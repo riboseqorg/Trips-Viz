@@ -1,0 +1,10 @@
+User-agent: *
+Crawl-Delay: 1 # Slow'em down a little
+Disallow: /cgi-bin/
+Disallow: /admin/
+Disallow: /shared/*
+
+
+User-agent: Riddler
+Disallow: /
+

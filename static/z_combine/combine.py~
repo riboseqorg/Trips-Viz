@@ -1,0 +1,44 @@
+
+import os
+import numpy as np
+count = []
+files = os.listdir("../zscore")
+for filea in files:
+	if filea[-2:] != "_1": continue
+	infileopen = open("../zscore/%s"%filea)
+	infileopen.readline()
+	if filea == "Jan_min_pulldown_1":
+		outfileopen = open("%s"%filea[:-2],"w")
+		for line in infileopen:
+			linesplit = line.split("\t")
+			if linesplit[4] != "":
+					outfileopen.write("%s\t%s\n"%(linesplit[0].upper(), float(linesplit[4])))
+	else:
+		dict_data= {}
+		try:
+			for number in range(1,30):
+				print "../zscore/%s_%s"%(filea[:-1], number)
+				infileopen2 = open("../zscore/%s_%s"%(filea[:-2], number))
+				infileopen2.readline()
+				for line in infileopen2:
+					linesplit = line.split("\t")
+					if linesplit[-1] != "\n":
+						dict_data.setdefault(linesplit[0],[])
+						dict_data[linesplit[0]] .append(float(linesplit[-1]))
+				#if linesplit[-1] != "\n":
+					#if dict_data.has_key(linesplit[0]):
+						#outfileopen.write("%s\t%s\n"%(linesplit[0].upper(), float(linesplit[-1])+dict_data[linesplit[0]]))
+
+		except :
+			#outfileopen = open("%s"%filea[:-2],"w")
+	#if 0:
+		#else:
+			count.append(filea.split("_"))
+			outfileopen = open("%s"%filea[:-2],"w")
+			for key, value in dict_data.items():
+				outfileopen.write("%s\t%s\n"%(key.upper(), np.mean(value)))
+			#for line in infileopen:
+				#linesplit = line.split("\t")
+				#if linesplit[-1] != "\n":
+
+print len(count), len(set(count))

@@ -1,0 +1,103 @@
+\hypertarget{mfe__window_8h_source}{}\section{mfe\+\_\+window.\+h}
+\label{mfe__window_8h_source}\index{ViennaRNA/mfe\_window.h@{ViennaRNA/mfe\_window.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{preprocessor}{\#ifndef VIENNA\_RNA\_PACKAGE\_MFE\_WINDOW\_H}}
+\DoxyCodeLine{00002 \textcolor{preprocessor}{\#define VIENNA\_RNA\_PACKAGE\_MFE\_WINDOW\_H}}
+\DoxyCodeLine{00003 }
+\DoxyCodeLine{00004 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{00005 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{fold__compound_8h}{ViennaRNA/fold\_compound.h}}>}}
+\DoxyCodeLine{00006 }
+\DoxyCodeLine{\Hypertarget{mfe__window_8h_source_l00060}\mbox{\hyperlink{group__mfe__window_ga4f3e5bc214ef803074ace313cb9571b4}{00060}} \textcolor{keyword}{typedef} void (\mbox{\hyperlink{group__mfe__window_ga4f3e5bc214ef803074ace313cb9571b4}{vrna\_mfe\_window\_callback}})(\textcolor{keywordtype}{int}         start,}
+\DoxyCodeLine{00061                                         \textcolor{keywordtype}{int}         end,}
+\DoxyCodeLine{00062                                         \textcolor{keyword}{const} \textcolor{keywordtype}{char}  *structure,}
+\DoxyCodeLine{00063                                         \textcolor{keywordtype}{float}       en,}
+\DoxyCodeLine{00064                                         \textcolor{keywordtype}{void}        *data);}
+\DoxyCodeLine{00065 }
+\DoxyCodeLine{00066 }
+\DoxyCodeLine{00067 \textcolor{preprocessor}{\#ifdef VRNA\_WITH\_SVM}}
+\DoxyCodeLine{00068 \textcolor{keyword}{typedef} void (vrna\_mfe\_window\_zscore\_callback)(\textcolor{keywordtype}{int}        start,}
+\DoxyCodeLine{00069                                                \textcolor{keywordtype}{int}        end,}
+\DoxyCodeLine{00070                                                \textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure,}
+\DoxyCodeLine{00071                                                \textcolor{keywordtype}{float}      en,}
+\DoxyCodeLine{00072                                                \textcolor{keywordtype}{float}      zscore,}
+\DoxyCodeLine{00073                                                \textcolor{keywordtype}{void}       *data);}
+\DoxyCodeLine{00074 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00075 }
+\DoxyCodeLine{00106 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00107 \mbox{\hyperlink{group__mfe__window_ga689df235a1915a1ad56e377383c044ce}{vrna\_mfe\_window}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}  *vc,}
+\DoxyCodeLine{00108                 FILE                  *file);}
+\DoxyCodeLine{00109 }
+\DoxyCodeLine{00110 }
+\DoxyCodeLine{00111 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00112 vrna\_mfe\_window\_cb(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}     *vc,}
+\DoxyCodeLine{00113                    \mbox{\hyperlink{group__mfe__window_ga4f3e5bc214ef803074ace313cb9571b4}{vrna\_mfe\_window\_callback}} *cb,}
+\DoxyCodeLine{00114                    \textcolor{keywordtype}{void}                     *data);}
+\DoxyCodeLine{00115 }
+\DoxyCodeLine{00116 }
+\DoxyCodeLine{00117 \textcolor{preprocessor}{\#ifdef VRNA\_WITH\_SVM}}
+\DoxyCodeLine{00118 }
+\DoxyCodeLine{00143 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00144 \mbox{\hyperlink{group__mfe__window_gaa4f67ae94efd08d800c17f9b53423fd6}{vrna\_mfe\_window\_zscore}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *vc,}
+\DoxyCodeLine{00145                        \textcolor{keywordtype}{double}               min\_z,}
+\DoxyCodeLine{00146                        FILE                 *file);}
+\DoxyCodeLine{00147 }
+\DoxyCodeLine{00148 }
+\DoxyCodeLine{00149 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00150 vrna\_mfe\_window\_zscore\_cb(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}            *vc,}
+\DoxyCodeLine{00151                           \textcolor{keywordtype}{double}                          min\_z,}
+\DoxyCodeLine{00152                           vrna\_mfe\_window\_zscore\_callback *cb,}
+\DoxyCodeLine{00153                           \textcolor{keywordtype}{void}                            *data);}
+\DoxyCodeLine{00154 }
+\DoxyCodeLine{00155 }
+\DoxyCodeLine{00156 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00157 }
+\DoxyCodeLine{00158 \textcolor{comment}{/* End basic local MFE interface */}}
+\DoxyCodeLine{00186 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00187 \mbox{\hyperlink{group__mfe__window_ga4918cce52bf69c1913cda503b2ac75d8}{vrna\_Lfold}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00188            \textcolor{keywordtype}{int}        window\_size,}
+\DoxyCodeLine{00189            FILE       *file);}
+\DoxyCodeLine{00190 }
+\DoxyCodeLine{00191 }
+\DoxyCodeLine{00192 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00193 vrna\_Lfold\_cb(\textcolor{keyword}{const} \textcolor{keywordtype}{char}                *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00194               \textcolor{keywordtype}{int}                       window\_size,}
+\DoxyCodeLine{00195               \mbox{\hyperlink{group__mfe__window_ga4f3e5bc214ef803074ace313cb9571b4}{vrna\_mfe\_window\_callback}}  *cb,}
+\DoxyCodeLine{00196               \textcolor{keywordtype}{void}                      *data);}
+\DoxyCodeLine{00197 }
+\DoxyCodeLine{00198 }
+\DoxyCodeLine{00199 \textcolor{preprocessor}{\#ifdef VRNA\_WITH\_SVM}}
+\DoxyCodeLine{00200 }
+\DoxyCodeLine{00224 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00225 \mbox{\hyperlink{group__mfe__window_ga27fddda5fc63eb49c861e38845fc34b4}{vrna\_Lfoldz}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char}  *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00226             \textcolor{keywordtype}{int}         window\_size,}
+\DoxyCodeLine{00227             \textcolor{keywordtype}{double}      min\_z,}
+\DoxyCodeLine{00228             FILE        *file);}
+\DoxyCodeLine{00229 }
+\DoxyCodeLine{00230 }
+\DoxyCodeLine{00231 \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00232 vrna\_Lfoldz\_cb(\textcolor{keyword}{const} \textcolor{keywordtype}{char}                       *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00233                \textcolor{keywordtype}{int}                              window\_size,}
+\DoxyCodeLine{00234                \textcolor{keywordtype}{double}                           min\_z,}
+\DoxyCodeLine{00235                vrna\_mfe\_window\_zscore\_callback  *cb,}
+\DoxyCodeLine{00236                \textcolor{keywordtype}{void}                             *data);}
+\DoxyCodeLine{00237 }
+\DoxyCodeLine{00238 }
+\DoxyCodeLine{00239 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00240 }
+\DoxyCodeLine{00241 \textcolor{keywordtype}{float} vrna\_aliLfold(\textcolor{keyword}{const} \textcolor{keywordtype}{char}  **alignment,}
+\DoxyCodeLine{00242                     \textcolor{keywordtype}{int}         maxdist,}
+\DoxyCodeLine{00243                     FILE        *fp);}
+\DoxyCodeLine{00244 }
+\DoxyCodeLine{00245 }
+\DoxyCodeLine{00246 \textcolor{keywordtype}{float} vrna\_aliLfold\_cb(\textcolor{keyword}{const} \textcolor{keywordtype}{char}               **alignment,}
+\DoxyCodeLine{00247                        \textcolor{keywordtype}{int}                      maxdist,}
+\DoxyCodeLine{00248                        \mbox{\hyperlink{group__mfe__window_ga4f3e5bc214ef803074ace313cb9571b4}{vrna\_mfe\_window\_callback}} *cb,}
+\DoxyCodeLine{00249                        \textcolor{keywordtype}{void}                     *data);}
+\DoxyCodeLine{00250 }
+\DoxyCodeLine{00251 }
+\DoxyCodeLine{00252 \textcolor{comment}{/* End simplified local MFE interface */}}
+\DoxyCodeLine{00255 \textcolor{comment}{/* End group mfe\_fold\_window */}}
+\DoxyCodeLine{00259 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -10,14 +10,19 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.js"></script>
-	<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.2.min.js" crossorigin="anonymous"></script>
-	<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.2.min.js" crossorigin="anonymous"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.css"/>
 	<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.js"></script>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/js/jquery.tablesorter.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-115765268-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'UA-115765268-1');
+	</script>
 	<strong>
 	 <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
 	 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -28,7 +33,6 @@
  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
 </head>
 <body>
-
 
 <header>
 		<h1 class="logo" style="font-family: 'Georgia'"><span style="color: #77abff">T</span>rips-<span style="color: #77abff">V</span>iz</h1>
@@ -41,21 +45,19 @@
 								<li><a href="{{ url_for('settingspage') }}"><span>Settings</span></a></li>
 								<li><a href="{{ url_for('uploadspage') }}"><span>Uploads</span></a></li>
 								<li><a href="{{ url_for('saved') }}"><span>Saved ORFs</span></a></li>
-
+								{% if current_user.is_authenticated %}
+										<li><a href="{{ url_for('logout') }}"><span>Logout</span></a></li>
+								{% endif %}
 								{% if not current_user.is_authenticated %}
-										<li><a href="{{ url_for('login')}}"><span>Sign In</span></a></li>
+										<li><a href="{{ url_for('login') }}"><span>Sign In</span></a></li>
 										<li><a href="{{ url_for('create') }}"><span>Sign Up</span></a></li>
 								{% endif %}
-								{% if current_user.is_authenticated %}
-										<li><a href="{{ url_for('logout')}}"><span>Sign Out</span></a></li>
-								{% endif %}
-								
 								<!--{% if current_user.name == "114224403@umail.ucc.ie" %}
 									<li><a href="{{ url_for('saved') }}"><span>My ORFs</span></a></li>
 								{% endif %}-->
-								
 						</ul>
 				</nav></strong>
+        
 </header>
 
 <div>
@@ -64,14 +66,12 @@
 						{% for message in messages %}
 								<div class="alert alert-info alert-dismissible" role="alert">
 										<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-										<!-- <strong>Title</strong> --> {{ message }}
-								</div>
+                                        <!-- <strong>Title</strong> --> {{ message }}
+                                </div>
 						{% endfor %}
 				{% endif %}
 		{% endwith %}
 </div>
-
-
 <div class="container">
 		{% block content %}
 
@@ -83,7 +83,7 @@
 <script type="text/javascript">
 
 var gtagId = 'UA-115765268-1';
-window['ga-disable-' + gtagId] = true;
+//window['ga-disable-' + gtagId] = true;
 
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
@@ -112,7 +112,7 @@ window.addEventListener('load', function(){
 						},
 				
 				
-				
+				/*
 				onInitialise: function(status) {
 							var type = this.options.type;
 							var didConsent = this.hasConsented();
@@ -162,16 +162,28 @@ window.addEventListener('load', function(){
 										gtag('config', 'UA-115765268-1');
 										
 										}
-									}
+									}*/
 				
-
+				
+				
+				
+				
+				
 				
 					   })
 					   });
 
 
 
+
+
+
+
+
+
 </script>
+
+
 </body>
 
 

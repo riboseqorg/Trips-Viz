@@ -1,0 +1,13 @@
+
+#For running celery to serve the live version of trips
+#Run from /home/DATA/www/tripsviz/
+~/.local/bin/celery -A tripsviz.celery worker --loglevel=DEBUG
+
+
+#For running celery for the development version 
+#Run from /home/DATA/www/tripsviz/tripsviz/
+~/.local/bin/celery -A orfquery_routes.celery worker --loglevel=DEBUG
+
+
+#For both
+Run redis by going to /home/DATA/www/tripsviz/tripsviz/redis/redis_5-0.1/src and run redis-server

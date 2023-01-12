@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<html>
+<head>
+<title>Trips-Viz - forgot password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link href="static/bootstrap.min.css" rel="stylesheet" media="screen"> -->
+<link rel= "stylesheet" href= "{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+<div class="centered form">
+	<h3 style="color:black; text-align: left" >Forgot Password</h3>
+	<p>Please enter your email address and we will send you a password reset link. </p>
+	<br>
+	<form action="" method="post">
+	<b>Email address</b><br>
+	<input style="margin-top: 15px;margin-bottom: 15px;padding-right:150px" type="text" placeholder="example@example.com" name="emailaddress" value="{{request.form.emailaddress }}">
+	<br>
+	<input class="btn btn-default loginbutton" type="submit" value="Reset Password">
+	</form>
+	{% if error %}
+	<p class="error"><strong>Error:</strong> {{ error }}
+	{% endif %}
+</div>
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<head>
+<link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
+</head>
+<style>
+
+/* used to style links under riboseq/rnaseq sections: unvisited link */
+a.org:link {
+	font-size: 21px;
+	text-decoration: none;
+	color: #666666;
+	}
+
+/* visited link */
+a.org:visited {
+	font-size: 21px;
+	text-decoration: none;
+	color: #666666;
+	}
+
+/* mouse over link */
+a.org:hover {
+	font-size: 21px;
+	text-decoration: none;
+	color: #77abff;
+	}
+
+#about {
+	padding-bottom: 150px;
+	text-align:center;
+	width: 100%;
+	float: left;
+	}
+
+#desc {
+	padding-left: 220px;
+	padding-right: 220px;
+	}
+
+#riboseq {
+	font-size: 25px;
+	top: 50%;
+	left: 42%;
+	text-align: center;
+	padding-bottom: 95px;
+	}
+
+
+
+span {
+	display: inline-block;
+	vertical-align: bottom;
+	line-height: normal;
+	}
+
+</style>
+
+
+
+
+<div id="riboseq">
+
+<ul class="checkbox-grid" data-role="listview" data-inset="true" id="ulist"  title="nodes list" data-inset="true">
+</div>
+
+
+</body>
+</html>
+<script type="text/javascript">
+
+
+
+var folder ="{{  folder|safe }}"
+var filelist = {{  filelist|safe  }};
+var arrayLen = filelist.length;
+
+window.onload = function() {
+	for (i = 0; i < arrayLen; i++ ) {
+		console.log(i);
+		var newDiv = document.createElement('div');
+		document.getElementById('riboseq').appendChild(newDiv);
+		newDiv.innerHTML = "<a class='org' href="+folder+"/"+filelist[i]+">"+filelist[i]+"</a>";
+		}
+		
+	}
+
+
+
+var url = "/sharedquery"
+
+
+
+
+
+
+
+</script>
+
+{% endblock %}

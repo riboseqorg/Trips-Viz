@@ -1,0 +1,180 @@
+
+<style>
+
+
+
+#info {
+    padding-bottom:10px;
+    };
+
+
+
+
+
+
+
+</style>
+
+
+<!--<script src="//cdn.bio.sh/msa/latest/msa.min.gz.js">-->
+<script src="//cdn.bio.sh/msa/1.0.3/msa.min.gz.js">
+
+
+</script>
+
+<div id='info'></div>
+<div id='snippetDiv' class='snippetDiv'></div>
+
+<pre style="display: none" id="fasta-file">
+</pre>
+
+
+
+<script>
+pre_div = document.getElementById("fasta-file")
+var seq_dict = {{ seq_dict|safe }};
+var highlight_dict = {{ highlight_dict|safe }};
+var toporg = '{{  toporg|safe }}';
+var gene = '{{ gene|safe }}';
+var group = '{{ group|safe }}';
+var group_num = '{{ group_num|safe }}';
+var aln_type = '{{ aln_type|safe }}';
+var colscheme = '{{ colscheme|safe }}';
+
+if (toporg != 'None') {
+    console.log("TOP ORG IS "+toporg);
+    pre_div.innerHTML += (">"+toporg+"\n"+seq_dict[toporg]+"\n")
+    };
+
+
+for (var org in seq_dict) {
+    if (org != toporg) {
+        pre_div.innerHTML += (">"+org+"\n"+seq_dict[org]+"\n")
+        };
+    };
+
+
+var fasta = document.getElementById("fasta-file").innerText;
+var info_div = document.getElementById("info");
+
+
+info_div.innerHTML += "<b>"+gene+"</b>";
+if (aln_type == "nucleo") {
+    info_div.innerHTML += " backtranslated nucleotide "
+}else if (aln_type == "amino") {
+    info_div.innerHTML += " amino acid"
+    };
+info_div.innerHTML += "  alignment to "+group_num+" "+group;
+
+
+
+
+
+
+
+var m = msa({
+    el: document.getElementById("snippetDiv"),
+    vis: {
+        conserv: true,
+        overviewbox: false,
+        seqlogo: true,
+        markers: true,
+        metacell:false,
+        gapheader:false,
+        leftheader:false,
+        scaleslider: true,
+
+        //label stuff
+        labels: true,
+        labelName: true,
+        labelId: true,
+        labelPartition: true,
+        labelCheckbox: false
+
+        },
+
+
+    conf: {
+        registerMouseHover: true,
+        registerMouseClicks: true,
+        eventBus: true,
+        alphabetSize: 20,
+        dropImport: true,
+        debug: false,
+        hasRef: false, // hasReference,
+        },
+
+
+
+    conserv: {
+        maxHeight: 200,
+        fillColor: 'blue',
+        strokeColor: '#000',
+        rectStyler: function (rect, data) {
+            if ( data.rowPos >= (highlight_dict["start"]-1) & data.rowPos < highlight_dict["stop"] ) {
+                rect.style.fill = "red"
+                }
+            }
+            },
+
+            seqlogo: {
+                maxHeight: 200,
+                },
+
+            zoomer: {
+                // general
+                alignmentWidth: "auto",
+                alignmentHeight: 650,
+                columnWidth: 23,
+                rowHeight: 21,
+                autoResize: true,
+
+
+                // labels
+                textVisible: true,
+                labelIdLength: 30,
+                labelNameLength: 260,
+                labelPartLength: 10,
+                labelCheckLength: 15,
+                labelFontsize: 13,
+                labelLineHeight: "14px",
+
+
+                // marker
+                markerFontsize: "13px",
+                stepSize: 1,
+                markerStepSize: 3,
+                markerHeight: 20,
+
+
+                // canvas
+                residueFont: "13", //in px
+                canvasEventScale: 1,
+
+
+                // overview box
+                boxRectHeight: 3,
+                boxRectWidth: 2,
+                overviewboxPaddingTop: 20,
+                overviewboxPaddingRight: 200,
+                },
+            visorder: {headerBox: 0},
+
+            menu: {
+                menuFontsize: "14px",
+                menuItemFontsize: "14px",
+                menuItemLineHeight: "14px",
+                menuMarginLeft: "10px",
+                menuPadding: "5px 15px 5px 15px"
+                    },
+
+
+
+
+            colorscheme: {"scheme": colscheme},
+            seqs: msa.io.fasta.parse(fasta),
+            bootstrapMenu:true
+            });
+m.g.zoomer.setLeftOffset(highlight_dict["start"]-2)
+m.render();
+</script>

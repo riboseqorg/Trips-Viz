@@ -421,9 +421,15 @@ def traninfoquery():
 		cursor.execute("SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';".format(organism, transcriptome))
 		owner = (cursor.fetchone())[0]
 		if owner == 1:
-			transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR,organism,transcriptome))
+			if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR,organism,transcriptome)):
+				sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR,organism,transcriptome)
+				transhelve = sqlite3.connect(sqlite_path_organism)
+			else:
+				return_str =  "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome)
+				return return_str
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			sqlite_path_organism = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome)
+			transhelve = sqlite3.connect(sqlite_path_organism)
 		cursor = transhelve.cursor()
 		
 		
@@ -448,13 +454,17 @@ def traninfoquery():
 				cds_stop = int(cds_stop)
 			if gc_location == "five":
 				seq = seq[:cds_start]
+			elif gc_location == "start":
+				seq = seq[cds_start-include_first_val:cds_start+include_last_val]
 			elif gc_location == "cds":
 				seq = seq[cds_start:cds_stop]
+			elif gc_location == "stop":
+				seq = seq[cds_stop-include_first_val:cds_stop+include_last_val]
 			elif gc_location == "three":
 				seq = seq[cds_stop:]
 			
 			subseq = ""
-			if sum([include_first_val, include_last_val,exclude_first_val,exclude_last_val]) == 0:
+			if sum([include_first_val, include_last_val,exclude_first_val,exclude_last_val]) == 0 or (gc_location in ["start","stop"]):
 				subseq = seq
 			else:
 				if include_first_val != 0:

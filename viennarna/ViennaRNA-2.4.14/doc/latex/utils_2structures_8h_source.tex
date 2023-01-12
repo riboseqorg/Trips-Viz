@@ -1,0 +1,342 @@
+\hypertarget{utils_2structures_8h_source}{}\section{structures.\+h}
+\label{utils_2structures_8h_source}\index{ViennaRNA/utils/structures.h@{ViennaRNA/utils/structures.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{preprocessor}{\#ifndef VIENNA\_RNA\_PACKAGE\_STRUCT\_UTILS\_H}}
+\DoxyCodeLine{00002 \textcolor{preprocessor}{\#define VIENNA\_RNA\_PACKAGE\_STRUCT\_UTILS\_H}}
+\DoxyCodeLine{00003 }
+\DoxyCodeLine{00004 \textcolor{preprocessor}{\#ifdef VRNA\_WARN\_DEPRECATED}}
+\DoxyCodeLine{00005 \textcolor{preprocessor}{\# if defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00006 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func \_\_attribute\_\_ ((deprecated("", msg)))}}
+\DoxyCodeLine{00007 \textcolor{preprocessor}{\# elif defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00008 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func \_\_attribute\_\_ ((deprecated(msg)))}}
+\DoxyCodeLine{00009 \textcolor{preprocessor}{\# else}}
+\DoxyCodeLine{00010 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func}}
+\DoxyCodeLine{00011 \textcolor{preprocessor}{\# endif}}
+\DoxyCodeLine{00012 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00013 \textcolor{preprocessor}{\# define DEPRECATED(func, msg) func}}
+\DoxyCodeLine{00014 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00015 }
+\DoxyCodeLine{00016 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{00017 }
+\DoxyCodeLine{00018 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{datastructures_2basic_8h}{ViennaRNA/datastructures/basic.h}}>}}
+\DoxyCodeLine{00019 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00037}\mbox{\hyperlink{group__struct__utils__helix__list_ga877363f3a1703b53ecd025c6fcf897a0}{00037}} \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_s}} \mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_t}};}
+\DoxyCodeLine{00038 }
+\DoxyCodeLine{00039 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00044}\mbox{\hyperlink{group__struct__utils__plist_gab9ac98ab55ded9fb90043b024b915aca}{00044}} \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_elem\_prob\_s}} \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}};}
+\DoxyCodeLine{00045 }
+\DoxyCodeLine{00046 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00057}\mbox{\hyperlink{group__struct__utils__dot__bracket_ga7e3f630af8d69bb0e917145aacf2f96d}{00057}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_ALPHA    4U}}
+\DoxyCodeLine{00058 }
+\DoxyCodeLine{00059 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00065}\mbox{\hyperlink{group__struct__utils__dot__bracket_gac92d5fa7c6625bce2670ece510a24fbd}{00065}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_RND      8U}}
+\DoxyCodeLine{00066 }
+\DoxyCodeLine{00067 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00073}\mbox{\hyperlink{group__struct__utils__dot__bracket_gaf41be40e79cb756c4e0bb8edb4d803d2}{00073}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_CLY      16U}}
+\DoxyCodeLine{00074 }
+\DoxyCodeLine{00075 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00081}\mbox{\hyperlink{group__struct__utils__dot__bracket_ga863e03f7f73f10fc9bbcbefbdda4bec8}{00081}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_ANG      32U}}
+\DoxyCodeLine{00082 }
+\DoxyCodeLine{00083 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00089}\mbox{\hyperlink{group__struct__utils__dot__bracket_ga60525d61d7496eeea490a37f3d6bf757}{00089}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_SQR      64U}}
+\DoxyCodeLine{00090 }
+\DoxyCodeLine{00091 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00103}\mbox{\hyperlink{group__struct__utils__dot__bracket_ga559ebf76b1b289f85309f4206e99aa1a}{00103}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_DEFAULT  \(\backslash\)}}
+\DoxyCodeLine{00104 \textcolor{preprocessor}{  (VRNA\_BRACKETS\_RND | \(\backslash\)}}
+\DoxyCodeLine{00105 \textcolor{preprocessor}{   VRNA\_BRACKETS\_CLY | \(\backslash\)}}
+\DoxyCodeLine{00106 \textcolor{preprocessor}{   VRNA\_BRACKETS\_ANG | \(\backslash\)}}
+\DoxyCodeLine{00107 \textcolor{preprocessor}{   VRNA\_BRACKETS\_SQR)}}
+\DoxyCodeLine{00108 }
+\DoxyCodeLine{00109 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00116}\mbox{\hyperlink{group__struct__utils__dot__bracket_ga013a9da903462d2f2b037f0c6ffb46e4}{00116}} \textcolor{preprocessor}{\#define VRNA\_BRACKETS\_ANY \(\backslash\)}}
+\DoxyCodeLine{00117 \textcolor{preprocessor}{  (VRNA\_BRACKETS\_RND | \(\backslash\)}}
+\DoxyCodeLine{00118 \textcolor{preprocessor}{   VRNA\_BRACKETS\_CLY | \(\backslash\)}}
+\DoxyCodeLine{00119 \textcolor{preprocessor}{   VRNA\_BRACKETS\_ANG | \(\backslash\)}}
+\DoxyCodeLine{00120 \textcolor{preprocessor}{   VRNA\_BRACKETS\_SQR | \(\backslash\)}}
+\DoxyCodeLine{00121 \textcolor{preprocessor}{   VRNA\_BRACKETS\_ALPHA)}}
+\DoxyCodeLine{00122 }
+\DoxyCodeLine{00123 }
+\DoxyCodeLine{00136 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00137 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga55c4783060a1464f862f858d5599c9e1}{vrna\_db\_pack}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *struc);}
+\DoxyCodeLine{00138 }
+\DoxyCodeLine{00139 }
+\DoxyCodeLine{00150 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00151 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga6490adff857d84ce06e6f379ae3a4512}{vrna\_db\_unpack}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *packed);}
+\DoxyCodeLine{00152 }
+\DoxyCodeLine{00153 }
+\DoxyCodeLine{00169 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00170 \mbox{\hyperlink{group__struct__utils__dot__bracket_gafd1304f5a86e2e3f1425e725cde44fa2}{vrna\_db\_flatten}}(\textcolor{keywordtype}{char}          *structure,}
+\DoxyCodeLine{00171                 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  options);}
+\DoxyCodeLine{00172 }
+\DoxyCodeLine{00173 }
+\DoxyCodeLine{00193 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00194 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga690425199c8b71545e7196e3af1436f8}{vrna\_db\_flatten\_to}}(\textcolor{keywordtype}{char}         *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00195                    \textcolor{keyword}{const} \textcolor{keywordtype}{char}   target[3],}
+\DoxyCodeLine{00196                    \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} options);}
+\DoxyCodeLine{00197 }
+\DoxyCodeLine{00198 }
+\DoxyCodeLine{00205 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00206 \mbox{\hyperlink{group__struct__utils__dot__bracket_gaf9ecd0d7877fecdbb0292e24f40283d5}{vrna\_db\_from\_ptable}}(\textcolor{keywordtype}{short} *pt);}
+\DoxyCodeLine{00207 }
+\DoxyCodeLine{00208 }
+\DoxyCodeLine{00220 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00221 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga02ca70cffb2d864f7b2d95d92218bae0}{vrna\_db\_from\_WUSS}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *wuss);}
+\DoxyCodeLine{00222 }
+\DoxyCodeLine{00223 }
+\DoxyCodeLine{00233 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00234 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga6a51a36b9245d0bac868c5cd172b9611}{vrna\_db\_from\_plist}}(\mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}    *\mbox{\hyperlink{group__struct__utils__deprecated_ga6341cbb704924824e0236c1dce791032}{pairs}},}
+\DoxyCodeLine{00235                    \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} n);}
+\DoxyCodeLine{00236 }
+\DoxyCodeLine{00237 }
+\DoxyCodeLine{00244 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00245 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga45360c09fb6d04d96e42dcccbb66015b}{vrna\_db\_to\_element\_string}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00246 }
+\DoxyCodeLine{00247 }
+\DoxyCodeLine{00279 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00280 \mbox{\hyperlink{group__struct__utils__dot__bracket_ga97dbebaa3fc49524cf5afa338a6c52ee}{vrna\_db\_pk\_remove}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure,}
+\DoxyCodeLine{00281                   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} options);}
+\DoxyCodeLine{00282 }
+\DoxyCodeLine{00283 \textcolor{comment}{/* End dot-bracket interface */}}
+\DoxyCodeLine{00302 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00303 \mbox{\hyperlink{group__struct__utils__pair__table_gae829fb8bb7f694c12a9c0bbc34c77c60}{vrna\_ptable}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00304 }
+\DoxyCodeLine{00305 }
+\DoxyCodeLine{00325 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00326 \mbox{\hyperlink{group__struct__utils__pair__table_gac76c9ef3de507748fb0416a59323362b}{vrna\_ptable\_from\_string}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char}    *\textcolor{keywordtype}{string},}
+\DoxyCodeLine{00327                         \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  options);}
+\DoxyCodeLine{00328 }
+\DoxyCodeLine{00329 }
+\DoxyCodeLine{00347 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00348 \mbox{\hyperlink{group__struct__utils__pair__table_gacca520048b24ec5a8978f4dafb4e4bf8}{vrna\_pt\_pk\_get}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00349 }
+\DoxyCodeLine{00350 }
+\DoxyCodeLine{00357 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00358 \mbox{\hyperlink{group__struct__utils__pair__table_ga2daefbbd6d9f8803731651882f54332d}{vrna\_ptable\_copy}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short} *pt);}
+\DoxyCodeLine{00359 }
+\DoxyCodeLine{00360 }
+\DoxyCodeLine{00365 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00366 \mbox{\hyperlink{group__struct__utils__pair__table_ga1ee4cdcda1f57d32dcb38032116d335d}{vrna\_pt\_ali\_get}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00367 }
+\DoxyCodeLine{00368 }
+\DoxyCodeLine{00376 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00377 \mbox{\hyperlink{group__struct__utils__pair__table_gaef0f7e1a6c00c81a349973de53039dda}{vrna\_pt\_snoop\_get}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00378 }
+\DoxyCodeLine{00379 }
+\DoxyCodeLine{00396 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00397 \mbox{\hyperlink{group__struct__utils__pair__table_gae8f31c859b48f97b8af889e914e4d040}{vrna\_pt\_pk\_remove}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short}   *ptable,}
+\DoxyCodeLine{00398                   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  options);}
+\DoxyCodeLine{00399 }
+\DoxyCodeLine{00400 \textcolor{comment}{/* End pair table interface */}}
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00412}\mbox{\hyperlink{group__struct__utils__plist_ga7c7484a8a1e6704b1aefaf589f3b27c1}{00412}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_BASEPAIR      0}}
+\DoxyCodeLine{00413 }
+\DoxyCodeLine{00414 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00418}\mbox{\hyperlink{group__struct__utils__plist_gac91ab79e9feede5347103949ecf04f8a}{00418}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_GQUAD         1}}
+\DoxyCodeLine{00419 }
+\DoxyCodeLine{00420 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00424}\mbox{\hyperlink{group__struct__utils__plist_ga4d142e0187b8410b61ec2b168ed4513e}{00424}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_H\_MOTIF       2}}
+\DoxyCodeLine{00425 }
+\DoxyCodeLine{00426 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00430}\mbox{\hyperlink{group__struct__utils__plist_gadf5905518079b5495bce3394cd7afb9a}{00430}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_I\_MOTIF       3}}
+\DoxyCodeLine{00431 }
+\DoxyCodeLine{00432 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00436}\mbox{\hyperlink{group__struct__utils__plist_ga01d749cdb675dcdbac1dc5103378c699}{00436}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_UD\_MOTIF      4}}
+\DoxyCodeLine{00437 }
+\DoxyCodeLine{00438 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00442}\mbox{\hyperlink{group__struct__utils__plist_ga36df728a95452170ca8684fc224299ea}{00442}} \textcolor{preprocessor}{\#define VRNA\_PLIST\_TYPE\_STACK         5}}
+\DoxyCodeLine{00443 }
+\DoxyCodeLine{00444 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00453}\mbox{\hyperlink{group__struct__utils__plist}{00453}} \textcolor{keyword}{struct }\mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_elem\_prob\_s}} \{}
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00454}\mbox{\hyperlink{group__struct__utils__plist_a0f8bb11ded4e605f816d7ad92eb568f6}{00454}}   \textcolor{keywordtype}{int}   \mbox{\hyperlink{group__struct__utils__plist_a0f8bb11ded4e605f816d7ad92eb568f6}{i}};    }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00455}\mbox{\hyperlink{group__struct__utils__plist_acada5be62ed6843334a918ca543f0c0d}{00455}}   \textcolor{keywordtype}{int}   \mbox{\hyperlink{group__struct__utils__plist_acada5be62ed6843334a918ca543f0c0d}{j}};    }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00456}\mbox{\hyperlink{group__struct__utils__plist_a9c09385582d8a7ab00485181f4e868b7}{00456}}   \textcolor{keywordtype}{float} \mbox{\hyperlink{group__struct__utils__plist_a9c09385582d8a7ab00485181f4e868b7}{p}};    }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00457}\mbox{\hyperlink{group__struct__utils__plist_a11715ffa51cb6277db7ebd3d9170d691}{00457}}   \textcolor{keywordtype}{int}   \mbox{\hyperlink{group__struct__utils__plist_a11715ffa51cb6277db7ebd3d9170d691}{type}}; }
+\DoxyCodeLine{00458 \};}
+\DoxyCodeLine{00459 }
+\DoxyCodeLine{00475 \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}} *\mbox{\hyperlink{group__struct__utils__plist_gaf002d69024d709744664a8b9ca3dd77d}{vrna\_plist}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char}  *struc,}
+\DoxyCodeLine{00476                       \textcolor{keywordtype}{float}       \mbox{\hyperlink{fold__vars_8h_ac98ec419070aee6831b44e5c700f090f}{pr}});}
+\DoxyCodeLine{00477 }
+\DoxyCodeLine{00478 }
+\DoxyCodeLine{00495 \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}} *\mbox{\hyperlink{group__part__func__global_ga94f6efc0b8d8712b023452794a0a5bd2}{vrna\_plist\_from\_probs}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *vc,}
+\DoxyCodeLine{00496                                  \textcolor{keywordtype}{double}               cut\_off);}
+\DoxyCodeLine{00497 }
+\DoxyCodeLine{00498 }
+\DoxyCodeLine{00499 \textcolor{comment}{/* End pair list interface */}}
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00511}\mbox{\hyperlink{group__struct__utils__helix__list}{00511}} \textcolor{keyword}{struct }\mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_s}} \{}
+\DoxyCodeLine{00512   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  start;}
+\DoxyCodeLine{00513   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  end;}
+\DoxyCodeLine{00514   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  length;}
+\DoxyCodeLine{00515   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  up5;}
+\DoxyCodeLine{00516   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  up3;}
+\DoxyCodeLine{00517 \};}
+\DoxyCodeLine{00518 }
+\DoxyCodeLine{00519 }
+\DoxyCodeLine{00526 \mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_t}} *}
+\DoxyCodeLine{00527 \mbox{\hyperlink{group__struct__utils__helix__list_ga7ca60670fbbf23ae2ac9f63e5dbf8aef}{vrna\_hx\_from\_ptable}}(\textcolor{keywordtype}{short} *pt);}
+\DoxyCodeLine{00528 }
+\DoxyCodeLine{00529 }
+\DoxyCodeLine{00533 \mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_t}} *}
+\DoxyCodeLine{00534 \mbox{\hyperlink{group__struct__utils__helix__list_ga2fdaac8bb6c239c119ad5c20b145b7f2}{vrna\_hx\_merge}}(\textcolor{keyword}{const} \mbox{\hyperlink{group__struct__utils__helix__list_structvrna__hx__s}{vrna\_hx\_t}} *list,}
+\DoxyCodeLine{00535               \textcolor{keywordtype}{int}             maxdist);}
+\DoxyCodeLine{00536 }
+\DoxyCodeLine{00537 }
+\DoxyCodeLine{00538 \textcolor{comment}{/* End helix list interface */}}
+\DoxyCodeLine{00545 \textcolor{keywordtype}{int} *}
+\DoxyCodeLine{00546 \mbox{\hyperlink{group__struct__utils_ga03e15af299be0866ff21da880c74b92e}{vrna\_loopidx\_from\_ptable}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short} *pt);}
+\DoxyCodeLine{00547 }
+\DoxyCodeLine{00548 }
+\DoxyCodeLine{00560 \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00561 \mbox{\hyperlink{group__struct__utils_ga65bdfbac6a16bf30286e8a3f7d15f60a}{vrna\_bp\_distance}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *str1,}
+\DoxyCodeLine{00562                  \textcolor{keyword}{const} \textcolor{keywordtype}{char} *str2);}
+\DoxyCodeLine{00563 }
+\DoxyCodeLine{00564 }
+\DoxyCodeLine{00565 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00566 vrna\_dist\_mountain(\textcolor{keyword}{const} \textcolor{keywordtype}{char}   *str1,}
+\DoxyCodeLine{00567                    \textcolor{keyword}{const} \textcolor{keywordtype}{char}   *str2,}
+\DoxyCodeLine{00568                    \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} p);}
+\DoxyCodeLine{00569 }
+\DoxyCodeLine{00570 }
+\DoxyCodeLine{00577 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} *}
+\DoxyCodeLine{00578 \mbox{\hyperlink{group__struct__utils_gab4c2a00c99ce1d612ffa5bde114eb96d}{vrna\_refBPcnt\_matrix}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short}  *reference\_pt,}
+\DoxyCodeLine{00579                      \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} turn);}
+\DoxyCodeLine{00580 }
+\DoxyCodeLine{00581 }
+\DoxyCodeLine{00589 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} *}
+\DoxyCodeLine{00590 \mbox{\hyperlink{group__struct__utils_ga5a27bd058183170afd4716f5b8ff511a}{vrna\_refBPdist\_matrix}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short}   *pt1,}
+\DoxyCodeLine{00591                       \textcolor{keyword}{const} \textcolor{keywordtype}{short}   *pt2,}
+\DoxyCodeLine{00592                       \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  turn);}
+\DoxyCodeLine{00593 }
+\DoxyCodeLine{00594 }
+\DoxyCodeLine{00598 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00599 \mbox{\hyperlink{group__struct__utils_ga0c28c410a5ab22d6ab9c77a84e8d5b44}{vrna\_db\_from\_probs}}(\textcolor{keyword}{const} \mbox{\hyperlink{group__data__structures_ga31125aeace516926bf7f251f759b6126}{FLT\_OR\_DBL}} *\mbox{\hyperlink{fold__vars_8h_ac98ec419070aee6831b44e5c700f090f}{pr}},}
+\DoxyCodeLine{00600                    \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}     length);}
+\DoxyCodeLine{00601 }
+\DoxyCodeLine{00602 }
+\DoxyCodeLine{00606 \textcolor{keywordtype}{char}}
+\DoxyCodeLine{00607 \mbox{\hyperlink{group__struct__utils_ga025bff1b27fa46534c8fae6980f64bb5}{vrna\_bpp\_symbol}}(\textcolor{keyword}{const} \textcolor{keywordtype}{float} *x);}
+\DoxyCodeLine{00608 }
+\DoxyCodeLine{00609 }
+\DoxyCodeLine{00621 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00622 \mbox{\hyperlink{group__struct__utils_ga27bea2c241564af53a065982183389df}{vrna\_db\_from\_bp\_stack}}(\mbox{\hyperlink{group__data__structures_structvrna__bp__stack__s}{vrna\_bp\_stack\_t}} *bp,}
+\DoxyCodeLine{00623                       \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}    length);}
+\DoxyCodeLine{00624 }
+\DoxyCodeLine{00625 }
+\DoxyCodeLine{00626 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00627 vrna\_letter\_structure(\textcolor{keywordtype}{char}            *structure,}
+\DoxyCodeLine{00628                       \mbox{\hyperlink{group__data__structures_structvrna__bp__stack__s}{vrna\_bp\_stack\_t}} *bp,}
+\DoxyCodeLine{00629                       \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}    length);}
+\DoxyCodeLine{00630 }
+\DoxyCodeLine{00631 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00648}\mbox{\hyperlink{group__struct__utils__tree_ga3ad5609bc93ef20034c3ab989365c1f0}{00648}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_HIT             1U}}
+\DoxyCodeLine{00649 }
+\DoxyCodeLine{00650 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00655}\mbox{\hyperlink{group__struct__utils__tree_ga549e259a963d77e2d5b7e14083fc016e}{00655}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_SHAPIRO\_SHORT   2U}}
+\DoxyCodeLine{00656 }
+\DoxyCodeLine{00657 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00662}\mbox{\hyperlink{group__struct__utils__tree_ga4acd9991a0250ccd4cd44c4725b31927}{00662}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_SHAPIRO         3U}}
+\DoxyCodeLine{00663 }
+\DoxyCodeLine{00664 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00669}\mbox{\hyperlink{group__struct__utils__tree_ga8666a10982a4f7a26892066ff07b4b48}{00669}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_SHAPIRO\_EXT     4U}}
+\DoxyCodeLine{00670 }
+\DoxyCodeLine{00671 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00676}\mbox{\hyperlink{group__struct__utils__tree_ga91f2e3a3a502d5445fd7fe5983a5fe92}{00676}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_SHAPIRO\_WEIGHT  5U}}
+\DoxyCodeLine{00677 }
+\DoxyCodeLine{\Hypertarget{utils_2structures_8h_source_l00682}\mbox{\hyperlink{group__struct__utils__tree_gab3b65489d1322da65d3a3e53242307ef}{00682}} \textcolor{preprocessor}{\#define   VRNA\_STRUCTURE\_TREE\_EXPANDED        6U}}
+\DoxyCodeLine{00683 }
+\DoxyCodeLine{00684 }
+\DoxyCodeLine{00714 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00715 \mbox{\hyperlink{group__struct__utils__tree_ga56551ab7da64933a7230d29430f40cfe}{vrna\_db\_to\_tree\_string}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char}   *structure,}
+\DoxyCodeLine{00716                        \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} type);}
+\DoxyCodeLine{00717 }
+\DoxyCodeLine{00718 }
+\DoxyCodeLine{00730 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00731 \mbox{\hyperlink{group__struct__utils__tree_gaa31da26a3f582ddc35a84ff1b9c0a2b0}{vrna\_tree\_string\_unweight}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure);}
+\DoxyCodeLine{00732 }
+\DoxyCodeLine{00733 }
+\DoxyCodeLine{00745 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00746 \mbox{\hyperlink{group__struct__utils__tree_ga99d280319a7fd3f87e9f0d8c44520774}{vrna\_tree\_string\_to\_db}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *tree);}
+\DoxyCodeLine{00747 }
+\DoxyCodeLine{00748 }
+\DoxyCodeLine{00749 \textcolor{comment}{/* End tree representations */}}
+\DoxyCodeLine{00752 \textcolor{preprocessor}{\#ifndef VRNA\_DISABLE\_BACKWARD\_COMPATIBILITY}}
+\DoxyCodeLine{00753 }
+\DoxyCodeLine{00754 \textcolor{comment}{/*\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#*/}}
+\DoxyCodeLine{00755 \textcolor{comment}{/*\# deprecated functions below              \#*/}}
+\DoxyCodeLine{00756 \textcolor{comment}{/*\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#*/}}
+\DoxyCodeLine{00757 }
+\DoxyCodeLine{00777 DEPRECATED(\textcolor{keywordtype}{void} \mbox{\hyperlink{group__part__func__global__deprecated_gab61df77cf7949cd516181fce0c3d7d78}{assign\_plist\_from\_db}}(\mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}  **pl,}
+\DoxyCodeLine{00778                                      \textcolor{keyword}{const} \textcolor{keywordtype}{char} *struc,}
+\DoxyCodeLine{00779                                      \textcolor{keywordtype}{float}      \mbox{\hyperlink{fold__vars_8h_ac98ec419070aee6831b44e5c700f090f}{pr}}),}
+\DoxyCodeLine{00780            \textcolor{stringliteral}{"Use vrna\_plist() instead"});}
+\DoxyCodeLine{00781 }
+\DoxyCodeLine{00795 DEPRECATED(\textcolor{keywordtype}{char} *\mbox{\hyperlink{group__struct__utils__deprecated_gac6dfa5e22928c087c6e09ff0054a7ced}{pack\_structure}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *struc),}
+\DoxyCodeLine{00796            \textcolor{stringliteral}{"Use vrna\_db\_pack() instead"});}
+\DoxyCodeLine{00797 }
+\DoxyCodeLine{00809 DEPRECATED(\textcolor{keywordtype}{char} *\mbox{\hyperlink{group__struct__utils__deprecated_ga071c6921efe1eb974f115ee6fefa3c39}{unpack\_structure}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *packed),}
+\DoxyCodeLine{00810            \textcolor{stringliteral}{"Use vrna\_db\_unpack() instead"});}
+\DoxyCodeLine{00811 }
+\DoxyCodeLine{00824 DEPRECATED(\textcolor{keywordtype}{short} *\mbox{\hyperlink{group__struct__utils__deprecated_ga89c32307ee50a0026f4a3131fac0845a}{make\_pair\_table}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure),}
+\DoxyCodeLine{00825            \textcolor{stringliteral}{"Use vrna\_ptable() instead"});}
+\DoxyCodeLine{00826 }
+\DoxyCodeLine{00827 DEPRECATED(\textcolor{keywordtype}{short} *make\_pair\_table\_pk(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure),}
+\DoxyCodeLine{00828            \textcolor{stringliteral}{"Use vrna\_ptable\_from\_string() instead"});}
+\DoxyCodeLine{00829 }
+\DoxyCodeLine{00839 DEPRECATED(\textcolor{keywordtype}{short} *\mbox{\hyperlink{group__struct__utils__deprecated_gafeaa6d68eef3a99d0a7aa08aa91c6601}{copy\_pair\_table}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short} *pt),}
+\DoxyCodeLine{00840            \textcolor{stringliteral}{"Use vrna\_ptable\_copy() instead"});}
+\DoxyCodeLine{00841 }
+\DoxyCodeLine{00848 DEPRECATED(\textcolor{keywordtype}{short} *\mbox{\hyperlink{group__struct__utils__deprecated_ga3c81b3967056c3888b8472b65fbb16f5}{alimake\_pair\_table}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure),}
+\DoxyCodeLine{00849            \textcolor{stringliteral}{"Use vrna\_pt\_ali\_get() instead"});}
+\DoxyCodeLine{00850 }
+\DoxyCodeLine{00858 DEPRECATED(\textcolor{keywordtype}{short} *\mbox{\hyperlink{group__struct__utils__deprecated_ga9aa3bf3b4346bb7fb88efc154dd07a79}{make\_pair\_table\_snoop}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *structure),}
+\DoxyCodeLine{00859            \textcolor{stringliteral}{"Use vrna\_pt\_snoop\_get() instead"});}
+\DoxyCodeLine{00860 }
+\DoxyCodeLine{00861 DEPRECATED(\textcolor{keywordtype}{int} *make\_loop\_index\_pt(\textcolor{keywordtype}{short} *pt),}
+\DoxyCodeLine{00862            \textcolor{stringliteral}{"Use vrna\_loopidx\_from\_ptable() instead"});}
+\DoxyCodeLine{00863 }
+\DoxyCodeLine{00877 DEPRECATED(\textcolor{keywordtype}{int} \mbox{\hyperlink{group__struct__utils__deprecated_ga6ebbcd29a754f0e4f1a66d1fd84184db}{bp\_distance}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *str1,}
+\DoxyCodeLine{00878                            \textcolor{keyword}{const} \textcolor{keywordtype}{char} *str2),}
+\DoxyCodeLine{00879            \textcolor{stringliteral}{"Use vrna\_bp\_distance() instead"});}
+\DoxyCodeLine{00880 }
+\DoxyCodeLine{00890 DEPRECATED(\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} *\mbox{\hyperlink{group__struct__utils__deprecated_ga578cd9712dee812fb1c58aa3cc489864}{make\_referenceBP\_array}}(\textcolor{keywordtype}{short}         *reference\_pt,}
+\DoxyCodeLine{00891                                                 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  turn),}
+\DoxyCodeLine{00892            \textcolor{stringliteral}{"Use vrna\_refBPcnt\_matrix() instead"});}
+\DoxyCodeLine{00893 }
+\DoxyCodeLine{00903 DEPRECATED(\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} *\mbox{\hyperlink{group__struct__utils__deprecated_gadd463184355d0803b6ee6e09f29182f2}{compute\_BPdifferences}}(\textcolor{keywordtype}{short}        *pt1,}
+\DoxyCodeLine{00904                                                \textcolor{keywordtype}{short}        *pt2,}
+\DoxyCodeLine{00905                                                \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} turn),}
+\DoxyCodeLine{00906            \textcolor{stringliteral}{"Use vrna\_refBPdist\_matrix() instead"});}
+\DoxyCodeLine{00907 }
+\DoxyCodeLine{00928 DEPRECATED(\textcolor{keywordtype}{void}  \mbox{\hyperlink{group__part__func__global__deprecated_ga1cc05aaa9b0e7df2d3887e98321c2030}{assign\_plist\_from\_pr}}(\mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}   **pl,}
+\DoxyCodeLine{00929                                       \mbox{\hyperlink{group__data__structures_ga31125aeace516926bf7f251f759b6126}{FLT\_OR\_DBL}}  *probs,}
+\DoxyCodeLine{00930                                       \textcolor{keywordtype}{int}         length,}
+\DoxyCodeLine{00931                                       \textcolor{keywordtype}{double}      cutoff),}
+\DoxyCodeLine{00932            \textcolor{stringliteral}{"Use vrna\_plist\_from\_probs() instead"});}
+\DoxyCodeLine{00933 }
+\DoxyCodeLine{00942 DEPRECATED(\textcolor{keywordtype}{void} \mbox{\hyperlink{group__struct__utils__deprecated_gadf0ad2d46c9ca7b850437d1b79627a7e}{parenthesis\_structure}}(\textcolor{keywordtype}{char}            *structure,}
+\DoxyCodeLine{00943                                       \mbox{\hyperlink{group__data__structures_structvrna__bp__stack__s}{vrna\_bp\_stack\_t}} *bp,}
+\DoxyCodeLine{00944                                       \textcolor{keywordtype}{int}             length),}
+\DoxyCodeLine{00945            \textcolor{stringliteral}{"Use vrna\_parenthesis\_structure() instead"});}
+\DoxyCodeLine{00946 }
+\DoxyCodeLine{00956 DEPRECATED(\textcolor{keywordtype}{void} \mbox{\hyperlink{group__struct__utils__deprecated_gab9c5c8311bd5120900585d4fa50c2df0}{parenthesis\_zuker}}(\textcolor{keywordtype}{char}            *structure,}
+\DoxyCodeLine{00957                                   \mbox{\hyperlink{group__data__structures_structvrna__bp__stack__s}{vrna\_bp\_stack\_t}} *bp,}
+\DoxyCodeLine{00958                                   \textcolor{keywordtype}{int}             length),}
+\DoxyCodeLine{00959            \textcolor{stringliteral}{"Use vrna\_parenthesis\_zuker() instead"});}
+\DoxyCodeLine{00960 }
+\DoxyCodeLine{00961 DEPRECATED(\textcolor{keywordtype}{void} letter\_structure(\textcolor{keywordtype}{char}             *structure,}
+\DoxyCodeLine{00962                                  \mbox{\hyperlink{group__data__structures_structvrna__bp__stack__s}{vrna\_bp\_stack\_t}}  *bp,}
+\DoxyCodeLine{00963                                  \textcolor{keywordtype}{int}              length),}
+\DoxyCodeLine{00964            \textcolor{stringliteral}{"Use vrna\_letter\_structure() instead"});}
+\DoxyCodeLine{00965 }
+\DoxyCodeLine{00971 DEPRECATED(\textcolor{keywordtype}{void}  \mbox{\hyperlink{group__struct__utils__deprecated_ga129d81c4a1ead793c5b2311333e03dfa}{bppm\_to\_structure}}(\textcolor{keywordtype}{char}         *structure,}
+\DoxyCodeLine{00972                                    \mbox{\hyperlink{group__data__structures_ga31125aeace516926bf7f251f759b6126}{FLT\_OR\_DBL}}   *\mbox{\hyperlink{fold__vars_8h_ac98ec419070aee6831b44e5c700f090f}{pr}},}
+\DoxyCodeLine{00973                                    \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} length),}
+\DoxyCodeLine{00974            \textcolor{stringliteral}{"Use vrna\_db\_from\_probs() instead"});}
+\DoxyCodeLine{00975 }
+\DoxyCodeLine{00981 DEPRECATED(\textcolor{keywordtype}{char}    \mbox{\hyperlink{group__struct__utils__deprecated_ga49962ad6242b8c628de6ca16bb831c1d}{bppm\_symbol}}(\textcolor{keyword}{const} \textcolor{keywordtype}{float} *x),}
+\DoxyCodeLine{00982            \textcolor{stringliteral}{"Use vrna\_bpp\_symbol() instead"});}
+\DoxyCodeLine{00983 }
+\DoxyCodeLine{00984 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00985 }
+\DoxyCodeLine{00990 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

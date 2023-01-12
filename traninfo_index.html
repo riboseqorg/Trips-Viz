@@ -1,0 +1,430 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<style>
+
+
+div #choose_region_of_interest {
+		display: inline-block;
+		float: left;
+		width:45%;
+		}
+
+div #features_and_limits {
+display: inline-block;
+float: right;
+width:50%;
+		}
+
+
+#section1_header {
+	text-align: center;
+	}
+
+
+
+.tooltip {
+		  position: relative;
+		  display: inline-block;
+		  border-bottom: 1px dotted black;
+		  }
+
+.tooltip .tooltiptext {
+					   visibility: hidden;
+					   width: 120px;
+					   background-color: black;
+					   color: #fff;
+					   text-align: center;
+					   border-radius: 6px;
+					   padding: 5px 0;
+					   
+					   /* Position the tooltip */
+					   position: absolute;
+					   z-index: 1;
+					   top: -5px;
+					   left: 105%; 
+					   }
+
+.tooltip:hover .tooltiptext {
+							 visibility: visible;
+							 }
+
+
+
+
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+<div  style="text-align:center">
+<table id="filters" style="text-align:center">
+
+
+</table>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="seq_types" style="display:none;">
+<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
+
+<table align="center">
+<!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
+<tr id="1">
+
+
+</tr>
+</table>
+
+
+</br>
+</div>
+
+
+<div id = "dialog-3" title = "Dataset breakdown">
+<div id="gene_reg_container2"></div>
+</div>
+
+
+
+
+
+
+
+
+<div id="buttons"></div>
+
+
+<div id="wrapper" style="text-align:center">
+<h4>Gene Set Enrichment Analysis</h4>
+
+
+
+Enter list of genes (comma seperated):   <input id="tran_list" name="tran_list" value="" > <button class="btn" type="button"  id="query"><b>Upload gene list</b></button><br>
+<b>OR</b><br>
+Upload a csv file of genes and z-scores:<form id="upload-file" action = "/gene_regulation_query" method = "POST" enctype = "multipart/form-data">
+<input name = "file" type = "file" multiple/>
+<td align="center">
+<input value="Upload file" type = "submit"/>
+</form>
+
+<br>
+
+</div>
+
+<div id="loading-div-background">
+<div id="loading-div" class="ui-corner-all" >
+<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
+<h3 style="color:gray;font-weight:normal;">Loading....</h3>
+</div>
+</div>
+
+
+<div id="gene_reg_container">
+
+<!--<h2 align="center"> Results Table </h2>-->
+<table  id="myTable" class="prediction_table hover">
+<thead><tr><th>Description</th><th>PMID</th><th>Mann-Whitney TE</th><th>#Up_#Down_#NoData</th><th>Mann-Whitney Ribo</th><th>#Up_#Down_#NoData</th><th>Mann-Whitney RNA</th><th>#Up_#Down_#NoData</th></thead><tbody></tr>
+</tbody>
+</table>
+</div>
+
+
+<div id="secondary_table"
+
+ style="text-align:center">
+<h4>Co-regulated clusters</h4>
+
+
+<table  id="myTable2" class="prediction_table hover">
+<thead><tr><th>Level</th><th>Gene list</th></thead><tbody></tr>
+</tbody>
+</table>
+</div>
+
+
+
+
+<div align="center" id="image">
+</div>
+
+
+
+
+
+
+<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script type="text/javascript">
+
+
+var organism = "{{ organism|safe }}";
+
+
+
+// hide advanced sections from user if they have not turned on the advanced setting
+var advanced = "{{ advanced|safe }}";
+
+
+// create DIV element and append to the table cell
+function createCell(cell, text, style) {
+	var div = document.createElement('div'), // create DIV element
+	txt = document.createTextNode(text); // create text node
+	div.appendChild(txt);                    // append text node to the DIV
+	div.setAttribute('class', style);        // set DIV class attribute
+	div.setAttribute('className', style);    // set DIV class attribute for IE (?!)
+	cell.appendChild(div);                   // append DIV to the table cell
+	}
+
+
+var user = "{{ user|safe }}";
+
+
+
+
+
+
+
+
+
+
+//"aaSorting": []
+
+
+
+
+$(document).ready( function () {
+		$('#summary_table').DataTable({
+				"aaSorting": []
+				});
+
+		$('#myTable').DataTable({
+			dom: 'Bfrtip',
+			buttons: ['csv'],
+			"order": [[ 2, "asc" ]],
+				});
+		
+		$('#myTable2').DataTable({
+			dom: 'Bfrtip',
+			buttons: ['csv'],
+			"order": [[ 0, "asc" ]],
+			});
+		
+		
+		
+		} );
+
+
+
+rownum = 1
+rowcount = -1
+
+
+
+
+// If the user presses the enter key call the #query function (generates the plot)
+$(document).keypress(function(e){
+if (e.which == 13){
+		$("#query").click();
+	}
+});
+
+var label = "";
+
+var url = "/gene_regulation_query"
+
+
+
+
+
+// This is called when the user passes a gene, shows a popup with multiple transcripts
+$("#loading-div-background").css({ opacity: 0.7 });
+$(function() {
+$( "#dialog-2" ).dialog({
+		autoOpen: false,
+		modal: true,
+		minWidth: 800,
+		buttons: {
+		Submit: function() {
+				label = document.getElementById('userlabel').value;
+				annotate_query()
+				$(this).dialog("close");
+				}
+		},
+		title: "Choose a label. . .",
+		position: {
+				my: "center",
+				at: "center"
+								}
+		});
+		$( "#query4" ).click(function() {
+		$( "#dialog-2" ).dialog("open");
+		});
+});
+
+
+
+// This is called when the user passes a gene, shows a popup with multiple transcripts
+$("#loading-div-background").css({ opacity: 0.7 });
+$(function() {
+	$( "#dialog-3" ).dialog({
+		autoOpen: false,
+		modal: true,
+		minWidth: 1400,
+		title: "Dataset breakdown",
+		position: {
+				my: "center",
+				at: "center"
+					}
+			});
+		$( "#query5" ).click(function() {
+			$( "#dialog-3" ).dialog("open");
+			});
+		});
+
+
+var organism = "{{  organism|safe  }}";
+var transcriptome = "{{  transcriptome|safe  }}";
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+$("#query").click(function() {
+		$("#loading-div-background").show();
+		$("#gene_reg_container").hide();
+		
+		//console.lgo("CONS SCORE IS "+min_cons_score);
+		var tran_list = $('input:text[name=tran_list]').val();
+		var qu = {"organism":organism,
+				"transcriptome":transcriptome,
+				"tran_list":tran_list};
+
+		$.ajax({
+				type: "POST",
+				async:true,
+				contentType: "application/json; charset=utf-8",
+				url: url,
+				data: JSON.stringify(qu),
+				dataType: "html",
+				success: function (data) {
+						if (data == "Error") {
+								console.log("Error")
+								window.scrollTo(0,0);
+								$("#loading-div-background").hide();
+								$("#gene_reg_container").show();
+								var table = $('#myTable').DataTable();
+								table.clear()
+								table.row.add(["ERROR: No files selected","","","","","","","","","","","","","","",""]).draw(false);
+								}
+						else {
+								$("#secondary_table").hide();
+								var div = document.getElementById('gene_reg_container');
+								//data1 populates the first table
+								var data1 = data.split("???")[0];
+								//data2 (optional) populates the second table
+								var data2 = data.split("???")[1];
+								var rawdata = data1.split("|");
+								var table_link = document.getElementById('table_link');
+								var base_url = "{{ url_for('static',filename='') }}";
+								splitdata = rawdata[0].split(".,/");
+								var table = $('#myTable').DataTable();
+								table.clear()
+								for(var i = 0; i < splitdata.length-1; i++) {
+										splitline = splitdata[i].split(",")
+										table.row.add( [
+												"<div class='tooltip'><a download href="+base_url+"z_all/"+splitline[0]+">"+splitline[0]+"</a><span class='tooltiptext'>"+splitline[8]+"</span></div>",
+												splitline[1],
+												splitline[2],
+												splitline[3],
+												splitline[4],
+												splitline[5],
+												splitline[6],
+												splitline[7]
+												]).draw( false );
+										};
+								table.draw()
+								//Load requested image from filename if one provided
+								var image_div = document.getElementById('image');
+								if (splitline[8] != "") {
+									image_div.innerHTML = "<img align='center' width='50%' src='/static/images/"+splitline[7]+"'></img>";
+									}
+								else {
+									image_div.innerHTML = "";
+									};
+								if (data2 != "") {
+									$("#secondary_table").show();
+									splitdata = data2.split(".,/");
+									var table = $('#myTable2').DataTable();
+									table.clear()
+									
+									for(var i = 0; i < splitdata.length-1; i++) {
+										splitline2 = splitdata[i].split(":")
+										table.row.add([
+											splitline2[0],
+											splitline2[1]
+											]).draw( false );
+										};
+										table.draw()
+									
+									}
+								else {
+									$("#secondary_table").hide();
+									};
+								
+								$("#loading-div-background").hide();
+								$("#gene_reg_container").show();
+								}}
+										});
+						});
+
+
+
+
+// Use this to create annotate button in the table, make sure to add a new header on table creation
+//"<button class='button' type='button'  id='annotate_query'  onclick='annotate_query("+input_str+")'><b>Save</b></button>"
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+///function dataset_dialog(i){
+///	save_line = i;
+	///input_line = splitdata[save_line].split(",");
+	///document.getElementById('userlabel').value = input_line[7]
+	///$("#gene_reg_container").show();
+	///$("#dialog-3").dialog("open");
+	///};
+
+
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+///function open_dialog(i){
+	///save_line = i;
+	///input_line = splitdata[save_line].split(",");
+	///document.getElementById('userlabel').value = input_line[7]
+	///$("#dialog-2").dialog("open");
+	///};
+///
+
+</script>
+{% endblock %}

@@ -168,6 +168,11 @@ def query():
 	#logging.warn(len(data["file_list"]))
 	#logging.debug("Length of alt file list is"+ len(data["alt_file_list"]))
 	# Send file_list (a list of integers intentionally encoded as strings due to javascript), to be converted to a dictionary with riboseq/rnaseq lists of file paths.
+	
+	total_files = len(data["file_list"])
+	if total_files > 1500:
+		return "A maximum of 1500 files can be selected on this page, currently there are {} selected".format(total_files)
+	
 	file_paths_dict = fetch_file_paths(data["file_list"],organism)
 
 	primetype = data["primetype"]
@@ -195,11 +200,10 @@ def query():
 			else:
 				return jsonify({'current': 400, 'total': 100, 'status': 'return_str','result': return_str}), 200, {'Location': ""} 
 	else:
-		sqlite_path_organism = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome)
+		sqlite_path_organism = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome)
 		transhelve = sqlite3.connect(sqlite_path_organism)
 	cursor = transhelve.cursor()
 	cursor.execute("SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-	
 	result = cursor.fetchone()
 	inputtran = True
 
@@ -207,6 +211,7 @@ def query():
 		newtran = result[0]
 	else:
 		inputtran = False
+	
 	if inputtran == False:
 		cursor.execute("SELECT * from transcripts WHERE gene = '{}'".format(tran))
 		result = cursor.fetchall()
@@ -279,12 +284,13 @@ def query():
 						return_str += (":{},{},{},{},{},{},{}".format(transcript[0],version, tranlen, cds_start, cdslen, threeutrlen,principal))
 				return return_str
 				
+				
 		else:
 			return_str =  "ERROR! Could not find any gene or transcript corresponding to {}".format(tran)
 			logging.debug(return_str)
 			return return_str
-			
 	transhelve.close()
+
 	if 'varlite' in data:
 		lite = "y"
 	else:

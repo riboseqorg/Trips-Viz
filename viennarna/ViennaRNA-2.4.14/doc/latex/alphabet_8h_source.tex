@@ -1,0 +1,100 @@
+\hypertarget{alphabet_8h_source}{}\section{alphabet.\+h}
+\label{alphabet_8h_source}\index{ViennaRNA/alphabet.h@{ViennaRNA/alphabet.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{preprocessor}{\#ifndef VIENNA\_RNA\_PACKAGE\_ALPHABET\_H}}
+\DoxyCodeLine{00002 \textcolor{preprocessor}{\#define VIENNA\_RNA\_PACKAGE\_ALPHABET\_H}}
+\DoxyCodeLine{00003 }
+\DoxyCodeLine{00004 \textcolor{preprocessor}{\#ifdef VRNA\_WARN\_DEPRECATED}}
+\DoxyCodeLine{00005 \textcolor{preprocessor}{\# if defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00006 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func \_\_attribute\_\_ ((deprecated("", msg)))}}
+\DoxyCodeLine{00007 \textcolor{preprocessor}{\# elif defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00008 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func \_\_attribute\_\_ ((deprecated(msg)))}}
+\DoxyCodeLine{00009 \textcolor{preprocessor}{\# else}}
+\DoxyCodeLine{00010 \textcolor{preprocessor}{\#  define DEPRECATED(func, msg) func}}
+\DoxyCodeLine{00011 \textcolor{preprocessor}{\# endif}}
+\DoxyCodeLine{00012 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00013 \textcolor{preprocessor}{\# define DEPRECATED(func, msg) func}}
+\DoxyCodeLine{00014 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00015 }
+\DoxyCodeLine{00029 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{fold__compound_8h}{ViennaRNA/fold\_compound.h}}>}}
+\DoxyCodeLine{00030 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{model_8h}{ViennaRNA/model.h}}>}}
+\DoxyCodeLine{00031 }
+\DoxyCodeLine{00032 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00033 vrna\_sequence\_length\_max(\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} options);}
+\DoxyCodeLine{00034 }
+\DoxyCodeLine{00035 }
+\DoxyCodeLine{00036 \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00037 vrna\_nucleotide\_IUPAC\_identity(\textcolor{keywordtype}{char} a,}
+\DoxyCodeLine{00038                                \textcolor{keywordtype}{char} b);}
+\DoxyCodeLine{00039 }
+\DoxyCodeLine{00040 }
+\DoxyCodeLine{00041 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00042 vrna\_ptypes\_prepare(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}  *fc,}
+\DoxyCodeLine{00043                     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}          options);}
+\DoxyCodeLine{00044 }
+\DoxyCodeLine{00045 }
+\DoxyCodeLine{00055 \textcolor{keywordtype}{char} *}
+\DoxyCodeLine{00056 \mbox{\hyperlink{group__alphabet__utils_ga51a9e86a5f731f5f2f5584ee67cee4a8}{vrna\_ptypes}}(\textcolor{keyword}{const} \textcolor{keywordtype}{short} *S,}
+\DoxyCodeLine{00057             \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}   *md);}
+\DoxyCodeLine{00058 }
+\DoxyCodeLine{00059 }
+\DoxyCodeLine{00064 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00065 \mbox{\hyperlink{group__alphabet__utils_ga636e7d6f888fd639587296a5eddea660}{vrna\_seq\_encode}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char}  *sequence,}
+\DoxyCodeLine{00066                 \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}   *md);}
+\DoxyCodeLine{00067 }
+\DoxyCodeLine{00068 }
+\DoxyCodeLine{00073 \textcolor{keywordtype}{short} *}
+\DoxyCodeLine{00074 \mbox{\hyperlink{group__alphabet__utils_ga3cd79d21d53248ad2634c1c0d43e97d7}{vrna\_seq\_encode\_simple}}(\textcolor{keyword}{const} \textcolor{keywordtype}{char} *sequence,}
+\DoxyCodeLine{00075                        \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}  *md);}
+\DoxyCodeLine{00076 }
+\DoxyCodeLine{00077 }
+\DoxyCodeLine{00089 \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00090 \mbox{\hyperlink{group__alphabet__utils_gac12bf00123f88621c9be847b0879c1fb}{vrna\_nucleotide\_encode}}(\textcolor{keywordtype}{char}       c,}
+\DoxyCodeLine{00091                        \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}  *md);}
+\DoxyCodeLine{00092 }
+\DoxyCodeLine{00093 }
+\DoxyCodeLine{00105 \textcolor{keywordtype}{char}}
+\DoxyCodeLine{00106 \mbox{\hyperlink{group__alphabet__utils_ga48ef585e697be9c8a08ed68c655e29b6}{vrna\_nucleotide\_decode}}(\textcolor{keywordtype}{int}        enc,}
+\DoxyCodeLine{00107                        \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}  *md);}
+\DoxyCodeLine{00108 }
+\DoxyCodeLine{00109 }
+\DoxyCodeLine{00110 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00111 vrna\_aln\_encode(\textcolor{keyword}{const} \textcolor{keywordtype}{char}    *sequence,}
+\DoxyCodeLine{00112                 \textcolor{keywordtype}{short}         **S\_p,}
+\DoxyCodeLine{00113                 \textcolor{keywordtype}{short}         **s5\_p,}
+\DoxyCodeLine{00114                 \textcolor{keywordtype}{short}         **s3\_p,}
+\DoxyCodeLine{00115                 \textcolor{keywordtype}{char}          **ss\_p,}
+\DoxyCodeLine{00116                 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  **as\_p,}
+\DoxyCodeLine{00117                 \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}     *md);}
+\DoxyCodeLine{00118 }
+\DoxyCodeLine{00119 }
+\DoxyCodeLine{00120 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00121 vrna\_get\_ptype\_md(\textcolor{keywordtype}{int}       i,}
+\DoxyCodeLine{00122                   \textcolor{keywordtype}{int}       j,}
+\DoxyCodeLine{00123                   \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}} *md);}
+\DoxyCodeLine{00124 }
+\DoxyCodeLine{00125 }
+\DoxyCodeLine{00126 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00127 vrna\_get\_ptype(\textcolor{keywordtype}{int}  ij,}
+\DoxyCodeLine{00128                \textcolor{keywordtype}{char} *ptype);}
+\DoxyCodeLine{00129 }
+\DoxyCodeLine{00130 }
+\DoxyCodeLine{00131 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00132 vrna\_get\_ptype\_window(\textcolor{keywordtype}{int}   i,}
+\DoxyCodeLine{00133                       \textcolor{keywordtype}{int}   j,}
+\DoxyCodeLine{00134                       \textcolor{keywordtype}{char}  **ptype);}
+\DoxyCodeLine{00135 }
+\DoxyCodeLine{00136 }
+\DoxyCodeLine{00141 \textcolor{preprocessor}{\#ifndef VRNA\_DISABLE\_BACKWARD\_COMPATIBILITY}}
+\DoxyCodeLine{00142 }
+\DoxyCodeLine{00143 DEPRECATED(\textcolor{keywordtype}{char} *get\_ptypes(\textcolor{keyword}{const} \textcolor{keywordtype}{short}   *S,}
+\DoxyCodeLine{00144                             \mbox{\hyperlink{group__model__details_structvrna__md__s}{vrna\_md\_t}}     *md,}
+\DoxyCodeLine{00145                             \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}  idx\_type),}
+\DoxyCodeLine{00146            \textcolor{stringliteral}{"Use vrna\_pytpes() instead"});}
+\DoxyCodeLine{00147 }
+\DoxyCodeLine{00148 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00149 }
+\DoxyCodeLine{00150 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

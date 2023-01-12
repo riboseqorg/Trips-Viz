@@ -78,7 +78,9 @@ def fetch_studies(username, organism, transcriptome):
 	study_access_list = []
 	#get a list of organism id's this user can access
 	if current_user.is_authenticated:
-		user_id = current_user.id
+		cursor.execute("SELECT user_id from users WHERE username = '{}';".format(current_user.name))
+		result = (cursor.fetchone())
+		user_id = result[0]
 		cursor.execute("SELECT study_id from study_access WHERE user_id = '{}';".format(user_id))
 		result = (cursor.fetchall())
 		for row in result:
@@ -619,7 +621,7 @@ def base62_to_integer(base62_str):
 	base = string.digits + string.ascii_lowercase + string.ascii_uppercase
 	limit = len(base62_str)
 	res = 0
-	for i in xrange(limit):
+	for i in range(limit):
 		res = 62 * res + base.find(base62_str[i])
 	return res
 
@@ -715,6 +717,8 @@ def calculate_coverages(sqlite_db,longest_tran_list,ambig_type, region, traninfo
 
 # Builds a profile, applying offsets
 def build_profile(trancounts, offsets, ambig,minscore=None,scores=None):
+	#print ("trancounts", trancounts)
+	#print ("minscore", minscore)
 	minreadlen = 15
 	maxreadlen = 150
 	profile = {}
@@ -727,11 +731,14 @@ def build_profile(trancounts, offsets, ambig,minscore=None,scores=None):
 	except:
 		ambig_trancounts = {}
 	for readlen in unambig_trancounts:
+		#print ("readlen", readlen)
 		if minscore != None:
 			if readlen in scores:
 				if scores[readlen] < minscore:
+					#print ("continuing1",scores[readlen])
 					continue
 			else:
+				#print ("continuing2")
 				continue
 		if readlen < minreadlen or readlen > maxreadlen:
 			continue
@@ -768,6 +775,7 @@ def build_profile(trancounts, offsets, ambig,minscore=None,scores=None):
 					profile[offset_pos]  += 0
 				except:
 					profile[offset_pos] = count
+	#print ("RETURNING PROFILE", profile)
 	return profile
 
 # Builds a profile, applying offsets
@@ -885,3 +893,15 @@ def fetch_rld(sqlite_db,ambig_type):
 	return rld
 
 
+def fetch_filename_file_id(file_id):
+	'''
+	return the filename from the database given a file id
+	'''
+	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
+	connection.text_factory = str
+	cursor = connection.cursor()
+	cursor.execute(f"SELECT file_name from files where file_id = '{file_id}';")
+	result = cursor.fetchall()
+	print(result[0])
+	connection.close()
+	return result[0][0]

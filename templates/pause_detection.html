@@ -1,0 +1,909 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<head>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js"></script>
+</head>
+
+
+
+<style>
+
+
+div #choose_region_of_interest {
+		display: inline-block;
+		float: left;
+		width:45%;
+		}
+
+div #features_and_limits {
+display: inline-block;
+float: right;
+width:50%;
+		}
+
+
+
+
+div .prediction_table {
+	width:100% !important;
+	}
+
+#section1_header {
+	text-align: center;
+	}
+
+
+
+
+
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="options" align="center" style="padding:10px;">
+<p><font size="5" align="center"><b><u>Options</u></b></font></p>
+<table id="filters">
+
+<tr><td>Minimum fold change:</td> <td><input id="min_fold_change" name="min_fold_change" value="20" ></input><span class='tooltip' style="max-height:800px" title = "The fold change for a pause is also referred to as the pause score(Si). Pauses are predicted using the following procedure.
+The number of reads r mapped to each position i within a sliding window of length n (step = n/2) is normalized over the average density within the window to score the pause. The average of these values across overlapping windows is used as the pause score, Si: 
+<br>
+<img width='15%' src='/static/pausepred_formula.png'></img>">&#9432;</span></td></tr>  
+<tr><td>Window size:</td> <td><input id="window_size" name="window_size" value="500" ></input><span class='tooltip' title = "The default size of the window(n) for calculating the background density is 1000 nucleotides (nt). An overlapping window approach is used in the pause prediction such that each window overlaps the previous window by 50% (i.e. the step size is n/2). For pauses which are predicted in both overlapping windows, the pause score and window coverage are averaged for the final output. ">&#9432;</span></td></tr>
+<tr><td>Minimum coverage (%):</td><td><input id="min_coverage" name="min_coverage" value="5" ></input><span class='tooltip' title = "The coverage(%) represents the percentage of positions within a window size that have a minimum of one read mapped. This parameter helps to filter out the genes/genomic regions that have a low density coverage across the window ">&#9432;</span></td></tr>   
+<tr><td>Nucleotide output:</td><td><input id="nuc_output" name="nuc_output" value="15" ></input><span class='tooltip' title = "The flanking nucleotide sequences of a predicted pause location are provided in the output. You can specify the length(nt) of up and downstream sequences to be provided in the output file (the default value is 50 nt).
+The sequence information can be used as input to secondary structure prediction tools which may provide insight into the pause occurrence. ">&#9432;</span></td></tr>
+<tr><td>Minimum read length:</td> <td><input id="min_read_length" name="min_read_length" value="20" ></input><span class='tooltip' title = "You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span></td></tr>  
+<tr><td>Maximum read length:</td> <td><input id="max_read_length" name="max_read_length" value="35" ></input><span class='tooltip' title = "You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span></td></tr>  
+
+
+<tr><td>Transcripts:</td><td><input type="radio" id="prin_trans" class="prin_trans" value="prin_trans" name="tranlist" checked>Principal</input>
+<input type="radio" id="all_trans" class="all_trans" value="all_trans" name="tranlist" unchecked>All</input>
+<input type="radio" id="custom_trans" class="custom_trans" value="custom_trans" name="tranlist" unchecked>Custom:</input></td><td><input id="custom_tran_list" name="custom_tran_list" value="" ></input><span class='tooltip' title = "Search for pauses only on principal transcripts, all transcripts or a custom list (enter a comma seperated list in the input box). ">&#9432;</span></td></tr>
+
+
+
+
+
+</table>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="seq_types">
+<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
+<table align="center">
+
+<td><button class="button all_checks" type="button" onclick="uncheck_study_multi()" ><b>Uncheck All files in Files box</b> </button></td>
+<td><button class="button all_checks" type="button" onclick="check_study_multi()" ><b>Check All files in Files box</b></button></td>
+<!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
+<tr id="1">
+</tr>
+</table>
+</br>
+</div>
+
+<div id = "dialog-2" title = "Choose a label">
+Label:<input id="userlabel" name="userlabel" value="" >
+</div>
+
+<div id = "dialog-3" title = "Dataset breakdown">
+<div id="container2"></div>
+</div>
+
+
+
+<div id="studies">
+<p><font size="5" align="center"><b><u>Studies</u></b></font></p>
+</br>
+
+
+
+
+
+
+<table align="center">
+
+<tr id="1">
+</tr>
+
+<tr id="2">
+
+</tr>
+
+</table>
+
+</br></br>
+
+<table align="center" name="studytable" id="studytable" class="studytable">
+<tr id="tablerow1">
+</tr>
+<tr id="tablerow2">
+</tr>
+<tr id="tablerow3">
+</tr>
+<tr id="tablerow4">
+</tr>
+<tr id="tablerow5">
+</tr>
+<tr id="tablerow6">
+</tr>
+<tr id="tablerow7">
+</tr>
+<tr id="tablerow8">
+</tr>
+<tr id="tablerow9">
+</tr>
+<tr id="tablerow10">
+</tr>
+<tr id="tablerow11">
+</tr>
+<tr id="tablerow12">
+</tr>
+<tr id="tablerow13">
+</tr>
+<tr id="tablerow14">
+</tr>
+<tr id="tablerow15">
+</tr>
+<tr id="tablerow16">
+</tr>
+<tr id="tablerow17">
+</tr>
+<tr id="tablerow18">
+</tr>
+</table>
+</br></br>
+</div>
+
+
+
+<div id="files">
+</br>
+<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
+</div>
+
+
+
+<div id="buttons"></div>
+
+
+
+
+
+<div id="wrapper"><button class="button" type="button"  id="query"><b>Generate table</b></button></div>
+
+<div id="loading-div-background">
+<div id="loading-div" class="ui-corner-all" >
+<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
+<h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
+<div style="color:white;font-weight:bold;" id="est_time"></div>
+</div>
+</div>
+
+
+<div id="container">
+</div>
+
+
+
+<div id="container2">
+<!-- <div id="summary_table_div">
+<br><br><br><br>
+<h2 align="center"> Summary Table </h2>
+<table  id="summary_table" class="prediction_table hover">
+<thead><tr><th></th><th>Score</th><th>Entropy</th><th>Start increase</th><th>Stop decrease</th><th>Coverage</th><th>Translation efficiency</th><th></th><th></th></tr></thead>
+<tbody></tr>
+</tbody>
+</table>
+</div> -->
+
+
+<br><br><br><br>
+<a id="table_link" href= "{{ url_for('static', filename='robots.txt') }}" download="robots.txt"> Download entire table</a>
+<h2 id="tabletitle" align="center"> Results Table </h2>
+<table  id="myTable" class="prediction_table hover">
+
+
+<thead><tr><th>Gene</th><th>Tran</th><th>Position</th><th>Region</th><th>Pause score</th><th>Upstream Sequence</th><th>Downstream Sequence</th><th>Count</th><th>View</th> </tr></thead><tbody></tr>
+
+
+</tbody>
+</table>
+
+</div>
+
+
+
+
+<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script type="text/javascript">
+
+
+var organism = "{{ organism|safe }}";
+var html_args = {{ html_args|safe }};
+
+
+
+var table = document.getElementById("filters");
+
+
+
+// hide advanced sections from user if they have not turned on the advanced setting
+//var advanced = "{{ advanced|safe }}";
+var advanced = "True";
+
+// create DIV element and append to the table cell
+function createCell(cell, text, style) {
+	var div = document.createElement('div'), // create DIV element
+	txt = document.createTextNode(text); // create text node
+	div.appendChild(txt);                    // append text node to the DIV
+	div.setAttribute('class', style);        // set DIV class attribute
+	div.setAttribute('className', style);    // set DIV class attribute for IE (?!)
+	cell.appendChild(div);                   // append DIV to the table cell
+	}
+
+
+var user = "{{ user|safe }}";
+
+
+//"aaSorting": []
+
+
+
+
+$(document).ready( function () {
+		$('#summary_table').DataTable({
+				"aaSorting": []
+				});
+
+		$('#myTable').DataTable({
+				"order": [[ 4, "desc" ]],
+
+				});
+		} );
+
+
+var alt_file_list = [];
+rownum = 1
+rowcount = -1
+
+
+
+var seq_types = {{  seq_types|safe  }};
+console.log("Seq TYPES Is: "+seq_types);
+for (var i in seq_types) {
+	console.log("SEQ TYPES "+seq_types[i])
+
+	//if the seq type is riboseq make it checked by default
+	if (seq_types[i] == "riboseq") {
+		checked = "checked"
+	}
+	else {
+		checked = "unchecked"
+	};
+
+	// if seq type is riboseq or rnaseq set a proper display name, else just use seq_type
+	if (seq_types[i] == "riboseq") {
+		display_name = "Ribo-Seq"
+	}
+	else if (seq_types[i] == "rnaseq") {
+		display_name = "mRNA-Seq"
+	}
+	else {
+		display_name = seq_types[i]
+	}
+
+	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label' >"+display_name+"</label>";
+	var seq_types_div = document.getElementById('seq_types');
+	seq_types_div.innerHTML += radio_seq_types;
+}
+
+
+var studies_dict = {{  studies_dict|safe  }};
+var studyinfo_dict = {{  studyinfo_dict|safe  }};
+for (var key in studies_dict)  {
+		rowcount += 1;
+		if (rowcount == 8) {
+				rowcount = 0
+				rownum += 1
+				};
+		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label' >"+studies_dict[key]["study_name"]+"</label>";
+		//console.log("LABEL ID IS label"+key);
+		addRow(rownum, radio_study)
+
+		for (i in seq_types) {
+			var seq_type = seq_types[i]
+			var files_div = document.getElementById('files');
+			var new_show_div = document.createElement(studies_dict[key]["study_name"]);
+			//console.log("Seq type is "+seq_type)
+			new_show_div.className = 'show';
+			new_show_div.id = seq_type+"study"+key;
+			tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+			new_show_div.innerHTML = tablehtml;
+			files_div.appendChild(new_show_div);
+		}
+		};
+
+
+
+
+// accepted files structure, key is file_type,values are file_id's (which are themselves keys) which point to a dictionary with the following: {"study_id":row[1],"file_name":row[2],"file_description":row[3],"file_type":row[4]}
+var accepted_files = {{ accepted_files|safe }};
+
+
+// keys in this are seq types with values being a list of study id's that have at least one file of that seq type
+// this is used to hide studies that don't have any files of the selected seq type.
+var seq_study_dict = {};
+
+
+// populate the ribostudies and rnastudies div with file names and descriptions.
+for (var filetype in accepted_files) {
+		//console.log("filetype ", filetype);
+		for (var study_id in accepted_files[filetype]) {
+				//console.log("Study id: ",study_id);
+				i=0
+				var file_names = [];
+				for (var file_id in accepted_files[filetype][study_id]) {
+					file_name = accepted_files[filetype][study_id][file_id]["file_name"]
+					file_names.push([file_name, file_id])
+					}
+				//console.log("File names", file_names);
+				file_names = file_names.sort(function(a, b) {
+					return a[0].localeCompare(b[0]);
+				})
+				
+				var sorted_file_list = [];
+				for (var z in file_names) {
+					var tup = file_names[z];
+					sorted_file_list.push(tup[1]);
+					}
+				//console.log("sorted file_list", sorted_file_list);
+				for (var file_id in sorted_file_list) {
+						file_id = sorted_file_list[file_id]
+						file_name = accepted_files[filetype][study_id][file_id]["file_name"];
+						file_description = accepted_files[filetype][study_id][file_id]["file_description"];
+
+						if (!(filetype in seq_study_dict)) {
+							seq_study_dict[filetype] = [];
+						};
+						//console.log("FILE ID LIST IS "+accepted_files[filetype][study_id])
+						if (accepted_files[filetype][study_id].length != 0) {
+							if (!(study_id in seq_study_dict[filetype])) {
+								//console.log("PUSHING STUDY ID"+study_id);
+								seq_study_dict[filetype].push(study_id);
+								//console.log("Seq study dict now "+seq_study_dict[filetype])
+						}
+					};
+
+
+						var table = document.getElementById(study_id+filetype);
+						//console.log("STUDY ID FILETYPE "+study_id+filetype);
+						var tr = document.createElement("tr");
+						var td = document.createElement("td");
+						// riboseq is checked by default all others not
+						td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='hidden_check file_"+file_id+" all_checks file_check "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+						//tr.appendChild();
+
+						if (i != 2){
+								table.appendChild(td);
+								i+= 1;
+												}
+						else if (i == 2){
+								table.appendChild(td);
+								table.appendChild(tr);
+								i = 0
+								}
+																						}
+														}
+								};
+
+
+// If the user presses the enter key call the #query function (generates the plot)
+$(document).keypress(function(e){
+if (e.which == 13){
+	console.log("CALLING QUERY");
+	$("#query").click();
+}
+});
+
+var label = "";
+
+// If local mode is true change the url called by query
+var local = "{{ local|safe }}";
+var anno_url = "/anno_query"
+var dataset_url = "/dataset_query"
+
+
+// This is called when the user passes a gene, shows a popup with multiple transcripts
+$("#loading-div-background").css({ opacity: 0.7 });
+$(function() {
+$( "#dialog-2" ).dialog({
+		autoOpen: false,
+		modal: true,
+		minWidth: 800,
+		buttons: {
+		Submit: function() {
+				label = document.getElementById('userlabel').value;
+				annotate_query()
+				$(this).dialog("close");
+				}
+		},
+		title: "Choose a label. . .",
+		position: {
+				my: "center",
+				at: "center"
+								}
+		});
+		$( "#query4" ).click(function() {
+		$( "#dialog-2" ).dialog("open");
+		});
+});
+
+
+
+// This is called when the user passes a gene, shows a popup with multiple transcripts
+$("#loading-div-background").css({ opacity: 0.7 });
+$(function() {
+	$( "#dialog-3" ).dialog({
+		autoOpen: false,
+		modal: true,
+		minWidth: 1400,
+		title: "Dataset breakdown",
+		position: {
+				my: "center",
+				at: "center"
+					}
+			});
+		$( "#query5" ).click(function() {
+			$( "#dialog-3" ).dialog("open");
+			});
+		});
+
+
+
+
+
+
+
+var project_id = "{{  project_id|safe  }}";
+//setup splitdata as a global var so we can access it in annotate_query
+var splitdata = "";
+var komondor_file_list = "";
+
+var user_short = "{{ user_short|safe }}";
+
+function remove_user_short() {
+	changebuttonlink(gwips_info)
+	user_short = "None";
+	//alert("The function called 'function_one' has been called.");
+	$("#query").click();
+	}
+
+
+
+
+
+
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+$("#query").click(function() {
+		console.log("calling query");
+		$("#loading-div-background").show();
+		$("#container").hide();
+		
+		var tranlist = document.querySelector('input[name=tranlist]:checked').value;
+		var custom_tran_list = $('input:text[name=custom_tran_list]').val();
+		
+		var min_fold_change = $('input:text[name=min_fold_change]').val();
+		var window_size = $('input:text[name=window_size]').val();
+		
+		var min_coverage = $('input:text[name=min_coverage]').val();
+		var nuc_output = $('input:text[name=nuc_output]').val();
+		
+		var min_read_length = $('input:text[name=min_read_length]').val();
+		var max_read_length = $('input:text[name=max_read_length]').val();
+
+		var qu = {"project_id":project_id,
+					"organism":"{{ organism|safe }}",
+					"transcriptome":"{{ transcriptome|safe }}",
+					"tran_list":tranlist,
+					"custom_tran_list":custom_tran_list,
+					"min_fold_change":min_fold_change,
+					"window_size":window_size,
+					"min_coverage":min_coverage,
+					"min_read_length":min_read_length,
+					"max_read_length":max_read_length,
+					"nuc_output":nuc_output,
+					"html_args":html_args};
+
+		console.log("alt_file_list", alt_file_list);
+		qu["file_list"] = alt_file_list
+
+		$.ajax({
+				type: "POST",
+				contentType: "application/json; charset=utf-8",
+				url: "{{ url_for('pausequery.pausequery')}}",
+				data: JSON.stringify(qu),
+				dataType: "html",
+				success: function(data) {
+					var result = data.toString();
+					if ((result.split("|")[0]) == "Table") {
+						console.log("Table in result loading table");
+						var div = document.getElementById('container2');
+						var rawdata = result.split("|");
+						komondor_file_list = rawdata[4]
+						short_code = rawdata[5]
+						tabletitle.innerText = "Results Table ("+short_code+")";
+						var table_link = document.getElementById('table_link');
+						var base_url = "{{ url_for('static',filename='') }}";
+						table_link.href = base_url+"tmp/"+rawdata[3]
+						table_link.download = rawdata[3]
+						
+						splitdata = rawdata[1].split(".,/");
+						var table = $('#myTable').DataTable();
+						table.clear()
+						//var file_list = ((splitdata[0]).split(",")[9]).replace(/;/g,",")
+						// there is a space in front of the file_list for some reason, this line removes it
+						//file_list = file_list.slice(1)
+						//console.log("file_list"+file_list+file_list[0]);
+						
+						for(var i = 0; i < splitdata.length-1; i++) {
+							splitline = splitdata[i].split(",")
+							//console.log("Trips link before"+splitline[11])
+							table.row.add( [
+								splitline[0],
+								splitline[1],
+								splitline[2],
+								splitline[3],
+								splitline[4],
+								splitline[5],
+								splitline[6],
+								splitline[7],
+								(splitline[8]).replace(/;/g,","),
+								]).draw( false );
+							};
+							table.columns.adjust()
+							table.draw()
+							$("#loading-div-background").hide();
+							$("#container").hide();
+							$("#container2").show();
+							}
+						else{
+							var graph = $("#container");
+							graph.html(data);
+							$("#loading-div-background").hide();
+							$("#container").show();
+							$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
+						}
+						document.getElementById('container').scrollIntoView();
+					
+					
+					
+		},
+				error: function() {
+					alert('Unexpected error');
+					},
+										
+										});
+						});
+
+
+
+//$(function() {
+//	$('#start-bg-job').click(start_long_task);
+//});
+
+
+// Use this to create annotate button in the table, make sure to add a new header on table creation
+//"<button class='button' type='button'  id='annotate_query'  onclick='annotate_query("+input_str+")'><b>Save</b></button>"
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+function dataset_dialog(i){
+	save_line = i;
+	input_line = splitdata[save_line].split(",");
+	document.getElementById('userlabel').value = input_line[6]
+	$("#container").show();
+	$("#dialog-3").dialog("open");
+	};
+
+
+
+function dataset_query(i) {
+	$("#container").hide();
+	$("#loading-div-background").show();
+	save_line = i;
+	input_line = splitdata[save_line].split(",");
+	document.getElementById('userlabel').value = input_line[6]
+	//$("#container2").hide();
+	console.log("dataset query called");
+	var region = document.querySelector('input[name=region]:checked').value;
+	//var file_list = [];
+	//for (var filetype in accepted_files) {
+	//	for (var study_id in accepted_files[filetype]) {
+	//		for (var file_id in accepted_files[filetype][study_id]) {
+	//			var newelement=$('input:checkbox[name='+file_id+']:checked').val();
+	//			if (newelement == 'inputfile'){
+	//				file_list.push(file_id);
+	//				};
+	//			}
+	//			}
+	//			};
+	var qu = {"input_line":input_line,"file_list":alt_file_list, "organism":organism,"region":region}
+		
+		$.ajax({
+			type: "POST",
+			async:true,
+			contentType: "application/json; charset=utf-8",
+			url: dataset_url,
+			data: JSON.stringify(qu),
+			success: function (data) {
+				var graph = $("#container2");
+				graph.html(data);
+				$("#loading-div-background").hide();
+				dataset_dialog(i);
+				//$("#container2").show();
+				},
+			dataType: "html"
+				});
+			};
+
+
+
+
+
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+function open_dialog(i){
+	save_line = i;
+	input_line = splitdata[save_line].split(",");
+	document.getElementById('userlabel').value = input_line[6]
+	$("#dialog-2").dialog("open");
+	};
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+function annotate_query(){
+		input_line = splitdata[save_line].split(",");
+		console.log(input_line);
+		var qu = {"organism":organism,
+				"transcriptome":transcriptome,
+				"label":label,
+				"gene":input_line[0],
+				"transcript":input_line[1],
+				"start":input_line[2],
+				"stop":input_line[3],
+				"length":input_line[4],
+				"score":input_line[5],
+				"type":input_line[6],
+				"start_codon":input_line[7],
+				"cds_overlap":input_line[8],
+				"start_score":input_line[9],
+				"stop_score":input_line[10],
+				"trips_link":input_line[11]};
+		$.ajax({
+				type: "POST",
+				async:true,
+				contentType: "application/json; charset=utf-8",
+				url: "{{ url_for('anno_query')}}",
+				data: JSON.stringify(qu),
+				dataType: "html"
+				});
+										};
+console.log("Tranlist is "+html_args["tranlist"]);
+
+$('.'+html_args["tranlist"]+'').attr('checked', true);
+		
+if (html_args["custom_tran_list"] != "None") {
+	document.getElementById('custom_tran_list').value = html_args["custom_tran_list"]
+	};
+		
+if (html_args["min_fold_change"] != "None") {
+	document.getElementById('min_fold_change').value = html_args["min_fold_change"]
+	};
+if (html_args["window_size"] != "None") {
+	document.getElementById('window_size').value = html_args["window_size"]
+	};
+
+if (html_args["min_coverage"] != "None") {
+	document.getElementById('min_coverage').value = html_args["min_coverage"]
+	};
+if (html_args["nuc_output"] != "None") {
+	document.getElementById('nuc_output').value = html_args["nuc_output"]
+	};
+
+
+if (html_args["min_read_length"] != "None") {
+	document.getElementById('min_read_length').value = html_args["min_read_length"]
+	};
+if (html_args["max_read_length"] != "None") {
+	document.getElementById('max_read_length').value = html_args["max_read_length"]
+	};
+
+
+
+if (html_args["user_files"].length != 0) {
+	//console.log("UNCHECKING everything");
+	for (i in seq_types) {
+		var seq_type = seq_types[i];
+		$('input.'+seq_type+'_file').prop('checked',false);
+		alt_file_list = [];
+		}
+	
+	if (html_args["user_files"].length != 0) {
+		for (i in html_args["user_files"]) {
+			//console.log("CHECKING "+'file_'+html_args["user_files"][i]+'');
+			$('input.file_'+html_args["user_files"][i]+'').prop('checked',true);
+			addItOnce(alt_file_list, html_args["user_files"][i]);
+			}};
+		
+
+			
+		
+				}
+				
+
+if (html_args["user_short"] != "None") {
+	console.log("USER SHORT IS NOT NONE",html_args["user_short"]);
+	$("#query").click();
+	};
+
+
+
+//Update the options box on page load and load files in file box
+$(document).ready(function(){
+	var n = document.querySelector('input[name="content_type"]:checked').value;
+	var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
+	for (var study_id in studies_dict) {
+		$("#label"+study_id+"").css({opacity: 0.2});
+	}
+	for (file_type in seq_study_dict) {
+		if (file_type == seq_type) {
+			//console.log("File type is seq_type "+file_type+"  "+seq_type);
+			for (var sub_study_id in seq_study_dict[file_type]) {
+				$("#label"+seq_study_dict[file_type][sub_study_id]+"").css({ opacity: 1 });
+			}
+		}
+	}
+
+	var selector = "#"+seq_type+ n; //Create a selector based on the id
+	$(".show").hide(); //Hide all the checkbox containers
+	$(selector).show(); //Show only the related container
+})
+
+
+
+// This section listens for clicks from any radio/checkbox with the all_checks class, if it detects a change it goes through
+// all studies to see which if any of them have riboseq/rnaseq files checked, if so it changes the border colour
+$('.all_checks').change(function() {
+	for (var key in studies_dict)  {
+		if (($('.rnaseq_study'+key+':checked').length == 0) && ($('.riboseq_study'+key+':checked').length == 0)) {
+			document.getElementById('label'+key+'').style.borderColor='#e2e2e2';
+			}
+		else {
+			document.getElementById('label'+key+'').style.borderColor='#77abff';
+			}
+		}
+		});
+		
+		
+// This function is called whenever the check/uncheck all buttons are pressed, when called it goes through
+// all studies to see which if any of them have riboseq/rnaseq files checked, if so it changes the border colour
+function update_colours() {
+	for (var key in studies_dict)  {
+		if (($('.rnaseq_study'+key+':checked').length == 0) && ($('.riboseq_study'+key+':checked').length == 0)) {
+			document.getElementById('label'+key+'').style.borderColor='#e2e2e2';
+			}
+		else {
+			document.getElementById('label'+key+'').style.borderColor='#77abff';
+			}
+		}
+		}
+				
+
+$('#files').on('change', '.file_check', function() {
+	//console.log("check function called")
+	var file_id = $(this).attr('name');
+	if (this.checked) {
+		//console.log("adding file id "+ $(this).attr('name'))
+		addItOnce(alt_file_list, file_id);
+		}
+	else {
+		removeItemOnce(alt_file_list, file_id);
+		};
+});
+		
+function removeItemOnce(arr, value) {
+	var index = arr.indexOf(value);
+	if (index > -1) {
+		//console.log("Poppin file id "+value);
+		arr.splice(index, 1);
+	}
+	return arr;
+};
+
+function addItOnce(arr, value) {
+	var index = arr.indexOf(value);
+	if (index < 0) {
+		//console.log("adding file id "+value);
+		arr.push(value);
+	}
+	return arr;
+};	
+
+// checks all checkboxes with the <seq_type>_study<study_id> class, the study_id is gotten from the value of the currently selected study
+function check_study_multi(){
+		var curstudy = $('input[name="content_type"]:checked').val();
+		var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
+		$('input.'+seq_type+'_'+curstudy+'').prop('checked',true);
+		update_colours();
+		$('input.'+seq_type+'_'+curstudy+'').each(function(){
+			var file_id = $(this).attr('name');
+			addItOnce(alt_file_list, file_id);
+			//console.log("Adding file id "+file_id);
+		});
+};
+
+function uncheck_study_multi(){
+		var curstudy = $('input[name="content_type"]:checked').val();
+		var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
+		$('input.'+seq_type+'_'+curstudy+'').prop('checked',false);
+		update_colours();
+		
+		$('input.'+seq_type+'_'+curstudy+'').each(function(){
+			var file_id = $(this).attr('name');
+			removeItemOnce(alt_file_list, file_id);
+			
+		});
+};		
+
+// Unchecks every checkbox that has the class <seq_type>_file
+function uncheck_all_multi(){
+		var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
+		$('input.'+seq_type+'_file').prop('checked',false);
+		update_colours();
+		$('input.'+seq_type+'_file').each(function(){
+			var file_id = $(this).attr('name');
+			removeItemOnce(alt_file_list, file_id);
+			
+		});
+};
+
+// Checks every checkbox that has the class <seq_type>_file
+function check_all_multi(){
+		var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
+		$('input.'+seq_type+'_file').prop('checked',true);
+		update_colours();
+		$('input.'+seq_type+'_file').each(function(){
+			var file_id = $(this).attr('name');
+			addItOnce(alt_file_list, file_id);
+			//console.log("Adding file id "+file_id);
+		});
+};
+
+
+
+</script>
+{% endblock %}

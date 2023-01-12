@@ -17,7 +17,7 @@ from mpld3.utils import get_id
 import pandas as pd
 import numpy as np
 from flask import make_response
-
+from new_plugins import InteractiveLegendPlugin,PointHTMLTooltip,TopToolbar,DownloadProfile,DownloadPNG,DownloadSVG
 
 
 from bokeh.plotting import figure, show, output_file
@@ -86,7 +86,7 @@ def year_dist(final_year_dict):
     df = pd.DataFrame(final_year_dict, columns = ['no_studies', 'year'])
     pos = list(range(len(df['no_studies'])))
     width = 0.25
-    fig, ax = plt.subplots( figsize=(23,12))
+    fig, ax = plt.subplots( figsize=(13,8))
 
     
     # Create a bar with riboseq files data in position pos,
@@ -109,17 +109,17 @@ def year_dist(final_year_dict):
     plt.ylim([0, max(df['no_studies'])*1.1])
 
 
-    ax.set_axis_bgcolor(background_col)
+    ax.set_facecolor(background_col)
     ax.tick_params('both', labelsize=16)
     plt.grid(color="white", linewidth=2,linestyle="solid")
-    plugins.connect(fig, plugins.TopToolbar(xoffset=-13, yoffset=115),plugins.DownloadPNG(returnstr="Study distribution by year"))
+    plugins.connect(fig, TopToolbar(xoffset=-13, yoffset=115),DownloadPNG(returnstr="Study distribution by year"))
     return mpld3.fig_to_html(fig)
 
 def org_breakdown_plot(read_dict): 
     df = pd.DataFrame(read_dict, columns = ['riboseq_files', 'rnaseq_files', 'organisms'])
     pos = list(range(len(df['riboseq_files'])))
     width = 0.25
-    fig, ax = plt.subplots( figsize=(23,12))
+    fig, ax = plt.subplots( figsize=(13,8))
 
     
     # Create a bar with riboseq files data in position pos,
@@ -146,9 +146,9 @@ def org_breakdown_plot(read_dict):
     # Adding the legend and showing the plot
     leg = plt.legend(['Riboseq files', 'Rnaseq files'], loc='upper right')
     leg.get_frame().set_edgecolor('#D2D2EB')
-    ax.set_axis_bgcolor(background_col)
+    ax.set_facecolor(background_col)
     ax.tick_params('both', labelsize=16)
     plt.grid(color="white", linewidth=2,linestyle="solid")
-    plugins.connect(fig, plugins.TopToolbar(xoffset=-13, yoffset=115),plugins.DownloadPNG(returnstr="Organism breakdown"))
+    plugins.connect(fig, TopToolbar(xoffset=-13, yoffset=115),DownloadPNG(returnstr="Organism breakdown"))
     return mpld3.fig_to_html(fig)
     

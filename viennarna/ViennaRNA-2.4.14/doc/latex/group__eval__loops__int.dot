@@ -1,0 +1,13 @@
+digraph "Internal Loops"
+{
+  bgcolor="transparent";
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=box];
+  rankdir=LR;
+  Node2 [label="Free Energy Evaluation",height=0.2,width=0.4,color="black",URL="$group__eval.html",tooltip="Functions and variables related to free energy evaluation of sequence/structure pairs."];
+  Node1 [label="Energy Evaluation for\l Individual Loops",height=0.2,width=0.4,color="black",URL="$group__eval__loops.html",tooltip="Functions to evaluate the free energy of particular types of loops."];
+  Node0 [label="Internal Loops",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Functions to evaluate the free energy contributions for internal loops."];
+  Node1->Node0 [shape=plaintext, dir="back", style="solid"];
+  Node0->Node2 [shape=plaintext, label="internal.h", color="darkgreen", dir="none", style="dashed"];
+  Node0->Node1 [shape=plaintext, label="internal.h", color="darkgreen", dir="none", style="dashed"];
+}

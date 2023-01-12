@@ -18,9 +18,12 @@ import riboflask_diff
 import collections
 from flask_login import current_user
 import json
+import pickle5
 
-
-
+def my_decoder(obj):
+	return pickle5.loads(obj)
+	
+	
 # Differential expression page, used to find diffentially expressed genes via z-score
 diff_plotpage_blueprint = Blueprint("diffpage", __name__, template_folder="templates")
 @diff_plotpage_blueprint.route('/<organism>/<transcriptome>/differential/')
@@ -122,7 +125,7 @@ def diffpage(organism,transcriptome):
 	accepted_studies = fetch_studies(user, organism, transcriptome)
 	file_id_to_name_dict,accepted_studies,accepted_files,seq_types = fetch_files(accepted_studies)
 	connection.close()
-	return render_template('index_diff.html', studies_dict=accepted_studies, accepted_files=accepted_files,organism=organism, default_tran=default_tran,local=local,transcriptome=transcriptome,html_args=html_args,studyinfo_dict=studyinfo_dict,seq_types=seq_types)
+	return render_template('index_diff_draggable.html', studies_dict=accepted_studies, accepted_files=accepted_files,organism=organism, default_tran=default_tran,local=local,transcriptome=transcriptome,html_args=html_args,studyinfo_dict=studyinfo_dict,seq_types=seq_types)
 
 
 def prepare_return_str(input_string):
@@ -159,6 +162,8 @@ def diffquery():
 	filename = organism+"_differential_translation_"+str(time.time())+".csv"
 	csv_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC,filename),"w")
 	master_file_dict = data["master_file_dict"]
+	#print ("master file dict", master_file_dict)
+	#return str(master_file_dict)
 	master_transcript_dict = {}
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	connection.text_factory = str
@@ -176,7 +181,7 @@ def diffquery():
 		else:
 			return prepare_return_str( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 	else:
-		transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+		transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 	trancursor = transhelve.cursor()
 	if transcript_list == ['']:
 		if genetype == "all":
@@ -323,7 +328,209 @@ def diffquery():
 	sample_rows = []
 	sample_data = []
 	counts = []
+
+	if plottype == "deltate":
+		deltate_folder = "DELTATE_{}".format(str(time.time()))
+		os.mkdir("{}/static/tmp/{}".format(config.SCRIPT_LOC, deltate_folder))
+		deltate_sample_filename = "{}/static/tmp/{}/DELTATE_sample_info.csv".format(config.SCRIPT_LOC,deltate_folder)
+		deltate_sample_file = open(deltate_sample_filename,"w")
+		deltate_sample_file.write(",Condition,SeqType\n")
+		ribo_headers = ["Gene/Transcript"]
+		rna_headers = ["Gene/Transcript"]
+		deltate_ribo_count_filename = "{}/static/tmp/{}/DELTATE_ribo_counts.csv".format(config.SCRIPT_LOC,deltate_folder)
+		deltate_rna_count_filename = "{}/static/tmp/{}/DELTATE_rna_counts.csv".format(config.SCRIPT_LOC,deltate_folder)
+		deltate_ribo_count_file = open(deltate_ribo_count_filename,"w")
+		deltate_rna_count_file = open(deltate_rna_count_filename,"w")
+		
+		if no_groups <= 1:
+			return("At least two replicates are required when using DESeq2")
+		mapped_reads_norm = False
+		for i in range(1,no_groups+1):
+			if label in ["TE","Riboseq"]:
+				deltate_sample_file.write("Ribo_cond1_count{},1,RIBO\n".format(i))
+				ribo_headers.append("Ribo_cond1_count{}".format(i))
+			sample_data.append(["control","riboseq"])
+			sample_rows.append("Ribo_cond1_count{}".format(i))
+		for i in range(1,no_groups+1):
+			if label in ["TE","Riboseq"]:
+				deltate_sample_file.write("Ribo_cond2_count{},2,RIBO\n".format(i))
+				ribo_headers.append("Ribo_cond2_count{}".format(i))
+			sample_data.append(["treatment","riboseq"])
+			sample_rows.append("Ribo_cond2_count{}".format(i))
+		for i in range(1,no_groups+1):
+			if label in ["TE","Rnaseq"]:
+				deltate_sample_file.write("mRNA_cond1_count{},1,RNA\n".format(i))
+				rna_headers.append("mRNA_cond1_count{}".format(i))
+			sample_data.append(["control","rnaseq"])
+			sample_rows.append("mRNA_cond1_count{}".format(i))
+		for i in range(1,no_groups+1):
+			if label in ["TE","Rnaseq"]:
+				deltate_sample_file.write("mRNA_cond2_count{},2,RNA\n".format(i))
+				rna_headers.append("mRNA_cond2_count{}".format(i))
+			sample_data.append(["treatment","rnaseq"])
+			sample_rows.append("mRNA_cond2_count{}".format(i))
+		deltate_sample_file.close()
+		deltate_ribo_count_file.write("{}\n".format(str(ribo_headers).strip("[]").replace("'","")))
+		deltate_rna_count_file.write("{}\n".format(str(rna_headers).strip("[]").replace("'","")))
+		deseq_dict = {}
+		count_dict = {}
+		sample_df = pd.DataFrame(sample_data, columns = ["Condition","SeqType"],index=sample_rows)
+		for tran in master_dict:
+			gene = (traninfo_dict[tran]["gene"]).replace(",","-")
+			if tran not in count_dict:
+				count_dict[tran] = {"ribo1":0,"ribo2":0,"rna1":0,"rna2":0}
+			deltate_ribo_count_file.write("{}___{},".format(gene, tran))
+			deltate_rna_count_file.write("{}___{},".format(gene, tran))
+			
+			group_count = 1
+			ribo1_counts = []
+			ribo2_counts = []
+			rna1_counts = []
+			rna2_counts = []
+			for group in master_transcript_dict:
+				ribo1 = master_transcript_dict[group][tran]["riboseq1"]
+				ribo2 = master_transcript_dict[group][tran]["riboseq2"]
+				rna1 = master_transcript_dict[group][tran]["rnaseq1"]
+				rna2 = master_transcript_dict[group][tran]["rnaseq2"]
+				ribo1_counts.append(ribo1)
+				ribo2_counts.append(ribo2)
+				rna1_counts.append(rna1)
+				rna2_counts.append(rna2)
+			
+			deltate_ribo_count_file.write("{},{}\n".format(str(ribo1_counts).strip("[]"),str(ribo2_counts).strip("[]")))
+			deltate_rna_count_file.write("{},{}\n".format(str(rna1_counts).strip("[]"),str(rna2_counts).strip("[]")))
+
+		deltate_ribo_count_file.close()
+		deltate_rna_count_file.close()
+		print ("{}/R/DTEG.R {} {} {} 0 {}".format(config.SCRIPT_LOC, deltate_ribo_count_filename,deltate_rna_count_filename, deltate_sample_filename,deltate_folder))
+		subprocess.call("{}/R/DTEG.R {} {} {} 0 {}".format(config.SCRIPT_LOC, deltate_ribo_count_filename,deltate_rna_count_filename, deltate_sample_filename,deltate_folder),shell=True)
+		return deltate_folder
+		if label == "TE":
+			subprocess.call("tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RIBOSEQ.txt {0}_DESeq2_RNASEQ.txt {0}_DESeq2_TE.txt".format(filename,config.SCRIPT_LOC, deseq_count_filename, deseq_sample_filename),shell=True)
+		elif label == "Riboseq":
+			subprocess.call("tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RIBOSEQ.txt".format(filename, config.SCRIPT_LOC, deseq_count_filename, deseq_sample_filename),shell=True)
+		elif label == "Rnaseq":
+			subprocess.call("tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RNASEQ.txt".format(filename, config.SCRIPT_LOC, deseq_count_filename, deseq_sample_filename),shell=True)
+		#Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
+		if os.path.isfile("{0}/static/tmp/{1}_DESeq2_TE.txt".format(config.SCRIPT_LOC,filename)):
+			te_file = open("{0}/static/tmp/{1}_DESeq2_TE.txt".format(config.SCRIPT_LOC,filename)).readlines()
+			for line in te_file[1:]:
+				splitline = line.split(",")
+				transcript = splitline[0].split("___")[1]
+				gene = splitline[0].split("___")[0]
+				basemean = splitline[1]
+				log2fc = splitline[2]
+				lfcSE = splitline[3]
+				padj = splitline[6].replace("\n","")
+				deseq_dict[gene] = {"te_padj":padj,"ribo_padj":"NA","rna_padj":"NA","ribo_fc":"NA","rna_fc":"NA","tran":transcript,
+									"ribo1":count_dict[transcript]["ribo1"],"ribo2":count_dict[transcript]["ribo2"], "rna1":count_dict[transcript]["rna1"],
+									"rna2":count_dict[transcript]["rna2"],"te_basemean":basemean,"te_lfcSE":lfcSE,"ribo_basemean":"NA","ribo_lfcSE":"NA","rna_basemean":"NA","rna_lfcSE":"NA"}
+		if os.path.isfile("{0}/static/tmp/{1}_DESeq2_RIBOSEQ.txt".format(config.SCRIPT_LOC,filename)):
+			ribo_file = open("{0}/static/tmp/{1}_DESeq2_RIBOSEQ.txt".format(config.SCRIPT_LOC,filename)).readlines()
+			for line in ribo_file[1:]:
+				splitline = line.split(",")
+				transcript = splitline[0].split("___")[1]
+				gene = splitline[0].split("___")[0]
+				basemean = splitline[1]
+				log2fc = splitline[2]
+				lfcSE = splitline[3]
+				padj = splitline[6].replace("\n","")
+				if gene not in deseq_dict:
+					deseq_dict[gene] = {"te_padj":"NA","ribo_padj":padj,"rna_padj":"NA","ribo_fc":log2fc,"rna_fc":"NA","tran":transcript,
+						"ribo1":count_dict[transcript]["ribo1"],"ribo2":count_dict[transcript]["ribo2"], "rna1":count_dict[transcript]["rna1"],
+						"rna2":count_dict[transcript]["rna2"],"te_basemean":"NA","te_lfcSE":"NA","ribo_basemean":basemean,"ribo_lfcSE":lfcSE,"rna_basemean":"NA","rna_lfcSE":"NA"}
+				else:
+					deseq_dict[gene]["ribo_padj"] = padj
+					deseq_dict[gene]["ribo_fc"] = log2fc
+		if os.path.isfile("{0}/static/tmp/{1}_DESeq2_RNASEQ.txt".format(config.SCRIPT_LOC,filename)):
+			rna_file = open("{0}/static/tmp/{1}_DESeq2_RNASEQ.txt".format(config.SCRIPT_LOC,filename)).readlines()
+			for line in rna_file[1:]:
+				splitline = line.split(",")
+				transcript = splitline[0].split("___")[1]
+				gene = splitline[0].split("___")[0]
+				basemean = splitline[1]
+				log2fc = splitline[2]
+				lfcSE = splitline[3]
+				padj = splitline[6].replace("\n","")
+				if gene not in deseq_dict:
+					deseq_dict[gene] = {"te_padj":"NA","ribo_padj":"NA","rna_padj":padj,"ribo_fc":"NA","rna_fc":log2fc,"tran":transcript,
+						"ribo1":count_dict[transcript]["ribo1"],"ribo2":count_dict[transcript]["ribo2"], "rna1":count_dict[transcript]["rna1"],
+						"rna2":count_dict[transcript]["rna2"],"te_basemean":"NA","te_lfcSE":"NA","ribo_basemean":"NA","ribo_lfcSE":"NA","rna_basemean":basemean,"rna_lfcSE":lfcSE}
+				else:
+					deseq_dict[gene]["rna_padj"] = padj
+					deseq_dict[gene]["rna_fc"] = log2fc
+		
+		
+		#DELETE GENES FROM DESEQ_DICT THAT DON'T HAVE A padj for either rna and ribo (these have low counts)
+		del_list = []
+		for gene in deseq_dict:
+			if deseq_dict[gene]["rna_padj"] == "NA" and  deseq_dict[gene]["ribo_padj"] == "NA":
+				del_list.append(gene)
+		
+		for gene in del_list:
+			del deseq_dict[gene]
+
+		
+		
+		background_col = config.BACKGROUND_COL
+		uga_col = config.UGA_COL
+		uag_col = config.UAG_COL
+		uaa_col = config.UAA_COL
+		title_size = config.TITLE_SIZE
+		subheading_size = config.SUBHEADING_SIZE
+		axis_label_size = config.AXIS_LABEL_SIZE
+		marker_size = config.MARKER_SIZE
+		if user != None:
+			cursor.execute("SELECT user_id from users WHERE username = '{}';".format(user))
+			result = (cursor.fetchone())
+			user_id = result[0]
+			#get a list of organism id's this user can access
+			cursor.execute("SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';".format(user_id))
+			result = (cursor.fetchone())
+			background_col = result[0]
+			title_size = result[1]
+			subheading_size = result[2]
+			axis_label_size = result[3]
+			marker_size = result[4]
+		
+		if html_args["user_short"] == "None" or user_short_passed == True:
+			short_code = generate_short_code(data,organism,html_args["transcriptome"],"differential")
+		else:
+			short_code = html_args["user_short"]
+			user_short_passed = True
+		
+		tar_file = filename+".tar.gz"
+		connection.close()
+		return riboflask_diff.deseq2_plot(deseq_dict,
+										organism,
+										transcriptome,
+										master_file_dict["riboseq1"]["file_ids"],
+										master_file_dict["riboseq2"]["file_ids"],
+										master_file_dict["rnaseq1"]["file_ids"],
+										master_file_dict["rnaseq2"]["file_ids"],
+										background_col,
+										short_code,
+										mapped_reads_norm,
+										tar_file,
+										no_groups,
+										str(title_size)+"pt",
+										str(axis_label_size)+"pt",
+										str(subheading_size)+"pt",
+										str(marker_size)+"pt",
+										ambiguous,
+										gene_list,
+										label,
+										minzscore)	
 	
+	
+	
+	
+	
+	
+	
+
+
+
 	if plottype == "deseq2":
 		if no_groups <= 1:
 			return prepare_return_str("At least two replicates are required when using DESeq2")
@@ -636,11 +843,12 @@ def diffquery():
 			#get a list of organism id's this user can access
 			cursor.execute("SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';".format(user_id))
 			result = (cursor.fetchone())
-			background_col = result[0]
-			title_size = result[1]
-			subheading_size = result[2]
-			axis_label_size = result[3]
-			marker_size = result[4]
+			if result != None:
+				background_col = result[0]
+				title_size = result[1]
+				subheading_size = result[2]
+				axis_label_size = result[3]
+				marker_size = result[4]
 			
 		if html_args["user_short"] == "None" or user_short_passed == True:
 			short_code = generate_short_code(data,organism,html_args["transcriptome"],"differential")
@@ -829,6 +1037,7 @@ def diffquery():
 	
 
 	for tran in master_dict:
+		#print ("tran", tran)
 		total_cases += 1
 		geo_mean_list = []
 		fc_list = []
@@ -970,11 +1179,12 @@ def diffquery():
 		#get a list of organism id's this user can access
 		cursor.execute("SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';".format(user_id))
 		result = (cursor.fetchone())
-		background_col = result[0]
-		title_size = result[1]
-		subheading_size = result[2]
-		axis_label_size = result[3]
-		marker_size = result[4]
+		if result != None:
+			background_col = result[0]
+			title_size = result[1]
+			subheading_size = result[2]
+			axis_label_size = result[3]
+			marker_size = result[4]
 		
 	if html_args["user_short"] == "None" or user_short_passed == True:
 		short_code = generate_short_code(data,organism,html_args["transcriptome"],"differential")
@@ -1046,7 +1256,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 	if riboseq1_filepath:
 		groupname += (riboseq1_filepath.split("/")[-1]).replace(".sqlite","")+"_"
 		if os.path.isfile(riboseq1_filepath):
-			sqlite_db = SqliteDict(riboseq1_filepath, autocommit=False)
+			sqlite_db = SqliteDict(f"{riboseq1_filepath}", autocommit=False, decode=my_decoder)
 		else:
 			return prepare_return_str("error","File not found: {}".format(groupname))
 		if region == "fiveprime":
@@ -1085,7 +1295,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 	if riboseq2_filepath:
 		groupname += (riboseq2_filepath.split("/")[-1]).replace(".sqlite","")+"_"
 		if os.path.isfile(riboseq2_filepath):
-			sqlite_db = SqliteDict(riboseq2_filepath, autocommit=False)
+			sqlite_db = sqlite_db = SqliteDict(f"{riboseq2_filepath}", autocommit=False, decode=my_decoder)
 		else:
 			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":
@@ -1124,7 +1334,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 	if rnaseq1_filepath:
 		groupname += (rnaseq1_filepath.split("/")[-1]).replace(".sqlite","")+"_"
 		if os.path.isfile(rnaseq1_filepath):
-			sqlite_db = SqliteDict(rnaseq1_filepath, autocommit=False)
+			sqlite_db = SqliteDict(f"{rnaseq1_filepath}", autocommit=False, decode=my_decoder)
 		else:
 			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":
@@ -1162,7 +1372,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 	if rnaseq2_filepath:
 		groupname += (rnaseq2_filepath.split("/")[-1]).replace(".sqlite","")+"_"
 		if os.path.isfile(rnaseq2_filepath):
-			sqlite_db = SqliteDict(rnaseq2_filepath, autocommit=False)
+			sqlite_db = SqliteDict(f"{rnaseq2_filepath}", autocommit=False, decode=my_decoder)
 		else:
 			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":

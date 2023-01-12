@@ -1,0 +1,10 @@
+<map id="Secondary Structure Utilities" name="Secondary Structure Utilities">
+<area shape="rect" id="node1" href="$group__struct__utils__plist.html" title=" " alt="" coords="312,5,479,45"/>
+<area shape="rect" id="node2" href="$group__struct__utils__tree.html" title=" " alt="" coords="312,69,479,109"/>
+<area shape="rect" id="node3" href="$group__struct__utils__dot__bracket.html" title=" " alt="" coords="312,133,479,173"/>
+<area shape="rect" id="node4" title="Functions to create, parse, convert, manipulate, and compare secondary structure representations." alt="" coords="120,165,261,205"/>
+<area shape="rect" id="node5" href="$group__struct__utils__pair__table.html" title=" " alt="" coords="309,197,481,237"/>
+<area shape="rect" id="node7" href="$group__struct__utils__helix__list.html" title=" " alt="" coords="311,261,480,301"/>
+<area shape="rect" id="node8" href="$group__struct__utils__deprecated.html" title=" " alt="" coords="313,326,477,381"/>
+<area shape="rect" id="node6" href="$group__utils.html" title=" " alt="" coords="5,173,72,198"/>
+</map>

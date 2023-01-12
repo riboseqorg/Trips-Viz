@@ -1,7 +1,7 @@
 import os
 import time
 from datetime import date
-import sys
+import sys, subprocess
 print ("PYTHON VERSION", sys.version)
 import sqlite3
 import logging
@@ -11,7 +11,6 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from flask_security import Security, current_user, auth_required, hash_password
 from flask_mail import Mail
 import ast
-import stats_plots
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import BadRequest
 import config
@@ -20,17 +19,19 @@ from sqlitedict import SqliteDict
 import smtplib
 import uuid
 import random 
-
-
-
+import json 
 from core_functions import fetch_file_paths,generate_short_code,base62_to_integer,build_profile,User,fetch_user
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery_blueprint
 from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
 from single_transcript_routes import single_transcript_plotpage_blueprint, single_transcript_query_blueprint
+from single_transcript_routes_genomic import single_transcript_plotpage_genomic_blueprint, single_transcript_query_genomic_blueprint
 from diff_exp_routes import diff_plotpage_blueprint,diffquery_blueprint
-
+from pause_routes import pause_detection_blueprint,pausequery_blueprint,find_pauses
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery_blueprint	
 from orfquery_routes import translated_orf_blueprint,orfquery_blueprint,find_orfs#, taskstatus_blueprint
+import stats_plots
+import re
+
 
 if sys.version_info[0] == 2:
 	from email.MIMEMultipart import MIMEMultipart 
@@ -80,20 +81,29 @@ app.register_blueprint(metainfo_plotpage_blueprint)
 app.register_blueprint(metainfoquery_blueprint)
 app.register_blueprint(single_transcript_plotpage_blueprint)
 app.register_blueprint(single_transcript_query_blueprint)
+app.register_blueprint(single_transcript_plotpage_genomic_blueprint)
+app.register_blueprint(single_transcript_query_genomic_blueprint)
 app.register_blueprint(comparison_plotpage_blueprint)
 app.register_blueprint(comparisonquery_blueprint)
 app.register_blueprint(diff_plotpage_blueprint)
 app.register_blueprint(diffquery_blueprint)
 app.register_blueprint(translated_orf_blueprint)
 app.register_blueprint(orfquery_blueprint)
+app.register_blueprint(pause_detection_blueprint)
+app.register_blueprint(pausequery_blueprint)
 #app.register_blueprint(taskstatus_blueprint)
 app.register_blueprint(traninfo_plotpage_blueprint)
 app.register_blueprint(traninfoquery_blueprint)
 app.config.from_pyfile('config.py')
 recaptcha = ReCaptcha(app=app)
 app.config['UPLOAD_FOLDER'] = '/static/tmp'
-app.config['SECRET_KEY'] = config.SECRET_KEY
+app.config['SECURITY_PASSWORD_SALT'] = config.PASSWORD_SALT
+app.config['SECRET_KEY'] = config.FLASK_SECRET_KEY
 
+#Modify security messages so people can't tell which users have already signed up. 
+app.config['SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED'] = (("Thank you. Confirmation instructions have been sent to %(email)s."),"error")
+app.config['USER_DOES_NOT_EXIST'] = (("Invalid credentials"), "error")
+app.config['INVALID_PASSWORD'] = (("Invalid credentials"), "error")
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -108,13 +118,16 @@ mail = Mail(app)
 
 
 
+def sanitize_get_request(request):
+	'''
+	take a get request and remove any XSS attempts
+	'''
+	if isinstance(request, str):
+		cleaned_request = re.sub("<.*>", "", request)
 
-
-
-
-
-
-
+		return cleaned_request
+	else:
+		return request
 
 
 
@@ -726,7 +739,7 @@ def login():
 					id = username
 					user = User(id)
 					login_user(user)
-					nxt = request.args.get('next')
+					nxt = sanitize_get_request(request.args.get('next'))
 					if nxt != None:
 						if "<function login" in nxt:
 							nxt = "/"
@@ -791,7 +804,7 @@ def reset():
 # Called when user presses the save button on the orf_translation page. 
 @app.route('/anno_query', methods=['POST'])
 def anno_query():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	user,logged_in = fetch_user()
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	cursor = connection.cursor()
@@ -868,7 +881,7 @@ def saved():
 def savedquery():
 	start_time = time.time()
 	acceptable = 0
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	user,logged_in = fetch_user()
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	cursor = connection.cursor()
@@ -939,7 +952,7 @@ def savedquery():
 # Allows users to delete previously saved cases
 @app.route('/del_query', methods=['POST'])
 def del_query():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	cursor = connection.cursor()
 	try:
@@ -979,9 +992,10 @@ def static_license_from_root():
 #This is the help page, linked from various other pages to explain terms on that page.
 @app.route('/help/')
 def helppage():
-	parent_acc = request.args.get('parent_acc')
-	child_acc = request.args.get('child_acc')
-
+	parent_acc = sanitize_get_request(request.args.get('parent_acc'))
+	child_acc = sanitize_get_request(request.args.get('child_acc'))
+	logging.debug(type(parent_acc))
+	logging.debug(child_acc)
 	return render_template('help.html', parent_acc=parent_acc, child_acc=child_acc)
 
 #This is the help page, linked from various other pages to explain terms on that page.
@@ -1053,7 +1067,7 @@ def homepage(message=""):
 	connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
 	connection.text_factory = str
 	cursor = connection.cursor()
-	consent = request.cookies.get("cookieconsent_status")
+	consent = sanitize_get_request(request.cookies.get("cookieconsent_status"))
 	user,logged_in = fetch_user()
 	
 	
@@ -1085,7 +1099,9 @@ def homepage(message=""):
 	organism_list.sort()
 	logging.debug("homepage Closing trips.sqlite connection")
 	connection.close()
-	return render_template('landing.html',organisms=organism_list,message=request.args.get('message'))
+	
+	message = sanitize_get_request(request.args.get('message'))
+	return render_template('landing.html',organisms=organism_list,message=message)
 
 
 
@@ -1102,7 +1118,9 @@ def transcriptomepage(organism):
 	
 	user_id = -1
 	if current_user.is_authenticated:
-		user_id = current_user.id
+		cursor.execute("SELECT user_id from users WHERE username = '{}';".format(current_user.name))
+		result = (cursor.fetchone())
+		user_id = result[0]
 	
 	org_access_list = []
 	cursor.execute("SELECT organism_id from organism_access WHERE user_id = '{}';".format(user_id))
@@ -1133,7 +1151,7 @@ def plogpage(organism,transcriptome):
 @app.route('/settingsquery', methods=['GET','POST'])
 #@login_required
 def settingsquery():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	connection.text_factory = str
 	cursor = connection.cursor()
@@ -1221,7 +1239,7 @@ def settingsquery():
 @app.route('/deletequery', methods=['GET','POST'])
 #@login_required
 def deletequery():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	
 	user,logged_in = fetch_user()
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
@@ -1289,9 +1307,6 @@ def deletequery():
 					opendict = SqliteDict(filepath,autocommit=True)
 					opendict["unmapped_reads"] = int(data[key]["unmapped"])
 					opendict.close()
-		
-		
-		
 	connection.commit()
 	connection.close()
 	flash("File list updated")
@@ -1302,7 +1317,7 @@ def deletequery():
 @app.route('/deletestudyquery', methods=['GET','POST'])
 #@login_required
 def deletestudyquery():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	connection.text_factory = str
 	cursor = connection.cursor()
@@ -1315,8 +1330,11 @@ def deletestudyquery():
 	for study_id in data:
 		studycheck = data[study_id][0]
 		#Delete studies where the "delete" checkbox is checked
+		
 		if studycheck.split("_")[-1] != "undefined":
 			study_id = studycheck.split("_")[-1]
+			print ("deleting study_id", study_id)
+			
 			#First delete all files on the server associated with this study, if there are any
 			cursor.execute("SELECT * FROM files WHERE study_id = {}".format(study_id))
 			result = cursor.fetchall()
@@ -1347,6 +1365,7 @@ def deletestudyquery():
 				cursor.execute("DELETE FROM files WHERE study_id = {}".format(study_id))
 				connection.commit()
 				continue
+		
 				
 				
 		#Modify access list next to studies 
@@ -1416,7 +1435,7 @@ def deletestudyquery():
 @app.route('/deletetranscriptomequery', methods=['GET','POST'])
 #@login_required
 def deletetranscriptomequery():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	connection.text_factory = str
 	cursor = connection.cursor()
@@ -1489,7 +1508,7 @@ def deletetranscriptomequery():
 @app.route('/seqrulesquery', methods=['GET','POST'])
 #@login_required
 def seqrulesquery():
-	data = ast.literal_eval(request.data)
+	data = json.loads(request.data)
 	connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,config.DATABASE_NAME))
 	connection.text_factory = str
 	cursor = connection.cursor()
@@ -1525,11 +1544,11 @@ def dataset_breakdown(organism,transcriptome):
 	user,logged_in = fetch_user()
 	
 	organism = str(organism)
-	accepted_orftype = request.args.get("region")
-	transcript = request.args.get("transcript")
-	start = int(request.args.get("start"))
-	stop = int(request.args.get("stop"))
-	files = request.args.get("files").strip(",")
+	accepted_orftype = sanitize_get_request(request.args.get("region"))
+	transcript = sanitize_get_request(request.args.get("transcript"))
+	start = int(sanitize_get_request(request.args.get("start")))
+	stop = int(sanitize_get_request(request.args.get("stop")))
+	files = sanitize_get_request(request.args.get("files")).strip(",")
 	file_list = []
 	for file_id in files.split("_"):
 		file_list.append(int(file_id))

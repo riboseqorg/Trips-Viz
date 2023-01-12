@@ -546,22 +546,36 @@ $("#query").click(function() {
 		url: url,
 		data: JSON.stringify(qu),
 		dataType: "html",
-		success: function (data) {
-		if (data.slice(0, 11) == "TRANSCRIPTS"){
-					var splitdata = data.split(":");
-					populate_jquery_dialog(splitdata);
-					$("#myTable").tablesorter({sortList: [[4,0]]});
-					$( "#dialog-2" ).dialog( "open" );
-					}
-				else{
-					var graph = $("#container");
-					graph.html(data);
-					$("#loading-div-background").hide();
-					$("#container").show();
-					$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
-					}
-				document.getElementById('container').scrollIntoView();
-			}});
+		success: function(data) {
+					
+					
+						if (data.slice(0, 11) == "TRANSCRIPTS"){
+							var splitdata = data.split(":");
+							populate_jquery_dialog(splitdata);
+							$("#myTable").tablesorter({sortList: [[4,0]]});
+							$( "#dialog-2" ).dialog( "open" );
+							}
+			
+						else if (data.slice(0, 17) == "QUANT_TRANSCRIPTS"){
+							var splitdata = data.split(":");
+							populate_jquery_dialog_quant(splitdata);
+							$("#myTable").tablesorter({sortList: [[6,0]]});
+							$( "#dialog-2" ).dialog( "open" );
+							}
+
+						else{
+							var graph = $("#container");
+							graph.html(data);
+							$("#loading-div-background").hide();
+							$("#container").show();
+							$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
+							}
+						document.getElementById('container').scrollIntoView();
+					
+					
+
+		}
+	 });
 });
 
 

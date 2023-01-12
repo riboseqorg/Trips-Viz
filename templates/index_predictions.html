@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Orf-db</title>   
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
+  <script  src="{{ url_for('static', filename='js/jquery-1.9.1.js') }}"></script>
+  <script  src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
+  <script  src="{{ url_for('static', filename='js/jquery.tablesorter.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
+  
+  <strong>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/lean-slider.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sample-styles.css') }}">
+  
+  </strong>
+  </head>
+  <body>
+  <header>
+  <div class="container">
+  <h1 class="logo" style="font-family: 'Georgia'"><span style="color: #f73d3d">O</span>rf-<span style="color: #f73d3d">d</span>b</h1>
+
+  </div>
+  </header>
+  
+  <div class="container">
+
+<style> 
+div #sidebar
+{
+  text-align: center;
+  border:0px solid #dbdbdb;
+  border-radius:20px;
+  height : 500px;
+  width : 49%;
+}
+
+div #settings
+{
+    text-align: center;
+    float: right;
+    border:0px solid #dbdbdb;
+    border-radius:20px;
+    height : 500px;
+    width : 48%;
+    }
+
+
+div #buttondiv {
+    padding: 30px;
+    text-align: center;
+    width: 100%;
+    border:0px solid #dbdbdb;
+    }
+
+
+
+
+
+tr:hover {
+    background-color: #dddddd;
+    }
+
+
+.prediction_table {
+    width: 100%;
+    border-radius: 10px;
+    border: 4px solid #999999;
+    border-spacing: 0px 0;
+}
+    
+    
+.prediction_table thead {
+    
+    background-color: #f73d3d;
+    color: #000000;
+    font-weight: bold;
+    cursor: default;
+    }   
+    
+    
+.prediction_table th, .prediction_table td {
+    border: 1px solid #999999;
+    padding: 5px;
+    text-align: center;
+    }
+    
+
+
+
+.wrapper {
+    padding: 30px;
+    text-align: center;
+}
+
+
+
+
+smallbutton {
+    width: 200px;
+    }
+
+label {
+    float: left;
+    text-align: left;
+    width: 10em;
+    margin-right: 1em;
+}
+
+
+input, select {
+}
+
+
+.checkbox-grid li {
+    display: block;
+    float: left;
+    width: 100%;
+}
+
+
+ul#ulist li {
+    //display:inline;
+    display: block;
+    float: left;
+    width: 25%;
+}
+
+div #container 
+{ 
+    width : 103%;
+    height : 800px;
+  }
+
+.hidden
+{
+    display:none;
+    }
+
+
+button {
+    background-color: #ffffff; 
+    color: black;
+    border: 2px solid #f73d3d;
+    padding: 6px 6px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+    border-radius: 16px;
+    width:250px;
+    }
+
+.button:hover {
+    background-color: #f73d3d; 
+    color: white;
+    border: 2px solid #f73d3d;
+    }
+
+
+
+
+
+</style>
+
+<div id="sidebar">
+
+<p><font size="5" align="center"><b><u>Choose a setting </u></b></font></p>
+
+<table align="center" class="plot_table">
+<tr><td><input id="organism_name" class="option_radio" type="radio" value="showorganism" name="option" checked></input><label for="organism_name" class='radio_label'>Organism</label></td></tr>
+<tr><td><input id="study_name" class="option_radio" type="radio" value="showstudy" name="option" checked></input><label for="study_name" class='radio_label'>Studies</label></td></tr>
+<tr><td><input id="combine_name" class="option_radio" type="radio" value="showcombine" name="option" checked></input><label for="combine_name" class='radio_label'>Combine type</label></td></tr>
+<tr><td><input id="gene_name" class="option_radio" type="radio" value="showgene" name="option" checked></input><label for="gene_name" class='radio_label'>Gene</label></td></tr>
+<tr><td><input id="length" class="option_radio" type="radio" value="showlength" name="option" checked></input><label for="length" class='radio_label'>Length</label></td></tr>
+<tr><td><input id="score" class="option_radio" type="radio" value="showscore" name="option" checked></input><label for="score" class='radio_label'>Score</label></td></tr>
+<tr><td><input id="rel_height" class="option_radio" type="radio" value="showrel_height" name="option" checked></input><label for="rel_height" class='radio_label'>Relative height</label></td></tr>
+<tr><td><input id="coverage" class="option_radio" type="radio" value="showcoverage" name="option" checked></input><label for="coverage" class='radio_label'>Coverage</label></td></tr>
+<tr><td><input id="conservation_score" class="option_radio" type="radio" value="showconservation_score" name="option" checked></input><label for="conservation_score" class='radio_label'>Conservation score</label></td></tr>
+<tr><td><input id="startcodon" class="option_radio" type="radio" value="showstartcodon" name="option" checked></input><label for="startcodon" class='radio_label'>Start codon</label></td></tr>
+<tr><td><input id="orftypes" class="option_radio" type="radio" value="showorftypes" name="option" checked></input><label for="orftypes" class='radio_label'>Orf types</label></td></tr>
+</table>
+
+<br/>
+</div>
+
+<div id="settings">
+
+<p><font size="5" align="center"><b><u> Modify setting </u></b></font></p>
+
+<div class="show" id="showorganism">
+<input id="homo_sapiens_gencodev25" type="radio" value="homo_sapiens_gencodev25" name="organism" checked>Homo sapiens Gencode v25</input>
+</div>
+
+
+
+
+
+
+<div class="show" id="showstudy">
+</div>
+
+
+
+
+
+
+
+<div class="show" id="showgene">
+Gene name: <input id='gene' name='gene' value='' ></input>
+</div>
+
+<div class="show" id="showlength">
+Min length: <input name='minlen' value='50' ></input><br>
+Max length: <input name='maxlen' value='2000' ></input>
+</div>
+
+<div class="show" id="showscore">
+Min Score: <input name="score" value="0.5" ></input>
+</div>
+
+<div class="show" id="showrel_height">
+Min relative height: <input name="minrelheight" value="-10000" ></input></br>
+Max relative height: <input name="maxrelheight" value="10000" ></input>
+</div>
+
+
+<div class="show" id="showcoverage">
+Max gencode coverage (between 0 and 1): <input name="maxgencode" value="1" ></input></br>
+Max curated refseq coverage (between 0 and 1): <input name="maxrefseq" value="1" ></input></br>
+Max all refseq coverage (between 0 and 1): <input name="maxallrefseq" value="1" ></input></br>
+</div>
+
+<div class="show" id="showconservation_score">
+Min conservation score: <input name="minconsscore" value="-10000" ></input>
+</div>
+
+<div class="show" id="showstartcodon">
+<input type="checkbox" name="AUG" value="AUG" checked>AUG</input>
+<input type="checkbox" name="CUG" value="CUG" unchecked>CUG</input>
+<input type="checkbox" name="None" value="None" unchecked>None</input>
+</div>
+
+<div class="show" id="showcombine">
+<input class="combine_type_radio" type="radio" name="combine_type_radio" value="sum" checked>Sum</input>
+<input class="combine_type_radio" type="radio" name="combine_type_radio" value="avg" checked>Average</input>
+<input class="combine_type_radio" type="radio" name="combine_type_radio" value="max" checked>Max</input>
+<input class="combine_type_radio" type="radio" name="combine_type_radio" value="min" checked>Min</input>
+<input class="combine_type_radio" type="radio" name="combine_type_radio" value="diff" checked>Difference</input>
+</div>
+
+
+
+<div class="show" id="showorftypes">
+
+<table align="center">
+<tr><td><input type="checkbox" name="uorf" value="uorf" checked>uorfs</input></tr></td>
+<tr><td><input type="checkbox" name="ouorf" value="ouorf" unchecked>ouorfs</input></tr></td>
+<tr><td><input type="checkbox" name="dorf" value="dorf" unchecked>dorfs</input></tr></td>
+<tr><td><input type="checkbox" name="nested" value="nested" unchecked>nested</input></tr></td>
+<tr><td><input type="checkbox" name="noncoding" value="noncoding" unchecked>noncoding</input></tr></td>
+<tr><td><input type="checkbox" name="odorf" value="odorf" unchecked>odorf</input></tr></td>
+<tr><td><input type="checkbox" name="readthrough" value="readthrough" unchecked>readthrough</input></tr></td>
+<tr><td><input type="checkbox" name="minusone" value="minusone" unchecked>minusone frameshift</input></tr></td>
+<tr><td><input type="checkbox" name="plusone" value="plusone" unchecked>plusone frameshift</input></tr></td>
+<tr><td><input type="checkbox" name="extension" value="extension" unchecked>n-term extension</input></tr></td>
+</table>
+
+</div>
+
+
+</div>
+
+
+
+
+<div id="buttondiv"><button class="button" type="button"  id="tablequery"><b>Update Table</b></button></div>
+
+
+
+
+
+
+
+
+
+<div id="loading-div-background">
+  <div id="loading-div" class="ui-corner-all" >
+    <!-- <img style="height:64px;margin:10px;" src="static/css/images/282.GIF" alt="Loading.."/> -->
+    <img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="200" height="85" alt="Loading..."/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
+    <h3 style="color:gray;font-weight:normal;">Loading....</h3>
+  </div>
+</div>
+
+
+
+
+<div id="container">
+<table  id="myTable" class="tablesorter prediction_table hover-highlight"> 
+<thead><tr><th>Gene</th><th>Tran</th><th>Start</th><th>Stop</th><th>Length</th><th>Score</th><th>Type</th><th>Reads</th><th>Start Codon</th><th>relative_height</th><th>Gencode_coverage</th> <th>Curated_refseq_cov</th> <th>All_refseq_cov</th><th>Cons score</th></tr></thead><tbody></tr> 
+</tbody> 
+</table> 
+</div>
+
+<script type="text/javascript">   
+
+
+var studies = {{  studies|safe  }};
+var studies_div = document.getElementById('showstudy');
+for (i in studies) {
+    studies_div.innerHTML += "<input type='checkbox' name="+studies[i]+" value="+studies[i]+" unchecked>"+studies[i]+"</input>"
+    }
+
+
+
+$(document).keypress(function(e){
+    if (e.which == 13){
+        $("#tablequery").click();
+        }
+    });
+
+$("#loading-div-background").css({opacity:0.7});
+
+$(document).ready(function() 
+   // [0,0] means sort on the first column, [2,0] means sort on the third column
+   { 
+   $("#myTable").tablesorter( {
+                               headers:{4: { sorter: 'digit' }} 
+                               
+                               }); 
+   } 
+   ); 
+       
+
+// This is needed to show/hide checkboxes when each studies radio button is selected/ deselected 
+$(document).ready(function() {
+    $(".show").hide();
+    $('input[name=option]').on('change', function() {    
+        var n = $(this).val();
+        console.log("SHowing divs with a id of "+n);
+        $(".show").hide(); //Hide all the checkbox containers
+        $("#"+n).show(); //Show only the related container
+
+        });
+    });
+
+
+$("#tablequery").click(function() {  
+    var minscore = $('input:text[name=score]').val();
+    var maxgencode = $('input:text[name=maxgencode]').val();
+    var maxrefseq = $('input:text[name=maxrefseq]').val();
+    var maxallrefseq = $('input:text[name=maxallrefseq]').val();
+    var minlen = $('input:text[name=minlen]').val();
+    var minrelheight = $('input:text[name=minrelheight]').val();
+    var maxrelheight = $('input:text[name=maxrelheight]').val();
+    var gene = $('input:text[name=gene]').val();
+    var maxlen = $('input:text[name=maxlen]').val();
+    var uorfs = $('input:checkbox[name=uorf]:checked').val();
+    var minconsscore = $('input:text[name=minconsscore]').val();
+    var readthrough = $('input:checkbox[name=readthrough]:checked').val();
+    var minusone = $('input:checkbox[name=minusone]:checked').val();
+    var plusone = $('input:checkbox[name=plusone]:checked').val();
+    var odorf = $('input:checkbox[name=odorf]:checked').val();
+    var noncoding = $('input:checkbox[name=noncoding]:checked').val();
+    var extension = $('input:checkbox[name=extension]:checked').val();
+    var ouorfs = $('input:checkbox[name=ouorf]:checked').val();
+    var dorfs = $('input:checkbox[name=dorf]:checked').val();
+    var nested = $('input:checkbox[name=nested]:checked').val();
+    var aug = $('input:checkbox[name=AUG]:checked').val();
+    var cug = $('input:checkbox[name=CUG]:checked').val();
+    var none = $('input:checkbox[name=None]:checked').val();
+    var selected_studies = [];
+    for (i in studies) {
+        var x = $('input:checkbox[name='+studies[i]+']:checked').val();
+        if (x != undefined) {
+            selected_studies.push(x);
+            }
+        }    
+
+    var combine_type = document.querySelector('input[name=combine_type_radio]:checked').value;
+    var qu = {"minscore":minscore, "minlen":minlen, "gene":gene, "maxlen":maxlen, "uorf":uorfs,"ouorf":ouorfs, "dorf":dorfs,"nested":nested,
+              "maxgencode":maxgencode, "maxrefseq":maxrefseq, "maxallrefseq":maxallrefseq, "AUG":aug, "CUG":cug,"None":none, "readthrough":readthrough,
+              "plusone":plusone, "minusone":minusone, "odorf":odorf, "noncoding":noncoding, "minrelheight":minrelheight, "maxrelheight":maxrelheight,
+              "minconsscore":minconsscore, "extension":extension, "combine_type":combine_type, "studies":selected_studies};
+    $("#loading-div-background").show();
+    $("#container").hide();
+
+
+
+
+    $.ajax({
+        type: "POST",
+        async:true,
+        contentType: "application/json; charset=utf-8",
+        url: "/tripsviz/tablequery",
+        data: JSON.stringify({qu}),
+        success: function (data) {
+            var splitdata = data.split(":"); 
+            var div = document.getElementById('container');
+
+            $('#myTable tr:gt(0)').remove();
+
+            var table = document.getElementById("myTable");
+            console.log("BEFORE ANYTHING inner html "+table.innerHTML);
+            table.innerHTML = "";
+            $('#myTable').trigger('update');
+
+            var tablestr = "";
+            tablestr = "<thead><tr><th>Gene</th><th>Tran</th><th>Start</th><th>Stop</th><th>Length</th><th>Score</th><th>Type</th><th>Reads</th><th>Start Codon</th><th>relative_height</th><th>Gencode_coverage</th> <th>Curated_refseq_cov</th> <th>All_refseq_cov</th><th>Cons score</th></tr></thead><tbody>";
+
+            console.log("Befor for loop "+tablestr);
+            for(var i = 0; i < splitdata.length-1; i++) {
+                tablestr += "<tr><td>"+(splitdata[i]).split(",")[0]+"</td><td> <a href='http://143.239.109.139/tripsviz/homo_sapiens/gencode_v25/interactive_plot/?hili="+(splitdata[i]).split(",")[2]+"_"+(splitdata[i]).split(",")[3]+"&readscore=0.5&transcript="+(splitdata[i]).split(",")[1]+"#container' target='_blank'>"+(splitdata[i]).split(",")[1]+"</a></td><td>"+(splitdata[i]).split(",")[2]+"</td><td>"+(splitdata[i]).split(",")[3]+"</td><td>"+Number((splitdata[i]).split(",")[4])+"</td><td>"+(splitdata[i]).split(",")[5]+"</td><td>"+(splitdata[i]).split(",")[6]+"</td><td>"+(splitdata[i]).split(",")[7]+"</td><td>"+(splitdata[i]).split(",")[8]+"</td><td>"+(splitdata[i]).split(",")[9]+"</td><td>"+(splitdata[i]).split(",")[10]+"</td><td>"+(splitdata[i]).split(",")[11]+"</td><td>"+(splitdata[i]).split(",")[12]+"</td><td>"+(splitdata[i]).split(",")[13]+"</td></tr>"
+                }
+   
+            tablestr += "</tbody>";
+            table.innerHTML = tablestr;
+
+            $("#loading-div-background").hide();      
+            $("#container").show();
+            
+            
+            console.log("INNER HTML NOW"+table.innerHTML);
+            // next line is very important to sorting but not sure what it does
+            $("#myTable").tablesorter( {
+                                        
+                                        headers:{4: { sorter: 'digit' },
+                                                 9: { sorter: 'digit' },
+                                                 13: { sorter: 'digit' }} 
+                                        }); 
+            },
+        dataType: "html"
+                        });
+                    });
+</script>
+</div>
+
+
+
+</body>
+
+
+</html>

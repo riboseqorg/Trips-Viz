@@ -1,0 +1,13 @@
+digraph "ViennaRNA/utils" {
+  bgcolor=transparent;
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_b65dce601f6c2aa1a9f53e1dbd97d018 {
+    graph [ bgcolor="#ddddee", pencolor="black", label="ViennaRNA" fontname="Helvetica", fontsize="10", URL="dir_b65dce601f6c2aa1a9f53e1dbd97d018.html"]
+  dir_1ed026dd4a6b3990a24ff2e0510f1e28 [shape=box, label="utils", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_1ed026dd4a6b3990a24ff2e0510f1e28.html"];
+  }
+  dir_99e275c152145741e4b8bbe1e7e65f5d [shape=box label="datastructures" URL="dir_99e275c152145741e4b8bbe1e7e65f5d.html"];
+  dir_99e275c152145741e4b8bbe1e7e65f5d->dir_1ed026dd4a6b3990a24ff2e0510f1e28 [headlabel="1", labeldistance=1.5 headhref="dir_000001_000008.html"];
+  dir_1ed026dd4a6b3990a24ff2e0510f1e28->dir_99e275c152145741e4b8bbe1e7e65f5d [headlabel="3", labeldistance=1.5 headhref="dir_000008_000001.html"];
+}

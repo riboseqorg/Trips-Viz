@@ -13,6 +13,75 @@ var gwips_info = {{  gwips_info|safe  }};
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/comparison.css') }}">
 </head>
 
+<style type="text/css">
+.list {
+    border: 1px solid grey;
+    border-radius: 12px;
+    margin: 0px;
+    padding: 2px;
+    cursor: pointer;
+    overflow: hidden;
+}
+ 
+.jscolor {
+    width:30px; 
+    height:30px; 
+    border-radius:20px; 
+    margin-left:30%;
+}
+ 
+.items {
+    list-style-type: none;
+    columns: 4;
+    -webkit-columns: 4;
+    -moz-columns: 4;
+    min-height:150px;
+    border: 1px solid #dbdbdb;
+    text-align:center;
+    border-radius: 20px;
+    padding: 10px;
+}
+ 
+.draggable_filelist {
+    list-style-type: none;
+    margin: 2px;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #dbdbdb;
+    border-radius: 20px;
+    min-height:150px;
+    text-align:center;
+}
+ 
+ 
+
+/* Outline dragged file with blue */   
+.highlight {                                    
+     background: #9dc1fc !important;                 
+     border-radius: 15px;    
+ }   
+ 
+.group_div {
+
+    border-radius: 20px;
+    width:24%;
+    display: inline-block;
+    vertical-align: top;
+} 
+ 
+
+
+
+
+ul:empty:after {
+    content: "Drag files from the files section and drop them here.";
+}
+
+
+</style>
+
+
+
 <div id="general_settings">
 	<p><font size="5" align="center"><b><u>General Settings </u></b></font></p>
 	<table align="center" class="studytable">
@@ -36,13 +105,9 @@ var gwips_info = {{  gwips_info|safe  }};
 <div id="studies">
 <p><font size="5" align="center"><b><u>Studies</u></b></font></p>
 </br>
-<ul class="checkbox-grid" data-role="listview" data-inset="true" id="ulist"  title="nodes list" data-inset="true"></ul>
+
 
 <table align="center">
-<tr><td><input class="jscolor {width:243, height:150, position:'right',
-borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"  style="width:60px; height:60px" id="inputcolor_riboseq"  name="favcolor" value="#ff0000"></td>
-<td><button class="button" type="button" id="btnAdd" value="Add" onclick="addItem('None')"><b>Add Selected File</b></button></td></tr>
-<tr><td></td><td><button class="button" type="button" id="btnAdd" value="Add" onclick="addStudy()"><b>Add All Files in File box</b></button></td></tr>
 <tr><td></td><td><button  class="study_button" type="button" onclick='view_study_info()'><b>View study info</b></button></td></tr>
 </table>
 </br>
@@ -86,27 +151,49 @@ borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"  styl
 </tr>
 <tr id="tablerow19">
 </tr>
+<tr id="tablerow20">
+</tr>
+<tr id="tablerow21">
+</tr>
+<tr id="tablerow22">
+</tr>
+<tr id="tablerow23">
+</tr>
 </table>
 </div>
 
-
-<div id="file_list">
-	<p><font size="5" align="center"><b><u>File list</u></b></font></p>
-	<ul id="color_file_list"></ul>
-	<ul class="checkbox-grid" data-role="listview" data-inset="true" id="ulist"  title="nodes list" data-inset="true">
-	</ul>
-	<br/>
-	<div class="clear_button">
-	<button class="button centerbutton" type="button" value="Clear list" onclick='removeAll()'><b>Clear list</b></button>
-	</div>
-</div>
 
 
 <div id="buttons"></div>
 <div id="files">
 </br>
-<p><font size="5" align="center"><b><u>Ribo-Seq files</u></b></br></font></p>
+<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
 </div>
+<div id="file_list">
+	</br>
+		<div id="group_1_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group1_color"  name="favcolor" value="#ff0000"><input style="font-weight: bold; max-width: 40%" align="center" name="group_1_label" id="group1_label" type="text" value="Group 1"></input><ul class="draggable_filelist" id="group_1_file_list" style="align:center"></ul></div>
+		<div id="group_2_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"  id="group2_color"  name="favcolor" value="#0010FF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_2_label" id="group2_label" type="text" value="Group 2"></input><ul class="draggable_filelist" id="group_2_file_list" style="align:center"></ul></div>
+		<div id="group_3_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group3_color"  name="favcolor" value="#0DFF00"><input style="font-weight: bold; max-width: 40%" align="center" name="group_3_label" id="group3_label" type="text" value="Group 3"></input><ul class="draggable_filelist" id="group_3_file_list" style="align:center"></ul></div>
+		<div id="group_4_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group4_color"  name="favcolor" value="#FFA200"><input style="font-weight: bold;max-width: 40%" align="center" name="group_4_label" id="group4_label" type="text" value="Group 4"></input><ul class="draggable_filelist" id="group_4_file_list" style="align:center"></ul></div>
+	<div id="group_5_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group5_color"  name="favcolor" value="#BA00FF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_5_label" id="group5_label" type="text" value="Group 5"></input><ul class="draggable_filelist" id="group_5_file_list" style="align:center"></ul></div>
+	<div id="group_6_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group6_color"  name="favcolor" value="#02EDFF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_6_label" id="group6_label" type="text" value="Group 6"></input><ul class="draggable_filelist" id="group_6_file_list" style="align:center"></ul></div>
+	<div id="group_7_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group7_color"  name="favcolor" value="#F9FF12"><input style="font-weight: bold; max-width: 40%" align="center" name="group_7_label" id="group7_label" type="text" value="Group 7"></input><ul class="draggable_filelist" id="group_7_file_list" style="align:center"></ul></div>
+	<div id="group_8_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
+	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group8_color"  name="favcolor" value="#FF02DA"><input style="font-weight: bold; max-width: 40%" align="center" name="group_8_label" id="group8_label" type="text" value="Group 8"></input><ul class="draggable_filelist" id="group_8_file_list" style="align:center"></ul></div>
+		<br/>
+	
+</div>
+
+
+
+
 <div id="view_plot">
 <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank" >
 <button class="button centerbutton" type="submit"><b>View on GWIPS-Viz</b></button></a>
@@ -134,41 +221,7 @@ var master_file_dict = {};
 var html_args = {{  html_args|safe  }};
 var file_id_to_name_dict = {{ file_id_to_name_dict|safe }};
 
-// INPUT ALL FILES PASSED IN HTML ARGUMENTS, also input labels if they were supplied
-for (color in html_args["user_file_dict"]) {
-	master_file_dict[color] = {"file_ids":[]}
-	master_file_dict[color]["file_ids"] = html_args["user_file_dict"][color]
-	var li = document.createElement("LI");
-	var newdiv = document.createElement("div");
-	newdiv.className =  "input-color";
-	var indiv = document.createElement("div");
-	indiv.className = "color-box";
-	indiv.style.backgroundColor = ""+color+"";
-	newdiv.appendChild(indiv);
-	if (color in html_args["user_label_dict"]) {
-		var file_name = html_args["user_label_dict"][color]
-	}
-	else {
-		var file_name = file_id_to_name_dict[master_file_dict[color]["file_ids"][0]]
-	}
-	var group_id = 'label_'+color
-	if (master_file_dict[color]["file_ids"].length == 1) {
-		var group_name = "<input type='text' id="+group_id+" value='"+file_name+"' ></input>"
-		li.innerHTML = [group_name];
-	}
-	else {
-		if (color in html_args["user_label_dict"]) {
-			var initial_value = file_name
-		}
-		else {
-			var initial_value = [file_name+ " and "+ ((master_file_dict[color]["file_ids"].length)-1).toString() +" others"];
-		}
-		var group_name = "<input type='text' id="+group_id+" value='"+initial_value+"' ></input>"
-		li.innerHTML = [group_name];
-	}
-	document.getElementById("color_file_list").appendChild(li);
-	document.getElementById("color_file_list").appendChild(newdiv);
-}
+
 
 
 
@@ -229,84 +282,101 @@ for (var key in studies_dict)  {
 			var new_show_div = document.createElement(studies_dict[key]["study_name"]);
 			new_show_div.className = 'show';
 			new_show_div.id = seq_type+"study"+key;
-			tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+			//tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+			tablehtml = "<li id="+key+seq_type+" class='items'></li>";
 			new_show_div.innerHTML = tablehtml;
 			files_div.appendChild(new_show_div);
 		}
 		};
 		// accepted files structure, key is file_type,values are file_id's (which are themselves keys) which point to a dictionary with the following: {"study_id":row[1],"file_name":row[2],"file_description":row[3],"file_type":row[4]}
-		var accepted_files = {{ accepted_files|safe }};
-		var seq_study_dict = {};
-		// populate the ribostudies and rnastudies div with file names and descriptions.
-		for (var filetype in accepted_files) {
-				for (var study_id in accepted_files[filetype]) {
-						i=0
-						var file_names = [];
-						for (var file_id in accepted_files[filetype][study_id]) {
-							file_name = accepted_files[filetype][study_id][file_id]["file_name"]
-							file_names.push([file_name, file_id])
-							}
-						file_names = file_names.sort(function(a, b) {
-							return a[0].localeCompare(b[0]);
-						})
+		
+		
+		
+		
+		
+		
+var accepted_files = {{ accepted_files|safe }};
+var seq_study_dict = {};
+// populate the ribostudies and rnastudies div with file names and descriptions.
+for (var filetype in accepted_files) {
+		for (var study_id in accepted_files[filetype]) {
+		
+				var ul = document.getElementById(study_id+filetype);
+				console.log("ul is", ul);
+				Sortable.create(ul, {
+					group: "sortable-group",
+					multiDrag: true,
+					sort: false,
+					selectedClass: "highlight",
+					animation: 200
+					});
+				i=0
+				var file_names = [];
+				for (var file_id in accepted_files[filetype][study_id]) {
+					file_name = accepted_files[filetype][study_id][file_id]["file_name"]
+					file_names.push([file_name, file_id])
+					}
+				file_names = file_names.sort(function(a, b) {
+					return a[0].localeCompare(b[0]);
+				})
+				
+				var sorted_file_list1 = [];
+				var sorted_file_list2 = [];
+				var sorted_file_list3 = [];
+				
+				for (var z in file_names) {
+					var tup = file_names[z];
+					console.log("Z is",z);
+					if (z%3 == 0){
+						sorted_file_list1.push(tup[1]);
+					}
+					if (z%3 == 1){
+						sorted_file_list2.push(tup[1]);
+					}
+					if (z%3 == 2){
+						sorted_file_list3.push(tup[1]);
+					}
+					
+					}
+				var sorted_file_list = [...sorted_file_list1, ...sorted_file_list2, ...sorted_file_list3]
+				
+				
+				for (var file_id in sorted_file_list) {
+						file_id = sorted_file_list[file_id]
+						file_name = accepted_files[filetype][study_id][file_id]["file_name"];
+						file_description = accepted_files[filetype][study_id][file_id]["file_description"];
+
+						if (!(filetype in seq_study_dict)) {
+							seq_study_dict[filetype] = [];
+						};
+						if (accepted_files[filetype][study_id].length != 0) {
+							if (!(study_id in seq_study_dict[filetype])) {
+								seq_study_dict[filetype].push(study_id);
+						}
+					};
+						//var table = document.getElementById(study_id+filetype);
+						//var tr = document.createElement("tr");
+						//var td = document.createElement("td");
+						var ul = document.getElementById(study_id+filetype);
 						
-						var sorted_file_list = [];
-						for (var z in file_names) {
-							var tup = file_names[z];
-							sorted_file_list.push(tup[1]);
-							}
-						for (var file_id in sorted_file_list) {
-								file_id = sorted_file_list[file_id]
-								file_name = accepted_files[filetype][study_id][file_id]["file_name"];
-								file_description = accepted_files[filetype][study_id][file_id]["file_description"];
+						
+						
+						//td.innerHTML = ("<td><input id='"+file_id+"' type='radio'    class='study_radio file_"+file_id+" "+filetype+"_file "+filetype+"_study"+study_id+"'  name='ribostudy' value="+file_id+"></input>    <label for='"+file_id+"' class='filetable_label'></label> <label for='"+file_id+"' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+						var li = document.createElement("li");
+						li.innerHTML = ("<li id="+file_id+" class='list'><b>"+file_name+"</b>:"+file_description+"</li> ");
+						ul.appendChild(li);
 
-								if (!(filetype in seq_study_dict)) {
-									seq_study_dict[filetype] = [];
-								};
-								if (accepted_files[filetype][study_id].length != 0) {
-									if (!(study_id in seq_study_dict[filetype])) {
-										seq_study_dict[filetype].push(study_id);
-								}
-							};
-								var table = document.getElementById(study_id+filetype);
-								var tr = document.createElement("tr");
-								var td = document.createElement("td");
-								td.innerHTML = ("<td><input id='"+file_id+"' type='radio'    class='study_radio file_"+file_id+" "+filetype+"_file "+filetype+"_study"+study_id+"'  name='ribostudy' value="+file_id+"></input>    <label for='"+file_id+"' class='filetable_label'></label> <label for='"+file_id+"' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
-								if (i != 2){
-										table.appendChild(td);
-										i+= 1;
+
+																						}
 														}
-								else if (i == 2){
-										table.appendChild(td);
-										table.appendChild(tr);
-										i = 0
-										}
-
-																								}
-																}
-										};
+								};
 
 
 var defaulttran = "{{ default_tran|safe }}";
 document.getElementById('tran').value = defaulttran;
 
-function removeAll(){
-
-		master_file_dict = {};
-		listnum = 0;
-		document.getElementById("color_file_list").innerHTML = "";}
 
 
-function addStudy(){
-	var study_id = document.querySelector('input[name="content_type"]:checked').value;
-	study_id = study_id.replace("study", "");
-	var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
-
-	for (var item in accepted_files[seq_type][study_id]) {
-		addItem(item);
-		};
-	
-	};
 
 
 function addItem(file_id){
@@ -409,7 +479,6 @@ $("#comparequery").click(function() {
 	var transcript = $('input:text[name=transcript]').val();
 	var minread = $('input:text[name=minread]').val();
 	var maxread = $('input:text[name=maxread]').val();
-	var nanobar = new Nanobar({bg: '#77abff'});
 	var hili_start = $('input:text[name=hili_start]').val();
 	var hili_stop = $('input:text[name=hili_stop]').val();
 
@@ -420,12 +489,135 @@ $("#comparequery").click(function() {
 	var organism = "{{  organism|safe  }}";
 	var transcriptome = "{{  transcriptome|safe  }}";
 
-	for (key in master_file_dict) {
-			var group_id = "label_"+key
-			var group_label = document.getElementById(group_id);
-			var label_val = (group_label.value).replace(/_/g, "-");
-			master_file_dict[key]["label"] = label_val
-			};
+	master_file_dict = {};
+	var group_1_file_list = document.getElementById("group_1_file_list").getElementsByTagName("li");
+	var group_1_color = document.getElementById("group1_color");
+	var group_1_label = $('input:text[name=group_1_label]').val();
+	if (group_1_file_list.length != 0) {
+		master_file_dict[group_1_color.value] = {"file_ids":[]}
+		master_file_dict[group_1_color.value]["label"] = group_1_label
+		for (var i = 0; i < group_1_file_list.length; ++i) {
+			var file_id = group_1_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_1_file_list[i].innerText)
+				master_file_dict[group_1_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_2_file_list = document.getElementById("group_2_file_list").getElementsByTagName("li");
+	var group_2_color = document.getElementById("group2_color");
+	var group_2_label = $('input:text[name=group_2_label]').val();
+	if (group_2_file_list.length != 0) {
+		master_file_dict[group_2_color.value] = {"file_ids":[]}
+		master_file_dict[group_2_color.value]["label"] = group_2_label
+		for (var i = 0; i < group_2_file_list.length; ++i) {
+			var file_id = group_2_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_2_file_list[i].innerText)
+				master_file_dict[group_2_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_3_file_list = document.getElementById("group_3_file_list").getElementsByTagName("li");
+	var group_3_color = document.getElementById("group3_color");
+	var group_3_label = $('input:text[name=group_3_label]').val();
+	if (group_3_file_list.length != 0) {
+		master_file_dict[group_3_color.value] = {"file_ids":[]}
+		master_file_dict[group_3_color.value]["label"] = group_3_label
+		for (var i = 0; i < group_3_file_list.length; ++i) {
+			var file_id = group_3_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_3_file_list[i].innerText)
+				master_file_dict[group_3_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_4_file_list = document.getElementById("group_4_file_list").getElementsByTagName("li");
+	var group_4_color = document.getElementById("group4_color");
+	var group_4_label = $('input:text[name=group_4_label]').val();
+	if (group_4_file_list.length != 0) {
+		master_file_dict[group_4_color.value] = {"file_ids":[]}
+		master_file_dict[group_4_color.value]["label"] = group_4_label
+		for (var i = 0; i < group_4_file_list.length; ++i) {
+			var file_id = group_4_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_4_file_list[i].innerText)
+				master_file_dict[group_4_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_5_file_list = document.getElementById("group_5_file_list").getElementsByTagName("li");
+	var group_5_color = document.getElementById("group5_color");
+	var group_5_label = $('input:text[name=group_5_label]').val();
+	if (group_5_file_list.length != 0) {
+		master_file_dict[group_5_color.value] = {"file_ids":[]}
+		master_file_dict[group_5_color.value]["label"] = group_5_label
+		for (var i = 0; i < group_5_file_list.length; ++i) {
+			var file_id = group_5_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_5_file_list[i].innerText)
+				master_file_dict[group_5_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_6_file_list = document.getElementById("group_6_file_list").getElementsByTagName("li");
+	var group_6_color = document.getElementById("group6_color");
+	var group_6_label = $('input:text[name=group_6_label]').val();
+	if (group_6_file_list.length != 0) {
+		master_file_dict[group_6_color.value] = {"file_ids":[]}
+		master_file_dict[group_6_color.value]["label"] = group_6_label
+		for (var i = 0; i < group_6_file_list.length; ++i) {
+			var file_id = group_6_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_6_file_list[i].innerText)
+				master_file_dict[group_6_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_7_file_list = document.getElementById("group_7_file_list").getElementsByTagName("li");
+	var group_7_color = document.getElementById("group7_color");
+	var group_7_label = $('input:text[name=group_7_label]').val();
+	if (group_7_file_list.length != 0) {
+		master_file_dict[group_7_color.value] = {"file_ids":[]}
+		master_file_dict[group_7_color.value]["label"] = group_7_label
+		for (var i = 0; i < group_7_file_list.length; ++i) {
+			var file_id = group_7_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_7_file_list[i].innerText)
+				master_file_dict[group_7_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
+	var group_8_file_list = document.getElementById("group_8_file_list").getElementsByTagName("li");
+	var group_8_color = document.getElementById("group8_color");
+	var group_8_label = $('input:text[name=group_8_label]').val();
+	if (group_8_file_list.length != 0) {
+		master_file_dict[group_8_color.value] = {"file_ids":[]}
+		master_file_dict[group_8_color.value]["label"] = group_8_label
+		for (var i = 0; i < group_8_file_list.length; ++i) {
+			var file_id = group_8_file_list[i].getAttribute("id")
+			if (file_id != null) {
+				var fileinput = (group_8_file_list[i].innerText)
+				master_file_dict[group_8_color.value]["file_ids"].push(file_id);
+				var file_name = fileinput.split(":")[0]
+			}
+		}
+	}
+	
 
 	var qu = {"transcript":transcript, "minread":minread, "maxread":maxread, "ambiguous": ambiguous, "master_file_dict": master_file_dict,
 				"organism":organism, "normalize":normalize, "html_args":html_args,"hili_start":hili_start,"hili_stop":hili_stop,
@@ -445,61 +637,29 @@ $("#comparequery").click(function() {
 			data: JSON.stringify(qu),
 			dataType: "html",
 			success: function(data) {
-					if (data.slice(0, 11) == "TRANSCRIPTS"){
-							var splitdata = data.split(":");
-							populate_jquery_dialog(splitdata);
-							$( "#dialog-2" ).dialog( "open" );
-							$("#loading-div-background").hide();
-							$("#container").show();
-							}
-					else{
-							var graph = $("#container");
-							graph.html(data);
-							$("#loading-div-background").hide();
-							$("#container").show();
-							$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
-							document.getElementById('container').scrollIntoView();
-							}},
+				if (data.slice(0, 11) == "TRANSCRIPTS"){
+						var splitdata = data.split(":");
+						populate_jquery_dialog(splitdata);
+						$( "#dialog-2" ).dialog( "open" );
+						$("#loading-div-background").hide();
+						$("#container").show();
+
+						}
+				else{
+						var graph = $("#container");
+						graph.html(data);
+						$("#loading-div-background").hide();
+						$("#container").show();
+						$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
+						document.getElementById('container').scrollIntoView();
+						}
+					},
+			
  });
 });
 
 
 
-function update_progress(status_url, nanobar) {
-	// send GET request to status URL
-	$.getJSON(status_url, function(data) {
-		// update UI
-		percent = parseInt(data['current'] * 100 / data['total']);
-		nanobar.go(percent);
-		//$(status_div.childNodes[1]).text(percent + '%');
-		//$(status_div.childNodes[2]).text(data['status']);
-		$("#loading_header").text(data['status'])
-		
-		if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
-				if (data['result'].slice(0, 11) == "TRANSCRIPTS"){
-							var splitdata = data['result'].split(":");
-							populate_jquery_dialog(splitdata);
-							$( "#dialog-2" ).dialog( "open" );
-							$("#loading-div-background").hide();
-							$("#container").show();
-							}
-					else{
-							var graph = $("#container");
-							graph.html(data['result']);
-							$("#loading-div-background").hide();
-							$("#container").show();
-							$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
-							document.getElementById('container').scrollIntoView();
-							}
-			}
-			else {
-				// rerun in 2 seconds
-				setTimeout(function() {
-					update_progress(status_url, nanobar);
-					}, 2000);
-				}
-				});
-				}
 
 
 
@@ -545,11 +705,7 @@ else if (html_args["normalize"] == "F") {
 		$('.norm_check').attr('checked', false);
 		}
 
-if (html_args["transcript"] != "None") {
-		document.getElementById('tran').value = html_args["transcript"];
-		// If a transcript is passed by the user then automatically produce a graph
-		$("#comparequery").click();
-		}
+
 
 //Update the options box on page load and load files in file box
 $(document).ready(function(){
@@ -571,6 +727,48 @@ $(document).ready(function(){
 	$(".show").hide(); //Hide all the checkbox containers
 	$(selector).show(); //Show only the related container
 })
+
+
+
+var list_of_lists = ["group_1_file_list","group_2_file_list","group_3_file_list","group_4_file_list","group_5_file_list","group_6_file_list","group_7_file_list","group_8_file_list"]
+
+for (var i = 0; i < list_of_lists.length; i++) {
+	var el = document.getElementById(list_of_lists[i]);
+	console.log("El is ", el);
+	Sortable.create(el, {
+		group: "sortable-group",
+		multiDrag: true,
+		direction: 'horizontal', 
+		selectedClass: "highlight",
+		animation: 200,
+		sort: false
+	});
+};
+
+
+var group_no = 0
+var group_list = ["group_1_file_list","group_2_file_list","group_3_file_list","group_4_file_list","group_5_file_list","group_6_file_list","group_7_file_list","group_8_file_list"]
+var group_colour_list = ["group1_color","group2_color","group3_color","group4_color","group5_color","group6_color","group7_color","group8_color"]
+var group_label_list = ["group1_label","group2_label","group3_label","group4_label","group5_label","group6_label","group7_label","group8_label"]
+// INPUT ALL FILES PASSED IN HTML ARGUMENTS, also input labels if they were supplied
+for (color in html_args["user_file_dict"]) {
+	document.getElementById(group_colour_list[group_no]).value = color;
+	document.getElementById(group_label_list[group_no]).value = html_args["user_label_dict"][color];
+	var ul = document.getElementById(group_list[group_no]);
+	for (i in html_args["user_file_dict"][color]) {
+		var fileinput = html_args["user_file_dict"][color][i];
+		var file_li = document.getElementById(fileinput);
+ 		ul.appendChild(file_li);
+		}
+	group_no += 1;
+}
+
+if (html_args["transcript"] != "None") {
+		document.getElementById('tran').value = html_args["transcript"];
+		// If a transcript is passed by the user then automatically produce a graph
+		$("#comparequery").click();
+		}
+
 
 </script>
 

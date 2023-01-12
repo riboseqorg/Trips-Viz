@@ -6,7 +6,6 @@ from mpld3 import plugins,utils
 from new_plugins import InteractiveLegendPlugin,TopToolbar,DownloadProfile,DownloadPNG
 from fetch_shelve_reads2 import get_reads
 import sqlite3
-import config
 import os
 import config
 
@@ -52,7 +51,7 @@ def generate_compare_plot(tran, ambig, min_read, max_read,master_filepath_dict,l
 			return_str =  "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome)
 			return {'current': 400, 'total': 100, 'status': 'return_str','result': return_str}
 	else:
-		transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+		transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 	cursor = transhelve.cursor()
 	cursor.execute("SELECT * from transcripts WHERE transcript = '{}'".format(tran))
 	result = cursor.fetchone()

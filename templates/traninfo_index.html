@@ -4,6 +4,8 @@
 <head>
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/metainfo.css') }}">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.css"/>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.js">
 </script>
 </head>
@@ -210,9 +212,13 @@ function update_settings(n,defaulttran){
 						break;
 				case 'fetch_seq':
 					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'> \
-						<tr><td><b>Region:</b><input type='radio' class='all' value='all' name='gc_location' checked>All</input> <input type='radio'\
-						class='five' value='five' name='gc_location' checked>5'</input>  <input type='radio'class='cds' value='cds' name='gc_location' checked>CDS</input> <input class='three' type='radio' value='three'\
-						name='gc_location' unchecked>3'</input></td></tr>\
+						<tr><td><b>Region:</b>\
+						<input type='radio' class='all' value='all' name='gc_location' unchecked>All</input>\
+						<input type='radio' class='five' value='five' name='gc_location' unchecked>5'</input>\
+						<input type='radio' class='start' value='start' name='gc_location' unchecked>Start codon</input>\
+						<input type='radio' class='cds' value='cds' name='gc_location' checked>CDS</input>\
+						<input type='radio' class='stop' value='stop' name='gc_location' unchecked>Stop codon</input>\
+						<input type='radio' class='three' value='three' name='gc_location' unchecked>3'</input></td></tr>\
 						<tr><td><b>Transcript list: </b><input type='text' id='gc_tranlist' name='gc_tranlist' value='"+defaulttran+"' ></input></td></tr> \
 						<tr><td>  Include first <input type='text'   id='include_first_val' name='include_first_val' value='0' ></input> nucleotides.</td></tr> \
 						<tr><td>  Include last <input type='text'   id='include_last_val' name='include_last_val' value='0' ></input> nucleotides.</td></tr> \

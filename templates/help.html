@@ -1061,7 +1061,7 @@ $(document).ready(function () {
 		if (parent_acc != "None") {
 				document.getElementById(parent_acc).click();
 				};
-		if (child_acc != "None") {
+		if (child_acc == "child_share") {
 				document.getElementById(child_acc).click();
 				$('html, body').animate({scrollBottom: $("#"+child_acc).offset().bottom}, 200);
 				};

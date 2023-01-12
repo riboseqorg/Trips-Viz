@@ -14,6 +14,7 @@ import shelve
 import mpld3
 import operator
 import logging
+import pickle5
 from sqlitedict import SqliteDict
 from math import log
 from mpld3 import plugins,utils
@@ -72,6 +73,8 @@ line_tooltip_css = """
 
 """
 
+def my_decoder(obj):
+	return pickle5.loads(obj)
 
 
 
@@ -149,7 +152,7 @@ def readlen_dist(master_dict,title,short_code,background_col,readlength_col,titl
 	#ax.yaxis.set_major_locator(plt.MaxNLocator(3))
 	#plt.rc('axes', linewidth=40,edgecolor="green")
 	plt.grid(color="white", linewidth=2,linestyle="solid")
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -182,7 +185,7 @@ def mismatch_pos(master_dict,title,short_code,background_col,readlength_col,titl
 	#ax.yaxis.set_major_locator(plt.MaxNLocator(3))
 	#plt.rc('axes', linewidth=40,edgecolor="green")
 	plt.grid(color="white", linewidth=2,linestyle="solid")
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -225,7 +228,7 @@ def nuc_comp(master_dict,maxreadlen,title, nuc_comp_type,nuc_comp_direction,shor
 	ax.tick_params('both', labelsize=marker_size)
 	plt.grid(color="white", linewidth=2,linestyle="solid")
 	ilp = InteractiveLegendPlugin([a_line, t_line, g_line, c_line], ["A","T","G","C"], alpha_unsel=0,alpha_sel=1,start_visible=True,fontsize=legend_size)
-	plugins.connect(fig, ilp,TopToolbar(yoffset=750,xoffset=600),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, ilp,TopToolbar(yoffset=-22,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -286,7 +289,7 @@ def mrna_dist_readlen(mrna_dist_dict,mrna_readlen_per,short_code,background_col,
 	ax.tick_params('both', labelsize=marker_size)
 	plt.grid(color="white", linewidth=2,linestyle="solid")
 	ilp = InteractiveLegendPlugin([five_leader_line, start_codon_line, cds_line, stop_codon_line, three_trailer_line], labels, alpha_unsel=0,alpha_sel=1,start_visible=True)
-	plugins.connect(fig, ilp,TopToolbar(yoffset=750,xoffset=600),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, ilp,TopToolbar(yoffset=-22,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -310,7 +313,7 @@ def dinuc_bias(master_count_dict,short_code,background_col,title_size, axis_labe
 	plt.xticks(tick_pos, master_count_dict.keys())
 	ax.set_facecolor(background_col)
 	ax.tick_params('both', labelsize=marker_size)
-	plugins.connect(fig,TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig,TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -416,9 +419,9 @@ def metagene_plot(readlen_list, fiveprime_list, threeprime_list,metagene_type,ti
 	
 	ax.set_facecolor(background_col)
 	if metagene_aggregate == True:
-		plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
+		plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
 	else:
-		plugins.connect(fig, ilp, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
+		plugins.connect(fig, ilp, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
 	plt.grid(color="white", linewidth=2,linestyle="solid")
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
@@ -495,7 +498,7 @@ def trip_periodicity_plot(read_dict,title,short_code,background_col,title_size, 
 	ax.set_facecolor(background_col)
 	ax.tick_params('both', labelsize=marker_size)
 	plt.grid(color="white", linewidth=2,linestyle="solid")
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str),DownloadProfile(returnstr=returnstr))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -621,7 +624,7 @@ def mapped_reads_plot(unmapped, mapped_coding, mapped_noncoding, labels, ambiguo
 				'rRNA removed: {:,}'.format(sum(rrna_removed)),
 				'Cutadapt removed {:,}'.format(sum(cutadapt_removed)),
 				'Total reads: {:,}'.format(all_reads_count)
-				),fontsize=legend_size/1.5)
+				),fontsize=legend_size/3)
 
 
 	for i, bar in enumerate(p8.get_children()):
@@ -644,7 +647,7 @@ def mapped_reads_plot(unmapped, mapped_coding, mapped_noncoding, labels, ambiguo
 		tooltip1 = plugins.LineHTMLTooltip(bar, lab1,voffset=10, hoffset=30,css=line_tooltip_css)
 		plugins.connect(fig, tooltip1)
 
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -876,7 +879,7 @@ def explore_offsets(f0_counts, f1_counts, f2_counts, labels,short_code,backgroun
 		tooltip1 = plugins.LineLabelTooltip(bar, label="Frame 2: {:,}  ({}%)".format(f2_counts[i], per))
 		plugins.connect(fig, tooltip1)
 
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadPNG(returnstr=title_str))
 	graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(marker_size)
 	graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
@@ -940,7 +943,7 @@ def most_freq_unmapped(file_paths_dict,short_code):
 		for file_id in file_paths_dict[filetype]:
 			filepath = file_paths_dict[filetype][file_id]
 			if os.path.isfile(filepath):
-				sqlite_db = SqliteDict(filepath, autocommit=False)
+				sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 			else:
 				return_str =  "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath.split("/")[-1])
 				return return_str
@@ -1002,9 +1005,7 @@ def heatplot(min_readlen, max_readlen, min_pos, max_pos, positions,readlengths,c
 	if reverse_scale == True:
 		color_pallete_list = color_pallete_list[::-1]
 	
-	print (count_list)
-	print (max(filter(lambda v: v is not None, count_list)))
-	
+
 	if maxscaleval == "None":
 		color_mapper = LogColorMapper(palette=color_pallete_list, low=1, high=max(filter(lambda v: v is not None, count_list)),nan_color=background_col)
 	else:
@@ -1409,7 +1410,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size, axis_label
 		#tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
 		plugins.connect(fig, tooltip1)
 
-	plugins.connect(fig, TopToolbar(yoffset=750,xoffset=600),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+	plugins.connect(fig, TopToolbar(yoffset=-22,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
 	graph = "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(short_code)
 	graph += mpld3.fig_to_html(fig)
 	return graph

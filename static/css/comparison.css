@@ -7,15 +7,7 @@ div #sidebar
     width : 100%;
 }
 
-div #file_list
-{
-    float: left;
-    border:1px solid #dbdbdb;
-    border-radius:20px;
-    height : 520px;
-    width : 22%;
-    position: relative;
-}
+
 
 
 div #seq_types
@@ -30,15 +22,7 @@ div #seq_types
 }
 
 
-div #files
-{
-		display: inline-block;
-		border:1px solid #dbdbdb;
-		padding:50px 0px;
-		border-radius:20px;
-		width : 99%;
 
-}
 
 
 
@@ -91,7 +75,7 @@ div #studies
     display: inline-block;
     border:1px solid #dbdbdb;
     border-radius:20px;
-    width : 77%;
+    width : 100%;
 }
 
 .colorinput {
@@ -114,65 +98,6 @@ label.checkbox_label {
     border-radius: 16px;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, abort, request, url_for, jsonify
 from flask import current_app as app
 import sqlite3
 from sqlitedict import SqliteDict
+import pickle5
 import ast
 import os
 import time
@@ -17,7 +18,8 @@ import subprocess
 import json
 
 
-
+def my_decoder(obj):
+	return pickle5.loads(obj)
 
 
 metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage", __name__, template_folder="templates")
@@ -276,7 +278,7 @@ def redo_periodicity_plots(connection, file_path):
 	for row in result:
 			traninfo_dict[str(row[0])] = [int(row[1]),int(row[2]),int(row[3])]
 	trip_periodicity_reads = 0
-	master_read_dict = SqliteDict(file_path)
+	master_read_dict = SqliteDict(f"{file_path}", autocommit=False, decode=my_decoder)
 	master_trip_dict = {"threeprime":{},"fiveprime":{}}
 
 	for tran in traninfo_dict:
@@ -575,7 +577,7 @@ def metainfoquery():
 		grp2_file_paths_dict = fetch_file_paths(sw_diff_group2,organism)
 		for file_id in sw_diff_group1:
 			#printgrp1_file_paths_dict["riboseq"]
-			sqlite_db = SqliteDict(grp1_file_paths_dict["riboseq"][int(file_id)])
+			sqlite_db = SqliteDict(f"{grp1_file_paths_dict['riboseq'][int(file_id)]}", autocommit=False, decode=my_decoder)
 			offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 			#print"offsets", offsets
 			for transcript in trandict.keys():
@@ -596,8 +598,7 @@ def metainfoquery():
 			
 			
 		for file_id in sw_diff_group2:
-			
-			sqlite_db = SqliteDict(grp2_file_paths_dict["riboseq"][int(file_id)])
+			sqlite_db = SqliteDict(f"{grp2_file_paths_dict['riboseq'][int(file_id)]}", autocommit=False, decode=my_decoder)
 			offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 			#print"offsets", offsets
 			for transcript in trandict.keys():
@@ -690,7 +691,7 @@ def metainfoquery():
 					for i in range(0,traninfo_dict[transcript]["length"]):
 						count_dict[identifier][i] = 0
 					if os.path.isfile(filepath):
-						sqlite_db = SqliteDict(filepath, autocommit=False)
+						sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 						offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 					else:
 						connection.close()
@@ -742,7 +743,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page. ".format(filepath)
@@ -777,7 +778,7 @@ def metainfoquery():
 					traninfo_cursor = traninfo_connection.cursor()
 					if metagene_tranlist == "":
 						#print"metagene tranlist is", metagene_tranlist
-						traninfo_cursor.execute("SELECT transcript,sequence,cds_start,cds_stop FROM transcripts WHERE principal = 1;")
+						traninfo_cursor.execute("SELECT transcript,sequence,cds_start,cds_stop FROM transcripts WHERE principal = 1 AND tran_type = 1;")
 						result = traninfo_cursor.fetchall()
 					else:
 						traninfo_cursor.execute("SELECT transcript,sequence,cds_start,cds_stop FROM transcripts WHERE transcript IN ({})".format(str(metagene_tranlist).strip("[]").replace('"','')))
@@ -818,7 +819,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page. ".format(filepath))
@@ -891,7 +892,7 @@ def metainfoquery():
 					master_dict[study] = {"range1_count":1.0,"range2_count":1.0}
 				if os.path.isfile(filepath):
 					#Add the counts to the profile
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					if "offsets" in sqlite_db:
 						offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 					else:
@@ -952,7 +953,7 @@ def metainfoquery():
 		all_values = []
 		offset_dict = {}
 		for file_id in file_paths_dict["riboseq"]:
-			sqlite_db = SqliteDict(file_paths_dict["riboseq"][file_id])
+			sqlite_db = SqliteDict(f"{file_paths_dict['riboseq'][file_id]}", autocommit=False, decode=my_decoder)
 			try:
 				offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 				offset_dict[file_id] = offsets
@@ -963,7 +964,7 @@ def metainfoquery():
 
 
 		for file_id in file_paths_dict["riboseq"]:
-			sqlite_db = SqliteDict(file_paths_dict["riboseq"][file_id])
+			sqlite_db = SqliteDict(f"{file_paths_dict['riboseq'][file_id]}", autocommit=False, decode=my_decoder)
 			if "codon_usage_dict2" in sqlite_db:
 				codon_usage_dict = sqlite_db["codon_usage_dict"]
 				for codon in codon_usage_dict:
@@ -1044,7 +1045,7 @@ def metainfoquery():
 		offset_dict = {}
 		for condition in condition_dict:
 			for file_id in condition_dict[condition]:
-				sqlite_db = SqliteDict(file_paths_dict["riboseq"][file_id])
+				sqlite_db = SqliteDict(f"{file_paths_dict['riboseq'][file_id]}", autocommit=False, decode=my_decoder)
 				try:
 					offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 					offset_dict[file_id] = offsets
@@ -1054,7 +1055,7 @@ def metainfoquery():
 			tran_count = 0
 
 			for file_id in condition_dict[condition]:
-				sqlite_db = SqliteDict(file_paths_dict["riboseq"][file_id])
+				sqlite_db = SqliteDict(f"{file_paths_dict['riboseq'][file_id]}", autocommit=False, decode=my_decoder)
 				if "codon_usage_dict" in sqlite_db:
 					codon_usage_dict = sqlite_db["codon_usage_dict"]
 					for codon in codon_usage_dict:
@@ -1129,7 +1130,7 @@ def metainfoquery():
 											"tran2_count":0}
 				if os.path.isfile(filepath):
 					#Add the counts to the profile
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					if "offsets" in sqlite_db:
 						offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
 					else:
@@ -1188,7 +1189,7 @@ def metainfoquery():
 		if owner == 1:
 			traninfo_dict = SqliteDict("{0}/{1}/{2}/{2}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR,organism), autocommit=False)
 		else:
-			traninfo_dict = SqliteDict("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome), autocommit=False)
+			traninfo_dict = SqliteDict("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome), autocommit=False)
 		if organism == "homo_sapiens" or organism == "homo_sapiens_polio":
 			longest_tran_db = SqliteDict("{0}/{1}/homo_sapiens/principal_isoforms_5ldr3tlr_rnaseq.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR), autocommit=False)
 			longest_tran_list = longest_tran_db["transcripts"]
@@ -1233,7 +1234,7 @@ def metainfoquery():
 						if os.path.isfile(filepath):
 
 							#Add the counts to the profile
-							sqlite_db = SqliteDict(filepath, autocommit=False)
+							sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 							if transcript in sqlite_db:
 								sqlite_db_tran = sqlite_db[transcript]
 								for readlen in sqlite_db_tran["unambig"]:
@@ -1313,7 +1314,7 @@ def metainfoquery():
 						if os.path.isfile(filepath):
 
 							#Add the counts to the profile
-							sqlite_db = SqliteDict(filepath, autocommit=False)
+							sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 							profile = {}
 							mismatch_profile = {"A":{},"T":{},"G":{},"C":{}}
 							if transcript in sqlite_db:
@@ -1378,7 +1379,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		cursor = transhelve.cursor()
 
 		
@@ -1443,7 +1444,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		cursor = transhelve.cursor()
 		cursor.execute("SELECT transcript,cds_start,cds_stop from transcripts where principal = 1 and tran_type = 1;")
 		result = cursor.fetchall()
@@ -1462,7 +1463,7 @@ def metainfoquery():
 											"3_trailer":0,
 											"total":0}
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -1518,7 +1519,7 @@ def metainfoquery():
 		if owner == 1:
 			traninfo_dict = SqliteDict("{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,config.ANNOTATION_DIR,organism,transcriptome), autocommit=False)
 		else:
-			traninfo_dict = SqliteDict("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome), autocommit=False)
+			traninfo_dict = SqliteDict("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome), autocommit=False)
 		longest_tran_list = []
 		cds_dict = {}
 		cursor.execute("SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';".format(organism, transcriptome))
@@ -1530,7 +1531,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		cursor = transhelve.cursor()
 		cursor.execute("SELECT transcript,cds_start,cds_stop from transcripts where principal = 1 and tran_type = 1;")
 		result = cursor.fetchall()
@@ -1548,7 +1549,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				try:
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					#opendict = dict(sqlite_db)
 					#sqlite_db.close()
 				except:
@@ -1767,7 +1768,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		trancursor = transhelve.cursor()
 		trancursor.execute("SELECT transcript,principal from transcripts")
 		prin_tran_list = []
@@ -1782,7 +1783,7 @@ def metainfoquery():
 			for filetype in file_paths_dict:
 				for file_id in file_paths_dict[filetype]:
 					filepath = file_paths_dict[filetype][file_id]
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					mapped_reads = sqlite_db["coding_counts"]
 					if mapped_reads == None or mapped_reads == 0:
 						connection.close()
@@ -1811,7 +1812,7 @@ def metainfoquery():
 				filepath = file_paths_dict[filetype][file_id]
 
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					opendict =sqlite_db["unambiguous_all_totals"]
 					sqlite_db.close()
 				else:
@@ -1846,7 +1847,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -1938,7 +1939,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -2071,7 +2072,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.v2.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		minpos = -300
 		maxpos = 300
 		pos_list = []
@@ -2099,7 +2100,7 @@ def metainfoquery():
 				file_desc = cursor.fetchone()[0]
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					if metagene_normalise == True:
 						mapped_reads = sqlite_db["coding_counts"]+sqlite_db["noncoding_counts"]
 						mapped_reads_dict[file_desc] = float(mapped_reads)
@@ -2237,7 +2238,7 @@ def metainfoquery():
 			for file_id in file_paths_dict[filetype]:
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -2251,7 +2252,7 @@ def metainfoquery():
 							connection.close()
 							return ("Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 					else:
-						transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+						transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 					redo_periodicity_plots(transhelve,filepath)
 					#return "No triplet periodicity data for this file, please report this to tripsvizsite@gmail.com or via the contact page."
 				trip_periodicity_dict = sqlite_db["trip_periodicity"]
@@ -2290,7 +2291,7 @@ def metainfoquery():
 				labels.append(result[1])
 
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -2355,7 +2356,7 @@ def metainfoquery():
 				connection.close()
 				return ( "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome))
 		else:
-			transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+			transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 		min_readlen = heatmap_minreadlen
 		max_readlen = heatmap_maxreadlen
 		min_pos = heatmap_startpos
@@ -2370,7 +2371,7 @@ def metainfoquery():
 				count_list = []
 				filepath = file_paths_dict[filetype][file_id]
 				if os.path.isfile(filepath):
-					sqlite_db = SqliteDict(filepath, autocommit=False)
+					sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 				else:
 					connection.close()
 					return ( "File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
@@ -2544,7 +2545,7 @@ def aggregate_counts(file_paths_dict, traninfo_dict, longest_tran_list, region, 
 			file_list += "{},".format(file_id)
 			filepath = file_paths_dict[seq_type][file_id]
 			if os.path.isfile(filepath):
-				sqlite_db = SqliteDict(filepath, autocommit=False)
+				sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 			else:
 				return "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
 			try:
@@ -2727,7 +2728,7 @@ def sample_counts(file_paths_dict, traninfo_dict, longest_tran_list, region, org
 				mapped_reads_dict[inputfilename] = 0
 			
 			if os.path.isfile(filepath):
-				sqlite_db = SqliteDict(filepath, autocommit=False)
+				sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 			else:
 				return "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
 			try:

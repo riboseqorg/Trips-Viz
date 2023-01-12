@@ -2,10 +2,8 @@ div #studies
 {
 		text-align:center;
 		display: inline-block;
-		padding: 20px 0px;
 		border:1px solid #dbdbdb;
 		border-radius:20px;
-		width : 97%;
 }
 
 
@@ -21,7 +19,7 @@ div #seq_types
 		width : 97%;
 }
 
-div #files
+/*div #files
 {
 		display: inline-block;
 		border:1px solid #dbdbdb;
@@ -30,6 +28,17 @@ div #files
 		width : 97%;
 
 }
+*/
+
+div #filebox {
+  display: inline-block;
+  border: 2px solid #a6a6a6;
+  padding: 5px 0px;
+  border-radius: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 
 
 label.checkbox_label {
@@ -56,11 +65,8 @@ div #riboseq_file_list_1
 {
 		display: inline-block;
 		float: left;
-		border:1px solid #dbdbdb;
-		padding:10px 30px;
-		border-radius:20px;
-		height : 350px;
-		width : 47%;
+		height : 250px;
+		width : 50%;
 		position: relative;
 }
 
@@ -68,11 +74,8 @@ div #riboseq_file_list_2
 {
 		display: inline-block;
 		float: left;
-		border:1px solid #dbdbdb;
-		padding:10px 30px;
-		border-radius:20px;
-		height : 350px;
-		width : 44%;
+		height : 250px;
+		width : 50%;
 		position: relative;
 }
 
@@ -81,11 +84,8 @@ div #rnaseq_file_list_1
 {
 		display: inline-block;
 		float: left;
-		border:1px solid #dbdbdb;
-		padding:10px 30px;
-		border-radius:20px;
-		height : 350px;
-		width : 47%;
+		height : 250px;
+		width : 50%;
 		position: relative;
 }
 
@@ -93,11 +93,8 @@ div #rnaseq_file_list_2
 {
 		display: inline-block;
 		float: left;
-		border:1px solid #dbdbdb;
-		padding:10px 30px;
-		border-radius:20px;
-		height : 350px;
-		width : 44%;
+		height : 250px;
+		width : 50%;
 		position: relative;
 }
 

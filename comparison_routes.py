@@ -5,12 +5,15 @@ from sqlitedict import SqliteDict
 import ast
 import os
 import config
+import pickle5
 from core_functions import fetch_studies, fetch_files,fetch_study_info,fetch_file_paths,generate_short_code,fetch_user
 import riboflask_compare
 import collections
 from flask_login import current_user
 import json
 
+def my_decoder(obj):
+	return pickle5.loads(obj)
 
 
 # Single transcript comparison page, user chooses a gene and groups of files to display
@@ -117,7 +120,7 @@ def comparequery():
 		else:
 			return "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome)
 	else:
-		transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+		transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 	cursor = transhelve.cursor()
 	cursor.execute("SELECT * from transcripts WHERE transcript = '{}'".format(tran))
 	result = cursor.fetchone()
@@ -151,6 +154,7 @@ def comparequery():
 						cdslen = cds_stop-cds_start
 						threeutrlen = tranlen - cds_stop
 					return_str += (":{},{},{},{},{},{}".format(transcript[0], tranlen, cds_start, cdslen, threeutrlen,principal))
+				
 				return return_str
 		else:
 			return_str =  "ERROR! Could not find any transcript corresponding to {}".format(tran)
@@ -166,7 +170,7 @@ def comparequery():
 	if master_file_dict == {}:
 		return_str =  "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
 		return return_str
-		
+
 
 	# This section is purely to sort by label alphabetically
 	for color in master_file_dict:
@@ -189,7 +193,7 @@ def comparequery():
 				for file_id in file_paths[filetype]:
 					filepath = file_paths[filetype][file_id]
 					if os.path.isfile(filepath):
-						sqlite_db = SqliteDict(filepath, autocommit=False)
+						sqlite_db = SqliteDict(f"{filepath}", autocommit=False, decode=my_decoder)
 					else:
 						return_str =  "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
 						if app.debug == True:

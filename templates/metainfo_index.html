@@ -4,7 +4,8 @@
 <head>
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/metainfo.css') }}">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.css"/>
-
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-2.3.2.min.js"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-2.3.2.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.js">
 </script>
 </head>
@@ -863,7 +864,17 @@ $("#metainfoquery").click(function() {
 			"mismatch_minreadlen":mismatch_minreadlen,"normalise":normalise,"mismatch_maxreadlen":mismatch_maxreadlen,"tran_corr_transcript1":tran_corr_transcript1,
 			"tran_corr_transcript2":tran_corr_transcript2,"apply_offset":apply_offset,"sw_diff_group1":sw_diff_group1,"sw_diff_group2":sw_diff_group2,"sw_diff_window_size":sw_diff_window_size,
 			"sw_diff_step_size":sw_diff_step_size,"sw_diff_min_diff":sw_diff_min_diff};
-
+	//var file_list = [];
+	//for (var filetype in accepted_files) {
+	//		for (var study_id in accepted_files[filetype]) {
+	//				for (var file_id in accepted_files[filetype][study_id]) {
+	//						var newelement=$('input:checkbox[name='+file_id+']:checked').val();
+	//						if (newelement == 'inputfile'){
+	//								file_list.push(file_id);
+	//														};
+	//																		}
+	//														}
+	//									};
 	qu["file_list"] = alt_file_list
 	//console.log("len of File list is "+file_list.length);
 	console.log("len of Alt file list is "+alt_file_list.length);
@@ -878,9 +889,9 @@ $("#metainfoquery").click(function() {
 		url: url,
 		data: JSON.stringify(qu),
 		success: function (data) {
-
-
+				
 					if (data.slice(0, 2) == "TE"){
+						console.log("TE TABLE LOAD")
 						//update link to point to temporary csv
 						var splitdata = data.split("?~");
 						
@@ -919,6 +930,8 @@ $("#metainfoquery").click(function() {
 						$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
 						document.getElementById('container').scrollIntoView();
 						}
+					
+
 	 },
 	 dataType: "html"
  });
@@ -927,7 +940,72 @@ $("#metainfoquery").click(function() {
 
 
 
+function update_progress(status_url, nanobar) {
+	console.log("update progress called");
+	// send GET request to status URL
+	console.log("Status url is", status_url);
+	$.getJSON(status_url, function(data) {
+		console.log("Updating UI")
+		// update UI
+		percent = parseInt(data['current'] * 100 / data['total']);
+		nanobar.go(percent);
+		//$(status_div.childNodes[1]).text(percent + '%');
+		//$(status_div.childNodes[2]).text(data['status']);
+		$("#loading_header").text(data['status'])
+		
 
+		if (data['state'] == 'SUCCESS') {
+			console.log("state is success");
+			if (data["status"] == "Complete") {
+				var graph = $("#container");
+				graph.html(data['result']);
+				$("#loading-div-background").hide();
+				$("#container").show();
+				$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
+				document.getElementById('container').scrollIntoView();
+				}
+			else if (data['status'] == 'Complete_TE') {
+				//update link to point to temporary csv
+				var splitdata = data["result"].split("?~");
+				var base_url = "{{ url_for('static',filename='') }}";
+				var headers = splitdata[2];
+				$('#te_table').empty();
+				$('#te_table').html('<a id="table_link" href= "{{ url_for("static", filename="tmp/robots.tx") }}" download="robots.txt"> Download entire table</a><table  id="myTable" class="prediction_table hover"><tbody> </tbody></table>');
+				var mytable = document.getElementById('myTable')
+				mytable.innerHTML = "";
+				mytable.innerHTML = headers;
+				var table_link = document.getElementById('table_link');
+				table_link.href = base_url+"tmp/"+splitdata[3]
+				table_link.download = splitdata[3]
+				table_link.text = "Download "+splitdata[1]+" rows as csv"
+				$('#myTable').DataTable().clear();
+				$('#myTable').DataTable().destroy();
+				var table = $('#myTable').DataTable();
+				
+				for(var i = 4; i < splitdata.length-1; i++) {
+						splitrow = splitdata[i].split(".;")
+						table.row.add(splitrow).draw(false);
+						}
+						table.draw()
+						te_div.style.visibility = "visible";
+						var graph = $("#container");
+						graph.html("");
+						$("#loading-div-background").hide();
+						$("#container").show();
+				}
+			
+			
+			}
+		
+		else {
+			// rerun in 2 seconds
+			setTimeout(function() {
+			console.log("State is", data["state"]);
+			update_progress(status_url, nanobar);
+			}, 500);
+			}
+		});
+	}
 
 
 
@@ -948,24 +1026,40 @@ if (html_args["user_plot_type"] != "None") {
 
 // if the user passes a list of files, or studies uncheck everything then recheck only those checkboxes which the user passed
 if (html_args["user_files"].length != 0 || html_args["user_ribo_studies"].length != 0 || html_args["user_rna_studies"].length != 0) {
-	for (i in seq_types) {
-		var seq_type = seq_types[i];
-		$('input.'+seq_type+'_file').prop('checked',false);
-	}
+		for (i in seq_types) {
+			var seq_type = seq_types[i];
+			$('input.'+seq_type+'_file').prop('checked',false);
+			console.log("User files submitted setting alt file list to empty");
+			alt_file_list = [];
+		}
+
 		if (html_args["user_files"].length != 0) {
+				console.log("Adding individual user files to alt file list");
 				for (i in html_args["user_files"]) {
 						$('input.file_'+html_args["user_files"][i]+'').prop('checked',true);
+						addItOnce(alt_file_list, html_args["user_files"][i]);
 						}};
 
 		if (html_args["user_ribo_studies"].length != 0) {
 				for (i in html_args["user_ribo_studies"]) {
+						console.log("Adding riboseq study to alt file list", html_args["user_ribo_studies"][i]);
+						//console.log("USER RIBO STUDIES "+user_ribo_studies[i]);
 						$('input.riboseq_study'+html_args["user_ribo_studies"][i]+'').prop('checked',true);
-						}};
+						$('input.riboseq_study'+html_args["user_ribo_studies"][i]+'').each(function(){
+							var file_id = $(this).attr('name');
+							addItOnce(alt_file_list, file_id);
+						});
+					}};
 
 		if (html_args["user_rna_studies"].length != 0) {
 				for (i in html_args["user_rna_studies"]) {
+						console.log("Adding rna study to alt file list", html_args["user_rna_studies"][i]);
 						$('input.rnaseq_study'+html_args["user_rna_studies"][i]+'').prop('checked',true);
-						}};
+						$('input.rnaseq_study'+html_args["user_rna_studies"][i]+'').each(function(){
+							var file_id = $(this).attr('name');
+							addItOnce(alt_file_list, file_id);
+						});
+					}};
 				}
 
 if (html_args["nuc_comp_direction"] == "nuc_comp_five") {

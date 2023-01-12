@@ -1,0 +1,10 @@
+digraph "ViennaRNA/landscape" {
+  bgcolor=transparent;
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_b65dce601f6c2aa1a9f53e1dbd97d018 {
+    graph [ bgcolor="#ddddee", pencolor="black", label="ViennaRNA" fontname="Helvetica", fontsize="10", URL="dir_b65dce601f6c2aa1a9f53e1dbd97d018.html"]
+  dir_6d7a52b325451b7ac0a99d06d420abcb [shape=box, label="landscape", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_6d7a52b325451b7ac0a99d06d420abcb.html"];
+  }
+}

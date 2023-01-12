@@ -1,0 +1,4 @@
+import RNA
+
+(ss, mfe) = RNA.fold("AUGCGUAGCUAGCUAGCUAGCUAGCUGACUGAUGCGCGUCUGA")
+print mfe

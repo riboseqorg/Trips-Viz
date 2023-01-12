@@ -1,0 +1,71 @@
+\hypertarget{equilibrium__probs_8h_source}{}\section{equilibrium\+\_\+probs.\+h}
+\label{equilibrium__probs_8h_source}\index{ViennaRNA/equilibrium\_probs.h@{ViennaRNA/equilibrium\_probs.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{preprocessor}{\#ifndef VIENNA\_RNA\_PACKAGE\_EQUILIBRIUM\_PROBS\_H}}
+\DoxyCodeLine{00002 \textcolor{preprocessor}{\#define VIENNA\_RNA\_PACKAGE\_EQUILIBRIUM\_PROBS\_H}}
+\DoxyCodeLine{00003 }
+\DoxyCodeLine{00004 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{datastructures_2basic_8h}{ViennaRNA/datastructures/basic.h}}>}}
+\DoxyCodeLine{00005 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{fold__compound_8h}{ViennaRNA/fold\_compound.h}}>}}
+\DoxyCodeLine{00006 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{utils_2structures_8h}{ViennaRNA/utils/structures.h}}>}}
+\DoxyCodeLine{00007 \textcolor{preprocessor}{\#include <\mbox{\hyperlink{params_2basic_8h}{ViennaRNA/params/basic.h}}>}}
+\DoxyCodeLine{00008 }
+\DoxyCodeLine{00020 \textcolor{comment}{/*}}
+\DoxyCodeLine{00021 \textcolor{comment}{ \#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{00022 \textcolor{comment}{ \# BASE PAIR PROBABILITY RELATED FUNCTIONS       \#}}
+\DoxyCodeLine{00023 \textcolor{comment}{ \#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+\DoxyCodeLine{00024 \textcolor{comment}{ */}}
+\DoxyCodeLine{00025 }
+\DoxyCodeLine{00026 \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00027 vrna\_pairing\_probs(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *vc,}
+\DoxyCodeLine{00028                    \textcolor{keywordtype}{char}                 *structure);}
+\DoxyCodeLine{00029 }
+\DoxyCodeLine{00030 }
+\DoxyCodeLine{00054 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00055 \mbox{\hyperlink{group__part__func__global_gad3f0c240512e6d43e2e4d4c2076021f5}{vrna\_mean\_bp\_distance\_pr}}(\textcolor{keywordtype}{int}        length,}
+\DoxyCodeLine{00056                          \mbox{\hyperlink{group__data__structures_ga31125aeace516926bf7f251f759b6126}{FLT\_OR\_DBL}} *\mbox{\hyperlink{fold__vars_8h_ac98ec419070aee6831b44e5c700f090f}{pr}});}
+\DoxyCodeLine{00057 }
+\DoxyCodeLine{00058 }
+\DoxyCodeLine{00075 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00076 \mbox{\hyperlink{group__part__func__global_gaa6b8983b559b9ef4b2e1b31113ea317b}{vrna\_mean\_bp\_distance}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *vc);}
+\DoxyCodeLine{00077 }
+\DoxyCodeLine{00078 }
+\DoxyCodeLine{00103 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00104 \mbox{\hyperlink{group__part__func__global_gaaf197722d1faa86af5e7b4240acafdee}{vrna\_ensemble\_defect}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *fc,}
+\DoxyCodeLine{00105                      \textcolor{keyword}{const} \textcolor{keywordtype}{char}           *structure);}
+\DoxyCodeLine{00106 }
+\DoxyCodeLine{00107 }
+\DoxyCodeLine{00130 \textcolor{keywordtype}{double} *}
+\DoxyCodeLine{00131 \mbox{\hyperlink{group__part__func__global_ga4ec346141028c7bcd15bc235c408b6e9}{vrna\_positional\_entropy}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *fc);}
+\DoxyCodeLine{00132 }
+\DoxyCodeLine{00133 }
+\DoxyCodeLine{00146 \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}} *}
+\DoxyCodeLine{00147 \mbox{\hyperlink{group__part__func__global_ga132664bf29fdc30bb5ea715491d1ab22}{vrna\_stack\_prob}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}  *vc,}
+\DoxyCodeLine{00148                 \textcolor{keywordtype}{double}                cutoff);}
+\DoxyCodeLine{00149 }
+\DoxyCodeLine{00150 }
+\DoxyCodeLine{00151 \textcolor{comment}{/* End base pair related functions */}}
+\DoxyCodeLine{00174 \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00175 \mbox{\hyperlink{group__part__func__global_gaa1e39e73afb51fbaf4ae38f0c066c46b}{vrna\_pf\_dimer\_probs}}(\textcolor{keywordtype}{double}                  FAB,}
+\DoxyCodeLine{00176                     \textcolor{keywordtype}{double}                  FA,}
+\DoxyCodeLine{00177                     \textcolor{keywordtype}{double}                  FB,}
+\DoxyCodeLine{00178                     \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}               *prAB,}
+\DoxyCodeLine{00179                     \textcolor{keyword}{const} \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}         *prA,}
+\DoxyCodeLine{00180                     \textcolor{keyword}{const} \mbox{\hyperlink{group__struct__utils__plist_structvrna__elem__prob__s}{vrna\_ep\_t}}         *prB,}
+\DoxyCodeLine{00181                     \textcolor{keywordtype}{int}                     Alength,}
+\DoxyCodeLine{00182                     \textcolor{keyword}{const} \mbox{\hyperlink{group__energy__parameters_structvrna__exp__param__s}{vrna\_exp\_param\_t}}  *exp\_params);}
+\DoxyCodeLine{00183 }
+\DoxyCodeLine{00184 }
+\DoxyCodeLine{00208 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00209 \mbox{\hyperlink{group__part__func__global_ga882c35d9dd775c1275593b3b6a966bec}{vrna\_pr\_structure}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}}  *fc,}
+\DoxyCodeLine{00210                   \textcolor{keyword}{const} \textcolor{keywordtype}{char}            *structure);}
+\DoxyCodeLine{00211 }
+\DoxyCodeLine{00212 }
+\DoxyCodeLine{00213 \textcolor{keywordtype}{double}}
+\DoxyCodeLine{00214 \mbox{\hyperlink{equilibrium__probs_8h_aa88e17336daede0e6db4da1f3252c031}{vrna\_pr\_energy}}(\mbox{\hyperlink{group__fold__compound_structvrna__fc__s}{vrna\_fold\_compound\_t}} *vc,}
+\DoxyCodeLine{00215                \textcolor{keywordtype}{double}               e);}
+\DoxyCodeLine{00216 }
+\DoxyCodeLine{00217 }
+\DoxyCodeLine{00218 \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -1,0 +1,324 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+div #choose_region_of_interest {
+		display: inline-block;
+		float: left;
+		width:45%;
+		}
+div #features_and_limits {
+display: inline-block;
+float: right;
+width:100%;
+		}
+
+.filters {
+	margin: 0 auto;
+	}
+</style>
+
+<head>
+<link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
+</head>
+<h3> Filters</h3><br>
+<div>
+<table class="filters">
+<tr><td>Organism:</td><td><select name="organism" id="organism_dropdown">
+<option value="item0">Select an Organism</option>
+</select>  </td></tr>
+<tr><td>Label:</td><td><input id="label" name="label" value=""></input></td>   <td></tr>
+<tr><td><br></td></tr>
+<tr><td><br></td></tr>
+</table>
+</div>
+</div>
+
+<div id="buttons"></div>
+<div id="wrapper" style="text-align: center"><button class="button" type="button"  id="query"><b>Generate table</b></button></div>
+<div id="loading-div-background">
+<div id="loading-div" class="ui-corner-all" >
+<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
+<h3 style="color:gray;font-weight:normal;">Loading....</h3>
+</div>
+</div>
+
+
+<div id="results_container">
+
+
+
+<br><br><br><br>
+<h2 align="center"> Results Table </h2>
+<table  id="myTable" class="prediction_table hover">
+{% if advanced %}
+		<thead><tr><th>Gene</th><th>Tran</th><th>Start</th><th>Stop</th><th>Length</th><th>Score</th><th>Label</th> <th>Trips-viz link</th> <th>Delete</th> </tr></thead><tbody></tr>
+{% endif %}
+
+{% if not advanced %}
+		<thead><tr><th>Gene</th><th>Tran</th><th>Start</th><th>Stop</th><th>Length</th><th>Score</th><th>Label</th> <th>Trips-viz link</th> <th>Delete</th> </tr></thead><tbody></tr>
+{% endif %}
+
+
+</tbody>
+</table>
+
+</div>
+
+<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script type="text/javascript">
+
+
+//"aaSorting": []
+
+
+$(document).ready( function () {
+		$('#summary_table').DataTable({
+				"aaSorting": []
+				});
+		$('#myTable').DataTable({
+			dom: 'Bfrtip',
+			buttons: [
+			  'csv'
+			 ],
+				"order": [[ 5, "desc" ]],
+				});
+		} );
+
+
+// If the user presses the enter key call the #query function (generates the plot)
+$(document).keypress(function(e){
+if (e.which == 13){
+	$("#query").click();
+}
+});
+
+
+// If local mode is true change the url called by query
+var local = "{{ local|safe }}";
+if (local == "True") {
+	var url = "/savedquery"
+	}
+else {
+	var url = "/savedquery"
+	}
+
+
+// If local mode is true change the url called by query
+var local = "{{ local|safe }}";
+if (local == "True") {
+	var del_url = "/del_query"
+	}
+else {
+	var del_url = "/del_query"
+	}
+
+
+
+var organism_list = {{ organism_list|safe }};
+
+for (var i in organism_list) {
+	org_dropdown = document.getElementById('organism_dropdown');
+	org_dropdown.options[org_dropdown.options.length] = new Option(organism_list[i], organism_list[i]);
+	}
+
+//setup splitdata as a global var so we can access it in annotate_query
+var splitdata = "";
+
+// When any of the buttons in summary table are pressed this function takes the values of that row and fills in the min/max feature boxes
+function populate_min_max(limits){
+		document.getElementById(limits.split(",")[7]+'_score').value = limits.split(",")[1]
+		document.getElementById(limits.split(",")[7]+'_entropy').value = limits.split(",")[2]
+		document.getElementById(limits.split(",")[7]+'_start_increase').value = limits.split(",")[3]
+		document.getElementById(limits.split(",")[7]+'_stop_decrease').value = limits.split(",")[4]
+		document.getElementById(limits.split(",")[7]+'_coverage').value = limits.split(",")[5]
+		document.getElementById(limits.split(",")[7]+'_te').value = limits.split(",")[6]
+		};
+
+
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+$("#query").click(function() {
+		$("#loading-div-background").show();
+		$("#results_container").hide();
+		var sc_none = $('input:checkbox[name=sc_none]:checked').val();
+		var min_score = $('input:text[name=min_score]').val();
+		var max_score = $('input:text[name=max_score]').val();
+		var org = document.getElementById("organism_dropdown");
+		var strorg = org.options[org.selectedIndex].text;
+		//var transcriptome = $('input:text[name=transcriptome]').val();
+		var label = $('input:text[name=label]').val();
+
+		var qu = {"organism":strorg,
+					"label":label,
+					"sc_none":sc_none,
+					"min_score":min_score,
+					"max_score":max_score};
+
+
+		$.ajax({
+				type: "POST",
+				async:true,
+				contentType: "application/json; charset=utf-8",
+				url: url,
+				data: JSON.stringify(qu),
+				dataType: "html",
+				success: function (data) {
+						if (data == "Error") {
+								window.scrollTo(0,0);
+								$("#loading-div-background").hide();
+								$("#results_container").show();
+								var table = $('#myTable').DataTable();
+								table.clear()
+								table.row.add(["ERROR: No files selected","","","","","","","","","","","","","","",""]).draw( false );
+								}
+						else {
+								var div = document.getElementById('results_container');
+								var table_link = document.getElementById('table_link');
+								var base_url = "{{ url_for('static',filename='') }}";
+								splitdata =  data.split(".,/");
+								var table = $('#myTable').DataTable();
+								table.clear()
+								//var file_list = ((splitdata[0]).split(",")[9]).replace(/;/g,",")
+								// there is a space in front of the file_list for some reason, this line removes it
+								//file_list = file_list.slice(1)
+								//console.log("file_list"+file_list+file_list[0]);
+
+								for(var i = 0; i < splitdata.length-1; i++) {
+										splitline = splitdata[i].split(",")
+										table.row.add( [
+											splitline[0],
+											splitline[1],
+											splitline[2],
+											splitline[3],
+											splitline[4],
+											splitline[5],
+											splitline[6],
+											(splitline[8]).replace(/;/g,","),
+											"<button class='button' type='button'  id='del_query'  onclick='del_query("+i+")'><b>Delete</b></button>"
+											] ).draw( false );
+										};
+								table.draw()
+								$("#loading-div-background").hide();
+								$("#results_container").show();
+
+								}}
+
+										});
+						});
+
+
+
+
+// Use this to create annotate button in the table, make sure to add a new header on table creation
+//"<button class='button' type='button'  id='annotate_query'  onclick='annotate_query("+input_str+")'><b>Save</b></button>"
+
+
+
+// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
+function del_query(i){
+		input_line = splitdata[i].split(",")
+		var qu = {"label":input_line[6],
+					"transcript":input_line[1],
+					"start":input_line[2],
+					"stop":input_line[3],
+					"trips_link":input_line[8]};
+		$.ajax({
+				type: "POST",
+				async:true,
+				contentType: "application/json; charset=utf-8",
+				url: del_url,
+				data: JSON.stringify(qu),
+				dataType: "html"
+				});
+										};
+
+
+jQuery('#noncoding').click(function(){
+		$("#max_cds").val("0");
+
+		$("#cds_ratio_check").prop("checked", false);
+		});
+
+
+jQuery('#noncoding , #uorf , #ouorf , #odorf , #dorf , #readthrough , #plusone , #minusone , #extension').click(function(){
+		jQuery('#highest_frame_diff_check').prop('checked', true);
+		jQuery('#lowest_frame_diff_check').prop('checked', false);
+});
+
+
+
+jQuery('#nested').click(function(){
+		jQuery('#highest_frame_diff_check').prop('checked', false);
+		jQuery('#lowest_frame_diff_check').prop('checked', true);
+});
+
+
+
+
+jQuery('#cds, #nested, #extension').click(function(){
+		$("#max_cds").val("1");
+		$("#min_cds_ratio").val("0.9");
+		$("#cds_ratio_check").prop("checked", true);
+		});
+
+
+jQuery('#plusone , #minusone , #readthrough').click(function(){
+		jQuery('#start_increase_check').prop('checked', false);
+		jQuery('#stop_decrease_check').prop('checked', true);
+		$('#AUG').prop('checked', false);
+		$('#CUG').prop('checked', false);
+		$('#GUG').prop('checked', false);
+		$("#NONE").prop("checked", true);
+		$("#max_cds").val("0.5");
+		$("#cds_ratio_check").prop("checked", false);
+		});
+
+
+
+jQuery('#uorf , #ouorf  , #odorf , #dorf').click(function(){
+		$("#max_cds").val("0.5");
+		$("#NONE").prop("checked", false);
+		$("#cds_ratio_check").prop("checked", false);
+		});
+
+jQuery('#extension').click(function(){
+		jQuery('#start_increase_check').prop('checked', true);
+		jQuery('#stop_decrease_check').prop('checked', false);
+		});
+
+
+
+jQuery('#extension').click(function(){
+		$("#max_cds").val("1");
+		$("#NONE").prop("checked", false);
+		$("#cds_ratio_check").prop("checked", false);
+		});
+
+
+
+jQuery('#cds , #uorf , #ouorf , #extension , #nested , #odorf , #dorf , #noncoding').click(function(){
+		$('#AUG').prop('checked', true);
+		$("#NONE").prop("checked", false);
+
+		});
+
+jQuery('#cds , #uorf , #ouorf  , #nested , #odorf , #dorf , #noncoding').click(function(){
+		jQuery('#start_increase_check').prop('checked', true);
+		jQuery('#stop_decrease_check').prop('checked', true);
+		$("#AUG").prop("checked", true);
+		});
+
+
+
+
+
+
+
+
+
+
+</script>
+{% endblock %}

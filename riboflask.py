@@ -13,7 +13,7 @@ from fetch_shelve_reads2 import get_reads,get_seq_var,get_readlength_breakdown
 import sqlite3
 import os
 import config
-from new_plugins import InteractiveLegendPlugin,PointHTMLTooltip,TopToolbar,DownloadProfile,DownloadPNG
+from new_plugins import InteractiveLegendPlugin,PointHTMLTooltip,TopToolbar,DownloadProfile,DownloadPNG,DownloadSVG
 import time
 
 # CSS for popup tables that appear when hovering over aug codons
@@ -71,7 +71,6 @@ def get_user_defined_seqs(seq,seqhili):
 
 
 def merge_dicts(dict1,dict2):
-	print ("dict1, dict2,", dict1, dict2)
 	for nuc in dict2:
 		if nuc not in dict1:
 			dict1[nuc] = dict2[nuc]
@@ -118,7 +117,7 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 			return_str =  "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome)
 			return return_str
 	else:
-		transhelve = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(trips_uploads_location,owner,organism,transcriptome))
+		transhelve = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(trips_uploads_location,owner,organism,transcriptome))
 	connection.close()
 	cursor = transhelve.cursor()
 	cursor.execute("SELECT * from transcripts WHERE transcript = '{}'".format(tran))
@@ -190,7 +189,6 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 	all_rna_reads, rna_seqvar_dict = get_reads(ambig, min_read, max_read, tran, file_paths_dict,tranlen,True, organism, False,noisered, primetype,"rnaseq",readscore,pcr,get_mismatches=mismatches)
 	#self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
 	all_subcodon_reads,ribo_seqvar_dict = get_reads(ambig, min_read, max_read, tran, file_paths_dict,tranlen,ribocoverage, organism, True,noisered, primetype,"riboseq",readscore,secondary_readscore,pcr,get_mismatches=mismatches)
-	print ("ribo_seqvar_dict", ribo_seqvar_dict)
 	seq_var_dict = merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
 	try:
 		rnamax = max(all_rna_reads.values())
@@ -208,18 +206,23 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 		ax_main.spines[s].set_linewidth(15)
 		ax_main.spines[s].set_color("red")
 	alt_seq_type_vars = []
+	#Store the  counts of any alt seq types so they can be written to csv file later
+	alt_seq_dict = {}
 	# Plot any alternative sequence types if there are any
 	for seq_type in file_paths_dict:
 		
 		if seq_type != "riboseq" and seq_type != "rnaseq":
 			if file_paths_dict[seq_type] == {}:
 				continue
-			if seq_rules[seq_type]["frame_breakdown"] == 1:
-				frame_breakdown = True
+			if seq_type in seq_rules:
+				if seq_rules[seq_type]["frame_breakdown"] == 1:
+					frame_breakdown = True
+				else:
+					frame_breakdown = False
 			else:
 				frame_breakdown = False
 			alt_sequence_reads,empty_seqvar_dict = get_reads(ambig, min_read, max_read, tran, file_paths_dict,tranlen,True, organism, frame_breakdown,noisered, primetype,seq_type,readscore)
-
+			alt_seq_dict[seq_type] = alt_sequence_reads
 			if frame_breakdown == False:
 				alt_seq_plot = ax_main.plot(alt_sequence_reads.keys(), alt_sequence_reads.values(), alpha=1, label = seq_type, zorder=2, color='#5c5c5c', linewidth=2)
 				labels.append(seq_type)
@@ -290,7 +293,6 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 
 	#plot a dummy exon junction at postion -1, needed in cases there are no exon junctions, this wont be seen
 	allexons = ax_main.plot((-1,-1), (0, 1), alpha=0.01,color='black',linestyle = '-.', linewidth=2)
-	print ("Exon junctions", exon_junctions)
 	for exon in exon_junctions:
 		allexons += ax_main.plot((exon,exon), (0, y_max), alpha=0.95,color='black',linestyle = ':', linewidth=3)
 
@@ -508,7 +510,10 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 	#ax_f1.tick_params(which="both", bottom=False, color="lightgray")
 
 
-	returnstr = "Position,Sequence,Frame 1,Frame 2,Frame 3,RNA-Seq\n"
+	returnstr = "Position,Sequence,Frame 1,Frame 2,Frame 3,RNA-Seq"
+	for seq_type in alt_seq_dict:
+		returnstr += ",{}".format(seq_type)
+	returnstr += "\n"
 	for i in range(0,len(seq)):
 		f1_count = 0
 		f2_count = 0
@@ -522,12 +527,21 @@ subheading_size,axis_label_size,marker_size, transcriptome, trips_uploads_locati
 			f3_count = frame_counts[2][i+1]
 		if i+1 in all_rna_reads:
 			rna_count = all_rna_reads[i+1]
-		returnstr += "{},{},{},{},{},{}\n".format(i+1,seq[i],f1_count, f2_count, f3_count,rna_count)
+		returnstr += "{},{},{},{},{},{}".format(i+1,seq[i],f1_count, f2_count, f3_count,rna_count)
+		for seq_type in alt_seq_dict:
+			if i+1 in alt_seq_dict[seq_type]:
+				count = alt_seq_dict[seq_type][i+1]
+			else:
+				count = 0
+			returnstr += ",{}".format(count)
+		returnstr += "\n"
+
+
 
 	if seqhili == ['']:
-		plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, TopToolbar(yoffset=-50,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+		plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, TopToolbar(yoffset=-50,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str),DownloadSVG(returnstr=title_str))
 	else:
-		plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, signaltooltip1,signaltooltip2,signaltooltip3, TopToolbar(yoffset=-50,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str))
+		plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, signaltooltip1,signaltooltip2,signaltooltip3, TopToolbar(yoffset=-50,xoffset=-300),DownloadProfile(returnstr=returnstr),DownloadPNG(returnstr=title_str),DownloadSVG(returnstr=title_str))
 
 	ax_main.set_facecolor("white")
 	# This changes the size of the tick markers, works on both firefox and chrome.

@@ -4,9 +4,6 @@ function changebuttonlink(gwips_info){
 		gwips_db = gwips_info["clade"];
 		var userInput = document.getElementById('tran').value;
 		var lnk = document.getElementById('gwips_link');
-		console.log("GWIPS CLADE IS"+gwips_clade);
-		console.log("GWIPS org IS"+gwips_org);
-		console.log("GWIPS db IS"+gwips_db);
 		lnk.href = "https://gwips.ucc.ie/cgi-bin/hgTracks?clade="+gwips_clade+"&org="+gwips_org+"&db="+gwips_db+"&position=" + userInput + "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835";
 };
 
@@ -89,7 +86,6 @@ function view_study_info(){
 		var study_dialog = document.getElementById('study_dialog');
 		study_dialog.innerHTML = "";
 		var selected_study = document.querySelector('input[name=content_type]:checked').value;
-		console.log("This is what a reals tudy looks like"+selected_study);
 		tablehtml = "<table class='study_dialog_table'><thead><tr><th>Study name</th><th>GSE</th><th>Title</th><th>Year</th><th>Paper</th><th>SRP</th><th>PMID</th><th>Adapters</th></tr></thead>";
 
 		for (var key in studies_dict)  {
@@ -257,7 +253,6 @@ $(document).ready(function () {
 $(document).ready(function () {
 		$(".show").hide();
 		$('input[name=seq_type]').on('change', function() {
-				console.log("Seq TypE WaS CHAngEd");
 				var n = document.querySelector('input[name="content_type"]:checked').value;
 				var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
 
@@ -266,7 +261,6 @@ $(document).ready(function () {
 				}
 				for (file_type in seq_study_dict) {
 					if (file_type == seq_type) {
-						console.log("File type is seq_type "+file_type+"  "+seq_type);
 						for (var sub_study_id in seq_study_dict[file_type]) {
 							$("#label"+seq_study_dict[file_type][sub_study_id]+"").css({ opacity: 1 });
 						}

@@ -41,7 +41,10 @@ import numpy as np
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import pickle5
 
+def my_decoder(obj):
+	return pickle5.loads(obj)
 
 
 
@@ -192,7 +195,6 @@ def tran_to_genome(tran, pos, transcriptome_info_dict):
 
 
 def create_aggregate(file_paths_dict,study_path, seq_type):
-	logging.debug("aggregate filepathsdict", file_paths_dict)
 	ambig = "unambig"
 	file_count = 0
 	offset_dict = {}
@@ -201,7 +203,8 @@ def create_aggregate(file_paths_dict,study_path, seq_type):
 	for file_id in file_paths_dict[seq_type]:
 		file_list.append(file_id)
 		file_count += 1
-		sqlite_dict = SqliteDict(file_paths_dict[seq_type][file_id])
+		sqlite_dict = SqliteDict(f"{file_paths_dict[seq_type][file_id]}", autocommit=False, decode=my_decoder)
+		#sqlite_dict = SqliteDict(file_paths_dict[seq_type][file_id])
 		sqlite_db = dict(sqlite_dict)
 		sqlite_dict.close()
 		#offsets = offset_dict[file_id]
@@ -281,8 +284,8 @@ def create_profiles(file_paths_dict,accepted_transcript_list,ambig,total_files,m
 			file_count += 1
 
 			#logging.debug("file_id", file_id)
-			
-			sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
+			sqlite_db = SqliteDict(f"{file_paths_dict[seq_type][file_id]}", autocommit=False, decode=my_decoder)
+			#sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
 			if type(file_id) == str:
 				if "STUDY" in file_id:
 					subfiles = sqlite_db["file_list"]
@@ -672,7 +675,7 @@ def extract_values(accepted_orf_dict,data,tran_gene_dict,selected_seq_types,prof
 	for locus in accepted_orf_dict:
 		tot_loc += 1
 		if tot_loc%100 == 0:
-			logging.debug("total transcripts {}".format(tot_loc))
+			print ("total transcripts {}".format(tot_loc))
 		for stop in accepted_orf_dict[locus]:
 			best_values = {"start":-1,"high_frame_count":1,"low_frame_count":1,"start_score":-10,"stop_score":1,"final_score":-10000,"coverage":0,"length":0,
 				  "transcript":locus,"stop":0,"proteomics_count":0,"ratio":0,"inframe_count":0,"start_ratio":0,"stop_ratio":0,"high_ratio":0,"low_ratio":0,
@@ -981,14 +984,12 @@ def extract_values(accepted_orf_dict,data,tran_gene_dict,selected_seq_types,prof
 
 
 def write_to_file(sorted_all_values,filename,sequence_dict,organism,transcriptome,file_string):
-	#logging.debug("all sorted all values", sorted_all_values)
 	returnstr = "Table|"
 	tmp_result_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC,filename),"w")
 	tmp_result_file.write("Gene,Tran,Start,Stop,Length,Global_Rank,Type,Trips-viz link,Start Codon,Highframe rank,Highframe value,Lowframe rank,Lowframe value,Stop rank,Stop value,Start rank,Start value,Coverage rank,Coverage value,Inframe Count Rank,Inframe Count Value,Amino acid sequence,Proteomics count,Read density\n")
 	tup_count = 0
 	#logging.debug("writing to file",len(sorted_all_values))
 	for tup in sorted_all_values:
-		#logging.debug("tup", tup)
 		gene = tup[0]
 		transcript = tup[1]
 		start = tup[2]
@@ -998,13 +999,12 @@ def write_to_file(sorted_all_values,filename,sequence_dict,organism,transcriptom
 		orftype = tup[18]
 		proteomics_count = tup[19]
 		read_density = tup[20]
-		#logging.debug("transcript", transcript, "start", start, "stop", stop)
 		try:
 			seq = sequence_dict[transcript][start-1:stop]
 		except:
 			seq = ""
 		start_codon = seq[:3]
-		# Get amino acid sequence of this ORF, excluding the stop codon. 
+		#Get amino acid sequence of this ORF, excluding the stop codon. 
 		while len(seq)%3 != 0:
 			seq = seq[:-1]
 
@@ -1046,6 +1046,11 @@ def find_orfs(data,user,logged_in):
 		output = "nnet"
 	else:
 		pass
+		
+	total_files = len(data["file_list"])
+	if total_files > 100:
+		return "A maximum of 100 files can be selected on this page, currently there are {} selected".format(total_files)
+		
 	file_paths_dict = fetch_file_paths(data["file_list"],organism)
 	#Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
@@ -1293,7 +1298,7 @@ def find_orfs(data,user,logged_in):
 			return_str =  "Cannot find annotation file {}.{}.sqlite".format(organism,transcriptome)
 			return returnstr
 	else:
-		traninfo_connection = sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
+		traninfo_connection = sqlite3.connect("{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(config.UPLOADS_DIR,owner,organism,transcriptome))
 
 
 	#traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
@@ -1471,7 +1476,8 @@ def find_orfs(data,user,logged_in):
 
 
 	if output != "nnet":
-		returnstr = write_to_file(sorted_all_values,filename,sequence_dict,organism,transcriptome,file_string)
+		logging.debug("Writing to file")
+	returnstr = write_to_file(sorted_all_values,filename,sequence_dict,organism,transcriptome,file_string)
 
 	
 	logging.debug("creating returnstr")
@@ -1507,8 +1513,7 @@ def find_orfs(data,user,logged_in):
 				server.quit()
 			except:
 				pass
-	logging.debug("returning result")
-	#return returnstr
+	logging.debug("Returning result")
 	return returnstr
 
 # Returns a table with ranked orf scores
