@@ -59,7 +59,7 @@ line_tooltip_css = """
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, "rb"))
+    return pickle.load(open(obj, 'rb'))
 
 
 def mismatches(master_dict, title, short_code, background_col, title_size,
