@@ -12,7 +12,7 @@ import json
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
+    return pickle.loads(obj)
 
 
 # Single transcript comparison page, user chooses a gene and groups of files to display

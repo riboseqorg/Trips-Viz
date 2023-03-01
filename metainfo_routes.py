@@ -17,7 +17,7 @@ import json
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
+    return pickle.loads(obj)
 
 
 metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",

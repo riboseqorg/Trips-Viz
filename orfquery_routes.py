@@ -17,7 +17,7 @@ import pickle
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
+    return pickle.loads(obj)
 
 
 HEADER = "Gene, transcript,start, stop, start_codon, type, sru, coverage,median_diff,read_density,split,first_diff\n"

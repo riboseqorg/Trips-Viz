@@ -18,7 +18,7 @@ import pickle
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
+    return pickle.loads(obj)
 
 
 # Differential expression page, used to find diffentially expressed genes via z-score

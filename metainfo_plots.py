@@ -6,6 +6,7 @@ import os
 import operator
 from sqlitedict import SqliteDict
 from math import log
+import mpld3
 from mpld3 import plugins
 import pandas as pd
 import numpy as np
@@ -17,6 +18,7 @@ from bokeh.embed import file_html
 from bokeh.resources import CDN
 from bokeh.palettes import all_palettes
 import bokeh.models as bmo
+import pickle
 from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
@@ -40,7 +42,7 @@ line_tooltip_css = """
 
 
 def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
+    return pickle.loads(obj)
 
 
 def mismatches(master_dict, title, short_code, background_col, title_size,
