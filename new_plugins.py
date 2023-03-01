@@ -1,17 +1,10 @@
 import mpld3
-from mpld3 import plugins,utils
-
+from mpld3 import plugins, utils
 
 import collections
 import json
 import uuid
 import matplotlib
-
-
-
-
-
-
 
 
 class PointLabelTooltip(plugins.PluginBase):
@@ -35,21 +28,29 @@ class PointLabelTooltip(plugins.PluginBase):
     >>> plugins.connect(fig, PointLabelTooltip(points[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 labels=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "tooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LineLabelTooltip(plugins.PluginBase):
@@ -73,17 +74,25 @@ class LineLabelTooltip(plugins.PluginBase):
     >>> plugins.connect(fig, LineLabelTooltip(lines[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, label=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 label=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
-        self.dict_ = {"type": "tooltip",
-                      "id": plugins.get_id(points),
-                      "labels": label if label is None else [label],
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": plugins.get_id(points),
+            "labels": label if label is None else [label],
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LinkedBrush(plugins.PluginBase):
@@ -125,10 +134,12 @@ class LinkedBrush(plugins.PluginBase):
         else:
             suffix = None
 
-        self.dict_ = {"type": "linkedbrush",
-                      "button": button,
-                      "enabled": enabled,
-                      "id": plugins.get_id(points, suffix)}
+        self.dict_ = {
+            "type": "linkedbrush",
+            "button": button,
+            "enabled": enabled,
+            "id": plugins.get_id(points, suffix)
+        }
 
 
 class PointHTMLTooltip(plugins.PluginBase):
@@ -189,8 +200,7 @@ class PointHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, css=None):
+    def __init__(self, points, labels=None, hoffset=0, voffset=10, css=None):
         self.points = points
         self.labels = labels
         self.voffset = voffset
@@ -200,11 +210,13 @@ class PointHTMLTooltip(plugins.PluginBase):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "htmltooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "htmltooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class LineHTMLTooltip(plugins.PluginBase):
@@ -266,23 +278,23 @@ class LineHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, line, label=None,
-                 hoffset=0, voffset=10,
-                 css=None):
+    def __init__(self, line, label=None, hoffset=0, voffset=10, css=None):
         self.line = line
         self.label = label
         self.voffset = voffset
         self.hoffset = hoffset
         self.css_ = css or ""
-        self.dict_ = {"type": "linehtmltooltip",
-                      "id": plugins.get_id(line),
-                      "label": label,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "linehtmltooltip",
+            "id": plugins.get_id(line),
+            "label": label,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class InteractiveLegendPlugin(plugins.PluginBase):
-	"""A plugin for an interactive legends.
+    """A plugin for an interactive legends.
 
 	Inspired by http://bl.ocks.org/simzou/6439398
 
@@ -331,7 +343,7 @@ class InteractiveLegendPlugin(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 	mpld3.register_plugin("interactive_legend", InteractiveLegend);
 	InteractiveLegend.prototype = Object.create(mpld3.Plugin.prototype);
 	InteractiveLegend.prototype.constructor = InteractiveLegend;
@@ -475,70 +487,81 @@ class InteractiveLegendPlugin(plugins.PluginBase):
 	};
 	"""
 
-	css_ = """
+    css_ = """
 	.legend-box {
 	  cursor: pointer;
 	}
 	"""
 
-	def __init__(self, plot_elements, labels, ax=None,
-				 alpha_sel=1, alpha_unsel=0.2, xoffset=0, yoffset=0,start_visible=False,fontsize=18):
+    def __init__(self,
+                 plot_elements,
+                 labels,
+                 ax=None,
+                 alpha_sel=1,
+                 alpha_unsel=0.2,
+                 xoffset=0,
+                 yoffset=0,
+                 start_visible=False,
+                 fontsize=18):
 
-		self.ax = ax
+        self.ax = ax
 
-		if ax:
-			ax = plugins.get_id(ax)
+        if ax:
+            ax = plugins.get_id(ax)
 
-		# start_visible could be a list
-		if isinstance(start_visible, bool):
-			start_visible = [start_visible] * len(labels)
-		elif not len(start_visible) == len(labels):
-			raise ValueError("{} out of {} visible params has been set".format(len(start_visible), len(labels)))
+        # start_visible could be a list
+        if isinstance(start_visible, bool):
+            start_visible = [start_visible] * len(labels)
+        elif not len(start_visible) == len(labels):
+            raise ValueError("{} out of {} visible params has been set".format(
+                len(start_visible), len(labels)))
 
-		mpld4_element_ids = self._determine_mpld4ids(plot_elements)
-		self.mpld4_element_ids = mpld4_element_ids
-		self.dict_ = {"type": "interactive_legend",
-					  "element_ids": mpld4_element_ids,
-					  "labels": labels,
-					  "ax": ax,
-					  "alpha_sel": alpha_sel,
-					  "alpha_unsel": alpha_unsel,
-					  "xoffset":xoffset,
-					  "yoffset":yoffset,
-					  "start_visible":start_visible,
-					  "fontsize":fontsize}
+        mpld4_element_ids = self._determine_mpld4ids(plot_elements)
+        self.mpld4_element_ids = mpld4_element_ids
+        self.dict_ = {
+            "type": "interactive_legend",
+            "element_ids": mpld4_element_ids,
+            "labels": labels,
+            "ax": ax,
+            "alpha_sel": alpha_sel,
+            "alpha_unsel": alpha_unsel,
+            "xoffset": xoffset,
+            "yoffset": yoffset,
+            "start_visible": start_visible,
+            "fontsize": fontsize
+        }
 
-	def _determine_mpld4ids(self, plot_elements):
-		"""
+    def _determine_mpld4ids(self, plot_elements):
+        """
 		Helper function to get the mpld4_id for each
 		of the specified elements.
 		"""
-		mpld4_element_ids = []
+        mpld4_element_ids = []
 
-		# There are two things being done here. First,
-		# we make sure that we have a list of lists, where
-		# each inner list is associated with a single legend
-		# item. Second, in case of Line2D object we pass
-		# the id for both the marker and the line.
-		# on the javascript side we filter out the nulls in
-		# case either the line or the marker has no equivalent
-		# D3 representation.
-		for entry in plot_elements:
-			ids = []
-			if isinstance(entry, collections.Iterable):
-				for element in entry:
-					mpld4_id = plugins.get_id(element)
-					ids.append(mpld4_id)
-					if isinstance(element, matplotlib.lines.Line2D):
-						mpld4_id = plugins.get_id(element, 'pts')
-						ids.append(mpld4_id)
-			else:
-				ids.append(plugins.get_id(entry))
-				if isinstance(entry, matplotlib.lines.Line2D):
-					mpld4_id = plugins.get_id(entry, 'pts')
-					ids.append(mpld4_id)
-			mpld4_element_ids.append(ids)
-		return mpld4_element_ids
+        # There are two things being done here. First,
+        # we make sure that we have a list of lists, where
+        # each inner list is associated with a single legend
+        # item. Second, in case of Line2D object we pass
+        # the id for both the marker and the line.
+        # on the javascript side we filter out the nulls in
+        # case either the line or the marker has no equivalent
+        # D3 representation.
+        for entry in plot_elements:
+            ids = []
+            if isinstance(entry, collections.abc.Iterable):
+                for element in entry:
+                    mpld4_id = plugins.get_id(element)
+                    ids.append(mpld4_id)
+                    if isinstance(element, matplotlib.lines.Line2D):
+                        mpld4_id = plugins.get_id(element, 'pts')
+                        ids.append(mpld4_id)
+            else:
+                ids.append(plugins.get_id(entry))
+                if isinstance(entry, matplotlib.lines.Line2D):
+                    mpld4_id = plugins.get_id(entry, 'pts')
+                    ids.append(mpld4_id)
+            mpld4_element_ids.append(ids)
+        return mpld4_element_ids
 
 
 class PointClickableHTMLTooltip(plugins.PluginBase):
@@ -610,8 +633,13 @@ class PointClickableHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None, targets=None,
-                 hoffset=2, voffset=-6, css=None):
+    def __init__(self,
+                 points,
+                 labels=None,
+                 targets=None,
+                 hoffset=2,
+                 voffset=-6,
+                 css=None):
         self.points = points
         self.labels = labels
         self.targets = targets
@@ -623,17 +651,18 @@ class PointClickableHTMLTooltip(plugins.PluginBase):
         else:
             styled_targets = None
 
-
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "clickablehtmltooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "targets": styled_targets,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "clickablehtmltooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "targets": styled_targets,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class MouseXPosition(plugins.PluginBase):
@@ -678,16 +707,19 @@ class MouseXPosition(plugins.PluginBase):
     >>> plugins.connect(fig, plugins.MouseXPosition())
     >>> fig_to_html(fig)
     """
-    def __init__(self, fontsize=12, fmt="8.0f"):
-        self.dict_ = {"type": "mousexposition",
-                      "fontsize": fontsize,
-                      "fmt": fmt}
-        
-        
-class TopToolbar(plugins.PluginBase):
-	"""Plugin for moving toolbar to top of figure"""
 
-	JAVASCRIPT = """
+    def __init__(self, fontsize=12, fmt="8.0f"):
+        self.dict_ = {
+            "type": "mousexposition",
+            "fontsize": fontsize,
+            "fmt": fmt
+        }
+
+
+class TopToolbar(plugins.PluginBase):
+    """Plugin for moving toolbar to top of figure"""
+
+    JAVASCRIPT = """
 	mpld3.register_plugin("toptoolbar", TopToolbar);
 	TopToolbar.prototype = Object.create(mpld3.Plugin.prototype);
 	TopToolbar.prototype.constructor = TopToolbar;
@@ -734,14 +766,17 @@ class TopToolbar(plugins.PluginBase):
 	  this.fig.toolbar.draw = function() {}
 	}
 	"""
-	def __init__(self,xoffset=0, yoffset=0):
-		self.dict_ = {"type": "toptoolbar",
-					  "xoffset":xoffset,
-					  "yoffset":yoffset} 
-        
+
+    def __init__(self, xoffset=0, yoffset=0):
+        self.dict_ = {
+            "type": "toptoolbar",
+            "xoffset": xoffset,
+            "yoffset": yoffset
+        }
+
 
 class DownloadProfile(plugins.PluginBase):
-	"""A Plugin to enable an HTML tooltip:
+    """A Plugin to enable an HTML tooltip:
 	formated text which hovers over points.
 
 	Parameters
@@ -766,7 +801,7 @@ class DownloadProfile(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 
 
 
@@ -1004,19 +1039,15 @@ class DownloadProfile(plugins.PluginBase):
 
 	"""
 
-	def __init__(self,returnstr=2017,css=None):
-		self.returnstr = returnstr
-		self.css_ = css or ""
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
 
-		self.dict_ = {"type": "downloadprofile",
-					  "returnstr": returnstr}
-
-
-
+        self.dict_ = {"type": "downloadprofile", "returnstr": returnstr}
 
 
 class DownloadPNG(plugins.PluginBase):
-	"""A Plugin to enable an HTML tooltip:
+    """A Plugin to enable an HTML tooltip:
 	formated text which hovers over points.
 
 	Parameters
@@ -1041,7 +1072,7 @@ class DownloadPNG(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 
 	/* FileSaver.js
 	 * A saveAs() FileSaver implementation.
@@ -1402,17 +1433,15 @@ class DownloadPNG(plugins.PluginBase):
 
 	"""
 
-	def __init__(self,returnstr=2017,css=None):
-		self.returnstr = returnstr
-		self.css_ = css or ""
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
 
-		self.dict_ = {"type": "downloadpng",
-					  "returnstr": returnstr}
-		
-		
-		
+        self.dict_ = {"type": "downloadpng", "returnstr": returnstr}
+
+
 class DownloadSVG(plugins.PluginBase):
-	"""A Plugin to enable an HTML tooltip:
+    """A Plugin to enable an HTML tooltip:
 	formated text which hovers over points.
 
 	Parameters
@@ -1437,7 +1466,7 @@ class DownloadSVG(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 
 	/* FileSaver.js
 	 * A saveAs() FileSaver implementation.
@@ -1770,47 +1799,8 @@ class DownloadSVG(plugins.PluginBase):
 
 	"""
 
-	def __init__(self,returnstr=2017,css=None):
-		self.returnstr = returnstr
-		self.css_ = css or ""
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
 
-		self.dict_ = {"type": "downloadsvg",
-					  "returnstr": returnstr}
-
-
-
-		
-		
-		
-		
-		
-		
-		
-				
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+        self.dict_ = {"type": "downloadsvg", "returnstr": returnstr}
