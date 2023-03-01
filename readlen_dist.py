@@ -1,21 +1,8 @@
-import sys
 import matplotlib
 from matplotlib import pyplot as plt
-from matplotlib import gridspec
-from matplotlib.font_manager import FontProperties
-import os 
-import re 
-import subprocess 
-import shelve 
-import mpld3 
-from mpld3 import plugins,utils 
-import collections 
+import mpld3
+import collections
 from mpld3.utils import get_id
-import pandas as pd
-import numpy as np
-
-
-
 
 # Define some CSS to control our custom labels
 css = """
@@ -39,7 +26,10 @@ table, th, td
   text-align: right;
 }
 """
+
+
 class PluginBase(object):
+
     def get_dict(self):
         return self.dict_
 
@@ -229,8 +219,12 @@ class InteractiveLegendPlugin(PluginBase):
     }
     """
 
-    def __init__(self, plot_elements, labels, ax=None,
-                 alpha_sel=1, alpha_unsel=0.2):
+    def __init__(self,
+                 plot_elements,
+                 labels,
+                 ax=None,
+                 alpha_sel=1,
+                 alpha_unsel=0.2):
 
         self.ax = ax
 
@@ -239,12 +233,14 @@ class InteractiveLegendPlugin(PluginBase):
 
         mpld3_element_ids = self._determine_mpld3ids(plot_elements)
         self.mpld3_element_ids = mpld3_element_ids
-        self.dict_ = {"type": "interactive_legend",
-                      "element_ids": mpld3_element_ids,
-                      "labels": labels,
-                      "ax": ax,
-                      "alpha_sel": alpha_sel,
-                      "alpha_unsel": alpha_unsel}
+        self.dict_ = {
+            "type": "interactive_legend",
+            "element_ids": mpld3_element_ids,
+            "labels": labels,
+            "ax": ax,
+            "alpha_sel": alpha_sel,
+            "alpha_unsel": alpha_unsel
+        }
 
     def _determine_mpld3ids(self, plot_elements):
         """
@@ -279,27 +275,22 @@ class InteractiveLegendPlugin(PluginBase):
         return mpld3_element_ids
 
 
-
-
-
-
-
-def readlen_dist(master_dict): 
+def readlen_dist(master_dict):
     print "readlen plot called"
-   
-    fig, ax = plt.subplots( figsize=(23,12))
+
+    fig, ax = plt.subplots(figsize=(23, 12))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Read Lengths')
     ax.set_ylabel('Count')
-    ax.set_ylim(0,max(master_dict.values())*1.25)
+    ax.set_ylim(0, max(master_dict.values()) * 1.25)
     width = 0.95
     #plot it
     ax = plt.subplot(111)
-    ax.bar(master_dict.keys(), master_dict.values(), width, color="firebrick", linewidth=2, align="center")
- 
+    ax.bar(master_dict.keys(),
+           master_dict.values(),
+           width,
+           color="firebrick",
+           linewidth=2,
+           align="center")
 
     return mpld3.fig_to_html(fig)
-
-
-
-

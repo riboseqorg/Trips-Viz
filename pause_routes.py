@@ -1,37 +1,14 @@
-from flask import Blueprint, render_template, abort, request, url_for, jsonify, abort
-from flask import current_app as app
+from flask import Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
-import ast
 import os
 import time
 import logging
 import config
 import subprocess
 from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, build_profile, build_proteomics_profile, nuc_to_aa, fetch_user, fetch_filename_file_id
-import collections
 import json
 import pickle
-from flask_login import current_user
-from bokeh.plotting import figure, show, output_file
-from bokeh.embed import file_html, components
-from bokeh.resources import CDN
-from bokeh.palettes import YlOrRd9 as palette
-from bokeh.palettes import inferno
-from bokeh.palettes import all_palettes
-from bokeh.models.glyphs import Text
-import bokeh.models as bmo
-from bokeh.io import show
-import random
-from scipy.stats import mannwhitneyu, wilcoxon, zscore
-from bokeh.models import (TapTool, OpenURL, Range1d, Label, FuncTickFormatter,
-                          LogTicker, ColumnDataSource, HoverTool,
-                          LinearColorMapper, LogColorMapper, BasicTicker,
-                          PrintfTickFormatter, ColorBar)
-import numpy as np
-import email
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 
 def my_decoder(obj):

@@ -1,9 +1,7 @@
-from flask import Blueprint, render_template, abort, request, url_for, jsonify
-from flask import current_app as app
+from flask import Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
 import pickle
-import ast
 import os
 import time
 import re

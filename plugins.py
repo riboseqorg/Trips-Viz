@@ -6,14 +6,13 @@ matplotlib plots.  A number of plugins are defined here; it is also possible
 to create nearly any imaginable behavior by defining your own custom plugin.
 """
 
-__all__ = ['connect', 'clear', 'get_plugins', 'PluginBase',
-           'Reset', 'Zoom', 'BoxZoom',
-           'PointLabelTooltip', 'PointHTMLTooltip', 'LineLabelTooltip',
-           'MousePosition']
+__all__ = [
+    'connect', 'clear', 'get_plugins', 'PluginBase', 'Reset', 'Zoom',
+    'BoxZoom', 'PointLabelTooltip', 'PointHTMLTooltip', 'LineLabelTooltip',
+    'MousePosition'
+]
 
 import collections
-import json
-import uuid
 import matplotlib
 
 from .utils import get_id
@@ -56,6 +55,7 @@ def clear(fig):
 
 
 class PluginBase(object):
+
     def get_dict(self):
         return self.dict_
 
@@ -93,9 +93,11 @@ class MousePosition(PluginBase):
     """
 
     def __init__(self, fontsize=12, fmt=".3g"):
-        self.dict_ = {"type": "mouseposition",
-                      "fontsize": fontsize,
-                      "fmt": fmt}
+        self.dict_ = {
+            "type": "mouseposition",
+            "fontsize": fontsize,
+            "fmt": fmt
+        }
 
 
 class Zoom(PluginBase):
@@ -111,12 +113,11 @@ class Zoom(PluginBase):
     -----
     Even if ``enabled`` is specified, other plugins may modify this state.
     """
+
     def __init__(self, button=True, enabled=None):
         if enabled is None:
             enabled = not button
-        self.dict_ = {"type": "zoom",
-                      "button": button,
-                      "enabled": enabled}
+        self.dict_ = {"type": "zoom", "button": button, "enabled": enabled}
 
 
 class BoxZoom(PluginBase):
@@ -132,12 +133,11 @@ class BoxZoom(PluginBase):
     -----
     Even if ``enabled`` is specified, other plugins may modify this state.
     """
+
     def __init__(self, button=True, enabled=None):
         if enabled is None:
             enabled = not button
-        self.dict_ = {"type": "boxzoom",
-                      "button": button,
-                      "enabled": enabled}
+        self.dict_ = {"type": "boxzoom", "button": button, "enabled": enabled}
 
 
 class PointLabelTooltip(PluginBase):
@@ -161,21 +161,29 @@ class PointLabelTooltip(PluginBase):
     >>> plugins.connect(fig, PointLabelTooltip(points[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 labels=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "tooltip",
-                      "id": get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LineLabelTooltip(PluginBase):
@@ -199,17 +207,25 @@ class LineLabelTooltip(PluginBase):
     >>> plugins.connect(fig, LineLabelTooltip(lines[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, label=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 label=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
-        self.dict_ = {"type": "tooltip",
-                      "id": get_id(points),
-                      "labels": label if label is None else [label],
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": get_id(points),
+            "labels": label if label is None else [label],
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LinkedBrush(PluginBase):
@@ -251,10 +267,12 @@ class LinkedBrush(PluginBase):
         else:
             suffix = None
 
-        self.dict_ = {"type": "linkedbrush",
-                      "button": button,
-                      "enabled": enabled,
-                      "id": get_id(points, suffix)}
+        self.dict_ = {
+            "type": "linkedbrush",
+            "button": button,
+            "enabled": enabled,
+            "id": get_id(points, suffix)
+        }
 
 
 class PointHTMLTooltip(PluginBase):
@@ -315,8 +333,7 @@ class PointHTMLTooltip(PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, css=None):
+    def __init__(self, points, labels=None, hoffset=0, voffset=10, css=None):
         self.points = points
         self.labels = labels
         self.voffset = voffset
@@ -326,11 +343,13 @@ class PointHTMLTooltip(PluginBase):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "htmltooltip",
-                      "id": get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "htmltooltip",
+            "id": get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class LineHTMLTooltip(PluginBase):
@@ -392,19 +411,19 @@ class LineHTMLTooltip(PluginBase):
     };
     """
 
-    def __init__(self, line, label=None,
-                 hoffset=0, voffset=10,
-                 css=None):
+    def __init__(self, line, label=None, hoffset=0, voffset=10, css=None):
         self.line = line
         self.label = label
         self.voffset = voffset
         self.hoffset = hoffset
         self.css_ = css or ""
-        self.dict_ = {"type": "linehtmltooltip",
-                      "id": get_id(line),
-                      "label": label,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "linehtmltooltip",
+            "id": get_id(line),
+            "label": label,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class InteractiveLegendPlugin(PluginBase):
@@ -598,8 +617,13 @@ class InteractiveLegendPlugin(PluginBase):
     }
     """
 
-    def __init__(self, plot_elements, labels, ax=None,
-                 alpha_unsel=0.2, alpha_over=1., start_visible=True):
+    def __init__(self,
+                 plot_elements,
+                 labels,
+                 ax=None,
+                 alpha_unsel=0.2,
+                 alpha_over=1.,
+                 start_visible=True):
 
         self.ax = ax
 
@@ -610,18 +634,20 @@ class InteractiveLegendPlugin(PluginBase):
         if isinstance(start_visible, bool):
             start_visible = [start_visible] * len(labels)
         elif not len(start_visible) == len(labels):
-            raise ValueError("{} out of {} visible params has been set"
-                             .format(len(start_visible), len(labels)))
+            raise ValueError("{} out of {} visible params has been set".format(
+                len(start_visible), len(labels)))
 
         mpld3_element_ids = self._determine_mpld3ids(plot_elements)
         self.mpld3_element_ids = mpld3_element_ids
-        self.dict_ = {"type": "interactive_legend",
-                      "element_ids": mpld3_element_ids,
-                      "labels": labels,
-                      "ax": ax,
-                      "alpha_unsel": alpha_unsel,
-                      "alpha_over": alpha_over,
-                      "start_visible": start_visible}
+        self.dict_ = {
+            "type": "interactive_legend",
+            "element_ids": mpld3_element_ids,
+            "labels": labels,
+            "ax": ax,
+            "alpha_unsel": alpha_unsel,
+            "alpha_over": alpha_over,
+            "start_visible": start_visible
+        }
 
     def _determine_mpld3ids(self, plot_elements):
         """
@@ -726,8 +752,13 @@ class PointClickableHTMLTooltip(PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None, targets=None,
-                 hoffset=2, voffset=-6, css=None):
+    def __init__(self,
+                 points,
+                 labels=None,
+                 targets=None,
+                 hoffset=2,
+                 voffset=-6,
+                 css=None):
         self.points = points
         self.labels = labels
         self.targets = targets
@@ -739,17 +770,18 @@ class PointClickableHTMLTooltip(PluginBase):
         else:
             styled_targets = None
 
-
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "clickablehtmltooltip",
-                      "id": get_id(points, suffix),
-                      "labels": labels,
-                      "targets": styled_targets,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "clickablehtmltooltip",
+            "id": get_id(points, suffix),
+            "labels": labels,
+            "targets": styled_targets,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class MouseXPosition(PluginBase):
@@ -794,12 +826,15 @@ class MouseXPosition(PluginBase):
     >>> plugins.connect(fig, plugins.MouseXPosition())
     >>> fig_to_html(fig)
     """
+
     def __init__(self, fontsize=12, fmt="8.0f"):
-        self.dict_ = {"type": "mousexposition",
-                      "fontsize": fontsize,
-                      "fmt": fmt}
-        
-        
+        self.dict_ = {
+            "type": "mousexposition",
+            "fontsize": fontsize,
+            "fmt": fmt
+        }
+
+
 class TopToolbar(plugins.PluginBase):
     """Plugin for moving toolbar to top of figure"""
 
@@ -825,8 +860,9 @@ class TopToolbar(plugins.PluginBase):
       this.fig.toolbar.draw = function() {}
     }
     """
+
     def __init__(self):
-        self.dict_ = {"type": "toptoolbar"}        
-        
+        self.dict_ = {"type": "toptoolbar"}
+
 
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]

@@ -1,9 +1,6 @@
-import mpld3
-from mpld3 import plugins, utils
+from mpld3 import plugins
 
 import collections
-import json
-import uuid
 import matplotlib
 
 

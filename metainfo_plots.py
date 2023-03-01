@@ -1,44 +1,25 @@
-import sys
 import matplotlib
 
 matplotlib.use('agg')
 from matplotlib import pyplot as plt
-from matplotlib import gridspec
-from matplotlib.font_manager import FontProperties
-from matplotlib.patches import Rectangle
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import os
-import re
-import subprocess
-import shelve
-import mpld3
 import operator
-import logging
-import pickle
 from sqlitedict import SqliteDict
 from math import log
-from mpld3 import plugins, utils
-import collections
-from mpld3.utils import get_id
+from mpld3 import plugins
 import pandas as pd
 import numpy as np
-from flask import make_response
-from new_plugins import InteractiveLegendPlugin, PointHTMLTooltip, TopToolbar, DownloadProfile, DownloadPNG
+from new_plugins import InteractiveLegendPlugin, TopToolbar, DownloadProfile, DownloadPNG
 from scipy.stats.stats import spearmanr, pearsonr
 import matplotlib.cm as cm
-from bokeh.plotting import figure, show, output_file
-from bokeh.embed import file_html, components
+from bokeh.plotting import figure, output_file
+from bokeh.embed import file_html
 from bokeh.resources import CDN
-from bokeh.palettes import YlOrRd9 as palette
-from bokeh.palettes import inferno
 from bokeh.palettes import all_palettes
-from bokeh.models.glyphs import Text
 import bokeh.models as bmo
-from bokeh.io import show
-from bokeh.models import (TapTool, OpenURL, Range1d, Label, FuncTickFormatter,
-                          LogTicker, ColumnDataSource, HoverTool,
-                          LinearColorMapper, LogColorMapper, BasicTicker,
-                          PrintfTickFormatter, ColorBar)
+from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
+                          ColumnDataSource, HoverTool, LogColorMapper,
+                          ColorBar)
 
 redhex = "#FF5F5B"
 greenhex = "#90E090"

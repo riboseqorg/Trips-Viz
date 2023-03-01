@@ -1,8 +1,5 @@
 import MySQLdb
 import shelve
-from werkzeug.security import generate_password_hash, check_password_hash
-import sys
-
 
 #CREATE TABLE organisms (organism_id INTEGER(5) PRIMARY KEY AUTO_INCREMENT, organism_name VARCHAR(300), transcriptome_list VARCHAR(500),gwips_databasename VARCHAR(300),gwips_clade VARCHAR(300),gwips_organism VARCHAR(300), gwips_database VARCHAR(300), default_transcript VARCHAR(300));
 #CREATE TABLE studies (study_id INTEGER(6) PRIMARY KEY AUTO_INCREMENT, organism_id INTEGER(5), study_name VARCHAR(500), paper_authors VARCHAR(300), srp_nos VARCHAR(300), paper_year VARCHAR(300), paper_pmid VARCHAR(300), paper_link VARCHAR(300), gse_nos VARCHAR(300), adapters VARCHAR(300), paper_title VARCHAR(300), description VARCHAR(2000), private TINYINT(1));
@@ -10,10 +7,6 @@ import sys
 #CREATE TABLE users (user_id INTEGER(6) PRIMARY KEY AUTO_INCREMENT, username VARCHAR(300), password VARCHAR(300), study_access VARCHAR(300));
 #CREATE TABLE urls (url_id INTEGER(6) PRIMARY KEY AUTO_INCREMENT, url VARCHAR(2000));
 #CREATE TABLE user_settings (user_id INTEGER(6) PRIMARY KEY AUTO_INCREMENT, background_col VARCHAR(300), readlength_col VARCHAR(300), metagene_fiveprime_col VARCHAR(300),metagene_threeprime_col VARCHAR(300));
-
-
-
-
 
 #INSERT INTO user_settings VALUES(1,"#F2F2F7","#FF5F5B","#FF5F5B","#9ACAFF");
 #INSERT INTO user_settings VALUES(2,"#F2F2F7","#FF5F5B","#FF5F5B","#9ACAFF");
@@ -23,19 +16,12 @@ import sys
 #INSERT INTO user_settings VALUES(6,"#F2F2F7","#FF5F5B","#FF5F5B","#9ACAFF");
 #INSERT INTO user_settings VALUES(7,"#F2F2F7","#FF5F5B","#FF5F5B","#9ACAFF");
 
-
-
-
-
-
-
-
-
-connection = MySQLdb.connect (host = "localhost", user = "stephenk", passwd = "ribosome", db = "trips")
-
+connection = MySQLdb.connect(host="localhost",
+                             user="stephenk",
+                             passwd="ribosome",
+                             db="trips")
 
 cursor = connection.cursor()
-
 """
 
 cursor.execute("INSERT INTO organisms VALUES ({},'{}','{}','{}','{}','{}','{}','{}')".format(1,"saccharomyces_cerevisiae","Gencode_v24","yeast","yeast","S.+cerevisiae","sacCer3","YPR122W"))
@@ -140,101 +126,53 @@ for org in allfiles_shelve:
 connection.commit()        
 """
 
-
-
-        
-   
-studyshelve = shelve.open("/home/DATA/GWIPS_viz/Trips_shelves/study_info.shelf")
-allfiles_shelve = shelve.open("/home/DATA/GWIPS_viz/Trips_shelves/all_files.shelf")
-
-
+studyshelve = shelve.open(
+    "/home/DATA/GWIPS_viz/Trips_shelves/study_info.shelf")
+allfiles_shelve = shelve.open(
+    "/home/DATA/GWIPS_viz/Trips_shelves/all_files.shelf")
 
 ##CREATE TABLE files (file_id INTEGER(6) PRIMARY KEY, organism_id INTEGER(5), study_id INTEGER(6), file_name VARCHAR(300), file_description VARCHAR(300), file_type VARCHAR(300));
-
 
 file_id = 1
 
 for org in allfiles_shelve:
     print org
-    cursor.execute("SELECT organism_id from organisms WHERE organism_name = '{}';".format(org))
+    cursor.execute(
+        "SELECT organism_id from organisms WHERE organism_name = '{}';".format(
+            org))
     org_id = cursor.fetchone()
     if org_id == None:
         continue
     org_id = org_id[0]
 
     org_id = int(org_id)
-    
+
     #print allfiles_shelve[org]
-    
-    
+
     for studyname in allfiles_shelve[org]:
         riboseq_filenames = []
         rnaseq_filenames = []
-        cursor.execute("SELECT study_id from studies WHERE study_name = '{}' and organism_id = {};".format(studyname,org_id))
+        cursor.execute(
+            "SELECT study_id from studies WHERE study_name = '{}' and organism_id = {};"
+            .format(studyname, org_id))
         study_id = cursor.fetchone()
         if study_id == None:
             continue
         study_id = int(study_id[0])
         for filename in allfiles_shelve[org][studyname]["riboseq"]:
             if filename not in riboseq_filenames:
-                cursor.execute("INSERT INTO files VALUES({},{},{},'{}','{}','{}')".format(file_id, org_id, study_id, filename, "None", "riboseq"))
+                cursor.execute(
+                    "INSERT INTO files VALUES({},{},{},'{}','{}','{}')".format(
+                        file_id, org_id, study_id, filename, "None",
+                        "riboseq"))
                 file_id += 1
                 riboseq_filenames.append(filename)
         for filename in allfiles_shelve[org][studyname]["rnaseq"]:
             if filename not in rnaseq_filenames:
-                cursor.execute("INSERT INTO files VALUES({},{},{},'{}','{}','{}')".format(file_id, org_id, study_id, filename, "None", "rnaseq"))
+                cursor.execute(
+                    "INSERT INTO files VALUES({},{},{},'{}','{}','{}')".format(
+                        file_id, org_id, study_id, filename, "None", "rnaseq"))
                 file_id += 1
                 rnaseq_filenames.append(filename)
 
-
-
-
-        
-connection.commit()                
-
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+connection.commit()
