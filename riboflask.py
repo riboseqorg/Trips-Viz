@@ -304,6 +304,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
     y_max = max(1, rnamax, subcodonmax) * 1.1
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
+
     ax_main.spines['bottom'].set_visible(False)
     for s in ['bottom', 'left', 'top', 'right']:
         ax_main.spines[s].set_linewidth(15)
@@ -689,8 +690,9 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
         axisname.tick_params(top=False,
                              bottom=False,
                              labelleft=False,
-                             labelright=False,
-                             labelbottom=False)
+                             labelright=False,)
+    #                          labelbottom=False)
+        axisname.set_xticks([])
     for label in ax_main.xaxis.get_majorticklabels():
         label.set_fontsize(36)
     for axis, frame in ((ax_f1, 1), (ax_f2, 2), (ax_f3, 3)):
@@ -904,17 +906,14 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                                 css=point_tooltip_css)
 
     #This works but hides axis labels for all axes
-    #ax_f1.axes.xaxis.set_ticklabels([])
-    #ax_f1.axes.yaxis.set_ticklabels([])
-    #ax_f2.axes.yaxis.set_ticklabels([])
-    #ax_f3.axes.yaxis.set_ticklabels([])
-    #ax_cds.axes.yaxis.set_ticklabels([])
-    #ax_nucseq.axes.yaxis.set_ticklabels([])
-    #ax_f1.get_xaxis().set_visible(False)
-    #ax_f1.get_yaxis().set_visible(False)
-    for key, spine in ax_f1.spines.items():
-        spine.set_visible(False)
-    #ax_f1.tick_params(which="both", bottom=False, color="lightgray")
+    ax_main.tick_params('both', labelsize=marker_size)
+
+    ax_f1.axes.yaxis.set_ticklabels([])
+    ax_f2.axes.yaxis.set_ticklabels([])    
+    ax_f3.axes.yaxis.set_ticklabels([])
+    ax_cds.axes.yaxis.set_ticklabels([])
+    ax_nucseq.axes.yaxis.set_ticklabels([])
+
 
     returnstr = "Position,Sequence,Frame 1,Frame 2,Frame 3,RNA-Seq"
     for seq_type in alt_seq_dict:
@@ -959,7 +958,6 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
 
     ax_main.set_facecolor("white")
     # This changes the size of the tick markers, works on both firefox and chrome.
-    ax_main.tick_params('both', labelsize=marker_size)
     ax_main.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax_main.yaxis.set_major_locator(plt.MaxNLocator(3))
     #ax_main.grid(False, color="white", linewidth=30,linestyle="solid")
