@@ -40,7 +40,7 @@ def interactiveplotpage(organism, transcriptome):
 
     user, logged_in = fetch_user()
     accepted_studies = fetch_studies(user, organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
+    _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
 
     cursor.execute(
