@@ -1,13 +1,13 @@
 import os
 import time
 from datetime import date
-import sys, subprocess
+import sys
 
-print("PYTHON VERSION", sys.version)
 import sqlite3
 import logging
 from flask import Flask, get_flashed_messages, render_template, request, send_from_directory, flash, redirect, url_for
-from flask_recaptcha import ReCaptcha
+from flask_xcaptcha import XCaptcha
+
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from flask_security import current_user
 from flask_mail import Mail
@@ -84,7 +84,9 @@ app.register_blueprint(pausequery_blueprint)
 app.register_blueprint(traninfo_plotpage_blueprint)
 app.register_blueprint(traninfoquery_blueprint)
 app.config.from_pyfile('config.py')
-recaptcha = ReCaptcha(app=app)
+
+xcaptcha = XCaptcha(app=app)
+
 app.config['UPLOAD_FOLDER'] = '/static/tmp'
 app.config['SECURITY_PASSWORD_SALT'] = config.PASSWORD_SALT
 app.config['SECRET_KEY'] = config.FLASK_SECRET_KEY
@@ -242,7 +244,7 @@ def statisticspage():
 @app.route('/contactus/', methods=["GET", "POST"])
 def contactus():
     if request.method == "POST":
-        if recaptcha.verify():
+        if xcaptcha.verify():
             name = str(request.form['name'])
             email = str(request.form['email'])
             fromaddr = "ribopipe@gmail.com"
@@ -280,7 +282,7 @@ def create():
         username = str(request.form['username'])
         password = str(request.form['password'])
         password2 = str(request.form['password2'])
-        if recaptcha.verify() or local == True:
+        if xcaptcha.verify() or local == True:
             username_dict = {}
             logging.debug("Connecting to trips.sqlite")
             connection = sqlite3.connect('{}/trips.sqlite'.format(
@@ -831,7 +833,7 @@ def login():
     if request.method == 'POST':
         username = str(request.form['username']).strip()
         password = str(request.form['password']).strip()
-        if recaptcha.verify() or local == True or username == "developer":
+        if xcaptcha.verify() or local == True or username == "developer":
             username_dict = {}
             logging.debug("login Connecting to trips.sqlite")
             connection = sqlite3.connect('{}/trips.sqlite'.format(
