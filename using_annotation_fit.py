@@ -24,9 +24,7 @@ def get_genes_for_organism(connection, coding=False):
 
 def get_file_paths(username, organism, transcriptome):
     accepted_studies = fetch_studies(username, organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
-    print accepted_files['riboseq'].keys()
+    _, accepted_studies, accepted_files, _ = fetch_files(accepted_studies)
     file_list = []
     for study in accepted_studies.keys():
         if study in accepted_files['riboseq']:
@@ -94,11 +92,10 @@ def region_scores_calculation_to_csv(sqlite, output, ambig, minread, maxread,
     total_genes = float(len(gene_list))
 
     for gene_number, gene in enumerate(gene_list):
-        print gene, '\t', float(gene_number) / total_genes * 100, '%'
+        print(gene, '\t', float(gene_number) / total_genes * 100, '%')
 
         gene_info = get_gene_info(gene, connection)
         transcript_architecture_dict = transcript_architecture(gene_info)
-        locus_counts = {}
         if transcript_architecture_dict == {}:
             continue
         for transcript in gene_info:
@@ -159,7 +156,6 @@ def csv_to_stats_df(csv_path):
     '''
     df = pd.read_csv(csv_path)
     genes = list(df["gene"].unique())
-    annotation_fit_results = pd.DataFrame()
     genes = genes[-10:]
     ouptut_dict = {}
     # df.coding_counts.hist()
@@ -190,7 +186,7 @@ def csv_to_stats_df(csv_path):
                 ouptut_dict[row['transcript']]['merged_fit'] = gene_scores[
                     row['transcript']]['merged_fit']
     for i in ouptut_dict:
-        print i, ouptut_dict[i]
+        print(i, ouptut_dict[i])
 
         # print row["gene"], row["transcript"],row["coding_counts"]
         # print gene_df
