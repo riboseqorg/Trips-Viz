@@ -325,10 +325,11 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                     frame_breakdown = False
             else:
                 frame_breakdown = False
-            alt_sequence_reads, empty_seqvar_dict = get_reads(
-                ambig, min_read, max_read, tran, file_paths_dict, tranlen,
-                True, organism, frame_breakdown, noisered, primetype, seq_type,
-                readscore)
+            alt_sequence_reads, _ = get_reads(ambig, min_read, max_read, tran,
+                                              file_paths_dict, tranlen, True,
+                                              organism, frame_breakdown,
+                                              noisered, primetype, seq_type,
+                                              readscore)
             alt_seq_dict[seq_type] = alt_sequence_reads
             if frame_breakdown == False:
                 alt_seq_plot = ax_main.plot(alt_sequence_reads.keys(),
@@ -583,7 +584,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
         mrnaseq = seq.replace("T", "U")
         color_list = ["#FF4A45", "#64FC44", "#5687F9"]
         char_frame = 0
-        for char in mrnaseq:
+        for _ in mrnaseq:
             ax_nucseq.text((xy + 1) - 0.1,
                            0.2,
                            mrnaseq[xy],
