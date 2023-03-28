@@ -9,19 +9,45 @@
 </head>
 	<body>
 	<div class="container">
-		<h1>Please login</h1>
-		<br>
-		<form action="" method="post">
-			<input type="text" placeholder="Username" name="username" value="{{
-			request.form.username }}">
-			<input type="password" placeholder="Password" name="password" value="{{
-			request.form.password }}">
+  <div class="mask d-flex align-items-center h-100 gradient-custom-3">
+    <div class="container h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+          <div class="card" style="border-radius: 15px;">
+            <div class="card-body p-5">
+              <h2 class="text-uppercase text-center mb-5"> Please login</h2>
+
+              <form action="" method="post">
+
+                <div class="form-outline mb-4">
+                  <input type="email"  placeholder="Email" name="username" value="{{ request.form.username }}" id="username" class="form-control form-control-lg" />
+                </div>
+
+                <div class="form-outline mb-4">
+                  <input type="password" id="password" placeholder="Password" name="password" value="{{request.form.password }}" class="form-control form-control-lg" />
+                </div>
+
+
 			{{ recaptcha }}
-			<input class="btn btn-default" type="submit" value="Login">
-		</form>
-		{% if error %}
+                <div class="d-flex justify-content-center">
+                  <button type="button"
+                    class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Login</button>
+                </div>
+
+                <p class="text-center text-muted mt-5 mb-0">Do not have account? <a href="{{ url_for('create') }}"
+                    class="fw-bold text-body"><u>Register here</u></a></p>
+
+              </form>
+{% if error %}
 			<p class="error"><strong>Error:</strong> {{ error }}
 		{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+		
 	</div>
 	</body>
 </html>
