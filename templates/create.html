@@ -1,31 +1,127 @@
 {% extends "layout.html" %}
 {% block content %}
+    <html>
+        <head>
+            <title>Trips-Viz - login page</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script>
+var code = document.getElementById("password");
 
+var strengthbar = document.getElementById("meter");
+//var display = document.getElementsByClassName("textbox")[0];
+    
+code.addEventListener("keyup", function() {
+  checkpassword(code.value);
+});
 
-<html>
-<head>
-<title>Trips-Viz - login page</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
-</head>
-<body>
-<div class="container" align="center">
-<h1>Sign up for a Trips-Viz account</h1>
-<br>
-<form action="" method="post">
-<input type="text" placeholder="E-mail address" name="username" value="{{request.form.username }}"><br>
-<input type="password" placeholder="Password" name="password" value="{{request.form.password }}"><br>
-<input type="password" placeholder="Re-type password" name="password2" value="{{request.form.password }}"><br>
-{{ recaptcha }}
-<input class="btn btn-default" type="submit" value="Login">
-</form>
-{% if error %}
-<p class="error"><strong>Error:</strong> {{ error }}
-{% endif %}
-</div>
-</body>
-</html>
+// TODO: fix the code below -- https://stackoverflow.com/questions/50547523/how-can-i-use-javascript-to-test-for-password-strength-in-a-way-that-returns-the
+function checkpassword(password) {
+  var strength = 0;
+  if (password.match(/[a-z]+/)) {
+    strength += 1;
+  }
+  if (password.match(/[A-Z]+/)) {
+    strength += 1;
+  }
+  if (password.match(/[0-9]+/)) {
+    strength += 1;
+  }
+  if (password.match(/[$@#&!]+/)) {
+    strength += 1;
 
+  }
 
+/*
+  if (password.length < 6) {
+    display.innerHTML = "minimum number of characters is 6";
+  }
 
-{% endblock %}
+  if (password.length > 12) {
+    display.innerHTML = "maximum number of characters is 12";
+  }
+*/
+  switch (strength) {
+    case 0:
+      strengthbar.value = 0;
+      break;
+
+    case 1:
+      strengthbar.value = 25;
+      break;
+
+    case 2:
+      strengthbar.value = 50;
+      break;
+
+    case 3:
+      strengthbar.value = 75;
+      break;
+
+    case 4:
+      strengthbar.value = 100;
+      break;
+  }
+}
+            </script>
+        </head>
+        <body>
+            <div class="container" align="center">
+                <h1>Sign up for a Trips-Viz account</h1>
+                <br>
+                <div class="container h-100">
+                    <div class="row d-flex justify-content-center align-items-center h-100">
+                        <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+                            <div class="card" style="border-radius: 15px;">
+                                <div class="card-body p-5">
+                                    <h2 class="text-uppercase text-center mb-5">Please login</h2>
+                                    <form action="" method="post">
+                                        <!--TODO: CSRF key-->
+                                        <div class="form-outline mb-4">
+                                            <input type="email"
+                                                   placeholder="Email"
+                                                   name="username"
+                                                   value="{{ request.form.username }}"
+                                                   id="username"
+                                                   class="form-control form-control-lg"/>
+                                        </div>
+                                        <div class="form-outline mb-4">
+                                            <input type="password"
+                                                   id="password"
+                                                   autocomplete="off"
+                                                   placeholder="Password"
+                                                   name="password"
+                                                   value="{{ request.form.password }}"
+                                                   class="form-control form-control-lg"/>
+                                            <progress max="100" value="0" id="meter"></progress>
+                                        </div>
+                                        <div class="form-outline mb-4">
+                                            <input type="password"
+                                                   id="password2"
+                                                   autocomplete="off"
+                                                   placeholder="Re-type Password"
+                                                   name="password2"
+                                                   value="{{ request.form.password }}"
+                                                   class="form-control form-control-lg"/>
+                                        </div>
+                                        {{ recaptcha }}
+                                        <div class="d-flex justify-content-center">
+                                            <button type="button"
+                                                    class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Register</button>
+                                        </div>
+                                        <p class="text-center text-muted mt-5 mb-0">
+                                            Already have an account? <a href="{{ url_for('login') }}" class="fw-bold text-body"><u>Login here</u></a>
+                                        </p>
+                                    </form>
+                                    {% if error %}
+                                        <p class="error">
+                                            <strong>Error:</strong> {{ error }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+    {% endblock %}
