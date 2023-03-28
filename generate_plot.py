@@ -1,4 +1,5 @@
 from new_plugins import InteractiveLegendPlugin, PointHTMLTooltip, TopToolbar, DownloadProfile, DownloadPNG, DownloadSVG
+import pickle
 import config
 import os
 import sqlite3
@@ -8,8 +9,12 @@ from sqlitedict import SqliteDict
 import collections
 from mpld3 import plugins
 import mpld3
+from bokeh.layouts import gridplot, column
+from bokeh.plotting import figure, output_file, show
 import matplotlib.pyplot as plt
 import matplotlib
+
+import altair as alt
 
 matplotlib.use('agg')
 
@@ -97,15 +102,60 @@ def merge_dicts(dict1, dict2):
     return dict1
 
 
-def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
-                  organism, readscore, noisered, primetype, minfiles, nucseq,
-                  user_hili_starts, user_hili_stops, uga_diff, file_paths_dict,
-                  short_code, color_readlen_dist, background_col, uga_col,
-                  uag_col, uaa_col, advanced, seqhili, seq_rules, title_size,
-                  subheading_size, axis_label_size, marker_size, transcriptome,
-                  trips_uploads_location, cds_marker_size, cds_marker_colour,
-                  legend_size, ribo_linewidth, secondary_readscore, pcr,
-                  mismatches, hili_start, hili_stop):
+# trips_shelves/rnaseq/escherichia_coli/Li14/SRR1067774.sqlite : reads, each gene each position, mismaches
+# trips_annotation: gtf file annotation, also contain sequnce                    spec
+
+
+def generate_plot():
+    (
+        tran,  # name of the transcript, like "ENST00000567892"
+        ambig,  # ambig/ynambig  TODO: covert to bool
+        min_read,  # it is length
+        max_read,  # max length
+        lite,  # line ot bar graph TODO: Boolean  y for line in the code
+        ribocoverage,  # if yes, plot count  TODO: Convert to Boolean. TODO: More details when Jack is back
+        organism,
+        readscore,  # Not thing to do with plot, will check later 
+        noisered,  # Noise reduction, About data selection
+        primetype,  # Data selection 
+        minfiles,  # TODO: Remove 
+        nucseq,  # shows nucletide sequence at the bottom. TODO: Add more tracks for other frames 
+        user_hili_starts,  # sequences to highlight
+        user_hili_stops,  # sequences to highlight
+        uga_diff,  # TODO: Remove 
+        file_paths_dict,
+        short_code,
+        color_readlen_dist,  # TODO: Remove
+        background_col,
+        uga_col,
+        uag_col,
+        uaa_col,
+        advanced,  # TODO: Remove
+        seqhili,  # To highlight the sequence
+        seq_rules,  # Rules in plotting. Can  be improved
+        title_size,
+        subheading_size,
+        axis_label_size,
+        marker_size,
+        transcriptome,  # Name of transcriptome Ensembl_k_12_ASM584v2
+        trips_uploads_location,
+        cds_marker_size,
+        cds_marker_colour,
+        legend_size,
+        ribo_linewidth,
+        secondary_readscore,  # TODO: need to check
+        pcr,  # PCR are duplicates
+        mismatches,  # Hight mismaches 
+        hili_start,
+        hili_stop) = pickle.load(open("first_plot.pkl", "rb"))
+    print(tran, ambig, min_read, max_read, lite, ribocoverage, organism,
+          readscore, noisered, primetype, minfiles, nucseq, user_hili_starts,
+          user_hili_stops, uga_diff, file_paths_dict, short_code,
+          color_readlen_dist, background_col, uga_col, uag_col, uaa_col,
+          advanced, 'xx', seqhili, seq_rules, title_size, subheading_size,
+          axis_label_size, marker_size, transcriptome, trips_uploads_location,
+          cds_marker_size, cds_marker_colour, legend_size, ribo_linewidth,
+          secondary_readscore, pcr, mismatches, hili_start, hili_stop)
 
     if lite == "n" and ribocoverage == True:
         return_str = "Error: Cannot display Ribo-Seq Coverage when 'Line Graph' is turned off"
@@ -170,6 +220,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
         "tran_type": result[10],
         "principal": result[11]
     }
+    print(traninfo)
     try:
         traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
     except:
@@ -188,7 +239,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
         traninfo["exon_junctions"] = []
     all_cds_regions = []
     # Check if the 'coding_regions' table exists
-    cursor.execute(
+    cursor.execute(  # TODO: Convert to model
         "SELECT name FROM sqlite_master WHERE type='table' AND name='coding_regions';"
     )
     result = cursor.fetchone()
@@ -302,9 +353,9 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
     except:
         subcodonmax = 0
     y_max = max(1, rnamax, subcodonmax) * 1.1
-    fig = plt.figure(figsize=(13, 8))
-    ax_main = plt.subplot2grid((31, 1), (0, 0), rowspan=22)
 
+    fig = plt.figure(figsize=(13, 8))
+    ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
     ax_main.spines['bottom'].set_visible(False)
     for s in ['bottom', 'left', 'top', 'right']:
         ax_main.spines[s].set_linewidth(15)
@@ -314,82 +365,84 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
     alt_seq_dict = {}
     # Plot any alternative sequence types if there are any
     for seq_type in file_paths_dict:
-
-        if seq_type != "riboseq" and seq_type != "rnaseq":
-            if file_paths_dict[seq_type] == {}:
-                continue
-            if seq_type in seq_rules:
-                if seq_rules[seq_type]["frame_breakdown"] == 1:
-                    frame_breakdown = True
-                else:
-                    frame_breakdown = False
+        if seq_type in ["riboseq", "rnaseq"]:
+            continue
+        print('heloo there')
+        if file_paths_dict[seq_type] == {}:
+            continue
+        if seq_type in seq_rules:
+            if seq_rules[seq_type]["frame_breakdown"] == 1:
+                frame_breakdown = True
             else:
                 frame_breakdown = False
-            alt_sequence_reads, _ = get_reads(ambig, min_read, max_read, tran,
-                                              file_paths_dict, tranlen, True,
-                                              organism, frame_breakdown,
-                                              noisered, primetype, seq_type,
-                                              readscore)
-            alt_seq_dict[seq_type] = alt_sequence_reads
-            if frame_breakdown == False:
-                alt_seq_plot = ax_main.plot(alt_sequence_reads.keys(),
-                                            alt_sequence_reads.values(),
-                                            alpha=1,
-                                            label=seq_type,
-                                            zorder=2,
-                                            color='#5c5c5c',
-                                            linewidth=2)
-                labels.append(seq_type)
-                start_visible.append(True)
-                alt_seq_type_vars.append(alt_seq_plot)
-            else:
-                alt_frame_counts = {
-                    0: collections.OrderedDict(),
-                    1: collections.OrderedDict(),
-                    2: collections.OrderedDict()
-                }
-                for key in alt_sequence_reads:
-                    start = key
-                    rem = start % 3
-                    if rem == 1:  # frame 1
-                        frame = 2
-                    elif rem == 2:  # frame 2
-                        frame = 0
-                    elif rem == 0:  # frame 3
-                        frame = 1
-                    alt_frame_counts[frame][key] = alt_sequence_reads[key]
-                frame0_altseqplot = ax_main.plot(alt_frame_counts[0].keys(),
-                                                 alt_frame_counts[0].values(),
-                                                 alpha=0.75,
-                                                 label=seq_type + "frame0",
-                                                 zorder=2,
-                                                 color="#FF4A45",
-                                                 linewidth=2)
-                frame1_altseqplot = ax_main.plot(alt_frame_counts[1].keys(),
-                                                 alt_frame_counts[1].values(),
-                                                 alpha=0.75,
-                                                 label=seq_type + "frame1",
-                                                 zorder=2,
-                                                 color="#64FC44",
-                                                 linewidth=2)
-                frame2_altseqplot = ax_main.plot(alt_frame_counts[2].keys(),
-                                                 alt_frame_counts[2].values(),
-                                                 alpha=0.75,
-                                                 label=seq_type + "frame2*",
-                                                 zorder=2,
-                                                 color="#5687F9",
-                                                 linewidth=2)
-                labels.append(seq_type + "frame 1")
-                labels.append(seq_type + "frame 2")
-                labels.append(seq_type + "frame 3")
-                start_visible.append(True)
-                start_visible.append(True)
-                start_visible.append(True)
-                alt_seq_type_vars.append(frame0_altseqplot)
-                alt_seq_type_vars.append(frame1_altseqplot)
-                alt_seq_type_vars.append(frame2_altseqplot)
-            if max(alt_sequence_reads.values()) > y_max:
-                y_max = max(alt_sequence_reads.values())
+        else:
+            frame_breakdown = False
+        alt_sequence_reads, empty_seqvar_dict = get_reads(
+            ambig, min_read, max_read, tran, file_paths_dict, tranlen, True,
+            organism, frame_breakdown, noisered, primetype, seq_type,
+            readscore)
+        alt_seq_dict[seq_type] = alt_sequence_reads
+        if frame_breakdown == False:
+            alt_seq_plot = ax_main.plot(alt_sequence_reads.keys(),
+                                        alt_sequence_reads.values(),
+                                        alpha=1,
+                                        label=seq_type,
+                                        zorder=2,
+                                        color='#5c5c5c',
+                                        linewidth=2)
+            labels.append(seq_type)
+            start_visible.append(True)
+            alt_seq_type_vars.append(alt_seq_plot)
+        else:
+            alt_frame_counts = {
+                0: collections.OrderedDict(),
+                1: collections.OrderedDict(),
+                2: collections.OrderedDict()
+            }
+            for key in alt_sequence_reads:
+                start = key
+                rem = start % 3
+                if rem == 1:  # frame 1
+                    frame = 2
+                elif rem == 2:  # frame 2
+                    frame = 0
+                elif rem == 0:  # frame 3
+                    frame = 1
+                alt_frame_counts[frame][key] = alt_sequence_reads[key]
+            frame0_altseqplot = ax_main.plot(alt_frame_counts[0].keys(),
+                                             alt_frame_counts[0].values(),
+                                             alpha=0.75,
+                                             label=seq_type + "frame0",
+                                             zorder=2,
+                                             color="#FF4A45",
+                                             linewidth=2)
+            frame1_altseqplot = ax_main.plot(alt_frame_counts[1].keys(),
+                                             alt_frame_counts[1].values(),
+                                             alpha=0.75,
+                                             label=seq_type + "frame1",
+                                             zorder=2,
+                                             color="#64FC44",
+                                             linewidth=2)
+            frame2_altseqplot = ax_main.plot(alt_frame_counts[2].keys(),
+                                             alt_frame_counts[2].values(),
+                                             alpha=0.75,
+                                             label=seq_type + "frame2*",
+                                             zorder=2,
+                                             color="#5687F9",
+                                             linewidth=2)
+
+            labels.append(seq_type + "frame 1")
+            labels.append(seq_type + "frame 2")
+            labels.append(seq_type + "frame 3")
+            start_visible.append(True)
+            start_visible.append(True)
+            start_visible.append(True)
+            alt_seq_type_vars.append(frame0_altseqplot)
+            alt_seq_type_vars.append(frame1_altseqplot)
+            alt_seq_type_vars.append(frame2_altseqplot)
+        if max(alt_sequence_reads.values()) > y_max:
+            y_max = max(alt_sequence_reads.values())
+
     label = 'Reads'
     ax_main.set_ylabel(label, fontsize=axis_label_size, labelpad=30)
     label = 'Position (nucleotides)'
@@ -441,7 +494,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                  fontsize=18,
                  color="black",
                  ha="center")
-    ax_cds = plt.subplot2grid((31, 1), (23, 0), rowspan=1, sharex=ax_main)
+    ax_cds = plt.subplot2grid((31, 1), (26, 0), rowspan=1, sharex=ax_main)
     ax_cds.set_facecolor("white")
     ax_cds.set_ylabel('Merged CDS',
                       labelpad=4,
@@ -450,7 +503,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                       rotation="horizontal",
                       color="black",
                       fontsize=(axis_label_size / 1.5))
-
+    print(color_dict)
     ax_f1 = plt.subplot2grid((31, 1), (27, 0), rowspan=1, sharex=ax_main)
     ax_f1.set_facecolor(color_dict['frames'][0])
     ax_f2 = plt.subplot2grid((31, 1), (28, 0), rowspan=1, sharex=ax_main)
@@ -482,73 +535,82 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
 
     # dictionary for each frame in which the keys are the posistions and the values are the counts
     frame_counts = {
-        0: collections.OrderedDict(),
-        1: collections.OrderedDict(),
-        2: collections.OrderedDict()
+        "pos": [],
+        "depth": [],
+        "frame": [],
     }
     for key in all_subcodon_reads:
-        rem = key % 3
-        if rem == 1:  # frame 1
-            frame = 0
-        elif rem == 2:  # frame 2
-            frame = 1
-        elif rem == 0:  # frame 3
-            frame = 2
-        frame_counts[frame][key] = all_subcodon_reads[key]
+        frame = (key - 1) % 3
+        frame_counts["pos"].append(key)
+        frame_counts["depth"].append(all_subcodon_reads[key])
+        frame_counts["frame"].append(frame)
+        # rem = key % 3
+        # if rem == 1:  # frame 1
+        # frame = 0
+        # elif rem == 2:  # frame 2
+        # frame = 1
+        # elif rem == 0:  # frame 3
+        # frame = 2
+        # frame_counts[frame][key] = all_subcodon_reads[key]
         if lite == "n":
-            frame_counts[frame][key + 1] = 0
-            frame_counts[frame][key + 2] = 0
+            frame_counts["pos"] += [key, key + 1]
+            frame_counts["depth"] += [0, 0]
+            frame_counts["frame"] += [frame, frame]
+            # frame_counts[frame][key + 1] = 0
+            # frame_counts[frame][key + 2] = 0
+
+    print('kiran')
+    output_file("panning.html")
+    print("Hello there")
+    s1 = figure(width=1050, height=500, title=None)
+    s1.xaxis.visible = False
+    s2 = figure(width=1050, height=50, title=None, x_range=s1.x_range)
+    s2.axis.visible = False
+    s3 = figure(width=1050, height=50, title=None, x_range=s1.x_range)
+    s3.yaxis.visible = False
+
+    # altair plots
+    selection = alt.selection_multi(fields=["frame"])
+    color = alt.condition(selection, alt.Color("frame:N", legend=None),
+                          alt.value("lightgray"))
+    alt.renderers.set_embed_options(actions={
+        "export": True,
+        "source": False,
+        "compiled": False,
+        "editor": False
+    })
+    line = alt.Chart(frame_counts).mark_line().encode(
+        x=alt.X('Horsepower:Q',
+                axis=alt.Axis(labels=False, tickSize=0, title="", grid=False)),
+        y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
+        color=color,
+        # tooltip='Name:N'
+    ).interactive(bind_y=False).properties(width=800, height=300)
 
     if lite == "n":
-        frame0subpro = ax_main.bar(frame_counts[0].keys(),
-                                   frame_counts[0].values(),
-                                   alpha=0.75,
-                                   label=labels,
-                                   zorder=2,
-                                   color="#FF4A45",
-                                   edgecolor="#FF4A45",
-                                   width=1,
-                                   linewidth=4)
-        frame1subpro = ax_main.bar(frame_counts[1].keys(),
-                                   frame_counts[1].values(),
-                                   alpha=0.75,
-                                   label=labels,
-                                   zorder=2,
-                                   color="#64FC44",
-                                   edgecolor="#64FC44",
-                                   width=1,
-                                   linewidth=4)
-        frame2subpro = ax_main.bar(frame_counts[2].keys(),
-                                   frame_counts[2].values(),
-                                   alpha=0.75,
-                                   label=labels,
-                                   zorder=2,
-                                   color="#5687F9",
-                                   edgecolor="#5687F9",
-                                   width=1,
-                                   linewidth=4)
+        bar = alt.Chart(frame_counts).mark_bar().encode(
+            x=alt.X('Horsepower:Q',
+                    axis=alt.Axis(labels=False,
+                                  tickSize=0,
+                                  title="",
+                                  grid=False)),
+            y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
+            color=color,
+            # tooltip='Name:N'
+        ).interactive(bind_y=False).properties(width=800, height=300)
+
     else:
-        frame0subpro = ax_main.plot(frame_counts[0].keys(),
-                                    frame_counts[0].values(),
-                                    alpha=0.75,
-                                    label=labels,
-                                    zorder=2,
-                                    color="#FF4A45",
-                                    linewidth=ribo_linewidth)
-        frame1subpro = ax_main.plot(frame_counts[1].keys(),
-                                    frame_counts[1].values(),
-                                    alpha=0.75,
-                                    label=labels,
-                                    zorder=2,
-                                    color="#64FC44",
-                                    linewidth=ribo_linewidth)
-        frame2subpro = ax_main.plot(frame_counts[2].keys(),
-                                    frame_counts[2].values(),
-                                    alpha=0.75,
-                                    label=labels,
-                                    zorder=2,
-                                    color="#5687F9",
-                                    linewidth=ribo_linewidth)
+        line = alt.Chart(frame_counts).mark_line().encode(
+            x=alt.X('Horsepower:Q',
+                    axis=alt.Axis(labels=False,
+                                  tickSize=0,
+                                  title="",
+                                  grid=False)),
+            y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
+            color=color,
+            # tooltip='Name:N'
+        ).interactive(bind_y=False).properties(width=800, height=300)
+
     if mismatches == True:
         a_mismatches = ax_main.plot(seq_var_dict["A"].keys(),
                                     seq_var_dict["A"].values(),
@@ -688,8 +750,12 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                                           voffset=10,
                                           hoffset=10,
                                           css=point_tooltip_css)
-
-        # axisname.set_xticks([])
+    for axisname in (ax_f1, ax_f2, ax_f3, ax_nucseq, ax_cds):
+        axisname.tick_params(top=False,
+                             bottom=False,
+                             labelleft=False,
+                             labelright=False,
+                             labelbottom=False)
     for label in ax_main.xaxis.get_majorticklabels():
         label.set_fontsize(36)
     for axis, frame in ((ax_f1, 1), (ax_f2, 2), (ax_f3, 3)):
@@ -903,7 +969,17 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
                                 css=point_tooltip_css)
 
     # This works but hides axis labels for all axes
-    ax_main.tick_params('both', labelsize=marker_size)
+    # ax_f1.axes.xaxis.set_ticklabels([])
+    # ax_f1.axes.yaxis.set_ticklabels([])
+    # ax_f2.axes.yaxis.set_ticklabels([])
+    # ax_f3.axes.yaxis.set_ticklabels([])
+    # ax_cds.axes.yaxis.set_ticklabels([])
+    # ax_nucseq.axes.yaxis.set_ticklabels([])
+    # ax_f1.get_xaxis().set_visible(False)
+    # ax_f1.get_yaxis().set_visible(False)
+    for key, spine in ax_f1.spines.items():
+        spine.set_visible(False)
+    # ax_f1.tick_params(which="both", bottom=False, color="lightgray")
 
     returnstr = "Position,Sequence,Frame 1,Frame 2,Frame 3,RNA-Seq"
     for seq_type in alt_seq_dict:
@@ -932,55 +1008,25 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
             returnstr += ",{}".format(count)
         returnstr += "\n"
 
-    # if seqhili == ['']:
-    # plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3,
-    # TopToolbar(yoffset=-50, xoffset=-300),
-    # DownloadProfile(returnstr=returnstr),
-    # DownloadPNG(returnstr=title_str),
-    # DownloadSVG(returnstr=title_str))
-    # else:
-    # plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, signaltooltip1,
-    # signaltooltip2, signaltooltip3,
-    # TopToolbar(yoffset=-50, xoffset=-300),
-    # DownloadProfile(returnstr=returnstr),
-    # DownloadPNG(returnstr=title_str),
-    # DownloadSVG(returnstr=title_str))
+    if seqhili == ['']:
+        plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3,
+                        TopToolbar(yoffset=-50, xoffset=-300),
+                        DownloadProfile(returnstr=returnstr),
+                        DownloadPNG(returnstr=title_str),
+                        DownloadSVG(returnstr=title_str))
+    else:
+        plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, signaltooltip1,
+                        signaltooltip2, signaltooltip3,
+                        TopToolbar(yoffset=-50, xoffset=-300),
+                        DownloadProfile(returnstr=returnstr),
+                        DownloadPNG(returnstr=title_str),
+                        DownloadSVG(returnstr=title_str))
 
     ax_main.set_facecolor("white")
     # This changes the size of the tick markers, works on both firefox and chrome.
-    # ax_main.xaxis.set_major_locator(plt.MaxNLocator(3))
-    # ax_main.yaxis.set_major_locator(plt.MaxNLocator(3))
-
-    # ax_f3.axes.get_yaxis().set_visible(False)
-    # ax_cds.axis('off')
-    # ax_cds.axes.get_xaxis().set_ticks([])
-    # plt.setp(ax_main.get_xticklabels(), visible=False)
-    for axisname in (ax_f1, ax_f2, ax_f3, ax_cds):
-        axisname.tick_params(
-            axis='both',
-            which='both',
-            top=False,
-            bottom=False,
-            left=False,
-            right=False,
-            labelbottom=False,
-        )
-        axisname.set_yticklabels([])
-
-        # axisname.axes.get_xaxis().set_ticks([])
-        # axisname.tick_params(axis='x', which='both', bottom=False)
-        # axisname.axes.get_yaxis().set_ticks([])
-    # ax_nucseq.set_ylabel([])
-    # ax_f1.set_ylabel([])
-    # ax_nucseq.tick_params(
-    # axis='both',
-    # which='both',
-    # top=False,
-    # bottom=False,
-    # left=False,
-    # right=False,
-    # )
-    plt.savefig('test.png', dpi=300, bbox_inches='tight')
+    ax_main.tick_params('both', labelsize=marker_size)
+    ax_main.xaxis.set_major_locator(plt.MaxNLocator(3))
+    ax_main.yaxis.set_major_locator(plt.MaxNLocator(3))
     # ax_main.grid(False, color="white", linewidth=30,linestyle="solid")
     # Without this style tag the markers sizes will appear correct on browser but be original size when downloaded via png
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
@@ -989,3 +1035,7 @@ def generate_plot(tran, ambig, min_read, max_read, lite, ribocoverage,
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
+
+
+if __name__ == "__main__":
+    print(generate_plot())

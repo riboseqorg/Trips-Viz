@@ -44,7 +44,7 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
     connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
     connection.text_factory = str
     cursor = connection.cursor()
-    cursor.execute(
+    cursor.execute(  # TODO: Convert into model
         "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
         .format(organism, transcriptome))
     owner = (cursor.fetchone())[0]
