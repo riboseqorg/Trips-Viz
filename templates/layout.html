@@ -1,118 +1,220 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>Trips-Viz</title>
-	<meta charset="utf-8"/>
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
-	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/css/base/jquery-ui.min.css"></script> -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-alpha.12/dist/html2canvas.min.js"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.js"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.css"/>
-	<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/js/jquery.tablesorter.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-115765268-1"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag(){dataLayer.push(arguments);}
-		gtag('js', new Date());
-		gtag('config', 'UA-115765268-1');
-	</script>
-	<strong>
-	 <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-	 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-	 <link rel="stylesheet" href="{{ url_for('static', filename='css/lean-slider.css') }}">
-	 <link rel="stylesheet" href="{{ url_for('static', filename='css/sample-styles.css') }}">
-	 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
- </strong>
- <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
-</head>
-<body>
+  <head>
+    <title>Trips-Viz</title>
+    <meta charset="utf-8" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <!-- Navbar content -->
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#"
+            ><h1 class="logo" style="font-family: 'Georgia'">
+              <span style="color: #77abff">T</span>rips-<span
+                style="color: #77abff"
+                >V</span
+              >iz
+            </h1></a
+          >
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a
+                  class="nav-link active"
+                  aria-current="page"
+                  href="{{ url_for('homepage') }}"
+                  >Home</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  aria-current="page"
+                  href="{{ url_for('uploadspage') }}"
+                  >Saved ORFs</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  aria-current="page"
+                  href="{{ url_for('uploadspage') }}"
+                  >Uploads</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  aria-current="page"
+                  href="{{ url_for('uploadspage') }}"
+                  >Downloads</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  aria-current="page"
+                  href="{{ url_for('uploadspage') }}"
+                  >Settings</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helppage') }}">Help</a>
+              </li>
+              <li class="nav-item">
+                <div class="dropdown">
+                  <a
+                    class="btn btn-secondary dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    >Account</a
+                  >
 
-<header>
-		<h1 class="logo" style="font-family: 'Georgia'"><span style="color: #77abff">T</span>rips-<span style="color: #77abff">V</span>iz</h1>
-				<strong><nav>
-						<ul class="menu" style="display:inline; padding: 0px 50px;">
-								<li><a href="{{ url_for('homepage') }}"><span>Home</span></a></li>
-								<li><a href="{{ url_for('helppage') }}"><span>Help</span></a></li>
-								<li><a href="{{ url_for('contactus') }}"><span>Contact Us</span></a></li>
-								<li><a href="{{ url_for('downloadspage') }}"><span>Downloads</span></a></li>
-								<li><a href="{{ url_for('settingspage') }}"><span>Settings</span></a></li>
-								<li><a href="{{ url_for('uploadspage') }}"><span>Uploads</span></a></li>
-								<li><a href="{{ url_for('saved') }}"><span>Saved ORFs</span></a></li>
-								{% if current_user.is_authenticated %}
-										<li><a href="{{ url_for('logout') }}"><span>Logout</span></a></li>
-								{% endif %}
-								{% if not current_user.is_authenticated %}
-										<li><a href="{{ url_for('login') }}"><span>Sign In</span></a></li>
-										<li><a href="{{ url_for('create') }}"><span>Sign Up</span></a></li>
-								{% endif %}
-								<!--{% if current_user.name == "114224403@umail.ucc.ie" %}
-									<li><a href="{{ url_for('saved') }}"><span>My ORFs</span></a></li>
-								{% endif %}-->
-						</ul>
-				</nav></strong>
-        
-</header>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('login') }}"
+                        >Login</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('create') }}"
+                        >Register</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <!--Replace with username if logged in-->
+              </li>
+            </ul>
+          </div>
+        </div>
 
-<div>
-		{% with messages = get_flashed_messages() %}
-				{% if messages %}
-						{% for message in messages %}
-								<div class="alert alert-info alert-dismissible" role="alert">
-										<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                        <!-- <strong>Title</strong> --> {{ message }}
-                                </div>
-						{% endfor %}
-				{% endif %}
-		{% endwith %}
-</div>
-<div class="container">
-		{% block content %}
+        <!--<strong>-->
+        <!--<ul class="menu" style="display: inline; padding: 0px 50px">-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('homepage') }}"><span>Home</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('helppage') }}"><span>Help</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('contactus') }}"><span>Contact Us</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('downloadspage') }}"-->
+        <!--><span>Downloads</span></a-->
+        <!-->-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('settingspage') }}"><span>Settings</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('uploadspage') }}"><span>Uploads</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('saved') }}"><span>Saved ORFs</span></a>-->
+        <!--</li>-->
+        <!--{% if current_user.is_authenticated %}-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('logout') }}"><span>Logout</span></a>-->
+        <!--</li>-->
+        <!--{% endif %} {% if not current_user.is_authenticated %}-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('login') }}"><span>Sign In</span></a>-->
+        <!--</li>-->
+        <!--<li>-->
+        <!--<a href="{{ url_for('create') }}"><span>Sign Up</span></a>-->
+        <!--</li>-->
+        <!--{% endif %}-->
+        <!--<!--{% if current_user.name == "114224403@umail.ucc.ie" %}-->
+        <!--<li><a href="{{ url_for('saved') }}"><span>My ORFs</span></a></li>-->
+        <!--{% endif %}-->-->
+        <!--</ul>-->
+        <!--</strong>-->
+      </nav>
+    </header>
 
-		{% endblock %}
-</div>
+    <div>
+      {% with messages = get_flashed_messages() %} {% if messages %} {% for
+      message in messages %}
+      <div class="alert alert-info alert-dismissible" role="alert">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <!-- <strong>Title</strong> -->
+        {{ message }}
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+    </div>
+    <div class="container">{% block content %} {% endblock %}</div>
 
+    <script
+      src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"
+      data-cfasync="false"
+    ></script>
+    <script type="text/javascript">
+      var gtagId = "UA-115765268-1";
+      //window['ga-disable-' + gtagId] = true;
 
-<script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js" data-cfasync="false"></script>
-<script type="text/javascript">
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-var gtagId = 'UA-115765268-1';
-//window['ga-disable-' + gtagId] = true;
+      window.addEventListener("load", function () {
+        window.cookieconsent.initialise({
+          type: "opt-out",
+          theme: "classic",
+          palette: {
+            popup: {
+              background: "#eaf7f7",
+              text: "#5c7291",
+            },
+            button: {
+              background: "#56cbdb",
+              text: "#ffffff",
+            },
+          },
+          theme: "classic",
+          position: "top",
 
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
+          content: {
+            message:
+              "This website uses cookies to generate website usage statistics via google analytics and persistent cookies to save user preferences and facilitate data uploads.",
+          },
 
-	
-window.addEventListener('load', function(){
-			window.cookieconsent.initialise({
-				type: "opt-out",
-				theme: "classic",
-				palette: {
-						popup: {
-							background: "#eaf7f7",
-							text: "#5c7291"
-								},
-						button: {
-							background: "#56cbdb",
-							text: "#ffffff"
-								}
-					   },
-				theme: "classic",
-				position:"top",
-				
-				content: {
-					message: "This website uses cookies to generate website usage statistics via google analytics and persistent cookies to save user preferences and facilitate data uploads."
-						},
-				
-				
-				/*
+          /*
 				onInitialise: function(status) {
 							var type = this.options.type;
 							var didConsent = this.hasConsented();
@@ -163,28 +265,8 @@ window.addEventListener('load', function(){
 										
 										}
 									}*/
-				
-				
-				
-				
-				
-				
-				
-					   })
-					   });
-
-
-
-
-
-
-
-
-
-</script>
-
-
-</body>
-
-
+        });
+      });
+    </script>
+  </body>
 </html>

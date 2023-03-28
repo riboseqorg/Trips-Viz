@@ -107,6 +107,10 @@ app.config['MAIL_USE_SSL'] = False
 
 mail = Mail(app)
 
+SPECIES_SHORT_NAMES = {
+    'escherichia_coli': 'E. coli',
+}
+
 
 def sanitize_get_request(request):
     '''
@@ -1189,15 +1193,17 @@ def after_request_func(response):
 
 
 #This is the home page it show a list of organisms as defined by trips_dict
+# TODO: Move pages in order
 @app.route('/')
 def homepage(message=""):
     organism_access_list = []
-    organism_list = []
+    organism_list = {}
     logging.debug("homepage Connecting to trips.sqlite")
-    connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
+    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
+                                                config.DATABASE_NAME))
     connection.text_factory = str
     cursor = connection.cursor()
-    consent = sanitize_get_request(request.cookies.get("cookieconsent_status"))
+    sanitize_get_request(request.cookies.get("cookieconsent_status"))
     user, logged_in = fetch_user()
 
     user_id = -1
@@ -1218,20 +1224,34 @@ def homepage(message=""):
 
     #returns a tuple with each field as a seperate string
     cursor.execute(
-        "SELECT organism_id,organism_name,private,owner from organisms;")
+        "SELECT organism_id,organism_name,private,owner from organisms;"
+    )  #TODO: Seq uniq
     # List of all rows returned
     result = (cursor.fetchall())
-    for row in result:
+    for row in result:  # TODO: Need to make it more efficient
         if row[2] == 0:
             if row[1] not in organism_list:
-                organism_list.append(row[1])
+                organism_list[row[1]] = []
         elif row[2] == 1:
             if row[0] in organism_access_list or row[3] == user_id:
                 if row[1] not in organism_list:
-                    organism_list.append(row[1])
-    organism_list.sort()
+                    organism_list[row[1]] = []
+    # organism_list.sort()
+
+    for organism in organism_list:
+        cursor.execute(
+            "SELECT transcriptome_list from organisms WHERE organism_name = '{}' AND (private = 0 OR organism_id IN ({})) ;"
+            .format(organism,
+                    str(organism_access_list).strip("[]")))
+        result = cursor.fetchall()
+        if result:
+            for row in result:
+                organism_list[organism].append(row[0])
+
     logging.debug("homepage Closing trips.sqlite connection")
     connection.close()
+    print(organism_list)
+    # organism_list = list(organism_list.keys())
 
     message = sanitize_get_request(request.args.get('message'))
     return render_template('landing.html',
@@ -1826,6 +1846,7 @@ def dataset_breakdown(organism, transcriptome):
     user, logged_in = fetch_user()
 
     organism = str(organism)
+    print(organism, transcriptome)
     accepted_orftype = sanitize_get_request(request.args.get("region"))
     transcript = sanitize_get_request(request.args.get("transcript"))
     start = int(sanitize_get_request(request.args.get("start")))
