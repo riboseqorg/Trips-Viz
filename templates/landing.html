@@ -117,11 +117,7 @@ pointer-events: none;
         and is licensed under the <a href='https://trips.ucc.ie/license.txt'>MIT License</a>.
     </div>
 </div>
-{% set plots = ["Single transcript plot", "Single transcript comparison plot", "Meta-Information", "Differential plot", "Transcriptome info", "Translated ORF detection", "PausePred"] %}
-{% for organism, transcripts in organisms.items() %}
-    {{ organism }}
-    {% for transcript in transcripts %}{{ transcript }}{% endfor %}
-{% endfor %}
+{% set plots = {"Single transcript plot":"interactive_plot", "Single transcript comparison plot":"comparison", "Meta-Information":"metainfo_plot", "Differential plot":"differential", "Transcriptome info":"transinfo_plot", "Translated ORF detection":"orf_translation", "PausePred":"pause_detection"} %}
 <div id="organims">
     <b>Choose Organism</b>
     <div id="orglist">
@@ -161,9 +157,10 @@ pointer-events: none;
                                     <a class="dropdown-item" href="#">{{ transcript }}</a
                                         >
                                         <ul class="dropdown-menu dropdown-submenu">
-                                            {% for plot in plots %}
+                                            {% for plot, page in plots.items() %}
                                                 <li>
-                                                    <a class="dropdown-item" href="/{{ plot }}/">{{ plot }}</a>
+                                                    <a class="dropdown-item"
+                                                       href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
                                                 </li>
                                             {% endfor %}
                                         </ul>
@@ -203,9 +200,10 @@ pointer-events: none;
                                     <a class="dropdown-item" href="#">{{ transcript }}</a
                                         >
                                         <ul class="dropdown-menu dropdown-submenu">
-                                            {% for plot in plots %}
+                                            {% for plot, page in plots.items() %}
                                                 <li>
-                                                    <a class="dropdown-item" href="/{{ plot }}/">{{ plot }}</a>
+                                                    <a class="dropdown-item"
+                                                       href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
                                                 </li>
                                             {% endfor %}
                                         </ul>
