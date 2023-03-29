@@ -68,8 +68,32 @@ span {
   border-radius: 4px;
 }
 
+//Drop down
+.dropdown-menu li {
+position: relative;
+}
+.dropdown-menu .dropdown-submenu {
+display: none;
+position: absolute;
+left: 100%;
+top: -7px;
+}
+.dropdown-menu .dropdown-submenu-left {
+right: 100%;
+left: auto;
+}
+.dropdown-menu > li:hover > .dropdown-submenu {
+display: block;
+}
 
+.dropdown-hover:hover>.dropdown-menu {
+display: inline-block;
+}
 
+.dropdown-hover>.dropdown-toggle:active {
+/*Without this, clicking will make it sticky*/
+pointer-events: none;
+}
     </style>
     {% if message %}
         <div style="background-color:#85beff;
@@ -97,7 +121,6 @@ span {
 {% for organism, transcripts in organisms.items() %}
     {{ organism }}
     {% for transcript in transcripts %}{{ transcript }}{% endfor %}
-    {% for plot in plots %}{{ plot }}{% endfor %}
 {% endfor %}
 <div id="organims">
     <b>Choose Organism</b>
@@ -135,8 +158,15 @@ span {
                         <ul class="dropdown-menu">
                             {% for transcript in transcripts %}
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('login') }}">{{ transcript }}</a
+                                    <a class="dropdown-item" href="#">{{ transcript }}</a
                                         >
+                                        <ul class="dropdown-menu dropdown-submenu">
+                                            {% for plot in plots %}
+                                                <li>
+                                                    <a class="dropdown-item" href="/{{ plot }}/">{{ plot }}</a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -170,8 +200,15 @@ span {
                         <ul class="dropdown-menu">
                             {% for transcript in transcripts %}
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('login') }}">{{ transcript }}</a
+                                    <a class="dropdown-item" href="#">{{ transcript }}</a
                                         >
+                                        <ul class="dropdown-menu dropdown-submenu">
+                                            {% for plot in plots %}
+                                                <li>
+                                                    <a class="dropdown-item" href="/{{ plot }}/">{{ plot }}</a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
                                     </li>
                                 {% endfor %}
                             </ul>
