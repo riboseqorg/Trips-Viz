@@ -313,11 +313,13 @@ label.check_label {
 		border-radius: 16px;
 }
 
+/*
 input[type="checkbox"]:checked + label {
 		background: #77abff;
 		color: white;
 
 }
+*/
 
 input[type="radio"]:checked + label {
 		background: #77abff;

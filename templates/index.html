@@ -66,18 +66,18 @@ anmol,
 
 <div id="transcripts">
 		</br></br></br></br>
-		<input class="hidden_check line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}></input><label for='line_graph' class='checkbox_label'></label> <label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
+		<input class="line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}></input><label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
 		</br></br>
-		<input class="hidden_check ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}></input><label for='ambig_check' class='checkbox_label'></label> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
+		<input class="ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
 		</br></br>
-		<input class="hidden_check pcr_check" id="pcr_check" type="checkbox" name="pcr" value="pcr" unchecked></input><label for='pcr_check' class='checkbox_label'></label> <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
+		<input class="pcr_check" id="pcr_check" type="checkbox" name="pcr" value="pcr" unchecked></input> <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
 		</br></br>
 	<div id="adv_section2">
-		<input class="hidden_check cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='cov_check' class='checkbox_label'></label> <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
+		<input class="cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}></input><label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
 		</br></br>
-		<input class="hidden_check nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" {% if user_nuc=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='nuc_check' class='checkbox_label'></label> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
+		<input class="nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" {% if user_nuc=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
 		</br></br>
-		<input class="hidden_check mismatch_check" id="mismatch_check"  type="checkbox" name="mismatchseq" value="mismatchseq" id="mismatchseqid" unchecked></input> <label for='mismatch_check' class='checkbox_label'></label> <label for='mismatch_check' class='padded_label'>Display mismatches</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
+		<input class="mismatch_check" id="mismatch_check"  type="checkbox" name="mismatchseq" value="mismatchseq" id="mismatchseqid" unchecked></input>  <label for='mismatch_check' class='padded_label'>Display mismatches</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
 	</div>
 </div>
 
@@ -331,10 +331,10 @@ for (var filetype in accepted_files) {
 						// riboseq is checked by default all others not
 						if (filetype == "riboseq") {
 								addItOnce(alt_file_list, file_id);
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='hidden_check file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile checked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile checked></input>  <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
 								}
 						else {
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='hidden_check file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>  <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
 								}
 						//tr.appendChild();
 
