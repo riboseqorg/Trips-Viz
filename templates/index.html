@@ -21,18 +21,17 @@ var gwips_info = {{  gwips_info|safe  }};
 <div id="dummy1" class="dummy">
 </div>
 
-
-
+anmol,  
 <div id="sidebar">
 		<br/>
 		<input type="checkbox" style="opacity:0;" name="noisered" value="noisered" unchecked></input>
 		<br/>
 		<b>Gene/Transcript: </b></tran> <a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432; </a><br>
-		<input id="tran" name="transcript" ></input>
+		<input id="tran" name="transcript" type="text" value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}" />
 		<br/>
 		<div id="adv_section1">
 		<b>Min triplet periodicity score: </b> <a class="whatsthis" target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
-		<input id="readscore" name="readscore" value="0" ></input><br>
+		<input id="readscore" name="readscore" value={% if user_readscore %} "{{ user_readscore|safe }}" {% else %} "0" {% endif %} ></input><br>
 		<div style="display:none">
 		<b>Secondary score: </b> <a class="whatsthis" target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
 		<input id="secondary_readscore" name="secondary_readscore" value="1" ></input>
@@ -40,10 +39,10 @@ var gwips_info = {{  gwips_info|safe  }};
 		</div>
 		<br/>
 		<b>Min Read: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432; </a><br>
-		<input id="minread" name="minread" value="5" ></input>
+		<input id="minread" name="minread" value={% if user_minread %} "{{ user_minread|safe }}" {% else %} "5" {% endif %} ></input>
 		<br/>
 		<b>Max Read: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432; </a><br>
-		<input id="maxread" name="maxread" value="150" ></input>
+		<input id="maxread" name="maxread" value={% if user_maxread %} "{{ user_maxread|safe }}" {% else %} "150" {% endif %} ></input>
 		<br/>
 		<b>Highlight sequences list: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432; </a><br>
 		<input id="seqhili" name="seqhili" value="" ></input>
@@ -67,16 +66,16 @@ var gwips_info = {{  gwips_info|safe  }};
 
 <div id="transcripts">
 		</br></br></br></br>
-		<input class="hidden_check line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" checked></input><label for='line_graph' class='checkbox_label'></label> <label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
+		<input class="hidden_check line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}></input><label for='line_graph' class='checkbox_label'></label> <label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
 		</br></br>
-		<input class="hidden_check ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input><label for='ambig_check' class='checkbox_label'></label> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
+		<input class="hidden_check ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}></input><label for='ambig_check' class='checkbox_label'></label> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
 		</br></br>
 		<input class="hidden_check pcr_check" id="pcr_check" type="checkbox" name="pcr" value="pcr" unchecked></input><label for='pcr_check' class='checkbox_label'></label> <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
 		</br></br>
 	<div id="adv_section2">
-		<input class="hidden_check cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" unchecked></input> <label for='cov_check' class='checkbox_label'></label> <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
+		<input class="hidden_check cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='cov_check' class='checkbox_label'></label> <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
 		</br></br>
-		<input class="hidden_check nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" unchecked></input> <label for='nuc_check' class='checkbox_label'></label> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
+		<input class="hidden_check nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" {% if user_nuc=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='nuc_check' class='checkbox_label'></label> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
 		</br></br>
 		<input class="hidden_check mismatch_check" id="mismatch_check"  type="checkbox" name="mismatchseq" value="mismatchseq" id="mismatchseqid" unchecked></input> <label for='mismatch_check' class='checkbox_label'></label> <label for='mismatch_check' class='padded_label'>Display mismatches</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
 	</div>
@@ -209,23 +208,15 @@ $(document).ready(function(){
 var alt_file_list = [];
 
 var user_transcript = "{{ user_transcript|safe }}";
-var user_readscore = "{{ user_readscore|safe }}";
-var user_minread = "{{ user_minread|safe }}";
-var user_maxread = "{{ user_maxread|safe }}";
 var user_hili_starts = {{ user_hili_starts|safe }};
 var user_hili_stops = {{ user_hili_stops|safe }};
 var user_dir = "{{ user_dir|safe }}";
-var user_line_graph = "{{ user_line_graph|safe }}";
-var user_ambig = "{{ user_ambig|safe }}";
-var user_cov = "{{ user_cov|safe }}";
-var user_nuc = "{{ user_nuc|safe }}";
 var user_short = "{{ user_short|safe }}";
 var user_files = {{ user_files|safe }};
 var user_ribo_studies = {{ user_ribo_studies|safe }};
 var user_proteomics_studies = {{ user_proteomics_studies|safe }};
 var user_rna_studies = {{ user_rna_studies|safe }};
 var user_crd = "{{ user_crd|safe }}";
-var defaulttran = "{{ default_tran|safe }}";
 
 
 rownum = 1
@@ -468,9 +459,9 @@ $(function() {
 				modal: true,
 				minWidth: 800,
 				buttons: {
-						Submit: function() {//var transcript = document.getElementById("transcript_sel").value();
+						Submit: function() {
 																var transcript = document.querySelector('input[name=transcript_sel]:checked').value;
-																document.getElementById('tran').value = transcript;
+																// anmol //document.getElementById('tran').value = transcript;
 																$(this).dialog("close");
 																$("#query").click();
 																}
@@ -520,21 +511,7 @@ $("#query").click(function() {
 			"user_short":user_short,"advanced":advanced,"seqhili":seqhili, "secondary_readscore":secondary_readscore,"mismatches":mismatches,
 			"hili_start":hili_start,"hili_stop":hili_stop};
 	console.log("Building file_list");
-	//var file_list = [];
-	//for (var filetype in accepted_files) {
-	//		for (var study_id in accepted_files[filetype]) {
-	//				for (var file_id in accepted_files[filetype][study_id]) {
-	//						var newelement=$('input:checkbox[name='+file_id+']:checked').val();
-	//						if (newelement == 'inputfile'){
-	//								file_list.push(file_id);
-	//																					};
-	//																																 }
-	//																										}
-	//																			};
-	//qu["file_list"] = file_list;
 	qu["file_list"] = alt_file_list;
-	//console.log("len of File list is "+file_list.length);
-	//console.log("len of Alt file list is "+alt_file_list);
 	if (alt_file_list.length == 1) {
 		loading_header.innerText = "Loading data from "+alt_file_list.length+" file";}
 	else {
@@ -658,32 +635,11 @@ if (user_files.length != 0 || user_ribo_studies.length != 0 || user_proteomics_s
 		}
 
 
-if (user_readscore != "None") {
-		document.getElementById('readscore').value = user_readscore;
-		}
 
-if (user_minread != "None") {
-		document.getElementById('minread').value = user_minread;
-		}
 
-if (user_maxread != "None") {
-		document.getElementById('maxread').value = user_maxread;
-		}
 
-if (user_line_graph == "F") {
-		$('.line_graph').attr('checked', false);
-		}
 
-if (user_ambig == "T") {
-		$('.ambig_check').attr('checked', true);
-		}
-if (user_cov == "T") {
-		$('.cov_check').attr('checked', true);
-		}
 
-if (user_nuc == "T") {
-		$('.nuc_check').attr('checked', true);
-		}
 
 if (user_crd == "T") {
 		//console.log("Setting crd to true");
@@ -692,7 +648,7 @@ if (user_crd == "T") {
 
 
 
-if (user_dir != "None") {
+if (user_dir != "None") { // TODO: find a way to remove this
 		if (user_dir == "fiveprime") {
 				$('.fiveprime').attr('checked', true);
 												 }
@@ -702,12 +658,9 @@ if (user_dir != "None") {
 												};
 
 if (user_transcript != "None") {
-		document.getElementById('tran').value = user_transcript;
+		//anmol//document.getElementById('tran').value = user_transcript;
 		// If a transcript is passed by the user then automatically produce a graph
-		$("#query").click();
-		}
-else {
-		document.getElementById('tran').value = defaulttran;
+		$("#query").click(); // What does it do??
 		}
 
 
