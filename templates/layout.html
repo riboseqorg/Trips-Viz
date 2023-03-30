@@ -3,17 +3,82 @@
   <head>
     <title>Trips-Viz</title>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
       crossorigin="anonymous"
     />
+    <!--link rel="stylesheet" href="/static/css/a/trips.css" /-->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css"
+      integrity="sha512-ELV+xyi8IhEApPS/pSj66+Jiw+sOT1Mqkzlh8ExXihe4zfqbWkxPRi8wptXIO9g73FSlhmquFlUOuMSoXz5IRw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"
+      integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"
+      integrity="sha512-57oZ/vW8ANMjR/KQ6Be9v/+/h6bq9/l3f0Oc7vn6qMqyhvPd1cvKBRWWpzu0QoneImqr2SkmO4MSqU+RpHom3Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
       crossorigin="anonymous"
     ></script>
+    <!--Might need to remove-->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-alpha.12/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
+    <link rel="stylesheet" href="/static/css/sofia.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.css"
+    />
+    <script
+      type="text/javascript"
+      src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-colvis-1.5.1/b-html5-1.5.1/b-print-1.5.1/cr-1.4.1/datatables.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/js/jquery.tablesorter.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-115765268-1"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "UA-115765268-1");
+    </script>
+    <strong>
+      <link rel="stylesheet" href="/static/css/common.css" />
+      <link rel="stylesheet" href="/static/css/main.css" />
+      <link rel="stylesheet" href="/static/css/lean-slider.css" />
+      <link rel="stylesheet" href="/static/css/sample-styles.css" />
+      <link rel="shortcut icon" href="/static/favicon.ico" />
+    </strong>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css"
+    />
+    <!--Might need to remove above-->
   </head>
   <body>
     <header>
@@ -53,7 +118,7 @@
                 <a
                   class="nav-link"
                   aria-current="page"
-                  href="{{ url_for('uploadspage') }}"
+                  href="{{ url_for('saved') }}"
                   >Saved ORFs</a
                 >
               </li>
@@ -69,7 +134,7 @@
                 <a
                   class="nav-link"
                   aria-current="page"
-                  href="{{ url_for('uploadspage') }}"
+                  href="{{ url_for('downloadspage') }}"
                   >Downloads</a
                 >
               </li>
@@ -84,6 +149,16 @@
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('helppage') }}">Help</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('contactus') }}"
+                  >Contact Us</a
+                >
+              </li>
+              {% if current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+              </li>
+              {% else %}
               <li class="nav-item">
                 <div class="dropdown">
                   <a
@@ -110,52 +185,10 @@
                 </div>
                 <!--Replace with username if logged in-->
               </li>
+              {% endif %}
             </ul>
           </div>
         </div>
-
-        <!--<strong>-->
-        <!--<ul class="menu" style="display: inline; padding: 0px 50px">-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('homepage') }}"><span>Home</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('helppage') }}"><span>Help</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('contactus') }}"><span>Contact Us</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('downloadspage') }}"-->
-        <!--><span>Downloads</span></a-->
-        <!-->-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('settingspage') }}"><span>Settings</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('uploadspage') }}"><span>Uploads</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('saved') }}"><span>Saved ORFs</span></a>-->
-        <!--</li>-->
-        <!--{% if current_user.is_authenticated %}-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('logout') }}"><span>Logout</span></a>-->
-        <!--</li>-->
-        <!--{% endif %} {% if not current_user.is_authenticated %}-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('login') }}"><span>Sign In</span></a>-->
-        <!--</li>-->
-        <!--<li>-->
-        <!--<a href="{{ url_for('create') }}"><span>Sign Up</span></a>-->
-        <!--</li>-->
-        <!--{% endif %}-->
-        <!--<!--{% if current_user.name == "114224403@umail.ucc.ie" %}-->
-        <!--<li><a href="{{ url_for('saved') }}"><span>My ORFs</span></a></li>-->
-        <!--{% endif %}-->-->
-        <!--</ul>-->
-        <!--</strong>-->
       </nav>
     </header>
 
@@ -213,60 +246,9 @@
             message:
               "This website uses cookies to generate website usage statistics via google analytics and persistent cookies to save user preferences and facilitate data uploads.",
           },
-
-          /*
-				onInitialise: function(status) {
-							var type = this.options.type;
-							var didConsent = this.hasConsented();
-							if (type == 'opt-in' && didConsent) {
-								console.log("Enabling cookies")
-								window['ga-disable-' + gtagId] = false;
-								gtag('config', 'UA-115765268-1');
-								}
-							if (type == 'opt-out' && !didConsent) {
-								console.log("Disabling cookies")
-								window['ga-disable-UA-115765268-1'] = true;
-								gtag('config', 'UA-115765268-1', {
-											 'client_storage': 'none'
-											 });
-								
-								}
-							},
-										
-				onStatusChange: function(status, chosenBefore) {
-								var type = this.options.type;
-								var didConsent = this.hasConsented();
-								if (type == 'opt-in' && didConsent) {
-									console.log("Enabling cookies")
-									window['ga-disable-' + gtagId] = false;
-									gtag('config', 'UA-115765268-1');
-									}
-								if (type == 'opt-out' && !didConsent) {
-									console.log("Disabling cookies")
-									window['ga-disable-UA-115765268-1'] = true;
-									gtag('config', 'UA-115765268-1', {
-										'client_storage': 'none'
-											});
-									}
-								},
-				onRevokeChoice: function() {
-									var type = this.options.type;
-									if (type == 'opt-in') {
-										console.log("Disabling cookies")
-										window['ga-disable-UA-115765268-1'] = true;
-										gtag('config', 'UA-115765268-1', {
-											'client_storage': 'none'
-												});
-										}
-									if (type == 'opt-out') {
-										console.log("Enabling cookies")
-										window['ga-disable-' + gtagId] = false;
-										gtag('config', 'UA-115765268-1');
-										
-										}
-									}*/
         });
       });
     </script>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
   </body>
 </html>
