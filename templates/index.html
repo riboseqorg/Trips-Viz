@@ -1,13 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<script>
-var gwips_clade = '{{  gwips_clade|safe  }}';
-var gwips_org = '{{  gwips_org|safe  }}';
-var gwips_db = '{{  gwips_db|safe  }}';
-var gwips_info = {{  gwips_info|safe  }};
-</script>
-
 <head>
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/triplet_periodicity.css') }}">
@@ -177,11 +170,7 @@ anmol,
 <div id="buttons"></div>
 
 
-<div id="gwips">
-<a href="http://gwips.ucc.ie" id="gwips_link" target="_blank" >
-<button class="button centerbutton" type="submit"><b>View on GWIPS-Viz</b></button>
-</a>
-</div>
+{% include 'gwips.html' %}
 
 <div id="view_plot" class="wrapper"><button class="button" type="button" onclick="changebuttonlink(gwips_info)"  id="query"><b>View Plot</b></button></div>
 

@@ -1,11 +1,5 @@
 {% extends "layout.html" %}
 {% block content %}
-    <script>
-var gwips_clade = '{{  gwips_clade|safe  }}';
-var gwips_org = '{{  gwips_org|safe  }}';
-var gwips_db = '{{  gwips_db|safe  }}';
-var gwips_info = {{  gwips_info|safe  }};
-    </script>
     <head>
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/common.css') }}">
@@ -416,18 +410,12 @@ ul:empty:after {
 <br/>
 </div>
 <div id="view_plot">
-    <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
-        <button class="button centerbutton" type="submit">
-            <b>View on GWIPS-Viz</b>
-        </button>
-    </a>
-</br>
-<button class="button centerbutton"
-        type="button"
-        onclick='changebuttonlink(gwips_info)'
-        id="comparequery">
-    <b>View Plot</b>
-</button>
+    <button class="button centerbutton"
+            type="button"
+            onclick='changebuttonlink(gwips_info)'
+            id="comparequery">
+        <b>View Plot</b>
+    </button>
 </div>
 <div id="loading-div-background">
     <div id="loading-div" class="ui-corner-all">

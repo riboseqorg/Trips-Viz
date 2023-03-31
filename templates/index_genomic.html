@@ -1,11 +1,5 @@
 {% extends "layout.html" %}
 {% block content %}
-    <script>
-var gwips_clade = '{{  gwips_clade|safe  }}';
-var gwips_org = '{{  gwips_org|safe  }}';
-var gwips_db = '{{  gwips_db|safe  }}';
-var gwips_info = {{  gwips_info|safe  }};
-    </script>
     <script type="text/javascript"
             src="https://cdn.jsdelivr.net/npm/igv@2.10.4/dist/igv.min.js"></script>
     <head>
@@ -389,13 +383,6 @@ var gwips_info = {{  gwips_info|safe  }};
 </p>
 </div>
 <div id="buttons">
-</div>
-<div id="gwips">
-    <a href="https://gwips.ucc.ie" id="gwips_link" target="_blank">
-        <button class="button centerbutton" type="submit">
-            <b>View on GWIPS-Viz</b>
-        </button>
-    </a>
 </div>
 <div id="view_plot" class="wrapper">
     <button class="button"
