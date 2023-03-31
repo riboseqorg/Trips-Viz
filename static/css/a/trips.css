@@ -1,0 +1,12 @@
+/*checkbox shape color*/
+input[type="checkbox"] {
+  appearance: none;
+  border-radius: 40%;
+  width: 32px;
+  height: 16px;
+  border: 1px solid black;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #2ac3de;
+}
