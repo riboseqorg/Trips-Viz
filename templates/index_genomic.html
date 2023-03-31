@@ -1,25 +1,20 @@
 {% extends "layout.html" %}
 {% block content %}
-
-<script>
+    <script>
 var gwips_clade = '{{  gwips_clade|safe  }}';
 var gwips_org = '{{  gwips_org|safe  }}';
 var gwips_db = '{{  gwips_db|safe  }}';
 var gwips_info = {{  gwips_info|safe  }};
-</script>
-
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/igv@2.10.4/dist/igv.min.js"> </script>
-
-
-<head>
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/triplet_periodicity.css') }}">
-</head>
-
-
-<style>
-
-
+    </script>
+    <script type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/igv@2.10.4/dist/igv.min.js"></script>
+    <head>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/common.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/triplet_periodicity.css') }}">
+    </head>
+    <style>
 .tab {
 	overflow:hidden;
 	border: 1px solid #ccc;
@@ -80,226 +75,393 @@ var gwips_info = {{  gwips_info|safe  }};
     transform-origin: 0 0;
 }
 
-</style>
-
-
-
-
-
-
-
-
-
-
-
-<div id="page_heading">
-<p><font size="5"><b><u>General Settings</u></b></font></p>
+    </style>
+    <div id="page_heading">
+        <p>
+            <font size="5"><b><u>General Settings</u></b></font>
+        </p>
+    </div>
+    <div id="spacer"></div>
+    <div id="dummy1" class="dummy"></div>
+    <div id="sidebar">
+        <br/>
+        <input type="checkbox"
+               style="opacity:0"
+               name="noisered"
+               value="noisered"
+               unchecked>
+    </input>
+    <br/>
+    <b>Gene/Transcript: </b></tran> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432; </a>
+    <br>
+    <input id="tran" name="transcript">
+</input>
+<br/>
+<div id="adv_section1">
+    <b>Min triplet periodicity score: </b> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a>
+    <br>
+    <input id="readscore" name="readscore" value="0">
+</input>
+<br>
+<div style="display:none">
+    <b>Secondary score: </b> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a>
+    <br>
+    <input id="secondary_readscore" name="secondary_readscore" value="1">
+</input>
+<br/>
 </div>
-
-<div id="spacer">   </div>
-<div id="dummy1" class="dummy">
+<br/>
+<b>Min Read: </b></tran> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432; </a>
+<br>
+<input id="minread" name="minread" value="5">
+</input>
+<br/>
+<b>Max Read: </b></tran> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432; </a>
+<br>
+<input id="maxread" name="maxread" value="150">
+</input>
+<br/>
+<b>Highlight sequences list: </b></tran> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432; </a>
+<br>
+<input id="seqhili" name="seqhili" value="">
+</input>
+<br/>
+<tr>
+    <td>
+        <b>Highlight start: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a>
+        <br>
+        <input type="text" id="hili_start" name="hili_start" value="0">
+    </input>
+</tr>
+</td>
+<br>
+<tr>
+    <td>
+        <b>Highlight stop: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a>
+        <br>
+        <input type="text" id="hili_stop" name="hili_stop" value="0">
+    </input>
+</tr>
+</td>
+<br/>
+<b>Offset Direction: </b> <a class="whatsthis"
+    target="_blank_"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432; </a>
+<br>
+<input type="radio"
+       class="prime_radio fiveprime"
+       id="fiveprime"
+       value="fiveprime"
+       name="primetype"
+       checked>
+</input>
+<label for='fiveprime' class='check_label'>5'</label>
+<input type="radio"
+       class="prime_radio threeprime"
+       id="threeprime"
+       value="threeprime"
+       name="primetype"
+       unchecked>
+</input>
+<label for='threeprime' class='check_label'>3'</label>
 </div>
-
-
-
-<div id="sidebar">
-		<br/>
-		<input type="checkbox" style="opacity:0;" name="noisered" value="noisered" unchecked></input>
-		<br/>
-		<b>Gene/Transcript: </b></tran> <a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432; </a><br>
-		<input id="tran" name="transcript" ></input>
-		<br/>
-		<div id="adv_section1">
-		<b>Min triplet periodicity score: </b> <a class="whatsthis" target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
-		<input id="readscore" name="readscore" value="0" ></input><br>
-		<div style="display:none">
-		<b>Secondary score: </b> <a class="whatsthis" target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
-		<input id="secondary_readscore" name="secondary_readscore" value="1" ></input>
-		<br/>
-		</div>
-		<br/>
-		<b>Min Read: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432; </a><br>
-		<input id="minread" name="minread" value="5" ></input>
-		<br/>
-		<b>Max Read: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432; </a><br>
-		<input id="maxread" name="maxread" value="150" ></input>
-		<br/>
-		<b>Highlight sequences list: </b></tran> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432; </a><br>
-		<input id="seqhili" name="seqhili" value="" ></input>
-		<br/>
-		
-		
-		<tr><td><b>Highlight start: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><br>
-		<input type="text" id="hili_start" name="hili_start" value="0" ></input></tr></td> <br>
-		<tr><td><b>Highlight stop: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><br>
-		<input type="text" id="hili_stop" name="hili_stop" value="0" ></input></tr></td>
-		<br/>
-		
-		<b>Offset Direction: </b> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432; </a><br>
-		<input type="radio" class = "prime_radio fiveprime" id="fiveprime" value="fiveprime" name="primetype" checked></input>
-		<label for='fiveprime' class='check_label'>5'</label>
-		<input type="radio" class="prime_radio threeprime" id="threeprime" value="threeprime" name="primetype" unchecked></input>
-		<label for='threeprime' class='check_label'>3'</label>
-		</div>
 </div>
-
-
 <div id="transcripts">
-		</br></br></br></br>
-		<input class="hidden_check line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" checked></input><label for='line_graph' class='checkbox_label'></label> <label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
-		</br></br>
-		<input class="hidden_check ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input><label for='ambig_check' class='checkbox_label'></label> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
-		</br></br>
-		<input class="hidden_check pcr_check" id="pcr_check" type="checkbox" name="pcr" value="pcr" unchecked></input><label for='pcr_check' class='checkbox_label'></label> <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label> <a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
-		</br></br>
-	<div id="adv_section2">
-		<input class="hidden_check cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" unchecked></input> <label for='cov_check' class='checkbox_label'></label> <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
-		</br></br>
-		<input class="hidden_check nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" unchecked></input> <label for='nuc_check' class='checkbox_label'></label> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
-		</br></br>
-		<input class="hidden_check mismatch_check" id="mismatch_check"  type="checkbox" name="mismatchseq" value="mismatchseq" id="mismatchseqid" unchecked></input> <label for='mismatch_check' class='checkbox_label'></label> <label for='mismatch_check' class='padded_label'>Display mismatches</label> <a class="whatsthis" target="_blank_"  target="_blank_"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
-	</div>
+</br>
+</br>
+</br>
+</br>
+<input class="line_graph"
+       id="line_graph"
+       type="checkbox"
+       name="namelite"
+       value="lite1"
+       checked>
+</input>
+<label for='line_graph' class='checkbox_label'></label>
+<label for='line_graph' class='padded_label'>Line Graph</label>
+<a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
+</br>
+</br>
+<input class="ambig_check"
+       id="ambig_check"
+       type="checkbox"
+       name="ambiguous"
+       value="ambiguous"
+       unchecked>
+</input>
+<label for='ambig_check' class='checkbox_label'></label>
+<label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
+<a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
+</br>
+</br>
+<input class="pcr_check"
+       id="pcr_check"
+       type="checkbox"
+       name="pcr"
+       value="pcr"
+       unchecked>
+</input>
+<label for='pcr_check' class='checkbox_label'></label>
+<label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
+<a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
+</br>
+</br>
+<div id="adv_section2">
+    <input class="cov_check"
+           id="cov_check"
+           type="checkbox"
+           name="coverage"
+           value="coverage"
+           id="coverageid"
+           unchecked>
+</input>
+<label for='cov_check' class='checkbox_label'></label>
+<label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
+<a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
+</br>
+</br>
+<input class="nuc_check"
+       id="nuc_check"
+       type="checkbox"
+       name="nucseq"
+       value="nucseq"
+       id="nucseqid"
+       unchecked>
+</input>
+<label for='nuc_check' class='checkbox_label'>
+</label>
+<label for='nuc_check' class='padded_label'>
+    Display nucleotide sequence
+</label>
+<a class="whatsthis"
+   target="_blank_"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
+</br>
+</br>
+<input class="mismatch_check"
+       id="mismatch_check"
+       type="checkbox"
+       name="mismatchseq"
+       value="mismatchseq"
+       id="mismatchseqid"
+       unchecked>
+</input>
+<label for='mismatch_check' class='checkbox_label'>
+</label>
+<label for='mismatch_check' class='padded_label'>
+    Display mismatches
+</label>
+<a class="whatsthis"
+   target="_blank_"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
 </div>
-
-
+</div>
 <div id = "dialog-2" title = "Choose a transcript...">
 </div>
-
-
 <div id = "study_dialog" title = "Study info">
-<table></table>
+    <table>
+    </table>
 </div>
-
-
-
 <div id="seq_types">
-<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
-
-<table align="center">
-<!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
-<tr id="1">
-<td><button class="button all_checks" type="button" onclick='uncheck_all_multi()'><b>Uncheck All Files With Selected Seq-type</b></button></td>
-<td><button class="button all_checks" type="button" onclick='check_all_multi()'><b>Check All Files with Selected Seq-type</b></button></td>
-</tr>
-</table>
+    <p>
+        <font size="5" align="center"><b><u>Seq types</u></b></font>
+    </p>
+    <table align="center">
+        <!--<input type="button"
+       onClick="uncheck_all_riboseq"
+       value="Riboseq: Uncheck All Studies    "
+       class="button"/>-->
+        <tr id="1">
+            <td>
+                <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
+                    <b>Uncheck All Files With Selected Seq-type</b>
+                </button>
+            </td>
+            <td>
+                <button class="button all_checks" type="button" onclick='check_all_multi()'>
+                    <b>Check All Files with Selected Seq-type</b>
+                </button>
+            </td>
+        </tr>
+    </table>
 </br>
 </div>
-
-
 <div id="studies">
-<p><font size="5" align="center"><b><u>Studies</u></b></font></p>
-
+    <p>
+        <font size="5" align="center"><b><u>Studies</u></b></font>
+    </p>
 </br>
-
-
-<button  class="study_button" type="button" onclick='view_study_info()'><b>View study info</b></button>
-
-
+<button class="study_button" type="button" onclick='view_study_info()'>
+    <b>View study info</b>
+</button>
 <table align="center">
-<tr id="2">
-<td><button class="button all_checks" type="button" onclick="uncheck_study_multi()" ><b>Uncheck All files in Files box</b> </button></td>
-<td><button class="button all_checks" type="button" onclick="check_study_multi()" ><b>Check All files in Files box</b></button></td>
-
-</tr>
+    <tr id="2">
+        <td>
+            <button class="button all_checks"
+                    type="button"
+                    onclick="uncheck_study_multi()">
+                <b>Uncheck All files in Files box</b>
+            </button>
+        </td>
+        <td>
+            <button class="button all_checks" type="button" onclick="check_study_multi()">
+                <b>Check All files in Files box</b>
+            </button>
+        </td>
+    </tr>
 </table>
-
-</br></br>
-
+</br>
+</br>
 <table align="center" name="studytable" id="studytable" class="studytable">
-<tr id="tablerow1">
-</tr>
-<tr id="tablerow2">
-</tr>
-<tr id="tablerow3">
-</tr>
-<tr id="tablerow4">
-</tr>
-<tr id="tablerow5">
-</tr>
-<tr id="tablerow6">
-</tr>
-<tr id="tablerow7">
-</tr>
-<tr id="tablerow8">
-</tr>
-<tr id="tablerow9">
-</tr>
-<tr id="tablerow10">
-</tr>
-<tr id="tablerow11">
-</tr>
-<tr id="tablerow12">
-</tr>
-<tr id="tablerow13">
-</tr>
-<tr id="tablerow14">
-</tr>
-<tr id="tablerow15">
-</tr>
-<tr id="tablerow16">
-</tr>
-<tr id="tablerow17">
-</tr>
-<tr id="tablerow18">
-</tr>
+    <tr id="tablerow1">
+    </tr>
+    <tr id="tablerow2">
+    </tr>
+    <tr id="tablerow3">
+    </tr>
+    <tr id="tablerow4">
+    </tr>
+    <tr id="tablerow5">
+    </tr>
+    <tr id="tablerow6">
+    </tr>
+    <tr id="tablerow7">
+    </tr>
+    <tr id="tablerow8">
+    </tr>
+    <tr id="tablerow9">
+    </tr>
+    <tr id="tablerow10">
+    </tr>
+    <tr id="tablerow11">
+    </tr>
+    <tr id="tablerow12">
+    </tr>
+    <tr id="tablerow13">
+    </tr>
+    <tr id="tablerow14">
+    </tr>
+    <tr id="tablerow15">
+    </tr>
+    <tr id="tablerow16">
+    </tr>
+    <tr id="tablerow17">
+    </tr>
+    <tr id="tablerow18">
+    </tr>
 </table>
-</br></br>
+</br>
+</br>
 </div>
-
-
 <div id="files">
 </br>
-<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
+<p>
+    <font size="5" align="center"><b><u>Files</u></b>
+    </br>
+</font>
+</p>
 </div>
-
-
-
-<div id="buttons"></div>
-
-
+<div id="buttons">
+</div>
 <div id="gwips">
-<a href="https://gwips.ucc.ie" id="gwips_link" target="_blank" >
-<button class="button centerbutton" type="submit"><b>View on GWIPS-Viz</b></button>
-</a>
+    <a href="https://gwips.ucc.ie" id="gwips_link" target="_blank">
+        <button class="button centerbutton" type="submit">
+            <b>View on GWIPS-Viz</b>
+        </button>
+    </a>
 </div>
-
-<div id="view_plot" class="wrapper"><button class="button" type="button" onclick="changebuttonlink(gwips_info)"  id="query"><b>View Plot</b></button></div>
-
+<div id="view_plot" class="wrapper">
+    <button class="button"
+            type="button"
+            onclick="changebuttonlink(gwips_info)"
+            id="query">
+        <b>View Plot</b>
+    </button>
+</div>
 <div id="loading-div-background">
-	<div id="loading-div" class="ui-corner-all" >
-		<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
-		<h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
-	</div>
+    <div id="loading-div" class="ui-corner-all">
+        <img style="height:64px;
+                    margin:10px"
+             src="{{ url_for('static', filename = 'css/images/282.GIF') }}"
+             width="110"
+             height="85"
+             alt="Loading..."/>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/sofia.css') }}">
+        <h3 id="loading_header" style="color:gray;font-weight:normal;">
+            Loading....
+        </h3>
+    </div>
 </div>
-
 <div class="tab">
-	<button id="sc_profile_button" class="tablinks" onclick="openTab(event, 'sc_profile')">Sub-codon profile</button>
-	<button class="tablinks" onclick="openTab(event, 'genome')">Gwips-Viz</button>
-	<button class="tablinks" onclick="openTab(event, 'igv')">IGV</button>
+    <button id="sc_profile_button"
+            class="tablinks"
+            onclick="openTab(event, 'sc_profile')">
+        Sub-codon profile
+    </button>
+    <button class="tablinks" onclick="openTab(event, 'genome')">
+        Gwips-Viz
+    </button>
+    <button class="tablinks" onclick="openTab(event, 'igv')">
+        IGV
+    </button>
 </div>
-
 <div id="sc_profile" class="tabcontent">
-	<h3>Subcodon profile<h3>
-	<div id="container"></div>
-</div>
-
-<div id="genome" class="tabcontent">
-	<h3>Gwips-Viz<h3>
-	
-	<iframe id="gwips_iframe" src="https://gwips.ucc.ie" width="1200px" height="660px" ></iframe>
-</div>
-
-<div id="igv" class="tabcontent">
-	<h3>IGV<h3>
-	<div id="myDiv" style="padding-top: 50px;padding-bottom: 20px; height: auto" ></div>
-</div>
-
-<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
-<script type="text/javascript">
-
-
-
+    <h3>
+        Subcodon profile
+        <h3>
+            <div id="container">
+            </div>
+        </div>
+        <div id="genome" class="tabcontent">
+            <h3>
+                Gwips-Viz
+                <h3>
+                    <iframe id="gwips_iframe"
+                            src="https://gwips.ucc.ie"
+                            width="1200px"
+                            height="660px"></iframe>
+                </div>
+                <div id="igv" class="tabcontent">
+                    <h3>
+                        IGV
+                        <h3>
+                            <div id="myDiv"
+                                 style="padding-top: 50px;
+                                        padding-bottom: 20px;
+                                        height: auto">
+                            </div>
+                        </div>
+                        <script type="text/javascript"
+                                src="{{ url_for('static', filename='js/common.js') }}"></script>
+                        <script type="text/javascript">
 // When the page is completely loaded call the update_colours function
 $(document).ready(function(){
 	update_colours()
@@ -354,7 +516,7 @@ for (var i in seq_types) {
 		display_name = seq_types[i]
 	}
 
-	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label' >"+display_name+"</label>";
+	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label'>"+display_name+"</label>";
 	var seq_types_div = document.getElementById('seq_types');
 	seq_types_div.innerHTML += radio_seq_types;
 }
@@ -369,7 +531,7 @@ for (var key in studies_dict)  {
 				rowcount = 0
 				rownum += 1
 				};
-		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label' >"+studies_dict[key]["study_name"]+"</label>";
+		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label'>"+studies_dict[key]["study_name"]+"</label>";
 		//console.log("LABEL ID IS label"+key);
 		addRow(rownum, radio_study)
 		for (i in seq_types) {
@@ -379,7 +541,7 @@ for (var key in studies_dict)  {
 			//console.log("Seq type is "+seq_type)
 			new_show_div.className = 'show';
 			new_show_div.id = seq_type+"study"+key;
-			tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+			tablehtml = "<table class='file_table' id="+key+seq_type+" align='center'></table>";
 			new_show_div.innerHTML = tablehtml;
 			files_div.appendChild(new_show_div);
 		}
@@ -439,10 +601,10 @@ for (var filetype in accepted_files) {
 						// riboseq is checked by default all others not
 						if (filetype == "riboseq") {
 								addItOnce(alt_file_list, file_id);
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='hidden_check file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile checked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile checked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
 								}
 						else {
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='hidden_check file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
+								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>    <label for='"+file_name+file_id+"_check' class='filetable_label'></label> <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
 								}
 						//tr.appendChild();
 
@@ -966,6 +1128,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-</script>
-
-{% endblock %}
+                        </script>
+                    {% endblock %}

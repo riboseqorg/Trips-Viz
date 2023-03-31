@@ -1,19 +1,18 @@
 {% extends "layout.html" %}
 {% block content %}
-
-<script>
+    <script>
 var gwips_clade = '{{  gwips_clade|safe  }}';
 var gwips_org = '{{  gwips_org|safe  }}';
 var gwips_db = '{{  gwips_db|safe  }}';
 var gwips_info = {{  gwips_info|safe  }};
-</script>
-
-<head>
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/comparison.css') }}">
-</head>
-
-<style type="text/css">
+    </script>
+    <head>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/common.css') }}">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/comparison.css') }}">
+    </head>
+    <style type="text/css">
 .list {
     border: 1px solid grey;
     border-radius: 12px;
@@ -78,143 +77,378 @@ ul:empty:after {
 }
 
 
-</style>
-
-
-
-<div id="general_settings">
-	<p><font size="5" align="center"><b><u>General Settings </u></b></font></p>
-	<table align="center" class="studytable">
-	<tr><td><input id="ambiguous" class="hidden_check ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input><label for='ambiguous' class='checkbox_label'></label><label for='line_graph' class='padded_label'>Allow ambiguous reads</label> <a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432; </a> </tr></td>
-	<tr><td><input id="normalize" class="hidden_check norm_check" type="checkbox" name="normalize" value="normalize" checked></input>     <label for='normalize' class='checkbox_label'></label><label for='line_graph' class='padded_label'>Normalize by mapped reads</label> <a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432; </a> </tr></td>
-	<tr><td><input id="comp_ribocov" class="hidden_check comp_ribocov_check" type="checkbox" name="comp_ribocov" value="comp_ribocov" checked></input>     <label for='comp_ribocov' class='checkbox_label'></label><label for='line_graph' class='padded_label'>Ribo-Seq coverage</label> <a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432; </a> </tr></td>
-	<tr><td><b>Gene/Transcript: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_gene">&#9432; </a>
-	<input align="center" id="tran" type="text" name="transcript" value="ENST00000367055"></input></tr></td>
-	<tr><td><b>Min Read: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_minread">&#9432; </a><input type="text" id="minread" name="minread" value="25" ></input></tr></td>
-	<tr><td><b>Max Read: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_maxread">&#9432; </a><input type="text" id="maxread" name="maxread" value="150" ></input></tr></td>
-	<tr><td><b>Highlight start: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><input type="text" id="hili_start" name="hili_start" value="0" ></input></tr></td>
-	<tr><td><b>Highlight stop: </b><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><input type="text" id="hili_stop" name="hili_stop" value="0" ></input></tr></td>
-	</table>
+    </style>
+    <div id="general_settings">
+        <p>
+            <font size="5" align="center"><b><u>General Settings </u></b></font>
+        </p>
+        <table align="center" class="studytable">
+            <tr>
+                <td>
+                    <input id="ambiguous"
+                           class="ambig_check"
+                           type="checkbox"
+                           name="ambiguous"
+                           value="ambiguous"
+                           unchecked>
+                </input>
+                <label for='ambiguous' class='checkbox_label'></label>
+                <label for='line_graph' class='padded_label'>Allow ambiguous reads</label>
+                <a class="whatsthis"
+                   target="_blank_"
+                   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432; </a>
+            </tr>
+        </td>
+        <tr>
+            <td>
+                <input id="normalize"
+                       class="norm_check"
+                       type="checkbox"
+                       name="normalize"
+                       value="normalize"
+                       checked>
+            </input>
+            <label for='normalize' class='checkbox_label'></label>
+            <label for='line_graph' class='padded_label'>Normalize by mapped reads</label>
+            <a class="whatsthis"
+               target="_blank_"
+               href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432; </a>
+        </tr>
+    </td>
+    <tr>
+        <td>
+            <input id="comp_ribocov"
+                   class="comp_ribocov_check"
+                   type="checkbox"
+                   name="comp_ribocov"
+                   value="comp_ribocov"
+                   checked>
+        </input>
+        <label for='comp_ribocov' class='checkbox_label'></label>
+        <label for='line_graph' class='padded_label'>Ribo-Seq coverage</label>
+        <a class="whatsthis"
+           target="_blank_"
+           href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432; </a>
+    </tr>
+</td>
+<tr>
+    <td>
+        <b>Gene/Transcript: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_gene">&#9432; </a>
+        <input align="center"
+               id="tran"
+               type="text"
+               name="transcript"
+               value="ENST00000367055">
+    </input>
+</tr>
+</td>
+<tr>
+    <td>
+        <b>Min Read: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_minread">&#9432; </a>
+        <input type="text" id="minread" name="minread" value="25">
+    </input>
+</tr>
+</td>
+<tr>
+    <td>
+        <b>Max Read: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_maxread">&#9432; </a>
+        <input type="text" id="maxread" name="maxread" value="150">
+    </input>
+</tr>
+</td>
+<tr>
+    <td>
+        <b>Highlight start: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a>
+        <input type="text" id="hili_start" name="hili_start" value="0">
+    </input>
+</tr>
+</td>
+<tr>
+    <td>
+        <b>Highlight stop: </b><a class="whatsthis"
+   target="_blank_"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a>
+        <input type="text" id="hili_stop" name="hili_stop" value="0">
+    </input>
+</tr>
+</td>
+</table>
 </div>
-
 <div id="seq_types">
-<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
+    <p>
+        <font size="5" align="center"><b><u>Seq types</u></b></font>
+    </p>
 </br>
 </div>
 <div id = "dialog-2" title = "Choose a transcript..."></div>
 <div id="studies">
-<p><font size="5" align="center"><b><u>Studies</u></b></font></p>
+    <p>
+        <font size="5" align="center"><b><u>Studies</u></b></font>
+    </p>
 </br>
-
-
 <table align="center">
-<tr><td></td><td><button  class="study_button" type="button" onclick='view_study_info()'><b>View study info</b></button></td></tr>
+    <tr>
+        <td></td>
+        <td>
+            <button class="study_button" type="button" onclick='view_study_info()'>
+                <b>View study info</b>
+            </button>
+        </td>
+    </tr>
 </table>
 </br>
-
-<table align="center" width="90%" name="studytable" id="studytable" class="studytable">
-<tr id="tablerow1">
-</tr>
-<tr id="tablerow2">
-</tr>
-<tr id="tablerow3">
-</tr>
-<tr id="tablerow4">
-</tr>
-<tr id="tablerow5">
-</tr>
-<tr id="tablerow6">
-</tr>
-<tr id="tablerow7">
-</tr>
-<tr id="tablerow8">
-</tr>
-<tr id="tablerow9">
-</tr>
-<tr id="tablerow10">
-</tr>
-<tr id="tablerow11">
-</tr>
-<tr id="tablerow12">
-</tr>
-<tr id="tablerow13">
-</tr>
-<tr id="tablerow14">
-</tr>
-<tr id="tablerow15">
-</tr>
-<tr id="tablerow16">
-</tr>
-<tr id="tablerow17">
-</tr>
-<tr id="tablerow18">
-</tr>
-<tr id="tablerow19">
-</tr>
-<tr id="tablerow20">
-</tr>
-<tr id="tablerow21">
-</tr>
-<tr id="tablerow22">
-</tr>
-<tr id="tablerow23">
-</tr>
+<table align="center"
+       width="90%"
+       name="studytable"
+       id="studytable"
+       class="studytable">
+    <tr id="tablerow1">
+    </tr>
+    <tr id="tablerow2">
+    </tr>
+    <tr id="tablerow3">
+    </tr>
+    <tr id="tablerow4">
+    </tr>
+    <tr id="tablerow5">
+    </tr>
+    <tr id="tablerow6">
+    </tr>
+    <tr id="tablerow7">
+    </tr>
+    <tr id="tablerow8">
+    </tr>
+    <tr id="tablerow9">
+    </tr>
+    <tr id="tablerow10">
+    </tr>
+    <tr id="tablerow11">
+    </tr>
+    <tr id="tablerow12">
+    </tr>
+    <tr id="tablerow13">
+    </tr>
+    <tr id="tablerow14">
+    </tr>
+    <tr id="tablerow15">
+    </tr>
+    <tr id="tablerow16">
+    </tr>
+    <tr id="tablerow17">
+    </tr>
+    <tr id="tablerow18">
+    </tr>
+    <tr id="tablerow19">
+    </tr>
+    <tr id="tablerow20">
+    </tr>
+    <tr id="tablerow21">
+    </tr>
+    <tr id="tablerow22">
+    </tr>
+    <tr id="tablerow23">
+    </tr>
 </table>
 </div>
-
-
-
 <div id="buttons"></div>
 <div id="files">
 </br>
-<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
+<p>
+    <font size="5" align="center"><b><u>Files</u></b>
+    </br>
+</font>
+</p>
 </div>
 <div id="file_list">
-	</br>
-		<div id="group_1_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group1_color"  name="favcolor" value="#ff0000"><input style="font-weight: bold; max-width: 40%" align="center" name="group_1_label" id="group1_label" type="text" value="Group 1"></input><ul class="draggable_filelist" id="group_1_file_list" style="align:center"></ul></div>
-		<div id="group_2_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"  id="group2_color"  name="favcolor" value="#0010FF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_2_label" id="group2_label" type="text" value="Group 2"></input><ul class="draggable_filelist" id="group_2_file_list" style="align:center"></ul></div>
-		<div id="group_3_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group3_color"  name="favcolor" value="#0DFF00"><input style="font-weight: bold; max-width: 40%" align="center" name="group_3_label" id="group3_label" type="text" value="Group 3"></input><ul class="draggable_filelist" id="group_3_file_list" style="align:center"></ul></div>
-		<div id="group_4_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group4_color"  name="favcolor" value="#FFA200"><input style="font-weight: bold;max-width: 40%" align="center" name="group_4_label" id="group4_label" type="text" value="Group 4"></input><ul class="draggable_filelist" id="group_4_file_list" style="align:center"></ul></div>
-	<div id="group_5_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group5_color"  name="favcolor" value="#BA00FF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_5_label" id="group5_label" type="text" value="Group 5"></input><ul class="draggable_filelist" id="group_5_file_list" style="align:center"></ul></div>
-	<div id="group_6_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group6_color"  name="favcolor" value="#02EDFF"><input style="font-weight: bold; max-width: 40%" align="center" name="group_6_label" id="group6_label" type="text" value="Group 6"></input><ul class="draggable_filelist" id="group_6_file_list" style="align:center"></ul></div>
-	<div id="group_7_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group7_color"  name="favcolor" value="#F9FF12"><input style="font-weight: bold; max-width: 40%" align="center" name="group_7_label" id="group7_label" type="text" value="Group 7"></input><ul class="draggable_filelist" id="group_7_file_list" style="align:center"></ul></div>
-	<div id="group_8_div" class="group_div"><input class="jscolor {width:250, height:150, position:'right',
-	borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"   id="group8_color"  name="favcolor" value="#FF02DA"><input style="font-weight: bold; max-width: 40%" align="center" name="group_8_label" id="group8_label" type="text" value="Group 8"></input><ul class="draggable_filelist" id="group_8_file_list" style="align:center"></ul></div>
-		<br/>
-	
-</div>
-
-
-
-
-<div id="view_plot">
-<a href="http://gwips.ucc.ie" id="gwips_link" target="_blank" >
-<button class="button centerbutton" type="submit"><b>View on GWIPS-Viz</b></button></a>
 </br>
-<button class="button centerbutton" type="button" onclick='changebuttonlink(gwips_info)'  id="comparequery"><b>View Plot</b></button>
+<div id="group_1_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group1_color"
+           name="favcolor"
+           value="#ff0000">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_1_label"
+           id="group1_label"
+           type="text"
+           value="Group 1">
+</input>
+<ul class="draggable_filelist"
+    id="group_1_file_list"
+    style="align:center">
+</ul>
 </div>
-
+<div id="group_2_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group2_color"
+           name="favcolor"
+           value="#0010FF">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_2_label"
+           id="group2_label"
+           type="text"
+           value="Group 2">
+</input>
+<ul class="draggable_filelist"
+    id="group_2_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_3_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group3_color"
+           name="favcolor"
+           value="#0DFF00">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_3_label"
+           id="group3_label"
+           type="text"
+           value="Group 3">
+</input>
+<ul class="draggable_filelist"
+    id="group_3_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_4_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group4_color"
+           name="favcolor"
+           value="#FFA200">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_4_label"
+           id="group4_label"
+           type="text"
+           value="Group 4">
+</input>
+<ul class="draggable_filelist"
+    id="group_4_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_5_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group5_color"
+           name="favcolor"
+           value="#BA00FF">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_5_label"
+           id="group5_label"
+           type="text"
+           value="Group 5">
+</input>
+<ul class="draggable_filelist"
+    id="group_5_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_6_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group6_color"
+           name="favcolor"
+           value="#02EDFF">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_6_label"
+           id="group6_label"
+           type="text"
+           value="Group 6">
+</input>
+<ul class="draggable_filelist"
+    id="group_6_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_7_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group7_color"
+           name="favcolor"
+           value="#F9FF12">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_7_label"
+           id="group7_label"
+           type="text"
+           value="Group 7">
+</input>
+<ul class="draggable_filelist"
+    id="group_7_file_list"
+    style="align:center">
+</ul>
+</div>
+<div id="group_8_div" class="group_div">
+    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
+           id="group8_color"
+           name="favcolor"
+           value="#FF02DA">
+    <input style="font-weight: bold;
+                  max-width: 40%"
+           align="center"
+           name="group_8_label"
+           id="group8_label"
+           type="text"
+           value="Group 8">
+</input>
+<ul class="draggable_filelist"
+    id="group_8_file_list"
+    style="align:center">
+</ul>
+</div>
+<br/>
+</div>
+<div id="view_plot">
+    <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
+        <button class="button centerbutton" type="submit">
+            <b>View on GWIPS-Viz</b>
+        </button>
+    </a>
+</br>
+<button class="button centerbutton"
+        type="button"
+        onclick='changebuttonlink(gwips_info)'
+        id="comparequery">
+    <b>View Plot</b>
+</button>
+</div>
 <div id="loading-div-background">
-	<div id="loading-div" class="ui-corner-all" >
-		<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
-		<h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
-	</div>
+    <div id="loading-div" class="ui-corner-all">
+        <img style="height:64px;
+                    margin:10px"
+             src="{{ url_for('static', filename = 'css/images/282.GIF') }}"
+             width="110"
+             height="85"
+             alt="Loading..."/>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/sofia.css') }}">
+        <h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
+    </div>
 </div>
-
 <div id="container"></div>
 <div id = "study_dialog" title = "Study info">
-<table></table>
+    <table>
+    </table>
 </div>
-
-<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='js/common.js') }}"></script>
 <script type="text/javascript">
 var listnum = 0;
 var master_file_dict = {};
@@ -259,7 +493,7 @@ for (var i in seq_types) {
 		display_name = seq_types[i]
 	}
 
-	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label' >"+display_name+"</label>";
+	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label'>"+display_name+"</label>";
 	var seq_types_div = document.getElementById('seq_types');
 	seq_types_div.innerHTML += radio_seq_types;
 }
@@ -273,7 +507,7 @@ for (var key in studies_dict)  {
 				rowcount = 0
 				rownum += 1
 				};
-		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label' >"+studies_dict[key]["study_name"]+"</label>";
+		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label'>"+studies_dict[key]["study_name"]+"</label>";
 		addRow(rownum, radio_study)
 
 		for (i in seq_types) {
@@ -282,7 +516,7 @@ for (var key in studies_dict)  {
 			var new_show_div = document.createElement(studies_dict[key]["study_name"]);
 			new_show_div.className = 'show';
 			new_show_div.id = seq_type+"study"+key;
-			//tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+			//tablehtml = "<table class='file_table' id="+key+seq_type+" align='center'></table>";
 			tablehtml = "<li id="+key+seq_type+" class='items'></li>";
 			new_show_div.innerHTML = tablehtml;
 			files_div.appendChild(new_show_div);
@@ -419,14 +653,14 @@ function addItem(file_id){
 				if (master_file_dict[color]["file_ids"].length == 1) {
 						var minread = master_file_dict[color]["minread"];
 						var maxread = master_file_dict[color]["maxread"];
-						var group_name = "<input type='text' id="+group_id+" value='"+file_name+"_"+minread+"-"+maxread+"' ></input>"
+						var group_name = "<input type='text' id="+group_id+" value='"+file_name+"_"+minread+"-"+maxread+"'></input>"
 						li.innerHTML = [group_name];
 																														 }
 				else {
 						var minread = master_file_dict[color]["minread"];
 						var maxread = master_file_dict[color]["maxread"];
 						var initial_value = [file_name+ " and "+ ((master_file_dict[color]["file_ids"].length)-1).toString() +" others"+"_"+minread+"-"+maxread];
-						var group_name = "<input type='text' id="+group_id+" value='"+initial_value+"' ></input>"
+						var group_name = "<input type='text' id="+group_id+" value='"+initial_value+"'></input>"
 						li.innerHTML = [group_name];
 						}
 				document.getElementById("color_file_list").appendChild(li);
@@ -771,5 +1005,4 @@ if (html_args["transcript"] != "None") {
 
 
 </script>
-
 {% endblock %}

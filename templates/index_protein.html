@@ -204,11 +204,11 @@ for (var key in proteostudies) {
         i = i+1
         desc = second_dict[filename];
         if(i%2 == 0){
-            ihtml = "<td><input id='"+filename+"_check' type='checkbox' class='hidden_check "+key+"' name="+filename+" value='proteoinputfile' checked ></input>    <label for='"+filename+"_check' class='filetable_label'></label> <label for='"+filename+"_check' class='padded_label'><b>"+filename+"</b>:"+desc+"</label>    </td>"
+            ihtml = "<td><input id='"+filename+"_check' type='checkbox' class='"+key+"' name="+filename+" value='proteoinputfile' checked ></input>    <label for='"+filename+"_check' class='filetable_label'></label> <label for='"+filename+"_check' class='padded_label'><b>"+filename+"</b>:"+desc+"</label>    </td>"
             tablehtml += '<tr id="'+key+'tablerow'+i+'">'+ihtml
             }
         else{
-            ihtml = "<td><input id='"+filename+"_check' type='checkbox' class='hidden_check "+key+"' name="+filename+" value='proteoinputfile' checked ></input>    <label for='"+filename+"_check' class='filetable_label'></label> <label for='"+filename+"_check' class='padded_label'><b>"+filename+"</b>:"+desc+"</label>    </td>"
+            ihtml = "<td><input id='"+filename+"_check' type='checkbox' class='"+key+"' name="+filename+" value='proteoinputfile' checked ></input>    <label for='"+filename+"_check' class='filetable_label'></label> <label for='"+filename+"_check' class='padded_label'><b>"+filename+"</b>:"+desc+"</label>    </td>"
             tablehtml += ihtml+'</tr> '
             }
         }
