@@ -94,10 +94,12 @@
 <td><button class="button all_checks" type="button" onclick='check_all_multi()'><b>Check All Files with Selected Seq-type</b></button></td>
 </tr>
 </table>
+
 </br>
-
-
-
+{% for seq_type in seq_types %}
+<input checked="" type="radio" class="seq_type_radio all_checks" id="{{seq_type}}" name="{{seq_type}}" value="{{seq_type}}">
+<label for="{{seq_type}}" id="label{{seq_type}}" class="radio_label">{{seq_type}}</label>
+{% endfor %}
 </div>
 
 
@@ -118,47 +120,25 @@
 </tr>
 </table>
 
-</br></br>
-
+<br /><br />
 <table align="center" name="studytable" id="studytable" class="studytable">
-<tr id="tablerow1">
+<tbody><tr id="tablerow1">
+
+{% for index, study_detail in studies_dict.items() %} 
+<td><input type="radio" checked="" class="study_radio all_checks" id="study{{index}}" name="content_type" value="study{{index}}"><label for="study{{index}}" id="label{{index}}" class="radio_label" style="border-color: rgb(119, 171, 255); opacity: 1;">{{study_detail['study_name']}}</label></td>
+{% endfor %}
+
+
+
 </tr>
-<tr id="tablerow2">
-</tr>
-<tr id="tablerow3">
-</tr>
-<tr id="tablerow4">
-</tr>
-<tr id="tablerow5">
-</tr>
-<tr id="tablerow6">
-</tr>
-<tr id="tablerow7">
-</tr>
-<tr id="tablerow8">
-</tr>
-<tr id="tablerow9">
-</tr>
-<tr id="tablerow10">
-</tr>
-<tr id="tablerow11">
-</tr>
-<tr id="tablerow12">
-</tr>
-<tr id="tablerow13">
-</tr>
-<tr id="tablerow14">
-</tr>
-<tr id="tablerow15">
-</tr>
-<tr id="tablerow16">
-</tr>
-<tr id="tablerow17">
-</tr>
-<tr id="tablerow18">
-</tr>
-</table>
-</br></br>
+
+</tbody></table>
+
+
+
+
+
+
 </div>
 anmol
 {{  studies_dict|safe  }}
