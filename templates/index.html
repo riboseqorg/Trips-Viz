@@ -14,7 +14,6 @@
 <div id="dummy1" class="dummy">
 </div>
 
-anmol,  
 <div id="sidebar">
 		<br/>
 		<input type="checkbox" style="opacity:0;" name="noisered" value="noisered" unchecked></input>
@@ -158,6 +157,29 @@ anmol,
 </table>
 </br></br>
 </div>
+anmol
+{{  studies_dict|safe  }}
+kiran
+{{  studyinfo_dict|safe  }}
+idiot
+{{ accepted_files|safe }} <!--Simplyfy this-->
+
+
+
+
+{% for seq, projects in accepted_files.items() %}
+
+<div class="show" id="{{seq}}study0" style={% if seq=='rnaseq' and 'riboseq' in accepted_files %} "display: none;" {% else %} "display=" {% endif %}>
+<table class="file_table" id="0{{seq}}" align="center">
+{% for project_id, file_metas in projects.items() %}
+{% for file_id, value in file_metas.items() %}
+<td><input id="{{value['file_name']}}{{file_id}}_check" type="checkbox" class="file_check file_{{file_id}} all_checks {{seq}}_file {{seq}}_study0" name="9" value="inputfile" unchecked="">  <label for="{{value['file_name']}}{{file_id}}_check" class="padded_label"><b>{{value['file_name']}}</b>:{{value['file_description']}}</label></td>
+{% endfor %}
+{% endfor %}
+</table>
+</div>
+{% endfor %}
+
 
 
 <div id="files">
@@ -270,76 +292,7 @@ for (var key in studies_dict)  {
 var accepted_files = {{ accepted_files|safe }};
 
 
-// keys in this are seq types with values being a list of study id's that have at least one file of that seq type
-// this is used to hide studies that don't have any files of the selected seq type.
-var seq_study_dict = {};
-
-
-// populate the ribostudies and rnastudies div with file names and descriptions.
-for (var filetype in accepted_files) {
-		//console.log("filetype ", filetype);
-		for (var study_id in accepted_files[filetype]) {
-				//console.log("Study id: ",study_id);
-				i=0
-				var file_names = [];
-				for (var file_id in accepted_files[filetype][study_id]) {
-					file_name = accepted_files[filetype][study_id][file_id]["file_name"]
-					file_names.push([file_name, file_id])
-					}
-				console.log("File names", file_names);
-				file_names = file_names.sort(function(a, b) {
-					return a[0].localeCompare(b[0]);
-				})
-				
-				var sorted_file_list = [];
-				for (var z in file_names) {
-					var tup = file_names[z];
-					sorted_file_list.push(tup[1]);
-					}
-				console.log("sorted file_list", sorted_file_list);
-				for (var file_id in sorted_file_list) {
-						file_id = sorted_file_list[file_id]
-						file_name = accepted_files[filetype][study_id][file_id]["file_name"];
-						file_description = accepted_files[filetype][study_id][file_id]["file_description"];
-						if (!(filetype in seq_study_dict)) {
-							seq_study_dict[filetype] = [];
-						};
-						//console.log("FILE ID LIST IS "+accepted_files[filetype][study_id])
-						if (accepted_files[filetype][study_id].length != 0) {
-							if (!(study_id in seq_study_dict[filetype])) {
-								//console.log("PUSHING STUDY ID"+study_id);
-								seq_study_dict[filetype].push(study_id);
-								//console.log("Seq study dict now "+seq_study_dict[filetype])
-						}
-					};
-
-
-						var table = document.getElementById(study_id+filetype);
-						var tr = document.createElement("tr");
-						var td = document.createElement("td");
-						// riboseq is checked by default all others not
-						if (filetype == "riboseq") {
-								addItOnce(alt_file_list, file_id);
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile checked></input>  <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
-								}
-						else {
-								td.innerHTML = ("<td><input id='"+file_name+file_id+"_check' type='checkbox' class='file_check file_"+file_id+" all_checks "+filetype+"_file "+filetype+"_study"+study_id+"'  name="+file_id+" value=inputfile unchecked></input>  <label for='"+file_name+file_id+"_check' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
-								}
-						//tr.appendChild();
-
-						if (i != 2){
-								table.appendChild(td);
-								i+= 1;
-												}
-						else if (i == 2){
-								table.appendChild(td);
-								table.appendChild(tr);
-								i = 0
-								}
-
-																						}
-														}
-								};
+							};
 
 
 
