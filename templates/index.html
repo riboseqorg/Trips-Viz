@@ -84,8 +84,8 @@
 
 
 
-<div id="seq_types">
-<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
+<div id="seq_types"><center>
+<p><font size="5" ><b><u>Seq types</u></b></font></p></center>
 
 <table align="center">
 <!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
@@ -104,7 +104,7 @@
 
 
 <div id="studies">
-<p><font size="5" align="center"><b><u>Studies</u></b></font></p>
+<center><p><font size="5"><b><u>Studies</u></b></font></p></center>
 
 </br>
 
@@ -121,7 +121,7 @@
 </table>
 
 <br /><br />
-<table align="center" name="studytable" id="studytable" class="studytable">
+<table align="center" id="studytable" class="studytable">
 <tbody><tr id="tablerow1">
 
 {% for index, study_detail in studies_dict.items() %} 
@@ -156,7 +156,7 @@ idiot
 
 <div id="files">
 </br>
-<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
+<center><p><font size="5"><b><u>Files</u></b></br></font></p></center>
 {% for seq, projects in accepted_files.items() %}
 {{(seq == 'rnaseq') and ('riboseq' in accepted_files)}}
 

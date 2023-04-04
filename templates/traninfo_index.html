@@ -13,7 +13,7 @@
 
 <div id="sidebar">
 	<br/>
-	<p><font size="5" align="center"><b><u>Choose plot type</u></b></font></p>
+	<center><p><font size="5"><b><u>Choose plot type</u></b></font></p></center>
 	<br/>
 	<br/>
 	<table align="center" class="plot_table" id="plottype_table">
@@ -31,7 +31,7 @@
 
 <div id="options">
 		</br>
-		<p><font size="5" align="center"><b><u>Options</u></b></font></p>
+		<center><p><font size="5"><b><u>Options</u></b></font></p></center>
 </div>
 
 
@@ -131,7 +131,7 @@ function update_settings(n,defaulttran){
 		switch(n)
 		{
 				case 'nuc_comp_single':
-						$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'>\
+						$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'>\
 							<tr><td>Transcript: <input type='text' id='metagene_tranlist' name='metagene_tranlist' value='"+defaulttran+"'></input></td></tr>\
 							</table>");
 						break;
@@ -144,7 +144,7 @@ function update_settings(n,defaulttran){
 					// We can do this reading the reference sequence, this would come in useful in cases where you suspect the extra nucleotide is genuninely part of the sequence
 					// but appeared outside the ribosome (as in nuclease bias), in this case we should see the bias in the nuc comp plot for out of frame reads but not in frame
 					// reads.
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'>\
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'>\
 						<tr><td><b>Plot type:</b><input type='radio' class='scatter' value='scatter' name='plot_type' checked>Scatter</input> <input type='radio'\
 						class='box' value='box' name='plot_type' checked>Box plot</input></td></tr>\
 						<tr><td><b>Region:</b><input type='radio' class='all' value='all' name='gc_location' checked>All</input> <input type='radio'\
@@ -167,7 +167,7 @@ function update_settings(n,defaulttran){
 					// We can do this reading the reference sequence, this would come in useful in cases where you suspect the extra nucleotide is genuninely part of the sequence
 					// but appeared outside the ribosome (as in nuclease bias), in this case we should see the bias in the nuc comp plot for out of frame reads but not in frame
 					// reads.
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'>\
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'>\
 						<tr><td><b>Plot type:</b><input type='radio' class='scatter' value='scatter' name='plot_type' checked>Scatter</input> <input type='radio'\
 						class='box' value='box' name='plot_type' checked>Box plot</input></td></tr>\
 						<tr><td><b>Region:</b><input type='radio' class='all' value='all' name='gc_location' checked>All</input> <input type='radio'\
@@ -181,16 +181,16 @@ function update_settings(n,defaulttran){
 						</table>");
 						break;
 				case 'gene_count':
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p><table align='center'></table></br>");
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center><table align='center'></table></br>");
 						break;
 
 				case 'codon_usage':
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'>\
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'>\
 						<tr><td><b>Transcript list: </b><input type='text' id='gc_tranlist' name='gc_tranlist' value='"+defaulttran+"' ></input></td></tr> \
 						</table>");
 						break;
 				case 'nuc_freq_plot':
-						$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'> <tr><td><input type='radio' class='tss' value='tss' name='nuc_freq_plot_anchor' checked>TSS</input> <input type='radio'\
+						$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'> <tr><td><input type='radio' class='tss' value='tss' name='nuc_freq_plot_anchor' checked>TSS</input> <input type='radio'\
 							class='cds_start' value='cds_start' name='nuc_freq_plot_anchor' checked>CDS start</input>  <input type='radio'class='cds_stop' value='cds_stop' name='nuc_freq_plot_anchor' checked>CDS stop</input> <input class='tts' type='radio' value='tts'\
 							name='nuc_freq_plot_anchor' unchecked>TTS</input></td></tr>\
 							<tr><td>  Include +/- <input type='text'   id='nuc_freq_plot_window' name='nuc_freq_plot_window' value='10' ></input> nucleotides.</td></tr> \
@@ -198,7 +198,7 @@ function update_settings(n,defaulttran){
 							</table>");
 						break;
 				case 'orfstats':
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'> \
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'> \
 						<tr><td><input type='checkbox' class = 'principal' value='principal'  name='principal' checked>Select principal isoforms only</input></td></tr>\
 						<tr><td><b> ORF type: </b> <input type='radio' class='uorf' value='uorf' name='orftype' checked>uORF</input> </td></tr>\
 						<tr><td><input type='radio' class='ouorf' value='ouorf' name='orftype' unchecked>ouORF</input></td></tr>\
@@ -211,7 +211,7 @@ function update_settings(n,defaulttran){
 							</table>");
 						break;
 				case 'fetch_seq':
-					$('#options').html("</br><p><font size='5' align='center'><b><u>Options</u></b></font></p> <table align='center'> \
+					$('#options').html("</br><center><p><font size='5'><b><u>Options</u></b></font></p></center> <table align='center'> \
 						<tr><td><b>Region:</b>\
 						<input type='radio' class='all' value='all' name='gc_location' unchecked>All</input>\
 						<input type='radio' class='five' value='five' name='gc_location' unchecked>5'</input>\
