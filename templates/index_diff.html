@@ -20,31 +20,31 @@
 		<input type="radio" class="plot_radio deseq2" id="deseq2" value="deseq2" name="plottype" unchecked> DESeq2 </input>
 		<input type="radio" class="plot_radio anota2seq" id="anota2seq" value="anota2seq" name="plottype" unchecked> Anota2seq </input>
 		</td>
-		<td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_plot_type">&#9432; </a></td></tr>
+		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_plot_type">&#9432; </a></td></tr>
 
 		<tr><td><b>Gene type: </b><input type="radio" class = "gene_radio all" id="all" value="all" name="genetype" unchecked>All</input>
 			<input type="radio" class="gene_radio coding" id="coding" value="coding" name="genetype" checked> Coding</input>
 			<input type="radio" class="gene_radio noncoding" id="noncoding" value="noncoding" name="genetype" unchecked> Non-coding </input></td>
-			<td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_gene_type">&#9432; </a></td></tr>
+			<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_gene_type">&#9432; </a></td></tr>
 
 
-		<tr><td><b>Minimum no. of reads: </b><input type="text" id="minread" name="minread" value="0" ></input></td><td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432; </a></td></tr>
-		<tr><td><b>Min z-score (+/-)/ Max padj (%): </b><input type="text" id="minzscore" name="minzscore" value="4" ></input></td><td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;  </a></td></tr>
+		<tr><td><b>Minimum no. of reads: </b><input type="text" id="minread" name="minread" value="0" ></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432; </a></td></tr>
+		<tr><td><b>Min z-score (+/-)/ Max padj (%): </b><input type="text" id="minzscore" name="minzscore" value="4" ></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;  </a></td></tr>
 		<tr><td><b>Region: </b>
 		<input class="all" type="radio" value="all" name="region" checked>All</input>
 		<input class="cds" type="radio" value="cds" name="region" checked>CDS</input>
 		<input class="fiveprime" type="radio" value="fiveprime" name="region" unchecked>5'</input>
-		<input class="threeprime" type="radio" value="threeprime" name="region" unchecked>3'</input></td><td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;  </a></td></tr>
-		<tr><td><b>Normalise by mapped reads: </b><input type='checkbox' value='mapped_reads_norm' name='mapped_reads_norm' checked></input></td><td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;  </a></td></tr>
-		<tr><td><b>Allow ambiguously mapped reads: </b><input id="ambiguous" class="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input> <td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;  </a></td> </tr></td>
+		<input class="threeprime" type="radio" value="threeprime" name="region" unchecked>3'</input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;  </a></td></tr>
+		<tr><td><b>Normalise by mapped reads: </b><input type='checkbox' value='mapped_reads_norm' name='mapped_reads_norm' checked></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;  </a></td></tr>
+		<tr><td><b>Allow ambiguously mapped reads: </b><input id="ambiguous" class="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input> <td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;  </a></td> </tr></td>
 		{% if current_user.name == "master" %}
 			<tr><td> <input type='checkbox' value='store_de_results' name='store_de_results' unchecked> Store results</input> </td></tr>
 			<tr><td> <input type="text" id="cond_desc" name="cond_desc" value=""></input></td></tr>
 		{% endif %}
 		<tr><td><b>Highlight gene List: </b> <input type="text" id="gene_list" name="gene_list" value=""></input></td>
-		<td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432; </a></td></tr>
+		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432; </a></td></tr>
 		<tr><td><b>Transcript List: </b> <input type="text" id="transcript_list" name="transcript_list" value=""></input>
-		<td><a class="whatsthis"  target="_blank_" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432; </a></td></td></tr>
+		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432; </a></td></td></tr>
 		<tr class= "hidden_element"><td><b>Minimum coverage: </b> <input type="text" id="min_cov" name="min_cov" value="0"></input></td></tr>
 		</table>
 </div>
