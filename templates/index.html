@@ -1,77 +1,216 @@
 {% extends "layout.html" %}
-{% block content %}
 
-<head>
+{% block static_head %}
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
 <link rel= "stylesheet" href= "{{ url_for('static', filename='css/triplet_periodicity.css') }}">
-</head>
+{% endblock %}
 
+
+{% block content %}
 <div id="page_heading">
 <p><font size="5"><b><u>General Settings</u></b></font></p>
 </div>
 
-<div id="spacer">   </div>
-<div id="dummy1" class="dummy">
-</div>
-
-<div id="sidebar">
-		<br/>
-		<input type="checkbox" style="opacity:0;" name="noisered" value="noisered" unchecked></input>
-		<br/>
-		<b>Gene/Transcript: </b></tran> <a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432; </a><br>
-		<input id="tran" name="transcript" type="text" value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}" />
-		<br/>
-		<div id="adv_section1">
-		<b>Min triplet periodicity score: </b> <a class="whatsthis" target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
-		<input id="readscore" name="readscore" value={% if user_readscore %} "{{ user_readscore|safe }}" {% else %} "0" {% endif %} ></input><br>
-		<div style="display:none">
-		<b>Secondary score: </b> <a class="whatsthis" target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432; </a><br>
-		<input id="secondary_readscore" name="secondary_readscore" value="1" ></input>
-		<br/>
-		</div>
-		<br/>
-		<b>Min Read: </b></tran> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432; </a><br>
-		<input id="minread" name="minread" value={% if user_minread %} "{{ user_minread|safe }}" {% else %} "5" {% endif %} ></input>
-		<br/>
-		<b>Max Read: </b></tran> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432; </a><br>
-		<input id="maxread" name="maxread" value={% if user_maxread %} "{{ user_maxread|safe }}" {% else %} "150" {% endif %} ></input>
-		<br/>
-		<b>Highlight sequences list: </b></tran> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432; </a><br>
-		<input id="seqhili" name="seqhili" value="" ></input>
-		<br/>
-		
-		
-		<tr><td><b>Highlight start: </b><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><br>
-		<input type="text" id="hili_start" name="hili_start" value="0" ></input></tr></td> <br>
-		<tr><td><b>Highlight stop: </b><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432; </a><br>
-		<input type="text" id="hili_stop" name="hili_stop" value="0" ></input></tr></td>
-		<br/>
-		
-		<b>Offset Direction: </b> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432; </a><br>
-		<input type="radio" class = "prime_radio fiveprime" id="fiveprime" value="fiveprime" name="primetype" checked></input>
-		<label for='fiveprime' class='check_label'>5'</label>
-		<input type="radio" class="prime_radio threeprime" id="threeprime" value="threeprime" name="primetype" unchecked></input>
-		<label for='threeprime' class='check_label'>3'</label>
-		</div>
-</div>
 
 
-<div id="transcripts">
-		</br></br></br></br>
-		<input class="line_graph" id="line_graph" type="checkbox" name="namelite" value="lite1" {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}></input><label for='line_graph' class='padded_label'>Line Graph</label><a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432; </a>
-		</br></br>
-		<input class="ambig_check" id="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432; </a>
-		</br></br>
-		<input class="pcr_check" id="pcr_check" type="checkbox" name="pcr" value="pcr" unchecked></input> <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label> <a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432; </a>
-		</br></br>
-	<div id="adv_section2">
-		<input class="cov_check" id="cov_check" type="checkbox" name="coverage" value="coverage" id="coverageid" {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}></input><label for='cov_check' class='padded_label'>Ribo-Seq coverage</label><a class="whatsthis" target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432; </a>
-		</br></br>
-		<input class="nuc_check" id="nuc_check"  type="checkbox" name="nucseq" value="nucseq" id="nucseqid" {% if user_nuc=="T" %} checked {% else %} unchecked {% endif %}></input> <label for='nuc_check' class='padded_label'>Display nucleotide sequence</label> <a class="whatsthis" target="_blank"  target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
-		</br></br>
-		<input class="mismatch_check" id="mismatch_check"  type="checkbox" name="mismatchseq" value="mismatchseq" id="mismatchseqid" unchecked></input>  <label for='mismatch_check' class='padded_label'>Display mismatches</label> <a class="whatsthis" target="_blank"  target="_blank"  href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432; </a>
-	</div>
+<div class="page-section">
+    <div class="row">
+        <div class="col-6">
+            <div class="row">
+                <div class="col-4">
+                    <b>Gene/Transcript:</b><a class="whatsthis"
+   target="_blank"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="tran"
+                           name="transcript"
+                           type="text"
+                           value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Min triplet periodicity score:</b><a class="whatsthis"
+   target="_blank"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="readscore" name="readscore" value="{% if user_readscore %} {{ user_readscore|safe }} {% else %} 0 {% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Min Read: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="minread" name="minread" value="{% if user_minread %} {{ user_minread|safe }} {% else %} 5 {% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Max Read: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="maxread" name="maxread" value="{% if user_maxread %} {{ user_maxread|safe }} {% else %} 150 {% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight sequences list: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="seqhili" name="seqhili" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight start: </b><a class="whatsthis"
+   target="_blank"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input type="text" id="hili_start" name="hili_start" value="0" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight stop: </b><a class="whatsthis"
+   target="_blank"
+   href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input type="text" id="hili_stop" name="hili_stop" value="0" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Offset Direction: </b> <a class="whatsthis"
+    target="_blank"
+    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input type="radio"
+                           class="prime_radio fiveprime"
+                           id="fiveprime"
+                           value="fiveprime"
+                           name="primetype"
+                           checked/>
+                    <label for='fiveprime' class='check_label'>5'</label>
+                    <input type="radio"
+                           class="prime_radio threeprime"
+                           id="threeprime"
+                           value="threeprime"
+                           name="primetype"
+                           unchecked/>
+                    <label for='threeprime' class='check_label'>3'</label>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="row">
+                <div class="col-2">
+                    <input class="line_graph"
+                           id="line_graph"
+                           type="checkbox"
+                           name="namelite"
+                           value="lite1"
+                           {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}/>
+                </div>
+                <div class="col-4">
+                    <label for='line_graph' class='padded_label'>Line Graph</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="ambig_check"
+                           id="ambig_check"
+                           type="checkbox"
+                           name="ambiguous"
+                           value="ambiguous"
+                           {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}/>
+                </div>
+                <div class="col-4">
+                    <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="pcr_check"
+                           id="pcr_check"
+                           type="checkbox"
+                           name="pcr"
+                           value="pcr"
+                           unchecked/>
+                </div>
+                <div class="col-4">
+                    <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="cov_check"
+                           id="cov_check"
+                           type="checkbox"
+                           name="coverage"
+                           value="coverage"
+                           id="coverageid"
+                           {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}/>
+                </div>
+                <div class="col-4">
+                    <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="mismatch_check"
+                           id="mismatch_check"
+                           type="checkbox"
+                           name="mismatchseq"
+                           value="mismatchseq"
+                           id="mismatchseqid"
+                           unchecked/>
+                </div>
+                <div class="col-4">
+                    <label for='mismatch_check' class='padded_label'>Display mismatches</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       target="_blank"
+                       href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432;</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+
+
+
+
+<div>
+
+
+
+
+
 
 
 <div id = "dialog-2" title = "Choose a transcript...">
@@ -87,13 +226,14 @@
 <div id="seq_types"><center>
 <p><font size="5" ><b><u>Seq types</u></b></font></p></center>
 
-<table align="center">
+
+<center><table>
 <!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
 <tr id="1">
 <td><button class="button all_checks" type="button" onclick='uncheck_all_multi()'><b>Uncheck All Files With Selected Seq-type</b></button></td>
 <td><button class="button all_checks" type="button" onclick='check_all_multi()'><b>Check All Files with Selected Seq-type</b></button></td>
 </tr>
-</table>
+</table></center>
 
 </br>
 {% for seq_type in seq_types %}
@@ -112,16 +252,17 @@
 <button  class="study_button" type="button" onclick='view_study_info()'><b>View study info</b></button>
 
 
-<table align="center">
+<center><table>
 <tr id="2">
 <td><button class="button all_checks" type="button" onclick="uncheck_study_multi()" ><b>Uncheck All files in Files box</b> </button></td>
 <td><button class="button all_checks" type="button" onclick="check_study_multi()" ><b>Check All files in Files box</b></button></td>
 
 </tr>
-</table>
+</table></center>
 
 <br /><br />
-<table align="center" id="studytable" class="studytable">
+<center>
+<table id="studytable" class="studytable">
 <tbody><tr id="tablerow1">
 
 {% for index, study_detail in studies_dict.items() %} 
@@ -133,7 +274,7 @@
 </tr>
 
 </tbody></table>
-
+</center>
 
 
 
@@ -162,13 +303,15 @@ idiot
 
 <div class="show" id="{{seq}}study0" {% if (seq == 'rnaseq') and ('riboseq' in accepted_files) %} style="display: none;" {% endif %}>
 test
-<table class="file_table" id="0{{seq}}" align="center">
+<center>
+<table class="file_table" id="0{{seq}}" >
 {% for project_id, file_metas in projects.items() %}
 {% for file_id, value in file_metas.items() %}
 <td><input id="{{value['file_name']}}{{file_id}}_check" type="checkbox" class="file_check file_{{file_id}} all_checks {{seq}}_file {{seq}}_study0" name="9" value="inputfile" unchecked="">  <label for="{{value['file_name']}}{{file_id}}_check" class="padded_label"><b>{{value['file_name']}}</b>:{{value['file_description']}}</label></td>
 {% endfor %}
 {% endfor %}
 </table>
+</center>
 </div>
 {% endfor %}
 
