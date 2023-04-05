@@ -65,7 +65,6 @@
       gtag("js", new Date());
       gtag("config", "UA-115765268-1");
     </script>
-    <strong> </strong>
     <link rel="stylesheet" href="/static/css/common.css" />
     <link rel="stylesheet" href="/static/css/main.css" />
     <link rel="stylesheet" href="/static/css/lean-slider.css" />
@@ -77,6 +76,7 @@
       href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css"
     />
     <!--Might need to remove above-->
+    {% block static_head %}{% endblock %} 
   </head>
   <body>
     <header>
