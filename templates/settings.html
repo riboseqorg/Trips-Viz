@@ -1,97 +1,263 @@
 {% extends "layout.html" %}
 {% block content %}
-
-
-<head>
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/common.css') }}">
-</head>
-
-
-<div id="accordion">
-
-
-<h3>General settings</h3>
-<div>
-<!-- <b> Advanced mode: </b> <input type="checkbox" name="advanced" value="advanced" unchecked></input> <br> -->
-<b> Background colour: </b> <input id="back_col" name="back_col" value={{ background_colour }} ></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the background colour for almost all plots on Trips-viz. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p>
-<br>
-
-<b>Title Size: </b> <input id="title_size" name="title_size" value={{ title_size }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the size of the plot titles)</p><br>
-
-<b>Subheading Size: </b> <input id="subheading_size" name="subheading_size" value={{ subheading_size }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the size of the subheadings, where transcript id and length are displayed)</p><br>
-
-<b>Axis Label Size: </b> <input id="axis_label_size" name="axis_label_size" value={{ axis_label_size }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the size of the axis labels)</p><br>
-
-<b>Tick Marker Size: </b> <input id="marker_size" name="marker_size" value={{ marker_size }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the size of the numbers on the x and y axis)</p><br>
-
-<b>Legend Size: </b> <input id="legend_size" name="legend_size" value={{ legend_size }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the size of the labels on plots with interactive legends)</p><br>
-
-<b>CDS Markers Width: </b> <input id="cds_marker_width" name="cds_marker_width" value={{ cds_marker_width }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the width of the CDS markers on the single transcript and comparison plots)</p><br>
-
-<b>CDS Markers Colour: </b> <input id="cds_marker_colour" name="cds_marker_colour" value={{ cds_marker_colour }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the colour of the CDS markers on the single transcript and comparison plots)</p><br>
-</div>
-
-
-<h3>Single gene/transcript plot</h3>
-<div>
-<b>UAG Colour: </b> <input id="uag_col" name="uag_col" value={{ uag_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>UAA Colour: </b> <input id="uaa_col" name="uaa_col" value={{ uaa_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>UGA Colour: </b> <input id="uga_col" name="uga_col" value={{ uga_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Riboseq line width: </b> <input id="ribo_linewidth" name="ribo_linewidth" value={{ ribo_linewidth }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This controls the width of the red, green and blue ribo-seq lines.)</p><br>
-</div>
-
-<h3>Single gene/transcript comparison plot</h3>
-<div>
-<b>UAG Colour: </b> <input id="comp_uag_col" name="comp_uag_col" value={{ comp_uag_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>UAA Colour: </b> <input id="comp_uaa_col" name="comp_uaa_col" value={{ comp_uaa_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>UGA Colour: </b> <input id="comp_uga_col" name="comp_uga_col" value={{ comp_uga_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-</div>
-
-
-
-<h3>Metainformation settings</h3>
-<div>
-<b>Readlength distribution bar colour: </b> <input id="rl_bar_col" name="rl_bar_col" value={{ readlength_colour }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the bars in the read length distribution plot. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Metagene fiveprime bar colour: </b> <input id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ metagene_fiveprime_colour }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the bars in the metagene profiles for the fiveprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Metagene threeprime bar colour: </b> <input id="mg_threeprime_col" name="mg_threeprime_col" value={{ metagene_threeprime_colour }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the bars in the metagene profiles for the threeprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Nucleotide composition A colour: </b> <input id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ nuc_comp_a_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the line for the A nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Nucleotide composition T colour: </b> <input id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ nuc_comp_t_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the line for the T nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Nucleotide composition G colour: </b> <input id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ nuc_comp_g_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the line for the G nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-<b>Nucleotide composition C colour: </b> <input id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ nuc_comp_c_col }}></input><p style="color:grey;text-align:left;font-size:12px;display: inline-block">    (This sets the colour of the line for the C nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)</p><br>
-</div>
-
-
-<!-- If user is logged in show a change password tab in the accordion, if not still create the tab (to prevent errors when accessing those fields in the template), but hide it -->
-{% if current_user.is_authenticated %}
-		<h3>Change password</h3>
-		<div align="center">
-		<input type="password" placeholder="Enter new password" name="new_password" id="new_password" value=""><br>
-		<input type="password" placeholder="Re-type new Password" name="new_password2" id="new_password2" value=""><br>
-		<input type="password" placeholder="Current Password" name="curr_password" id="curr_password" value=""><br>
-		</div>
-		<!-- End of the accordion div -->
-		</div>
-	{% else %}
-		<!-- End the accordion div if not showing password tab, otherwise end up with a blank tab-->
-		</div>
-		<div class="hidden">
-		<input type="password" class="hidden" placeholder="Enter new password" name="new_password" id="new_password" value=""><br>
-		<input type="password" class="hidden" placeholder="Re-type new Password" name="new_password2" id="new_password2" value=""><br>
-		<input type="password" class="hidden" placeholder="Current Password" name="curr_password" id="curr_password" value=""><br>
-		</div>
+    <div id="accordion">
+        <h3>General settings</h3>
+        <div>
+            <b> Background colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the background colour for almost all plots on Trips-viz. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="back_col" name="back_col" value={{ background_colour }}>
+            </input>
+            <br>
+            <b>Title Size
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the size of the plot titles</span>
+                </div>
+                : </b> <input id="title_size" name="title_size" value={{ title_size }}>
+            </input>
+            <br>
+            <b>Subheading Size
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the size of the subheadings, where transcript id and length are displayed</span>
+                </div>
+                : </b> <input id="subheading_size" name="subheading_size" value={{ subheading_size }}>
+            </input>
+            <br>
+            <b>Axis Label Size
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the size of the axis labels</span>
+                </div>
+                : </b> <input id="axis_label_size" name="axis_label_size" value={{ axis_label_size }}>
+            </input>
+            <br>
+            <b>Tick Marker Size
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the size of the numbers on the x and y axis</span>
+                </div>
+                : </b> <input id="marker_size" name="marker_size" value={{ marker_size }}>
+            </input>
+            <br>
+            <b>Legend Size
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the size of the labels on plots with interactive legends</span>
+                </div>
+                : </b> <input id="legend_size" name="legend_size" value={{ legend_size }}>
+            </input>
+            <br>
+            <b>CDS Markers Width
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the width of the CDS markers on the single transcript and comparison plots</span>
+                </div>
+                : </b> <input id="cds_marker_width" name="cds_marker_width" value={{ cds_marker_width }}>
+            </input>
+            <br>
+            <b>CDS Markers Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the colour of the CDS markers on the single transcript and comparison plots</span>
+                </div>
+                : </b> <input id="cds_marker_colour" name="cds_marker_colour" value={{ cds_marker_colour }}>
+            </input>
+            <br>
+        </div>
+        <h3>Single gene/transcript plot</h3>
+        <div>
+            <b>UAG Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="uag_col" name="uag_col" value={{ uag_col }}>
+            </input>
+            <br>
+            <b>UAA Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">
+                        (This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)
+                    </span>
+                </div>
+                : </b> <input id="uaa_col" name="uaa_col" value={{ uaa_col }}>
+            </input>
+            <br>
+            <b>UGA Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="uga_col" name="uga_col" value={{ uga_col }}>
+            </input>
+            <br>
+            <b>Riboseq line width
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This controls the width of the red, green and blue ribo-seq lines.</span>
+                </div>
+                : </b> <input id="ribo_linewidth" name="ribo_linewidth" value={{ ribo_linewidth }}>
+            </input>
+            <br>
+        </div>
+        <h3>Single gene/transcript comparison plot</h3>
+        <div>
+            <b>UAG Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="comp_uag_col" name="comp_uag_col" value={{ comp_uag_col }}>
+            </input>
+            <br>
+            <b>UAA Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="comp_uaa_col" name="comp_uaa_col" value={{ comp_uaa_col }}>
+            </input>
+            <br>
+            <b>UGA Colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="comp_uga_col" name="comp_uga_col" value={{ comp_uga_col }}>
+            </input>
+            <br>
+        </div>
+        <h3>Metainformation settings</h3>
+        <div>
+            <b>Readlength distribution bar colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the bars in the read length distribution plot. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="rl_bar_col" name="rl_bar_col" value={{ readlength_colour }}>
+            </input>
+            <br>
+            <b>Metagene fiveprime bar colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the fiveprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ metagene_fiveprime_colour }}>
+            </input>
+            <br>
+            <b>Metagene threeprime bar colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the threeprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="mg_threeprime_col" name="mg_threeprime_col" value={{ metagene_threeprime_colour }}>
+            </input>
+            <br>
+            <b>Nucleotide composition A colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">
+                        This sets the colour of the line for the A nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
+                    </span>
+                </div>
+                : </b> <input id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ nuc_comp_a_col }}>
+            </input>
+            <br>
+            <b>Nucleotide composition T colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">
+                        This sets the colour of the line for the T nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
+                    </span>
+                </div>
+                : </b> <input id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ nuc_comp_t_col }}>
+            </input>
+            <br>
+            <b>Nucleotide composition G colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the line for the G nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ nuc_comp_g_col }}>
+            </input>
+            <br>
+            <b>Nucleotide composition C colour
+                <div class="tooltip">
+                    (?)
+                    <span class="tooltiptext">This sets the colour of the line for the C nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
+                </div>
+                : </b> <input id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ nuc_comp_c_col }}>
+            </input>
+            <br>
+        </div>
+        <!-- If user is logged in show a change password tab in the accordion, if not still create the tab (to prevent errors when accessing those fields in the template), but hide it -->
+        {% if current_user.is_authenticated %}
+            <h3>
+                Change password
+            </h3>
+            <div align="center">
+                <input type="password"
+                       placeholder="Enter new password"
+                       name="new_password"
+                       id="new_password"
+                       value="">
+                <br>
+                <input type="password"
+                       placeholder="Re-type new Password"
+                       name="new_password2"
+                       id="new_password2"
+                       value="">
+                <br>
+                <input type="password"
+                       placeholder="Current Password"
+                       name="curr_password"
+                       id="curr_password"
+                       value="">
+                <br>
+            </div>
+            <!-- End of the accordion div -->
+        </div>
+    {% else %}
+        <!-- End the accordion div if not showing password tab, otherwise end up with a blank tab-->
+    </div>
+    <div class="hidden">
+        <input type="password"
+               class="hidden"
+               placeholder="Enter new password"
+               name="new_password"
+               id="new_password"
+               value="">
+        <br>
+        <input type="password"
+               class="hidden"
+               placeholder="Re-type new Password"
+               name="new_password2"
+               id="new_password2"
+               value="">
+        <br>
+        <input type="password"
+               class="hidden"
+               placeholder="Current Password"
+               name="curr_password"
+               id="curr_password"
+               value="">
+        <br>
+    </div>
 {% endif %}
-
-
-
-
-
-
-
-<div class="wrapper"><button class="button" type="button"  id="settingsquery"><b>Update settings</b></button></div>
-
-<div id="container"></div>
-
-<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<div class="wrapper">
+    <button class="button" type="button"  id="settingsquery">
+        <b>Update settings</b>
+    </button>
+</div>
+<div id="container">
+</div>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='js/common.js') }}"></script>
 <script type="text/javascript">
 $( function() {
 		$( "#accordion" ).accordion();
