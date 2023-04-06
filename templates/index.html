@@ -298,24 +298,21 @@
     {{ accepted_files|safe }} <!--Simplyfy this-->
     <div id="files">
     </br>
-    <center>
-        <p>
-            <font size="5"><b><u>Files</u></b>
-            </br>
-        </font>
-    </p>
-</center>
+    <p>
+        <font size="5"><b><u>Files</u></b>
+        </br>
+    </font>
+</p>
 {% for seq, projects in accepted_files.items() %}
     {{(seq == 'rnaseq') and ('riboseq' in accepted_files)}}
     <div class="show"
          id="{{ seq }}study0"
          {% if (seq == 'rnaseq') and ('riboseq' in accepted_files) %} style="display: none;" {% endif %}>
-        test
-        <center>
-            <table class="file_table" id="0{{ seq }}">
+        <div class="row">
+            <div class="col" id="0{{ seq }}">
                 {% for project_id, file_metas in projects.items() %}
                     {% for file_id, value in file_metas.items() %}
-                        <td>
+                        <div class="col-6">
                             <input id="{{ value['file_name'] }}{{ file_id }}_check"
                                    type="checkbox"
                                    class="file_check file_{{ file_id }} all_checks {{ seq }}_file {{ seq }}_study0"
@@ -326,11 +323,11 @@
                                    class="padded_label">
                                 <b>{{ value['file_name'] }}</b>:{{ value['file_description'] }}
                             </label>
-                        </td>
+                        </div>
                     {% endfor %}
                 {% endfor %}
-            </table>
-        </center>
+            </div>
+        </div>
     </div>
 {% endfor %}
 </div>
