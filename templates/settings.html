@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
     <div id="accordion">
-        <h3>General settings</h3>
+        <h3 align="left">General settings</h3>
         <div>
             <b> Background colour
                 <div class="tooltip">
@@ -16,7 +16,7 @@
                     (?)
                     <span class="tooltiptext">This controls the size of the plot titles</span>
                 </div>
-                : </b> <input id="title_size" name="title_size" value={{ title_size }}>
+                : </b> <input type="number" min="5" max="50" id="title_size" name="title_size" value={{ title_size }}>
             </input>
             <br>
             <b>Subheading Size
@@ -24,7 +24,7 @@
                     (?)
                     <span class="tooltiptext">This controls the size of the subheadings, where transcript id and length are displayed</span>
                 </div>
-                : </b> <input id="subheading_size" name="subheading_size" value={{ subheading_size }}>
+                : </b> <input type="number" min="5" max="30" id="subheading_size" name="subheading_size" value={{ subheading_size }}>
             </input>
             <br>
             <b>Axis Label Size
@@ -32,7 +32,7 @@
                     (?)
                     <span class="tooltiptext">This controls the size of the axis labels</span>
                 </div>
-                : </b> <input id="axis_label_size" name="axis_label_size" value={{ axis_label_size }}>
+                : </b> <input type="number" min="5" max="50" id="axis_label_size" name="axis_label_size" value={{ axis_label_size }}>
             </input>
             <br>
             <b>Tick Marker Size
@@ -40,7 +40,7 @@
                     (?)
                     <span class="tooltiptext">This controls the size of the numbers on the x and y axis</span>
                 </div>
-                : </b> <input id="marker_size" name="marker_size" value={{ marker_size }}>
+                : </b> <input type="number" min="5" max="50" id="marker_size" name="marker_size" value={{ marker_size }}>
             </input>
             <br>
             <b>Legend Size
@@ -48,7 +48,7 @@
                     (?)
                     <span class="tooltiptext">This controls the size of the labels on plots with interactive legends</span>
                 </div>
-                : </b> <input id="legend_size" name="legend_size" value={{ legend_size }}>
+                : </b> <input type="number" min="5" max="50" id="legend_size" name="legend_size" value={{ legend_size }}>
             </input>
             <br>
             <b>CDS Markers Width
@@ -56,7 +56,7 @@
                     (?)
                     <span class="tooltiptext">This controls the width of the CDS markers on the single transcript and comparison plots</span>
                 </div>
-                : </b> <input id="cds_marker_width" name="cds_marker_width" value={{ cds_marker_width }}>
+                : </b> <input type="number" min="1" max="15" id="cds_marker_width" name="cds_marker_width" value={{ cds_marker_width }}>
             </input>
             <br>
             <b>CDS Markers Colour
@@ -101,7 +101,7 @@
                     (?)
                     <span class="tooltiptext">This controls the width of the red, green and blue ribo-seq lines.</span>
                 </div>
-                : </b> <input id="ribo_linewidth" name="ribo_linewidth" value={{ ribo_linewidth }}>
+                : </b> <input type="number" min="1" max="15" id="ribo_linewidth" name="ribo_linewidth" value={{ ribo_linewidth }}>
             </input>
             <br>
         </div>
