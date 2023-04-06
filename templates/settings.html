@@ -8,7 +8,7 @@
                     (?)
                     <span class="tooltiptext">This sets the background colour for almost all plots on Trips-viz. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="back_col" name="back_col" value={{ background_colour }}>
+                : </b> <input type="color" id="back_col" name="back_col" value={{ background_colour }}>
             </input>
             <br>
             <b>Title Size
@@ -64,7 +64,7 @@
                     (?)
                     <span class="tooltiptext">This controls the colour of the CDS markers on the single transcript and comparison plots</span>
                 </div>
-                : </b> <input id="cds_marker_colour" name="cds_marker_colour" value={{ cds_marker_colour }}>
+                : </b> <input type="color" id="cds_marker_colour" name="cds_marker_colour" value={{ cds_marker_colour }}>
             </input>
             <br>
         </div>
@@ -75,7 +75,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="uag_col" name="uag_col" value={{ uag_col }}>
+                : </b> <input type="color" id="uag_col" name="uag_col" value={{ uag_col }}>
             </input>
             <br>
             <b>UAA Colour
@@ -85,7 +85,7 @@
                         (This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)
                     </span>
                 </div>
-                : </b> <input id="uaa_col" name="uaa_col" value={{ uaa_col }}>
+                : </b> <input type="color" id="uaa_col" name="uaa_col" value={{ uaa_col }}>
             </input>
             <br>
             <b>UGA Colour
@@ -93,7 +93,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="uga_col" name="uga_col" value={{ uga_col }}>
+                : </b> <input type="color" id="uga_col" name="uga_col" value={{ uga_col }}>
             </input>
             <br>
             <b>Riboseq line width
@@ -112,7 +112,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="comp_uag_col" name="comp_uag_col" value={{ comp_uag_col }}>
+                : </b> <input type="color" id="comp_uag_col" name="comp_uag_col" value={{ comp_uag_col }}>
             </input>
             <br>
             <b>UAA Colour
@@ -120,7 +120,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="comp_uaa_col" name="comp_uaa_col" value={{ comp_uaa_col }}>
+                : </b> <input type="color" id="comp_uaa_col" name="comp_uaa_col" value={{ comp_uaa_col }}>
             </input>
             <br>
             <b>UGA Colour
@@ -128,7 +128,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="comp_uga_col" name="comp_uga_col" value={{ comp_uga_col }}>
+                : </b> <input type="color" id="comp_uga_col" name="comp_uga_col" value={{ comp_uga_col }}>
             </input>
             <br>
         </div>
@@ -139,7 +139,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the bars in the read length distribution plot. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="rl_bar_col" name="rl_bar_col" value={{ readlength_colour }}>
+                : </b> <input type="color" id="rl_bar_col" name="rl_bar_col" value={{ readlength_colour }}>
             </input>
             <br>
             <b>Metagene fiveprime bar colour
@@ -147,7 +147,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the fiveprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ metagene_fiveprime_colour }}>
+                : </b> <input type="color" id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ metagene_fiveprime_colour }}>
             </input>
             <br>
             <b>Metagene threeprime bar colour
@@ -155,7 +155,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the threeprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="mg_threeprime_col" name="mg_threeprime_col" value={{ metagene_threeprime_colour }}>
+                : </b> <input type="color" id="mg_threeprime_col" name="mg_threeprime_col" value={{ metagene_threeprime_colour }}>
             </input>
             <br>
             <b>Nucleotide composition A colour
@@ -165,7 +165,7 @@
                         This sets the colour of the line for the A nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
                     </span>
                 </div>
-                : </b> <input id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ nuc_comp_a_col }}>
+                : </b> <input type="color" id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ nuc_comp_a_col }}>
             </input>
             <br>
             <b>Nucleotide composition T colour
@@ -175,7 +175,7 @@
                         This sets the colour of the line for the T nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
                     </span>
                 </div>
-                : </b> <input id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ nuc_comp_t_col }}>
+                : </b> <input type="color" id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ nuc_comp_t_col }}>
             </input>
             <br>
             <b>Nucleotide composition G colour
@@ -183,7 +183,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the line for the G nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ nuc_comp_g_col }}>
+                : </b> <input type="color" id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ nuc_comp_g_col }}>
             </input>
             <br>
             <b>Nucleotide composition C colour
@@ -191,7 +191,7 @@
                     (?)
                     <span class="tooltiptext">This sets the colour of the line for the C nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
                 </div>
-                : </b> <input id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ nuc_comp_c_col }}>
+                : </b> <input type="color" id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ nuc_comp_c_col }}>
             </input>
             <br>
         </div>
