@@ -11,325 +11,329 @@
             <font size="5"><b><u>General Settings</u></b></font>
         </p>
     </div>
-    <div class="page-section">
-        <div class="row">
-            <div class="col-6">
-                <div class="row">
-                    <div class="col-4">
-                        <b>Gene/Transcript:</b><a class="whatsthis"
+    <form>
+        <div class="page-section">
+            <div class="row">
+                <div class="col-6">
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Gene/Transcript:</b><a class="whatsthis"
    target="_blank"
    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input id="tran"
+                                   name="transcript"
+                                   type="text"
+                                   value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}"/>
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input id="tran"
-                               name="transcript"
-                               type="text"
-                               value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}"/>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Min triplet periodicity score:</b><a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Min triplet periodicity score:</b><a class="whatsthis"
    target="_blank"
    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input id="readscore"
+                                   type="number"
+                                   min="0"
+                                   max="100"
+                                   name="readscore"
+                                   value="{% if user_readscore %} {{ user_readscore|safe }} {% else %} 0 {% endif %}"/>
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input id="readscore"
-                               name="readscore"
-                               value="{% if user_readscore %} {{ user_readscore|safe }} {% else %} 0 {% endif %}"/>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Min Read: </b></tran> <a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Min Read: </b></tran> <a class="whatsthis"
     target="_blank"
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input id="minread"
+                                   type="number"
+                                   min="1"
+                                   max="100"
+                                   name="minread"
+                                   value="{% if user_minread %} {{ user_minread|safe }} {% else %} 5 {% endif %}"/>
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input id="minread"
-                               name="minread"
-                               value="{% if user_minread %} {{ user_minread|safe }} {% else %} 5 {% endif %}"/>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Max Read: </b></tran> <a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Max Read: </b></tran> <a class="whatsthis"
     target="_blank"
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input id="maxread"
+                                   type="number"
+                                   min="1"
+                                   name="maxread"
+                                   value="{% if user_maxread %} {{ user_maxread|safe }} {% else %} 150 {% endif %}"/>
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input id="maxread"
-                               name="maxread"
-                               value="{% if user_maxread %} {{ user_maxread|safe }} {% else %} 150 {% endif %}"/>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Highlight sequences list: </b></tran> <a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Highlight sequences list: </b></tran> <a class="whatsthis"
     target="_blank"
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input id="seqhili" name="seqhili" value="" />
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input id="seqhili" name="seqhili" value="" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Highlight start: </b><a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Highlight start: </b><a class="whatsthis"
    target="_blank"
    href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input type="text" id="hili_start" name="hili_start" value="0" />
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input type="text" id="hili_start" name="hili_start" value="0" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Highlight stop: </b><a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Highlight stop: </b><a class="whatsthis"
    target="_blank"
    href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                        </div>
+                        <div class="col-2">
+                            <input type="text" id="hili_stop" name="hili_stop" value="0" />
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input type="text" id="hili_stop" name="hili_stop" value="0" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <b>Offset Direction: </b> <a class="whatsthis"
+                    <div class="row">
+                        <div class="col-4">
+                            <b>Offset Direction: </b> <a class="whatsthis"
     target="_blank"
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432;</a>
-                    </div>
-                    <div class="col-2">
-                        <input type="radio"
-                               class="prime_radio fiveprime"
-                               id="fiveprime"
-                               value="fiveprime"
-                               name="primetype"
-                               checked/>
-                        <label for='fiveprime' class='check_label'>5'</label>
-                        <input type="radio"
-                               class="prime_radio threeprime"
-                               id="threeprime"
-                               value="threeprime"
-                               name="primetype"
-                               unchecked/>
-                        <label for='threeprime' class='check_label'>3'</label>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="row">
-                    <div class="col-2">
-                        <input class="line_graph"
-                               id="line_graph"
-                               type="checkbox"
-                               name="namelite"
-                               value="lite1"
-                               {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}/>
-                    </div>
-                    <div class="col-4">
-                        <label for='line_graph' class='padded_label'>Line Graph</label>
-                        <a class="whatsthis"
-                           target="_blank"
-                           href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432;</a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <input class="ambig_check"
-                               id="ambig_check"
-                               type="checkbox"
-                               name="ambiguous"
-                               value="ambiguous"
-                               {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}/>
-                    </div>
-                    <div class="col-4">
-                        <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
-                        <a class="whatsthis"
-                           target="_blank"
-                           href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <input class="pcr_check"
-                               id="pcr_check"
-                               type="checkbox"
-                               name="pcr"
-                               value="pcr"
-                               unchecked/>
-                    </div>
-                    <div class="col-4">
-                        <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
-                        <a class="whatsthis"
-                           target="_blank"
-                           href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432;</a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <input class="cov_check"
-                               id="cov_check"
-                               type="checkbox"
-                               name="coverage"
-                               value="coverage"
-                               id="coverageid"
-                               {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}/>
-                    </div>
-                    <div class="col-4">
-                        <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
-                        <a class="whatsthis"
-                           target="_blank"
-                           href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432;</a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <input class="mismatch_check"
-                               id="mismatch_check"
-                               type="checkbox"
-                               name="mismatchseq"
-                               value="mismatchseq"
-                               id="mismatchseqid"
-                               unchecked/>
-                    </div>
-                    <div class="col-4">
-                        <label for='mismatch_check' class='padded_label'>Display mismatches</label>
-                        <a class="whatsthis"
-                           target="_blank"
-                           target="_blank"
-                           href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432;</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {# NOTE: Second part of the options #}
-    <div id="onscreen">
-        <div id = "dialog-2" title = "Choose a transcript..."></div>
-        <div id = "study_dialog" title = "Study info">
-            <table>
-            </table>
-        </div>
-    </div>
-    <div id="seq_types">
-        <div class="row">
-            <div class="col">Seq Types</div>
-        </div>
-        <div class="row">
-            <div class="col-6">
-                <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
-                    <b>Uncheck All Files With Selected Seq-type</b>
-                </button>
-            </div>
-            <div class="col-6">
-                <button class="button all_checks" type="button" onclick='check_all_multi()'>
-                    <b>Check All Files with Selected Seq-type</b>
-                </button>
-            </div>
-        </div>
-        <div class="row">
-            {% for seq_type in seq_types %}
-                <div class="col-sm-6">
-                    <input checked=""
-                           type="radio"
-                           class="seq_type_radio all_checks"
-                           id="{{ seq_type }}"
-                           name="{{ seq_type }}"
-                           value="{{ seq_type }}">
-                    <label for="{{ seq_type }}" id="label{{ seq_type }}" class="radio_label">{{ seq_type }}</label>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div id="studies">
-        <!--TODO: Change it to class-->
-        <div class="row">
-            <div class="col">Studies</div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <button class="study_button" type="button" onclick='view_study_info()'>
-                    <b>View study info</b>
-                </button>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-6">
-                <button class="button all_checks"
-                        type="button"
-                        onclick="uncheck_study_multi()">
-                    <b>Uncheck All files in Files box</b>
-                </button>
-            </div>
-            <div class="col-6">
-                <button class="button all_checks" type="button" onclick="check_study_multi()">
-                    <b>Check All files in Files box</b>
-                </button>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                {% for index, study_detail in studies_dict.items() %}
-                    <td>
-                        <input type="radio"
-                               checked=""
-                               class="study_radio all_checks"
-                               id="study{{ index }}"
-                               name="content_type"
-                               value="study{{ index }}">
-                        <label for="study{{ index }}"
-                               id="label{{ index }}"
-                               class="radio_label"
-                               style="border-color: rgb(119, 171, 255);
-                                      opacity: 1">
-                            {{ study_detail['study_name'] }}
-                        </label>
-                    </td>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    anmol
-    {{  studies_dict|safe  }}
-    kiran
-    {{  studyinfo_dict|safe  }}
-    idiot
-    {{ accepted_files|safe }} <!--Simplyfy this-->
-    <div id="files">
-    </br>
-    <p>
-        <font size="5"><b><u>Files</u></b>
-        </br>
-    </font>
-</p>
-{% for seq, projects in accepted_files.items() %}
-    {{(seq == 'rnaseq') and ('riboseq' in accepted_files)}}
-    <div class="show"
-         id="{{ seq }}study0"
-         {% if (seq == 'rnaseq') and ('riboseq' in accepted_files) %} style="display: none;" {% endif %}>
-        <div class="row">
-            <div class="col" id="0{{ seq }}">
-                {% for project_id, file_metas in projects.items() %}
-                    {% for file_id, value in file_metas.items() %}
-                        <div class="col-6">
-                            <input id="{{ value['file_name'] }}{{ file_id }}_check"
-                                   type="checkbox"
-                                   class="file_check file_{{ file_id }} all_checks {{ seq }}_file {{ seq }}_study0"
-                                   name="9"
-                                   value="inputfile"
-                                   unchecked="">
-                            <label for="{{ value['file_name'] }}{{ file_id }}_check"
-                                   class="padded_label">
-                                <b>{{ value['file_name'] }}</b>:{{ value['file_description'] }}
-                            </label>
                         </div>
-                    {% endfor %}
+                        <div class="col-2">
+                            <select id="offsite">
+                                <option value="fiveprime">
+                                    5'
+                                </option>
+                                <option value="threeprime">
+                                    3'
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="row">
+                        <div class="col-2">
+                            <input class="line_graph"
+                                   id="line_graph"
+                                   type="checkbox"
+                                   name="namelite"
+                                   value="lite1"
+                                   {% if user_line_graph == "T" %} checked {% else %} unchecked {% endif %}/>
+                        </div>
+                        <div class="col-4">
+                            <label for='line_graph' class='padded_label'>Line Graph</label>
+                            <a class="whatsthis"
+                               target="_blank"
+                               href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432;</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-2">
+                            <input class="ambig_check"
+                                   id="ambig_check"
+                                   type="checkbox"
+                                   name="ambiguous"
+                                   value="ambiguous"
+                                   {% if user_ambig=="T" %} checked {% else %} unchecked {% endif %}/>
+                        </div>
+                        <div class="col-4">
+                            <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
+                            <a class="whatsthis"
+                               target="_blank"
+                               href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-2">
+                            <input class="pcr_check"
+                                   id="pcr_check"
+                                   type="checkbox"
+                                   name="pcr"
+                                   value="pcr"
+                                   unchecked/>
+                        </div>
+                        <div class="col-4">
+                            <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
+                            <a class="whatsthis"
+                               target="_blank"
+                               href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432;</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-2">
+                            <input class="cov_check"
+                                   id="cov_check"
+                                   type="checkbox"
+                                   name="coverage"
+                                   value="coverage"
+                                   id="coverageid"
+                                   {% if user_cov=="T" %} checked {% else %} unchecked {% endif %}/>
+                        </div>
+                        <div class="col-4">
+                            <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
+                            <a class="whatsthis"
+                               target="_blank"
+                               href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432;</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-2">
+                            <input class="mismatch_check"
+                                   id="mismatch_check"
+                                   type="checkbox"
+                                   name="mismatchseq"
+                                   value="mismatchseq"
+                                   id="mismatchseqid"
+                                   unchecked/>
+                        </div>
+                        <div class="col-4">
+                            <label for='mismatch_check' class='padded_label'>Display mismatches</label>
+                            <a class="whatsthis"
+                               target="_blank"
+                               target="_blank"
+                               href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# NOTE: Second part of the options #}
+        <div id="onscreen">
+            <div id = "dialog-2" title = "Choose a transcript..."></div>
+            <div id = "study_dialog" title = "Study info">
+                <table>
+                </table>
+            </div>
+        </div>
+        <div id="seq_types">
+            <div class="row">
+                <div class="col">Seq Types</div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
+                        <b>Uncheck All Files With Selected Seq-type</b>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="button all_checks" type="button" onclick='check_all_multi()'>
+                        <b>Check All Files with Selected Seq-type</b>
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                {% for seq_type in seq_types %}
+                    <div class="col-sm-6">
+                        <input checked=""
+                               type="radio"
+                               class="seq_type_radio all_checks"
+                               id="{{ seq_type }}"
+                               name="{{ seq_type }}"
+                               value="{{ seq_type }}">
+                        <label for="{{ seq_type }}" id="label{{ seq_type }}" class="radio_label">{{ seq_type }}</label>
+                    </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
-{% endfor %}
+        <div id="studies">
+            <!--TODO: Change it to class-->
+            <div class="row">
+                <div class="col">Studies</div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button class="study_button" type="button" onclick='view_study_info()'>
+                        <b>View study info</b>
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <button class="button all_checks"
+                            type="button"
+                            onclick="uncheck_study_multi()">
+                        <b>Uncheck All files in Files box</b>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="button all_checks" type="button" onclick="check_study_multi()">
+                        <b>Check All files in Files box</b>
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {% for index, study_detail in studies_dict.items() %}
+                        <td>
+                            <input type="radio"
+                                   checked=""
+                                   class="study_radio all_checks"
+                                   id="study{{ index }}"
+                                   name="content_type"
+                                   value="study{{ index }}">
+                            <label for="study{{ index }}"
+                                   id="label{{ index }}"
+                                   class="radio_label"
+                                   style="border-color: rgb(119, 171, 255);
+                                          opacity: 1">
+                                {{ study_detail['study_name'] }}
+                            </label>
+                        </td>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        anmol
+        {{  studies_dict|safe  }}
+        kiran
+        {{  studyinfo_dict|safe  }}
+        idiot
+        {{ accepted_files|safe }} <!--Simplyfy this-->
+        <div id="files">
+        </br>
+        <p>
+            <font size="5"><b><u>Files</u></b>
+            </br>
+        </font>
+    </p>
+    {% for seq, projects in accepted_files.items() %}
+        {{(seq == 'rnaseq') and ('riboseq' in accepted_files)}}
+        <div class="show"
+             id="{{ seq }}study0"
+             {% if (seq == 'rnaseq') and ('riboseq' in accepted_files) %} style="display: none;" {% endif %}>
+            <div class="row">
+                <div class="col" id="0{{ seq }}">
+                    {% for project_id, file_metas in projects.items() %}
+                        {% for file_id, value in file_metas.items() %}
+                            <div class="col-6">
+                                <input id="{{ value['file_name'] }}{{ file_id }}_check"
+                                       type="checkbox"
+                                       class="file_check file_{{ file_id }} all_checks {{ seq }}_file {{ seq }}_study0"
+                                       name="9"
+                                       value="inputfile"
+                                       unchecked="">
+                                <label for="{{ value['file_name'] }}{{ file_id }}_check"
+                                       class="padded_label">
+                                    <b>{{ value['file_name'] }}</b>:{{ value['file_description'] }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</form>
 </div>
 <div id="buttons"></div>
 {% include 'gwips.html' %}
@@ -351,9 +355,16 @@
              alt="Loading..."/>
         <link rel="stylesheet"
               href="{{ url_for('static', filename='css/sofia.css') }}">
-        <h3 id="loading_header" style="color:gray;font-weight:normal;">
-            Loading....
-        </h3>
+        <h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
     </div>
 </div>
+<script>
+    var object = {};
+formData.forEach(function(value, key){
+    object[key] = value;
+});
+var json = JSON.stringify(object);
+
+
+</script>
 {% endblock %}
