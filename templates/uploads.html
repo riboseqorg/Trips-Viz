@@ -1,10 +1,29 @@
 {% extends "layout.html" %}
 {% block content %}
-<html>
-<body>
-
-<style>
-
+    <html>
+        <body>
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.css"/>
+            <link rel="stylesheet"
+                  href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/basic.min.css"/>
+            <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.js">
+            </script>
+            <style>
+.dropzoneDragArea {
+    background-color: #ccc;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    text-align: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+    
+.dropzone {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    border-radius: 2px dashed #ccc;
+}
+            </style>
+            <style>
 td {
 
 	text-align: center;
@@ -49,125 +68,227 @@ table, th, td {
 	    }
 
 
-</style>
-
-
-<div id="accordion" class="top_header">
-<h3  class="acc_headers" align="left">Upload new file</h3>
-<div>
-	<table style="border: 10px black">
-		<tr><th>Organism</th><th>Assembly</th><th>Study name</th><th>File to upload</th><th>File type</th><th></th></tr>
-		<tr>
-				<form action = "/uploadquery" method = "POST" enctype = "multipart/form-data">
-				<td align="center">
-					<select name="organism" id="organism_dropdown">
-						<option value="item0">--Select an Organism--</option>
-					</select>
-				</td>
-				<td align="center">
-					<select name="assembly" id="size">
-						<option value="">-- Select a transcriptome -- </option>
-					</select>
-				</td>
-				<td align="center">
-					<input type=text value=Foldername name=foldername>
-				</td>
-				<td align="center">
-					<input name = "file" type = "file"/>
-				</td>
-				<td align="left">
-					<input type="radio" id="riboseq" value="riboseq" name="filetype" checked></input>Ribo-Seq<br>
-					<input type="radio" id="rnaseq" value="rnaseq" name="filetype" unchecked></input>mRNA-Seq<br>
-					<input type="radio" id="other" value="other" name="filetype" unchecked></input><input type=text value="Other" name=seq_type placeholder="Enter name of other sequence type">
-				</td>
-				<td align="center">
-					<input value="Upload file" type = "submit"/>
-				</td>
-			</form>
-		</tr>
-	</table>
+            </style>
+            <form action=""
+                  name="demoform"
+                  id="demoform"
+                  method="POST"
+                  class="dropzone"
+                  enctype="multipart/form-data">
+                <div>
+                    <label for="species">Species</label>
+                    <input type="text"
+                           name="species"
+                           id="species"
+                           placeholder="Enter species name">
+                </div>
+                <div>
+                    <label for="species">Species</label>
+                    <input type="text"
+                           name="species"
+                           id="species"
+                           placeholder="Enter species name">
+                </div>
+                <div id="dropzoneDragArea" class="dz-default dz-message dropzoneDragArea">
+                    <span>Uupload file</span>
+                </div>
+                <div class="dropzone-previews"></div>
+            </form>
+            <div id="accordion" class="top_header">
+                <h3 class="acc_headers" align="left">Upload new file</h3>
+                <div>
+                    <table style="border: 10px black">
+                        <tr>
+                            <th>Organism</th>
+                            <th>Assembly</th>
+                            <th>Study name</th>
+                            <th>File to upload</th>
+                            <th>File type</th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <form action="/uploadquery"
+                                  class="dropzone dz-clickable"
+                                  method="POST"
+                                  id="dropper"
+                                  enctype="multipart/form-data">
+                                <td align="center">
+                                    <select name="organism" id="organism_dropdown">
+                                        <option value="item0">
+                                            --Select an Organism--
+                                        </option>
+                                    </select>
+                                </td>
+                                <td align="center">
+                                    <select name="assembly" id="size">
+                                        <option value="">
+                                            -- Select a transcriptome --
+                                        </option>
+                                    </select>
+                                </td>
+                                <td align="center">
+                                    <input type=text value=Foldername name=foldername>
+                                </td>
+                                <td align="center">
+                                    <input name = "file" type = "file"/>
+                                </td>
+                                <td align="left">
+                                    <input type="radio" id="riboseq" value="riboseq" name="filetype" checked>
+                                </input>
+                                Ribo-Seq
+                                <br>
+                                <input type="radio" id="rnaseq" value="rnaseq" name="filetype" unchecked>
+                            </input>
+                            mRNA-Seq
+                            <br>
+                            <input type="radio" id="other" value="other" name="filetype" unchecked>
+                        </input>
+                        <input type="text"
+                               value="Other"
+                               name="seq_type"
+                               placeholder="Enter name of other sequence type">
+                    </td>
+                    <td align="center">
+                        <input value="Upload file" type = "submit"/>
+                    </td>
+                </form>
+            </tr>
+        </table>
+    </div>
+    <h3 class="acc_headers" align="left">My studies</h3>
+    <div>
+        <table id="study_table">
+            <tr>
+                <th>Studyname</th>
+                <th>Organism</th>
+                <th>Assembly</th>
+                <th>Access list</th>
+                <th>Delete</th>
+            </tr>
+        </table>
+        <div align="center">
+            <button align="center" type="button"  id="update_study_button">
+                <b>Update</b>
+            </button>
+        </div>
+    </div>
+    <h3 class="acc_headers" align="left">My files</h3>
+    <div>
+        <table id="file_table">
+            <tr>
+                <th>Filename</th>
+                <th>Studyname</th>
+                <th>Description</th>
+                <th>Cutadapt removed</th>
+                <th>rRNA removed</th>
+                <th>Unmapped</th>
+                <th>Delete</th>
+            </tr>
+        </table>
+        <div align="center">
+            <button align="center" type="button"  id="delete_button">
+                <b>Update</b>
+            </button>
+        </div>
+    </div>
+    <h3 class="acc_headers">
+        Sequence rules
+    </h3>
+    <div align="center">
+        <table id="seq_table">
+            <tr>
+                <th>
+                    Sequence type
+                </th>
+                <th>
+                    Colour by frame
+                </th>
+            </tr>
+        </table>
+        <div align="center">
+            <button align="center" type="button"  id="update_seq_button">
+                <b>Update sequence rules</b>
+            </button>
+        </div>
+    </div>
+    <h3 class="acc_headers" align="left">
+        Upload new transcriptome
+    </h3>
+    <div>
+        <table style="border: 10px black">
+            <tr>
+                <th>
+                    Organism name
+                </th>
+                <th>
+                    Assembly name
+                </th>
+                <th>
+                    Annotation sqlite file
+                </th>
+                <th>
+                    Default tran
+                </th>
+                <th>
+                </th>
+            </tr>
+            <tr>
+                <form action="/uploadtranscriptome"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    <td align="center">
+                        <input type="text"
+                               value="organism"
+                               name="organism"
+                               placeholder="Enter organism name">
+                    </td>
+                    <td align="center">
+                        <input type="text"
+                               value="assembly"
+                               name="assembly"
+                               placeholder="Enter transcriptome assembly name">
+                    </td>
+                    <td align="center">
+                        <input name = "anno_file" type = "file" multiple/>
+                    </td>
+                    <td align="center">
+                        <input type="text"
+                               value="default_tran"
+                               name="default_tran"
+                               placeholder="Enter default transcript">
+                    </td>
+                    <td align="center">
+                        <input value="Upload file" type = "submit"/>
+                    </td>
+                </form>
+            </tr>
+        </table>
+    </div>
+    <h3 class="acc_headers" align="left">
+        My transcriptomes
+    </h3>
+    <div>
+        <table id="transcriptome_table">
+            <tr>
+                <th>
+                    Organism
+                </th>
+                <th>
+                    Assembly
+                </th>
+                <th>
+                    Delete
+                </th>
+            </tr>
+        </table>
+        <div align="center">
+            <button align="center" type="button"  id="update_transcriptomes_button">
+                <b>Update</b>
+            </button>
+        </div>
+    </div>
 </div>
-
-
-<h3 class="acc_headers" align="left"> My studies</h3>
-<div>
-<table id="study_table">
-<tr><th>Studyname</th><th>Organism</th><th>Assembly</th><th>Access list</th><th>Delete</th></tr>
-</table>
-<div align="center">
-	<button align="center" type="button"  id="update_study_button"><b>Update</b></button>
-</div>
-</div>
-
-<h3 class="acc_headers" align="left"> My files</h3>
-<div>
-<table id="file_table">
-<tr><th>Filename</th><th>Studyname</th><th>Description</th><th>Cutadapt removed</th><th>rRNA removed</th><th>Unmapped</th><th>Delete</th></tr>
-</table>
-<div align="center">
-	<button align="center" type="button"  id="delete_button"><b>Update</b></button>
-</div>
-</div>
-
-
-<h3 class="acc_headers" >Sequence rules</h3>
-<div align="center">
-<table id="seq_table">
-<tr><th>Sequence type</th><th>Colour by frame</th></tr>
-
-
-</table>
-<div align="center">
-	<button align="center" type="button"  id="update_seq_button"><b>Update sequence rules</b></button>
-</div>
-</div>
-
-
-<h3 class="acc_headers" align="left"> Upload new transcriptome</h3>
-<div>
-<table style="border: 10px black">
-	<tr><th>Organism name</th><th>Assembly name</th><th>Annotation sqlite file</th>  <th>Default tran</th>  <th></th></tr>
-	<tr>
-	<form action = "/uploadtranscriptome" method = "POST" enctype = "multipart/form-data">
-
-		<td align="center">
-			<input type=text value=organism name=organism placeholder="Enter organism name">
-		</td>
-		
-		<td align="center">
-			<input type=text value=assembly name=assembly placeholder="Enter transcriptome assembly name">
-		</td>
-
-		<td align="center">
-			<input name = "anno_file" type = "file" multiple/>
-		</td>
-
-		<td align="center">
-			<input type=text value=default_tran name=default_tran placeholder="Enter default transcript">
-		</td>
-
-		<td align="center">
-			<input value="Upload file" type = "submit"/>
-		</td>
-		
-	</form>
-	</tr>
-</table>
-</div>
-
-<h3 class="acc_headers" align="left"> My transcriptomes</h3>
-<div>
-<table id="transcriptome_table">
-<tr><th>Organism</th><th>Assembly</th><th>Delete</th></tr>
-</table>
-<div align="center">
-<button align="center" type="button"  id="update_transcriptomes_button"><b>Update</b></button>
-</div>
-</div>
-
-
-</div>
-	<script type="text/javascript">
+<script type="text/javascript">
 	$( function() {
 	    $( "#accordion").accordion({
 	        collapsible: true,
@@ -598,8 +719,27 @@ document.getElementById("update_seq_button").onclick = (function() {
 				
 				})
 		});
-	</script>
+	
+</script>
+<script type="application/javascript">
+Dropzone.autoDiscover = false;
+$(function(){
+var mydropzone = new Dropzone("#dropzone", {
+    
+})
+    Dropzone.options.dropper = {
+        paramName: 'file',
+        chunking: true,
+        forceChunking: true,
+        url: '/uploadquery',
+        maxFilesize: 1025, 
+        chunkSize: 1000000 
+    },
 
+
+
+    })
+</script>
 </body>
 </html>
 {% endblock %}
