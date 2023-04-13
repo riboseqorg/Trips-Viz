@@ -1,3 +1,4 @@
+from threading import Lock
 import os
 import time
 from datetime import date
@@ -25,7 +26,8 @@ from single_transcript_routes_genomic import single_transcript_plotpage_genomic_
 from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
 from pause_routes import pause_detection_blueprint, pausequery_blueprint
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery_blueprint
-from orfquery_routes import translated_orf_blueprint, orfquery_blueprint  #, taskstatus_blueprint
+# , taskstatus_blueprint
+from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
 import stats_plots
 import re
 
@@ -37,7 +39,7 @@ elif sys.version_info[0] == 3:
     from email.mime.text import MIMEText
 
 root_logger = logging.getLogger()
-#lhStdout = root_logger.handlers[0]
+# lhStdout = root_logger.handlers[0]
 root_logger.setLevel(logging.DEBUG)
 root_logger.propagate = False
 
@@ -52,13 +54,11 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(log_format)
 
 root_logger.addHandler(file_handler)
-#root_logger.addHandler(stream_handler)
-#root_logger.removeHandler(lhStdout)
+# root_logger.addHandler(stream_handler)
+# root_logger.removeHandler(lhStdout)
 
-#logging.basicConfig(filename=config.LOG_FILE,level=logging.DEBUG,format='%(asctime)s %(levelname)-8s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
+# logging.basicConfig(filename=config.LOG_FILE,level=logging.DEBUG,format='%(asctime)s %(levelname)-8s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
 app = Flask(__name__, static_folder='static')
-
-from threading import Lock
 
 lock = Lock()
 
@@ -80,7 +80,7 @@ app.register_blueprint(translated_orf_blueprint)
 app.register_blueprint(orfquery_blueprint)
 app.register_blueprint(pause_detection_blueprint)
 app.register_blueprint(pausequery_blueprint)
-#app.register_blueprint(taskstatus_blueprint)
+# app.register_blueprint(taskstatus_blueprint)
 app.register_blueprint(traninfo_plotpage_blueprint)
 app.register_blueprint(traninfoquery_blueprint)
 app.config.from_pyfile('config.py')
@@ -91,7 +91,7 @@ app.config['UPLOAD_FOLDER'] = '/static/tmp'
 app.config['SECURITY_PASSWORD_SALT'] = config.PASSWORD_SALT
 app.config['SECRET_KEY'] = config.FLASK_SECRET_KEY
 
-#Modify security messages so people can't tell which users have already signed up.
+# Modify security messages so people can't tell which users have already signed up.
 app.config['SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED'] = ((
     "Thank you. Confirmation instructions have been sent to %(email)s."),
                                                        "error")
@@ -124,7 +124,7 @@ def sanitize_get_request(request):
         return request
 
 
-#change cookie name and path, this avoids cookies clashing with other flask apps on the same server
+# change cookie name and path, this avoids cookies clashing with other flask apps on the same server
 try:
     if sys.argv[1] == "true":
         pass
@@ -278,7 +278,7 @@ def contactus():
 # This is the page where users create a new login.
 @app.route("/create", methods=["GET", "POST"])
 def create():
-    #if user is already logged in then redirect to homepage
+    # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
     error = None
@@ -318,7 +318,7 @@ def create():
             result = cursor.fetchone()
             max_user_id = int(result[0])
             user_id = max_user_id + 1
-            #Add -1 to study access list, causes problems when adding study id's later if we don't
+            # Add -1 to study access list, causes problems when adding study id's later if we don't
             # Last value is temp_user, set to 0 because this is not a temporary user (temporary users identified by uuid in session cookie only, no username or pw)
             cursor.execute(
                 "INSERT INTO users VALUES ({},'{}','{}','-1','',0,0);".format(
@@ -346,9 +346,9 @@ def create():
         return render_template('create.html', error=error)
 
 
-#Allows users to change some global settings such as plot background colour, title size, tick label size, etc.
+# Allows users to change some global settings such as plot background colour, title size, tick label size, etc.
 @app.route('/settings/')
-#@login_required
+# @login_required
 def settingspage():
     global local
     try:
@@ -361,7 +361,7 @@ def settingspage():
     cursor = connection.cursor()
 
     user, logged_in = fetch_user()
-    #If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
+    # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if user == None:
         return redirect(
             url_for(
@@ -369,7 +369,7 @@ def settingspage():
                 message=
                 "To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
-    #get user_id
+    # get user_id
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
     result = (cursor.fetchone())
@@ -494,7 +494,7 @@ def download_file():
 
 # Allows users to upload their own sqlite files and transcriptomes.
 @app.route('/uploads/')
-#@login_required
+# @login_required
 def uploadspage():
     global local
     try:
@@ -508,7 +508,7 @@ def uploadspage():
     cursor = connection.cursor()
 
     user, logged_in = fetch_user()
-    #If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
+    # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if user == None:
         return redirect(
             url_for(
@@ -561,12 +561,12 @@ def uploadspage():
         format(user_id))
     result = cursor.fetchall()
     for row in result:
-        #add to organism dict if not caught earlier (this only happens when database is modified manually)
+        # add to organism dict if not caught earlier (this only happens when database is modified manually)
         if row[2] not in org_id_dict:
             cursor.execute(
                 "SELECT organism_name,transcriptome_list,organism_id from organisms where organism_id =  {};"
                 .format(row[2]))
-            #organism_dict[organism] = [transcriptome]
+            # organism_dict[organism] = [transcriptome]
             org_id_dict[row[2]] = [row[0], transcriptome]
         study_dict[int(row[0])] = [
             row[1].replace("_{}".format(user_id), "", 1),
@@ -627,133 +627,134 @@ def uploadspage():
 
 # Called when user uploads something on the uploads page
 @app.route('/uploadquery', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def upload_file():
     if request.method == 'POST':
-        uploaded_files = request.files.getlist("file")
+        # uploaded_files = request.files.getlist("file")
+        f = request.files["file"]
+        print(request.form)
+        print(request.files)
         connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                     config.DATABASE_NAME))
         connection.text_factory = str
         cursor = connection.cursor()
         user, logged_in = fetch_user()
 
-        for f in uploaded_files:
+        cursor.execute(
+            "SELECT user_id from users WHERE username = '{}';".format(user))
+        result = (cursor.fetchone())
+        user_id = result[0]
+        filename = f.filename
+        # filename = secure_filename(f.filename)
+        print(filename)
+        file_ext = (filename.split("."))[-1]
+        if file_ext != "sqlite":
+            flash("Error: File extension should be sqlite not {}".format(
+                file_ext))
+            return redirect("https://trips.ucc.ie/uploads")
+        if user != "public":
+            foldername = "{}_{}".format(
+                request.form["foldername"].replace(" ", "_"), user_id)
+        else:
+            foldername = "{}".format(request.form["foldername"].replace(
+                " ", "_"))
+        organism = request.form["organism"]
+        assembly = request.form["assembly"]
+        filetype_radio = request.form["filetype"]
+        if filetype_radio == "riboseq":
+            filetype = "riboseq"
+        elif filetype_radio == "rnaseq":
+            filetype = "rnaseq"
+        elif filetype_radio == "other":
+            filetype = (request.form["seq_type"]).lower().strip()
+
+        # if this filetype is new for this user insert a new entry into seq_rules table
+        if filetype != "riboseq" and filetype != "rnaseq":
             cursor.execute(
-                "SELECT user_id from users WHERE username = '{}';".format(
-                    user))
-            result = (cursor.fetchone())
-            user_id = result[0]
-            filename = secure_filename(f.filename)
-            file_ext = (filename.split("."))[-1]
-            if file_ext != "sqlite":
-                flash("Error: File extension should be sqlite not {}".format(
-                    file_ext))
-                return redirect("https://trips.ucc.ie/uploads")
+                "SELECT * from seq_rules where user_id = {} and seq_name = '{}'"
+                .format(user_id, filetype))
+            result = cursor.fetchone()
+            if result == None:
+                cursor.execute(
+                    "INSERT INTO seq_rules VALUES ({},'{}',0)".format(
+                        user_id, filetype))
+
+        if not os.path.isdir("{}/uploads/{}".format(config.SCRIPT_LOC,
+                                                    foldername)):
+            os.makedirs("{}/uploads/{}".format(config.SCRIPT_LOC, foldername))
+        upload_file_path = "{}/uploads/{}/{}".format(config.SCRIPT_LOC,
+                                                     foldername, filename)
+        with open(upload_file_path, "wb") as fout:
+            while True:
+                chunk = f.stream.read(1024)
+                if not chunk:
+                    break
+                fout.write(chunk)
+
+        # f.save("{}/uploads/{}/{}".format(config.SCRIPT_LOC, foldername,
+        # filename))
+        sqlite_db = SqliteDict("{}/uploads/{}/{}".format(
+            config.SCRIPT_LOC, foldername, filename))
+        try:
+            file_description = sqlite_db["description"]
+        except:
+            file_description = "NULL"
+        sqlite_db.close()
+        # get file id
+        cursor.execute("SELECT MAX(file_id) FROM files;")
+        result = cursor.fetchone()
+        new_file_id = int(result[0]) + 1
+        cursor.execute(
+            "SELECT organism_id FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}';"
+            .format(organism, assembly))
+        result = cursor.fetchone()
+        organism_id = int(result[0])
+        # get study_id
+        cursor.execute(
+            "SELECT study_id FROM studies WHERE study_name = '{}' and organism_id = {} and owner = {}"
+            .format(foldername, organism_id, user_id))
+        result = cursor.fetchone()
+        if result != None:
+            study_id = int(result[0])
+        else:
+            cursor.execute("SELECT MAX(study_id) FROM studies;")
+            result = cursor.fetchone()
+            study_id = int(result[0]) + 1
             if user != "public":
-                foldername = "{}_{}".format(
-                    request.form["foldername"].replace(" ", "_"), user_id)
+                cursor.execute(
+                    "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
+                    .format(study_id, organism_id, foldername, 'NULL', 'NULL',
+                            'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+                            'NULL', 1, user_id))
             else:
-                foldername = "{}".format(request.form["foldername"].replace(
-                    " ", "_"))
-            organism = request.form["organism"]
-            assembly = request.form["assembly"]
-            filetype_radio = request.form["filetype"]
-            if filetype_radio == "riboseq":
-                filetype = "riboseq"
-            elif filetype_radio == "rnaseq":
-                filetype = "rnaseq"
-            elif filetype_radio == "other":
-                filetype = (request.form["seq_type"]).lower().strip()
-
-            #if this filetype is new for this user insert a new entry into seq_rules table
-            if filetype != "riboseq" and filetype != "rnaseq":
                 cursor.execute(
-                    "SELECT * from seq_rules where user_id = {} and seq_name = '{}'"
-                    .format(user_id, filetype))
-                result = cursor.fetchone()
-                if result == None:
-                    cursor.execute(
-                        "INSERT INTO seq_rules VALUES ({},'{}',0)".format(
-                            user_id, filetype))
-
-            if not os.path.isdir("{}/uploads/{}".format(
-                    config.SCRIPT_LOC, foldername)):
-                os.makedirs("{}/uploads/{}".format(config.SCRIPT_LOC,
-                                                   foldername))
-            upload_file_path = "{}/uploads/{}/{}".format(
-                config.SCRIPT_LOC, foldername, filename)
-            f.save("{}/uploads/{}/{}".format(config.SCRIPT_LOC, foldername,
-                                             filename))
-            sqlite_db = SqliteDict("{}/uploads/{}/{}".format(
-                config.SCRIPT_LOC, foldername, filename))
-            try:
-                file_description = sqlite_db["description"]
-            except:
-                file_description = "NULL"
-            sqlite_db.close()
-            #get file id
-            cursor.execute("SELECT MAX(file_id) FROM files;")
-            result = cursor.fetchone()
-            new_file_id = int(result[0]) + 1
-            cursor.execute(
-                "SELECT organism_id FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}';"
-                .format(organism, assembly))
-            result = cursor.fetchone()
-            organism_id = int(result[0])
-            #get study_id
-            cursor.execute(
-                "SELECT study_id FROM studies WHERE study_name = '{}' and organism_id = {} and owner = {}"
-                .format(foldername, organism_id, user_id))
-            result = cursor.fetchone()
-            if result != None:
-                study_id = int(result[0])
-            else:
-                cursor.execute("SELECT MAX(study_id) FROM studies;")
-                result = cursor.fetchone()
-                study_id = int(result[0]) + 1
-                if user != "public":
-                    cursor.execute(
-                        "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
-                        .format(study_id, organism_id, foldername, 'NULL',
-                                'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
-                                'NULL', 'NULL', 1, user_id))
-                else:
-                    cursor.execute(
-                        "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
-                        .format(study_id, organism_id, foldername, 'NULL',
-                                'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
-                                'NULL', 'NULL', 0, user_id))
-                #cursor.execute("SELECT study_access from users WHERE user_id = {}".format(user_id))
-                #result = cursor.fetchone()
-                #study_access_list = result[0]
-                #if str(study_id) not in study_access_list.split(","):
-                #study_access_list += ",{}".format(study_id)
-                #cursor.execute("UPDATE users SET study_access = '{}' WHERE user_id = {}".format(study_access_list, user_id))
-                cursor.execute(
-                    "INSERT INTO study_access VALUES({},{});".format(
-                        study_id, user_id))
-            cursor.execute(
-                "INSERT INTO files VALUES({},{},{},'{}','{}','{}',{},{},{},'{}')"
-                .format(new_file_id, organism_id, study_id, filename,
-                        file_description, filetype, user_id, 0, 0, ""))
-            #If user is not logged in only keep file for a set period of time
-            if logged_in == False:
-                curr_time = time.time()
-                #The time to keep the file in seconds, currently set to one day
-                keep_time = 60 * 60 * 24
-                deletion_time = curr_time + keep_time
-                cursor.execute(
-                    "INSERT INTO deletions VALUES({},'{}',{})".format(
-                        new_file_id, upload_file_path, deletion_time))
-            connection.commit()
-            flash("File uploaded successfully")
+                    "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
+                    .format(study_id, organism_id, foldername, 'NULL', 'NULL',
+                            'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+                            'NULL', 0, user_id))
+            cursor.execute("INSERT INTO study_access VALUES({},{});".format(
+                study_id, user_id))
+        cursor.execute(
+            "INSERT INTO files VALUES({},{},{},'{}','{}','{}',{},{},{},'{}')".
+            format(new_file_id, organism_id, study_id, filename,
+                   file_description, filetype, user_id, 0, 0, ""))
+        # If user is not logged in only keep file for a set period of time
+        if logged_in == False:
+            curr_time = time.time()
+            # The time to keep the file in seconds, currently set to one day
+            keep_time = 60 * 60 * 24
+            deletion_time = curr_time + keep_time
+            cursor.execute("INSERT INTO deletions VALUES({},'{}',{})".format(
+                new_file_id, upload_file_path, deletion_time))
+        connection.commit()
+        flash("File uploaded successfully")
         connection.close()
-        return redirect("https://trips.ucc.ie/uploads")
+    return redirect("/uploads/")
 
 
 # Called when a user uploads a custom transcriptome
 @app.route('/uploadtranscriptome', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def upload_transcriptome():
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
@@ -789,7 +790,7 @@ def upload_transcriptome():
                 return """Error: Expecting extension sqlite but got extension {}. The file generated by the create_annotation_sqlite.py script should be uploaded here.
 						This script can be gotten on the downloads page, by selecting the Scripts group.""".format(
                     ext)
-            #Instead of using filename of the uploaded file we rename it to organism_assembly.sqlite, to keep things consistent
+            # Instead of using filename of the uploaded file we rename it to organism_assembly.sqlite, to keep things consistent
             filename = "{}_{}.sqlite".format(organism, assembly)
             full_path = "{}/uploads/transcriptomes/{}/{}/{}/{}".format(
                 config.SCRIPT_LOC, user_id, organism, assembly, filename)
@@ -803,9 +804,9 @@ def upload_transcriptome():
             cursor.execute("INSERT INTO organism_access VALUES ({},{})".format(
                 max_org_id, user_id))
             if logged_in == False:
-                #Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
+                # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
                 curr_time = time.time()
-                #The time to keep the file in seconds, currently set to 1 day
+                # The time to keep the file in seconds, currently set to 1 day
                 keep_time = 60 * 60 * 24
                 deletion_time = curr_time + keep_time
                 cursor.execute(
@@ -830,7 +831,7 @@ def handle_bad_request(e):
 @app.route("/user/login", methods=["GET", "POST"])
 def login():
     global local
-    #if user is already logged in then redirect to homepage
+    # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
     error = None
@@ -891,18 +892,18 @@ def load_user(userid):
 
 
 # Forgot password page.
-#@app.route("/forgot", methods=["GET", "POST"])
-#def forgot():
-##if user is already logged in then redirect to homepage
-#if current_user.is_authenticated:
-#return redirect("/")
-#error=None
-#if request.method == 'POST':
-#emailaddress = str(request.form['emailaddress'])
-#print ("address is ", emailaddress)
-#return redirect("/")
-#else:
-#return render_template('forgot_password.html',error=error)
+# @app.route("/forgot", methods=["GET", "POST"])
+# def forgot():
+# if user is already logged in then redirect to homepage
+# if current_user.is_authenticated:
+# return redirect("/")
+# error=None
+# if request.method == 'POST':
+# emailaddress = str(request.form['emailaddress'])
+# print ("address is ", emailaddress)
+# return redirect("/")
+# else:
+# return render_template('forgot_password.html',error=error)
 
 
 @app.route("/reset", methods=["GET", "POST"])
@@ -949,7 +950,7 @@ def saved():
     cursor = connection.cursor()
     advanced = False
     user, logged_in = fetch_user()
-    #If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
+    # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if user == None:
         flash(
             "To use the Saved ORFs page you either need to be logged in or allow cookies."
@@ -1002,7 +1003,7 @@ def savedquery():
     organism = data["organism"]
     label = data["label"]
     returnstr = ""
-    #get user_id
+    # get user_id
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
     result = (cursor.fetchone())
@@ -1099,9 +1100,9 @@ def del_query():
 
 
 # Allows users to logout
-#@app.route("/user/logout")
-#@login_required
-#def logout():
+# @app.route("/user/logout")
+# @login_required
+# def logout():
 #	logout_user()
 #	return redirect(login)
 
@@ -1118,7 +1119,7 @@ def static_license_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
 
 
-#This is the help page, linked from various other pages to explain terms on that page.
+# This is the help page, linked from various other pages to explain terms on that page.
 @app.route('/help/')
 def helppage():
     parent_acc = sanitize_get_request(request.args.get('parent_acc'))
@@ -1130,7 +1131,7 @@ def helppage():
                            child_acc=child_acc)
 
 
-#This is the help page, linked from various other pages to explain terms on that page.
+# This is the help page, linked from various other pages to explain terms on that page.
 @app.route('/shared/<folder>')
 def sharepage(folder):
     filelist = []
@@ -1152,14 +1153,14 @@ def viewfile(folder, filename):
                                as_attachment=False)
 
 
-#This is the short url page, user supplies a short code which will be converted to a full url which user will then be redirected to
+# This is the short url page, user supplies a short code which will be converted to a full url which user will then be redirected to
 @app.route('/short/<short_code>/')
 def short(short_code):
     try:
         user = current_user.name
     except:
         user = None
-    #First convert short code to an integer
+    # First convert short code to an integer
     integer = base62_to_integer(short_code)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
@@ -1171,7 +1172,7 @@ def short(short_code):
         return "Short code not recognized."
     url = ""
     url += result[0]
-    #add a keyword to the url to prevent generating another shortcode
+    # add a keyword to the url to prevent generating another shortcode
     url += "&short={}".format(short_code)
     connection.close()
     return redirect(url)
@@ -1180,7 +1181,7 @@ def short(short_code):
 @app.after_request
 def after_request_func(response):
     consent = request.cookies.get("cookieconsent_status")
-    #if consent == "deny":
+    # if consent == "deny":
     #	session.clear()
     #	for cookie_name in request.cookies:
     #		if cookie_name != "cookieconsent_status":
@@ -1192,7 +1193,7 @@ def after_request_func(response):
     return response
 
 
-#This is the home page it show a list of organisms as defined by trips_dict
+# This is the home page it show a list of organisms as defined by trips_dict
 # TODO: Move pages in order
 @app.route('/')
 def homepage(message=""):
@@ -1214,7 +1215,7 @@ def homepage(message=""):
             "SELECT user_id from users WHERE username = '{}';".format(user))
         result = (cursor.fetchone())
         user_id = result[0]
-        #get a list of organism id's this user can access
+        # get a list of organism id's this user can access
         cursor.execute(
             "SELECT organism_id from organism_access WHERE user_id = '{}';".
             format(user_id))
@@ -1222,7 +1223,7 @@ def homepage(message=""):
         for row in result:
             organism_access_list.append(int(row[0]))
 
-    #returns a tuple with each field as a seperate string
+    # returns a tuple with each field as a seperate string
     cursor.execute(
         "SELECT organism_id,organism_name,private,owner from organisms;"
     )  #TODO: Seq uniq
@@ -1259,50 +1260,10 @@ def homepage(message=""):
                            message=message)
 
 
-#show a list of transcriptomes
-@app.route('/<organism>/')
-def transcriptomepage(organism):
-    transcriptomes = []
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-
-    user, logged_in = fetch_user()
-
-    user_id = -1
-    if current_user.is_authenticated:
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(
-                current_user.name))
-        result = (cursor.fetchone())
-        user_id = result[0]
-
-    org_access_list = []
-    cursor.execute(
-        "SELECT organism_id from organism_access WHERE user_id = '{}';".format(
-            user_id))
-    result = cursor.fetchall()
-    for row in result:
-        org_access_list.append(str(row[0]))
-    cursor.execute(
-        "SELECT transcriptome_list from organisms WHERE organism_name = '{}' AND (private = 0 OR organism_id IN ({})) ;"
-        .format(organism,
-                str(org_access_list).strip("[]")))
-    result = (cursor.fetchall())
-    if result:
-        for row in result:
-            transcriptomes.append(row[0])
-    transcriptomes = str(transcriptomes).strip("[]").replace("'", "")
-    connection.close()
-    return render_template('transcriptomes.html',
-                           transcriptomes=transcriptomes)
-
-
-#show a list of plot types
+# show a list of plot types
 @app.route('/<organism>/<transcriptome>/')
 def plogpage(organism, transcriptome):
-    try:
+    try:  # TODO: Integrate login details in main page and remove this function
         user = current_user.name
     except:
         user = None
@@ -1310,8 +1271,8 @@ def plogpage(organism, transcriptome):
 
 
 # Updates the settings for a specific user
-@app.route('/settingsquery', methods=['GET', 'POST'])
-#@login_required
+@app.route('/settingsquery', methods=['POST'])
+# @login_required
 def settingsquery():
     data = json.loads(request.data)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -1341,7 +1302,7 @@ def settingsquery():
                 connection.commit()
             else:
                 return "ERROR: Current password is not correct"
-    #get user_id
+    # get user_id
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
     result = (cursor.fetchone())
@@ -1357,8 +1318,9 @@ def settingsquery():
             "UPDATE users SET advanced = 0 WHERE user_id = '{}';".format(
                 user_id))
         connection.commit()
+    # TODO: Check the input before updating the settings
 
-    #get a list of organism id's this user can access
+    # get a list of organism id's this user can access
     cursor.execute(
         "UPDATE user_settings SET background_col = '{}' WHERE user_id = '{}';".
         format(data["background_colour"].strip(), user_id))
@@ -1454,7 +1416,7 @@ def settingsquery():
 
 # Allows users to delete files
 @app.route('/deletequery', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def deletequery():
     data = json.loads(request.data)
 
@@ -1483,9 +1445,9 @@ def deletequery():
             study_name = result[2]
             full_path = "{}{}/{}".format(config.UPLOADS_DIR, study_name,
                                          filename)
-            #Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
+            # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
-            #The time to keep the file in seconds, currently set to 14 days
+            # The time to keep the file in seconds, currently set to 14 days
             keep_time = 60 * 60 * 24 * 14
             deletion_time = curr_time + keep_time
             cursor.execute("INSERT INTO deletions VALUES({},'{}',{})".format(
@@ -1555,7 +1517,7 @@ def deletequery():
 
 # Allows users to delete studies,modify access, modify the organism/transcriptome assembly or study name
 @app.route('/deletestudyquery', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def deletestudyquery():
     data = json.loads(request.data)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -1571,13 +1533,13 @@ def deletestudyquery():
     user_id = result[0]
     for study_id in data:
         studycheck = data[study_id][0]
-        #Delete studies where the "delete" checkbox is checked
+        # Delete studies where the "delete" checkbox is checked
 
         if studycheck.split("_")[-1] != "undefined":
             study_id = studycheck.split("_")[-1]
             print("deleting study_id", study_id)
 
-            #First delete all files on the server associated with this study, if there are any
+            # First delete all files on the server associated with this study, if there are any
             cursor.execute(
                 "SELECT * FROM files WHERE study_id = {}".format(study_id))
             result = cursor.fetchall()
@@ -1595,22 +1557,22 @@ def deletestudyquery():
                                                  study_name, filename)
                     if owner == user_id:
                         if os.path.isfile(full_path):
-                            #Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
+                            # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
                             curr_time = time.time()
-                            #The time to keep the file in seconds, currently set to 14 days
+                            # The time to keep the file in seconds, currently set to 14 days
                             keep_time = 60 * 60 * 24 * 14
                             deletion_time = curr_time + keep_time
                             cursor.execute(
                                 "INSERT INTO deletions VALUES({},'{}',{})".
                                 format(file_id, full_path, deletion_time))
-            #Now remove the study and the files associated with it from the db
+            # Now remove the study and the files associated with it from the db
             cursor.execute(
                 "SELECT owner FROM studies WHERE study_id = {}".format(
                     study_id))
             result = cursor.fetchone()
             study_owner = result[0]
             if study_owner == user_id:
-                #os.rename(study_path,study_path+"_REMOVE")
+                # os.rename(study_path,study_path+"_REMOVE")
                 cursor.execute(
                     "DELETE FROM studies WHERE study_id = {}".format(study_id))
                 cursor.execute(
@@ -1618,9 +1580,9 @@ def deletestudyquery():
                 connection.commit()
                 continue
 
-        #Modify access list next to studies
+        # Modify access list next to studies
         study_access = data[study_id][1].split(",")
-        #check study_access against a list of all users
+        # check study_access against a list of all users
         all_users = {}
         cursor.execute("SELECT username,user_id FROM users;")
         result = cursor.fetchall()
@@ -1644,18 +1606,18 @@ def deletestudyquery():
                             "\n\n\nINSERT INTO study_access VALUES({},{});".
                             format(study_id, all_users[username]))
 
-        #Modify study names if they have changed
+        # Modify study names if they have changed
         new_study_name = "{}_{}".format(data[study_id][2], user_id)
         cursor.execute(
             "SELECT study_name FROM studies WHERE study_id = {}".format(
                 study_id))
         old_study_name = cursor.fetchone()[0]
         if old_study_name != new_study_name:
-            #Update study name in the sqlite
+            # Update study name in the sqlite
             cursor.execute(
                 "UPDATE studies SET study_name = '{}' WHERE study_id = {}".
                 format(new_study_name, study_id))
-            #If the new_study_name folder does not exist, rename the old study to the new study, else move all files from old folder to new folder
+            # If the new_study_name folder does not exist, rename the old study to the new study, else move all files from old folder to new folder
             if not os.path.isdir("{}/uploads/{}".format(
                     config.SCRIPT_LOC, new_study_name)):
                 os.rename(
@@ -1691,7 +1653,7 @@ def deletestudyquery():
             old_organism = result[0]
             old_assembly = result[1]
             if old_organism != organism_name or old_assembly != assembly_name:
-                #Check if the new orgnaism and new assembly are a valid combination
+                # Check if the new orgnaism and new assembly are a valid combination
                 cursor.execute(
                     "SELECT organism_id  FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}'"
                     .format(organism_name, assembly_name))
@@ -1704,7 +1666,7 @@ def deletestudyquery():
                         "UPDATE studies SET organism_id = {} WHERE study_id = {}"
                         .format(result[0], study_id))
                     pass
-                    #update study_id with new org_id
+                    # update study_id with new org_id
 
     connection.commit()
     connection.close()
@@ -1714,7 +1676,7 @@ def deletestudyquery():
 
 # Allows users to delete transcriptomes
 @app.route('/deletetranscriptomequery', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def deletetranscriptomequery():
     data = json.loads(request.data)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -1732,7 +1694,7 @@ def deletetranscriptomequery():
         transcriptomecheck = data[organism_id][0]
         if transcriptomecheck.split("_")[-1] != "undefined":
             organism_id = transcriptomecheck.split("_")[-1]
-            #Delete the annotation sqlite file
+            # Delete the annotation sqlite file
             cursor.execute(
                 "SELECT organism_name, transcriptome_list, owner FROM organisms WHERE organism_id = {}"
                 .format(organism_id))
@@ -1745,23 +1707,23 @@ def deletetranscriptomequery():
             sqlite_path = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                 config.UPLOADS_DIR, user_id, organism_name, transcriptome_list)
             if os.path.isfile(sqlite_path):
-                #os.rename(sqlite_path,sqlite_path+"_REMOVE")
-                #Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
+                # os.rename(sqlite_path,sqlite_path+"_REMOVE")
+                # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
                 curr_time = time.time()
-                #The time to keep the file in seconds, currently set to 14 days
+                # The time to keep the file in seconds, currently set to 14 days
                 keep_time = 60 * 60 * 24 * 14
                 deletion_time = curr_time + keep_time
                 cursor.execute(
                     "INSERT INTO org_deletions VALUES({},'{}',{})".format(
                         organism_id, sqlite_path, deletion_time))
-            #sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
-            #if os.path.isdir(sqlite_dir):
+            # sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
+            # if os.path.isdir(sqlite_dir):
             #	os.rename(sqlite_dir,sqlite_dir+"_REMOVE")
 
             cursor.execute(
                 "DELETE FROM organisms WHERE organism_id = {}".format(
                     organism_id))
-            #delete all files on the server associated with this organism, if there are any
+            # delete all files on the server associated with this organism, if there are any
             cursor.execute("SELECT * FROM files WHERE organism_id = {}".format(
                 organism_id))
             result = cursor.fetchall()
@@ -1789,7 +1751,7 @@ def deletetranscriptomequery():
                 if os.path.isdir(full_path):
                     os.rename(full_path, full_path + "_REMOVE")
 
-            #Now remove the study and the files associated with it from the db
+            # Now remove the study and the files associated with it from the db
             for study_id in study_ids:
                 cursor.execute(
                     "DELETE FROM studies WHERE study_id = {}".format(study_id))
@@ -1803,7 +1765,7 @@ def deletetranscriptomequery():
 
 # Updates the "sequence rules", for custom sequence types
 @app.route('/seqrulesquery', methods=['GET', 'POST'])
-#@login_required
+# @login_required
 def seqrulesquery():
     data = json.loads(request.data)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -1813,7 +1775,7 @@ def seqrulesquery():
 
     user, logged_in = fetch_user()
 
-    #get user_id
+    # get user_id
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
     result = (cursor.fetchone())
@@ -1836,7 +1798,7 @@ def seqrulesquery():
 # breaks down the counts from each file for a specific ORF
 @app.route('/<organism>/<transcriptome>/dataset_breakdown/')
 def dataset_breakdown(organism, transcriptome):
-    #ip = request.environ['REMOTE_ADDR']
+    # ip = request.environ['REMOTE_ADDR']
     global local
     try:
         print(local)
