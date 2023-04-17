@@ -3,6 +3,8 @@ from math import floor
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
+from sqlqueries import sqlquery
+import pandas as pd
 import uuid
 import config
 import logging
@@ -82,38 +84,49 @@ def fetch_user():
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(username, organism, transcriptome):
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
+def fetch_studies(organism, transcriptome):
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     accepted_studies = {}
     study_access_list = []
     #get a list of organism id's this user can access
     if current_user.is_authenticated:
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(
-                current_user.name))
-        result = (cursor.fetchone())
-        user_id = result[0]
-        cursor.execute(
-            "SELECT study_id from study_access WHERE user_id = '{}';".format(
-                user_id))
-        result = (cursor.fetchall())
-        for row in result:
-            study_access_list.append(int(row[0]))
+        # getting user ID
+        result = sqlquery(dbpath, "users")  # users is name of table
+        user_id = result[result.username ==
+                         current_user.name].user_id.values[0]
+        # Study accession list
+        result = sqlquery(dbpath, "study_accesion")  # users is name of table
+        study_access_list = result.loc[result.user_id == user_id,
+                                       "study_id"].values
+
+    # Getting organism id
+    result = sqlquery(dbpath, "organisms")  # users is name of table
+    organism_id = result.loc[(
+        result.organism_name == organism
+        & result.transcriptome == transcriptome), "organism_id"].values[
+            0]  # NOTE: Expecting it has to be true as it is encoded in form
+
+    # Getting studies
+    result = sqlquery(dbpath, "studies")  # users is name of table
+    result = result.loc[result.organism_id == organism_id,
+                        ["study_id", "study_name", "private"]]
+    if not result.empty:
+        result = pd.concat([
+            result[result.private == 0],
+            result[result.study_id.isin(study_access_list)]
+        ])
 
     cursor.execute(
         "SELECT organism_id from organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
         .format(organism, transcriptome))
-    result = (cursor.fetchone())
+    result = cursor.fetchone()
     if result:
         organism_id = int(result[0])
-    #keys are converted from int to str as javascript will not accept a dictionary with ints for keys.
-    cursor.execute(
-        "SELECT study_id,study_name,private from studies WHERE organism_id = '{}';"
-        .format(organism_id))
-    result = (cursor.fetchall())
+        #keys are converted from int to str as javascript will not accept a dictionary with ints for keys.
+        cursor.execute(
+            "SELECT study_id,study_name,private from studies WHERE organism_id = '{}';"
+            .format(organism_id))
+        result = cursor.fetchall()
     if result != []:
         if result[0]:
             for row in result:
@@ -136,6 +149,7 @@ def fetch_studies(username, organism, transcriptome):
 def fetch_files(accepted_studies):
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
+
     connection.text_factory = str
     cursor = connection.cursor()
     accepted_files = {}
@@ -165,7 +179,8 @@ def fetch_files(accepted_studies):
             "file_description": row[3],
             "file_type": row[4]
         }
-        accepted_studies[str(row[1])]["filetypes"].append(row[4])
+        if row[4] not in accepted_studies[str(row[1])]["filetypes"]:
+            accepted_studies[str(row[1])]["filetypes"].append(row[4])
         file_id_to_name_dict[str(row[0])] = row[2].replace(".shelf", "")
     connection.close()
     return file_id_to_name_dict, accepted_studies, accepted_files, seq_types

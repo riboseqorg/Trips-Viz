@@ -9,5 +9,13 @@ def sqlquery(sqlfilepath, tablename):
     Base = automap_base()
     Base.prepare(engine, reflect=True)
     session = Session(engine)
-    sqlTable = pd.read_sql(session.query(Base.classes[tablename]), engine)
+    sql = session.query(Base.classes[tablename])
+    sqlTable = pd.read_sql(sql, engine)
     return sqlTable
+
+
+def table2dict(table, keys_col, values_col):
+    dict = {}
+    for index, row in table.iterrows():
+        dict[row[keys_col]] = row[values_col]
+    return dict
