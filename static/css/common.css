@@ -738,28 +738,6 @@ div #rnaseq_files
 	width : 49%;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .tran_select_box {
 	width: 100%;
 	border-radius: 10px;
@@ -801,46 +779,6 @@ div #sidebar
 	border-radius:20px;
 	width : 32%;
 }
-
-
-div #seq_types
-{
-	float: left;
-	text-align:center;
-	display: inline-block;
-	border:1px solid #dbdbdb;
-	padding:10px 0px;
-	border-radius:20px;
-	width : 99%;
-}
-
-
-
-
-
-div #studies
-{
-	float: left;
-	text-align:center;
-	display: inline-block;
-	border:1px solid #dbdbdb;
-	padding:10px 0px;
-	border-radius:20px;
-	width : 99%;
-}
-
-
-
-div #files
-{
-	display: inline-block;
-	border:1px solid #dbdbdb;
-	padding:50px 0px;
-	border-radius:20px;
-	width : 99%;
-	
-}
-
 
 .hidden_element {
 	visibility: hidden;
