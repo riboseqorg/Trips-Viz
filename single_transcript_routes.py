@@ -8,6 +8,7 @@ import riboflask
 from flask_login import current_user
 import logging
 import json
+from sqlqueries import sqlquery
 try:
     from orfQuant import incl_OPM_run_orfQuant
     from tripsTPM import TPM
@@ -24,7 +25,6 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
     '/<organism>/<transcriptome>/interactive_plot/')
 def interactiveplotpage(organism, transcriptome):
     #global user_short_passed
-    user_short_passed = True
     global local
     try:
         print(local)
@@ -38,10 +38,13 @@ def interactiveplotpage(organism, transcriptome):
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
-    accepted_studies = fetch_studies(user, organism, transcriptome)
+    accepted_studies = fetch_studies(organism, transcriptome)
+    print(accepted_studies)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
+    print(accepted_studies)
+    print(accepted_files)
+    print(seq_types)
 
     cursor.execute(
         "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
@@ -110,8 +113,7 @@ def interactiveplotpage(organism, transcriptome):
             user_hili_starts.append(int(item.split("_")[0]))
             user_hili_stops.append(int(item.split("_")[1]))
     except:
-        user_hili_start = None
-        user_hili_stop = None
+        pass
 
     try:
         user_minread = int(user_minread)
