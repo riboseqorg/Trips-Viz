@@ -3,6 +3,7 @@ from math import floor
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
+from Bio.Seq import Seq
 from sqlqueries import sqlquery, table2dict
 import uuid
 import config
@@ -148,7 +149,6 @@ def fetch_study_info(organism):
     ]]
     # "paper_link": row[5].strip('"'),  # generate link using pubmed id
     return table2dict(studies, ["study_id"])
-    
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
@@ -162,6 +162,13 @@ def fetch_file_paths(file_list, organism):
         int_file_list = [int(x) for x in file_list]
     except:
         return {}
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    studies = sqlquery(dbpath, "studies")[[
+        "study_id", "study_name"
+    ]]
+    files = sqlquery(dbpath, "files")
+    files = files[files["file_id"].isin(int_file_list)]
+    # ----
     connection_ffp = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                     config.DATABASE_NAME))
     connection_ffp.text_factory = str
@@ -576,11 +583,9 @@ def generate_short_code(data, organism, transcriptome, plot_type):
 
         url += "&start_codons={}".format(
             str(start_codons).strip("[]").replace("'", ""))
-        #url += "&min_start_inc={}&max_start_inc={}&min_stop_dec={}&max_stop_dec={}&min_lfd={}&max_lfd={}&min_hfd={}&max_hfd={}".format(data["min_start_increase"],data["max_start_increase"],data["min_stop_decrease"],data["max_stop_decrease"],data["min_lowest_frame_diff"],data["max_lowest_frame_diff"],data["min_highest_frame_diff"],data["max_highest_frame_diff"])
         url += "&min_cds={}&max_cds={}&min_len={}&max_len={}&min_avg={}&max_avg={}".format(
             data["min_cds"], data["max_cds"], data["min_len"], data["max_len"],
             data["min_avg"], data["max_avg"])
-        #url += "&region={}".format(data["region"])
         url += "&tran_list={}".format(data["tran_list"])
 
         if "start_increase_check" in data:
@@ -652,81 +657,8 @@ def base62_to_integer(base62_str):
 
 #Takes a nucleotide string and returns the amino acide sequence
 def nuc_to_aa(nuc_seq):
-    codon_dict = {
-        'ATA': 'I',
-        'ATC': 'I',
-        'ATT': 'I',
-        'ATG': 'M',
-        'ACA': 'T',
-        'ACC': 'T',
-        'ACG': 'T',
-        'ACT': 'T',
-        'AAC': 'N',
-        'AAT': 'N',
-        'AAA': 'K',
-        'AAG': 'K',
-        'AGC': 'S',
-        'AGT': 'S',
-        'AGA': 'R',
-        'AGG': 'R',
-        'CTA': 'L',
-        'CTC': 'L',
-        'CTG': 'L',
-        'CTT': 'L',
-        'CCA': 'P',
-        'CCC': 'P',
-        'CCG': 'P',
-        'CCT': 'P',
-        'CAC': 'H',
-        'CAT': 'H',
-        'CAA': 'Q',
-        'CAG': 'Q',
-        'CGA': 'R',
-        'CGC': 'R',
-        'CGG': 'R',
-        'CGT': 'R',
-        'GTA': 'V',
-        'GTC': 'V',
-        'GTG': 'V',
-        'GTT': 'V',
-        'GCA': 'A',
-        'GCC': 'A',
-        'GCG': 'A',
-        'GCT': 'A',
-        'GAC': 'D',
-        'GAT': 'D',
-        'GAA': 'E',
-        'GAG': 'E',
-        'GGA': 'G',
-        'GGC': 'G',
-        'GGG': 'G',
-        'GGT': 'G',
-        'TCA': 'S',
-        'TCC': 'S',
-        'TCG': 'S',
-        'TCT': 'S',
-        'TTC': 'F',
-        'TTT': 'F',
-        'TTA': 'L',
-        'TTG': 'L',
-        'TAC': 'Y',
-        'TAT': 'Y',
-        'TAA': '*',
-        'TAG': '*',
-        'TGC': 'C',
-        'TGT': 'C',
-        'TGA': '*',
-        'TGG': 'W'
-    }
-    aa_seq = ""
-    for i in range(0, len(nuc_seq), 3):
-        codon = nuc_seq[i:i + 3]
-        if "N" in codon:
-            aa_seq += "N"
-        else:
-            aa_seq += codon_dict[codon]
-    return aa_seq
-
+    return str(Seq(nuc_seq).translate())
+    
 
 # Calculates the coverage of each gene, for 5' leader, cds and 3' trailer for unambiguous and ambigous reads, needed for diff exp
 def calculate_coverages(sqlite_db, longest_tran_list, ambig_type, region,
