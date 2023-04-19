@@ -163,9 +163,7 @@ def fetch_file_paths(file_list, organism):
     except:
         return {}
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(dbpath, "studies")[[
-        "study_id", "study_name"
-    ]]
+    studies = sqlquery(dbpath, "studies")[["study_id", "study_name"]]
     files = sqlquery(dbpath, "files")
     files = files[files["file_id"].isin(int_file_list)]
     # ----
@@ -637,10 +635,10 @@ def integer_to_base62(num):
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     r = num % 62
     res = base[r]
-    q = floor(num / 62)
+    q = num // 62
     while q:
         r = q % 62
-        q = floor(q / 62)
+        q //= 62
         res = base[int(r)] + res
     return res
 
@@ -648,9 +646,8 @@ def integer_to_base62(num):
 # Converts a base62 encoded string to an integer, needed to decode short urls
 def base62_to_integer(base62_str):
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
-    limit = len(base62_str)
     res = 0
-    for i in range(limit):
+    for i in base62_str:
         res = 62 * res + base.find(base62_str[i])
     return res
 
@@ -658,7 +655,7 @@ def base62_to_integer(base62_str):
 #Takes a nucleotide string and returns the amino acide sequence
 def nuc_to_aa(nuc_seq):
     return str(Seq(nuc_seq).translate())
-    
+
 
 # Calculates the coverage of each gene, for 5' leader, cds and 3' trailer for unambiguous and ambigous reads, needed for diff exp
 def calculate_coverages(sqlite_db, longest_tran_list, ambig_type, region,
@@ -938,12 +935,6 @@ def fetch_filename_file_id(file_id):
     '''
 	return the filename from the database given a file id
 	'''
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(f"SELECT file_name from files where file_id = '{file_id}';")
-    result = cursor.fetchall()
-    print(result[0])
-    connection.close()
-    return result[0][0]
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    files = sqlquery(dbpath, "files")
+    return files.loc[files["file_id"] == file_id, 'file_name'].values[0]
