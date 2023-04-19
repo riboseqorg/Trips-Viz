@@ -4,13 +4,12 @@ from sqlitedict import SqliteDict
 import os
 import time
 import numpy as np
-import pandas as pd
 from bisect import bisect_left
 from random import shuffle
 from math import log
 import config
 import subprocess
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user, calculate_coverages
+from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, calculate_coverages
 import riboflask_diff
 from flask_login import current_user
 import json
@@ -29,8 +28,7 @@ diff_plotpage_blueprint = Blueprint("diffpage",
 
 @diff_plotpage_blueprint.route('/<organism>/<transcriptome>/differential/')
 def diffpage(organism, transcriptome):
-    #global user_short_passed
-    user_short_passed = True
+    # global user_short_passed
     global local
     try:
         print(local)
@@ -43,20 +41,11 @@ def diffpage(organism, transcriptome):
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
-
     cursor.execute(
         "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}';"
         .format(organism))
     result = (cursor.fetchone())
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
-    gwips_info = {
-        "organism": gwips_org,
-        "clade": gwips_clade,
-        "database": gwips_db
-    }
+
     default_tran = result[3]
     studyinfo_dict = fetch_study_info(organism)
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
@@ -70,67 +59,24 @@ def diffpage(organism, transcriptome):
         "gene_list": str(request.args.get('gene_list')),
         "transcript_list": str(request.args.get('transcript_list')),
         "transcriptome": str(transcriptome),
-        "min_cov": str(request.args.get('min_cov'))
+        "min_cov": str(request.args.get('min_cov')),
+        "riboseq_files_1": [],
+        "riboseq_files_2": [],
+        "rnaseq_files_1": [],
+        "rnaseq_files_2": [],
     }
-    html_args["riboseq_files_1"] = "None"
-    html_args["riboseq_files_2"] = "None"
-    html_args["rnaseq_files_1"] = "None"
-    html_args["rnaseq_files_2"] = "None"
+    for seq in ["riboseq", "rnaseq"]:
+        for typ in ["files", "labels"]:
+            for idx in ['1', '2']:
+                var = f"{seq}_{typ}_{idx}"
+                user_files = request.args.get(var)
+                if user_files:
+                    html_args[var] = user_files.split(",")
+                else:
+                    html_args[var] = []
 
-    user_files = request.args.get('riboseq_files_1')
-    if user_files != None:
-        if len(user_files) != 0:
-            user_files = user_files.split(",")
-            html_args["riboseq_files_1"] = [str(x) for x in user_files]
-
-    user_files = request.args.get('riboseq_files_2')
-    if user_files != None:
-        if len(user_files) != 0:
-            user_files = user_files.split(",")
-            html_args["riboseq_files_2"] = [str(x) for x in user_files]
-
-    user_files = request.args.get('rnaseq_files_1')
-    if user_files != None:
-        if len(user_files) != 0:
-            user_files = user_files.split(",")
-            html_args["rnaseq_files_1"] = [str(x) for x in user_files]
-
-    user_files = request.args.get('rnaseq_files_2')
-    if user_files != None:
-        if len(user_files) != 0:
-            user_files = user_files.split(",")
-            html_args["rnaseq_files_2"] = [str(x) for x in user_files]
-
-    user_labels = request.args.get('riboseq_labels_1')
-    if user_labels != None:
-        user_labels = user_labels.split(",")
-        html_args["riboseq_labels_1"] = [str(x) for x in user_labels]
-    else:
-        html_args["riboseq_labels_1"] = []
-
-    user_labels = request.args.get('riboseq_labels_2')
-    if user_labels != None:
-        user_labels = user_labels.split(",")
-        html_args["riboseq_labels_2"] = [str(x) for x in user_labels]
-    else:
-        html_args["riboseq_labels_2"] = []
-
-    user_labels = request.args.get('rnaseq_labels_1')
-    if user_labels != None:
-        user_labels = user_labels.split(",")
-        html_args["rnaseq_labels_1"] = [str(x) for x in user_labels]
-    else:
-        html_args["rnaseq_labels_1"] = []
-
-    user_labels = request.args.get('rnaseq_labels_2')
-    if user_labels != None:
-        user_labels = user_labels.split(",")
-        html_args["rnaseq_labels_2"] = [str(x) for x in user_labels]
-    else:
-        html_args["rnaseq_labels_2"] = []
-
-    accepted_studies = fetch_studies(user, organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
+    accepted_studies = fetch_studies(organism, transcriptome)
+    _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     connection.close()
     return render_template('index_diff_draggable.html',
@@ -145,7 +91,8 @@ def diffpage(organism, transcriptome):
                            seq_types=seq_types)
 
 
-def prepare_return_str(input_string):
+def prepare_return_str(
+        input_string):  # TODO: remove this might not be required
     return input_string
 
 
@@ -157,13 +104,13 @@ diffquery_blueprint = Blueprint("diffquery",
 
 @diffquery_blueprint.route('/diffquery', methods=['POST'])
 def diffquery():
-    #global user_short_passed
+    # global user_short_passed
     user_short_passed = True
     data = json.loads(request.data)
     plottype = data["plottype"]
 
     genetype = data["genetype"]
-    region = data["region"]  #can be all, cds,fiveprime, or threeprime
+    region = data["region"]  # can be all, cds,fiveprime, or threeprime
     if genetype != "coding" and region != "all":
         return prepare_return_str(
             "If gene type is not set to 'coding' then region has to be set to 'all'"
@@ -171,8 +118,6 @@ def diffquery():
     html_args = data["html_args"]
     organism = data["organism"]
     transcriptome = data["transcriptome"]
-    store_de_results = data["store_de_results"]
-    cond_desc = data["cond_desc"]
     gene_list = data["gene_list"]
     minreads = float(data["minreads"])
     transcript_list = ((data["transcript_list"].strip(" ")).replace(
@@ -189,15 +134,13 @@ def diffquery():
     csv_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                     "w")
     master_file_dict = data["master_file_dict"]
-    #print ("master file dict", master_file_dict)
-    #return str(master_file_dict)
+    # print ("master file dict", master_file_dict)
+    # return str(master_file_dict)
     master_transcript_dict = {}
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str
     cursor = connection.cursor()
-
-    user, logged_in = fetch_user()
 
     cursor.execute(
         "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
@@ -255,12 +198,12 @@ def diffquery():
     transhelve.close()
     longest_tran_list = traninfo_dict.keys()
 
-    #This will hold one or more z-scores for every transcript
+    # This will hold one or more z-scores for every transcript
     master_dict = {}
 
-    #keys are genes, values are the x and y values
+    # keys are genes, values are the x and y values
     ribo_vs_rna_dict = {}
-    #List of tuples, (gene, z_Score) used to find the top 500 most DE genes
+    # List of tuples, (gene, z_Score) used to find the top 500 most DE genes
     absolute_zcores = []
 
     riboseq1_filepaths = {}
@@ -305,7 +248,7 @@ def diffquery():
         mapped_reads_norm = True
     else:
         mapped_reads_norm = False
-    #DESeq2 requires all genes be included
+    # DESeq2 requires all genes be included
     if plottype == "deseq2":
         minreads = 0
         mapped_reads_norm = False
@@ -368,10 +311,6 @@ def diffquery():
 
     no_groups = max(len(master_file_dict["riboseq1"]["file_ids"]),
                     len(master_file_dict["rnaseq1"]["file_ids"]))
-    riboseq1_tot_reads = 0.001
-    riboseq2_tot_reads = 0.001
-    rnaseq1_tot_reads = 0.001
-    rnaseq2_tot_reads = 0.001
     csv_file.write("Transcript,Gene,")
     # Group together files according to the order they were given in, if a mismatch in group number raise an error.
     for i in range(0, no_groups):
@@ -404,7 +343,7 @@ def diffquery():
                 csv_file.write(
                     "Normalised_mRNA-Seq_Cond1_count ,Normalised_mRNA-Seq_Cond2_count,"
                 )
-        #if plottype == "z_score":
+        # if plottype == "z_score":
         if len(riboseq1_filepaths) != 0:
             riboseq1_filepath = riboseq1_filepaths[int(
                 master_file_dict["riboseq1"]["file_ids"][i])]
@@ -492,9 +431,7 @@ def diffquery():
             str(rna_headers).strip("[]").replace("'", "")))
         deseq_dict = {}
         count_dict = {}
-        sample_df = pd.DataFrame(sample_data,
-                                 columns=["Condition", "SeqType"],
-                                 index=sample_rows)
+
         for tran in master_dict:
             gene = (traninfo_dict[tran]["gene"]).replace(",", "-")
             if tran not in count_dict:
@@ -542,180 +479,6 @@ def diffquery():
             deltate_folder),
                         shell=True)
         return deltate_folder
-        if label == "TE":
-            subprocess.call(
-                "tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RIBOSEQ.txt {0}_DESeq2_RNASEQ.txt {0}_DESeq2_TE.txt"
-                .format(filename, config.SCRIPT_LOC, deseq_count_filename,
-                        deseq_sample_filename),
-                shell=True)
-        elif label == "Riboseq":
-            subprocess.call(
-                "tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RIBOSEQ.txt"
-                .format(filename, config.SCRIPT_LOC, deseq_count_filename,
-                        deseq_sample_filename),
-                shell=True)
-        elif label == "Rnaseq":
-            subprocess.call(
-                "tar -C {1}/static/tmp/ -czvf {1}/static/tmp/{0}.tar.gz  {0}_deseq_counts.csv {0}_deseq_sample_info.csv {0}_DESeq2_RNASEQ.txt"
-                .format(filename, config.SCRIPT_LOC, deseq_count_filename,
-                        deseq_sample_filename),
-                shell=True)
-        #Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
-        if os.path.isfile("{0}/static/tmp/{1}_DESeq2_TE.txt".format(
-                config.SCRIPT_LOC, filename)):
-            te_file = open("{0}/static/tmp/{1}_DESeq2_TE.txt".format(
-                config.SCRIPT_LOC, filename)).readlines()
-            for line in te_file[1:]:
-                splitline = line.split(",")
-                transcript = splitline[0].split("___")[1]
-                gene = splitline[0].split("___")[0]
-                basemean = splitline[1]
-                log2fc = splitline[2]
-                lfcSE = splitline[3]
-                padj = splitline[6].replace("\n", "")
-                deseq_dict[gene] = {
-                    "te_padj": padj,
-                    "ribo_padj": "NA",
-                    "rna_padj": "NA",
-                    "ribo_fc": "NA",
-                    "rna_fc": "NA",
-                    "tran": transcript,
-                    "ribo1": count_dict[transcript]["ribo1"],
-                    "ribo2": count_dict[transcript]["ribo2"],
-                    "rna1": count_dict[transcript]["rna1"],
-                    "rna2": count_dict[transcript]["rna2"],
-                    "te_basemean": basemean,
-                    "te_lfcSE": lfcSE,
-                    "ribo_basemean": "NA",
-                    "ribo_lfcSE": "NA",
-                    "rna_basemean": "NA",
-                    "rna_lfcSE": "NA"
-                }
-        if os.path.isfile("{0}/static/tmp/{1}_DESeq2_RIBOSEQ.txt".format(
-                config.SCRIPT_LOC, filename)):
-            ribo_file = open("{0}/static/tmp/{1}_DESeq2_RIBOSEQ.txt".format(
-                config.SCRIPT_LOC, filename)).readlines()
-            for line in ribo_file[1:]:
-                splitline = line.split(",")
-                transcript = splitline[0].split("___")[1]
-                gene = splitline[0].split("___")[0]
-                basemean = splitline[1]
-                log2fc = splitline[2]
-                lfcSE = splitline[3]
-                padj = splitline[6].replace("\n", "")
-                if gene not in deseq_dict:
-                    deseq_dict[gene] = {
-                        "te_padj": "NA",
-                        "ribo_padj": padj,
-                        "rna_padj": "NA",
-                        "ribo_fc": log2fc,
-                        "rna_fc": "NA",
-                        "tran": transcript,
-                        "ribo1": count_dict[transcript]["ribo1"],
-                        "ribo2": count_dict[transcript]["ribo2"],
-                        "rna1": count_dict[transcript]["rna1"],
-                        "rna2": count_dict[transcript]["rna2"],
-                        "te_basemean": "NA",
-                        "te_lfcSE": "NA",
-                        "ribo_basemean": basemean,
-                        "ribo_lfcSE": lfcSE,
-                        "rna_basemean": "NA",
-                        "rna_lfcSE": "NA"
-                    }
-                else:
-                    deseq_dict[gene]["ribo_padj"] = padj
-                    deseq_dict[gene]["ribo_fc"] = log2fc
-        if os.path.isfile("{0}/static/tmp/{1}_DESeq2_RNASEQ.txt".format(
-                config.SCRIPT_LOC, filename)):
-            rna_file = open("{0}/static/tmp/{1}_DESeq2_RNASEQ.txt".format(
-                config.SCRIPT_LOC, filename)).readlines()
-            for line in rna_file[1:]:
-                splitline = line.split(",")
-                transcript = splitline[0].split("___")[1]
-                gene = splitline[0].split("___")[0]
-                basemean = splitline[1]
-                log2fc = splitline[2]
-                lfcSE = splitline[3]
-                padj = splitline[6].replace("\n", "")
-                if gene not in deseq_dict:
-                    deseq_dict[gene] = {
-                        "te_padj": "NA",
-                        "ribo_padj": "NA",
-                        "rna_padj": padj,
-                        "ribo_fc": "NA",
-                        "rna_fc": log2fc,
-                        "tran": transcript,
-                        "ribo1": count_dict[transcript]["ribo1"],
-                        "ribo2": count_dict[transcript]["ribo2"],
-                        "rna1": count_dict[transcript]["rna1"],
-                        "rna2": count_dict[transcript]["rna2"],
-                        "te_basemean": "NA",
-                        "te_lfcSE": "NA",
-                        "ribo_basemean": "NA",
-                        "ribo_lfcSE": "NA",
-                        "rna_basemean": basemean,
-                        "rna_lfcSE": lfcSE
-                    }
-                else:
-                    deseq_dict[gene]["rna_padj"] = padj
-                    deseq_dict[gene]["rna_fc"] = log2fc
-
-        #DELETE GENES FROM DESEQ_DICT THAT DON'T HAVE A padj for either rna and ribo (these have low counts)
-        del_list = []
-        for gene in deseq_dict:
-            if deseq_dict[gene]["rna_padj"] == "NA" and deseq_dict[gene][
-                    "ribo_padj"] == "NA":
-                del_list.append(gene)
-
-        for gene in del_list:
-            del deseq_dict[gene]
-
-        background_col = config.BACKGROUND_COL
-        uga_col = config.UGA_COL
-        uag_col = config.UAG_COL
-        uaa_col = config.UAA_COL
-        title_size = config.TITLE_SIZE
-        subheading_size = config.SUBHEADING_SIZE
-        axis_label_size = config.AXIS_LABEL_SIZE
-        marker_size = config.MARKER_SIZE
-        if user != None:
-            cursor.execute(
-                "SELECT user_id from users WHERE username = '{}';".format(
-                    user))
-            result = (cursor.fetchone())
-            user_id = result[0]
-            #get a list of organism id's this user can access
-            cursor.execute(
-                "SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';"
-                .format(user_id))
-            result = (cursor.fetchone())
-            background_col = result[0]
-            title_size = result[1]
-            subheading_size = result[2]
-            axis_label_size = result[3]
-            marker_size = result[4]
-
-        if html_args["user_short"] == "None" or user_short_passed == True:
-            short_code = generate_short_code(data, organism,
-                                             html_args["transcriptome"],
-                                             "differential")
-        else:
-            short_code = html_args["user_short"]
-            user_short_passed = True
-
-        tar_file = filename + ".tar.gz"
-        connection.close()
-        return riboflask_diff.deseq2_plot(
-            deseq_dict, organism, transcriptome,
-            master_file_dict["riboseq1"]["file_ids"],
-            master_file_dict["riboseq2"]["file_ids"],
-            master_file_dict["rnaseq1"]["file_ids"],
-            master_file_dict["rnaseq2"]["file_ids"], background_col,
-            short_code, mapped_reads_norm, tar_file, no_groups,
-            str(title_size) + "pt",
-            str(axis_label_size) + "pt",
-            str(subheading_size) + "pt",
-            str(marker_size) + "pt", ambiguous, gene_list, label, minzscore)
 
     if plottype == "deseq2":
         if no_groups <= 1:
@@ -752,9 +515,7 @@ def diffquery():
             str(headers).strip("[]").replace("'", "")))
         deseq_dict = {}
         count_dict = {}
-        sample_df = pd.DataFrame(sample_data,
-                                 columns=["Condition", "SeqType"],
-                                 index=sample_rows)
+
         for tran in master_dict:
             gene = (traninfo_dict[tran]["gene"]).replace(",", "-")
             if tran not in count_dict:
@@ -819,7 +580,7 @@ def diffquery():
                 .format(filename, config.SCRIPT_LOC, deseq_count_filename,
                         deseq_sample_filename),
                 shell=True)
-        #Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
+        # Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
         if os.path.isfile("{0}/static/tmp/{1}_DESeq2_TE.txt".format(
                 config.SCRIPT_LOC, filename)):
             te_file = open("{0}/static/tmp/{1}_DESeq2_TE.txt".format(
@@ -919,7 +680,7 @@ def diffquery():
                     deseq_dict[gene]["rna_padj"] = padj
                     deseq_dict[gene]["rna_fc"] = log2fc
 
-        #DELETE GENES FROM DESEQ_DICT THAT DON'T HAVE A padj for either rna and ribo (these have low counts)
+        # DELETE GENES FROM DESEQ_DICT THAT DON'T HAVE A padj for either rna and ribo (these have low counts)
         del_list = []
         for gene in deseq_dict:
             if deseq_dict[gene]["rna_padj"] == "NA" and deseq_dict[gene][
@@ -930,9 +691,6 @@ def diffquery():
             del deseq_dict[gene]
 
         background_col = config.BACKGROUND_COL
-        uga_col = config.UGA_COL
-        uag_col = config.UAG_COL
-        uaa_col = config.UAA_COL
         title_size = config.TITLE_SIZE
         subheading_size = config.SUBHEADING_SIZE
         axis_label_size = config.AXIS_LABEL_SIZE
@@ -944,7 +702,7 @@ def diffquery():
                     user_name))
             result = (cursor.fetchone())
             user_id = result[0]
-            #get a list of organism id's this user can access
+            # get a list of organism id's this user can access
             cursor.execute(
                 "SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';"
                 .format(user_id))
@@ -1012,9 +770,7 @@ def diffquery():
             str(headers).strip("[]").replace("'", "")))
         deseq_dict = {}
         count_dict = {}
-        sample_df = pd.DataFrame(sample_data,
-                                 columns=["Condition", "SeqType"],
-                                 index=sample_rows)
+
         for tran in master_dict:
             gene = (traninfo_dict[tran]["gene"]).replace(",", "-")
             if tran not in count_dict:
@@ -1079,7 +835,7 @@ def diffquery():
                 .format(filename, config.SCRIPT_LOC, deseq_count_filename,
                         deseq_sample_filename),
                 shell=True)
-        #Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
+        # Parse TE file to get the x,y values of the transcripts and get the genes below a signifigcance level.
         sig_translated = []
         sig_rna = []
         sig_buffered = []
@@ -1183,16 +939,13 @@ def diffquery():
                     deseq_dict[gene]["rna_fc"] = log2fc
 
         background_col = config.BACKGROUND_COL
-        uga_col = config.UGA_COL
-        uag_col = config.UAG_COL
-        uaa_col = config.UAA_COL
         title_size = config.TITLE_SIZE
         subheading_size = config.SUBHEADING_SIZE
         axis_label_size = config.AXIS_LABEL_SIZE
         marker_size = config.MARKER_SIZE
         if current_user.is_authenticated:
             user_id = current_user.id
-            #get a list of organism id's this user can access
+            # get a list of organism id's this user can access
             cursor.execute(
                 "SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';"
                 .format(user_id))
@@ -1227,60 +980,10 @@ def diffquery():
             str(subheading_size) + "pt",
             str(marker_size) + "pt", ambiguous, gene_list, label, minzscore,
             sig_translated, sig_rna, sig_buffered)
-        '''
-		
-		read_delim = robjects.r('read.delim')
-		as_data_frame = robjects.r('as.data.frame')
-		as_factor = robjects.r('as.factor')
-		rapply = robjects.r("apply")
-		relevel = robjects.r("relevel")
-		to_dataframe = robjects.r('function(x) data.frame(x)')
-		deseq = importr('DESeq2')
-		count_df = pd.read_csv(deseq_count_filename)
-		design_df = pd.read_csv(deseq_sample_filename,index_col=0)
-		count_df=count_df.dropna()
-		design = Formula("~ Condition + SeqType + Condition:SeqType")
-		gene_id = count_df["id"]
-		count_matrix = pandas2ri.py2ri(count_df.drop("id",axis=1))
-		design_matrix = pandas2ri.py2ri(design_df)
-		dds = deseq.DESeqDataSetFromMatrix(countData=count_matrix,colData=design_matrix,design=design)
-		dds = deseq.DESeq(dds)
-		try:
-			dollar = base.__dict__["$"]
-			dds.SeqType = relevel(dds.SeqType,"rnaseq")
-		except Exception as e:
-			pass
-		#normalized_count_matrix = deseq.counts(dds, normalized=True)
-		comparison = deseq.resultsNames(dds)
-		deseq_result = deseq.results(dds)
-		deseq_result = to_dataframe(deseq_result)
-		deseq_result = pandas2ri.ri2py(deseq_result) ## back to pandas dataframe
-		deseq_result["id"] = gene_id.values
-		
-		return riboflask_diff.deseq2_plot(ribo_vs_rna_dict,
-										organism,
-										transcriptome,
-										master_file_dict["riboseq1"]["file_ids"],
-										master_file_dict["riboseq2"]["file_ids"],
-										master_file_dict["rnaseq1"]["file_ids"],
-										master_file_dict["rnaseq2"]["file_ids"],
-										background_col,
-										short_code,
-										mapped_reads_norm,
-										filename,
-										no_groups,
-										str(title_size)+"pt",
-										str(axis_label_size)+"pt",
-										str(subheading_size)+"pt",
-										str(marker_size)+"pt",
-										ambiguous,
-										gene_list,
-										label)
-		'''
 
     del_list = []
     for tran in master_dict:
-        #If the transcript is missing from one of the groups or if the coverage of the transcript is less than the minimum allowed, discard it here
+        # If the transcript is missing from one of the groups or if the coverage of the transcript is less than the minimum allowed, discard it here
         if (len(master_dict[tran].keys()) - 1) != no_groups:
             del_list.append(tran)
         elif min_cov > 0:
@@ -1291,7 +994,7 @@ def diffquery():
                             "max_cov"] > max_group_cov:
                         max_group_cov = master_transcript_dict[group][tran][
                             "max_cov"]
-                except Exception as e:
+                except:
                     pass
             if max_group_cov < min_cov:
                 del_list.append(tran)
@@ -1306,7 +1009,7 @@ def diffquery():
     aggregated_values = []
     total_cases = 0
 
-    #If there are 2 replicates in each group, emprically calculate the fdr for each gene
+    # If there are 2 replicates in each group, emprically calculate the fdr for each gene
     if no_groups == 2:
         all_genuine_z_scores = []
         false_positives_z_dict = {}
@@ -1326,7 +1029,7 @@ def diffquery():
             average_z_score = sum(z_scores) / len(z_scores)
             master_dict[tran]["z_score"] = average_z_score
             all_genuine_z_scores.append(average_z_score)
-            #If z_scores not in same direction for all groups, this counts as a false positive.
+            # If z_scores not in same direction for all groups, this counts as a false positive.
             if not all(item >= 0
                        for item in z_scores) and not all(item <= 0
                                                          for item in z_scores):
@@ -1346,15 +1049,12 @@ def diffquery():
                 all_shuffled_z_scores.append(average_z_score)
         all_shuffled_z_scores.sort()
         genuine_te_set = list(set(all_genuine_z_scores))
-        temp_count = 0
         p_val_dict[0] = len(all_shuffled_z_scores)
         if all_shuffled_z_scores != []:
             for gen_te in genuine_te_set:
                 if gen_te > all_shuffled_z_scores[-1]:
                     p_val_dict[gen_te] = 0
                     continue
-                success1s = 0
-                success2s = 0
                 pos = bisect_left(all_shuffled_z_scores, abs(gen_te))
                 reversed_pos = len(all_shuffled_z_scores) - pos
                 p_val_dict[abs(gen_te)] = reversed_pos
@@ -1379,7 +1079,7 @@ def diffquery():
                     master_dict[tran]["fdr"] = fdr
 
     for tran in master_dict:
-        #print ("tran", tran)
+        # print ("tran", tran)
         total_cases += 1
         geo_mean_list = []
         fc_list = []
@@ -1533,11 +1233,11 @@ def diffquery():
     for i in range(0, len(sorted_aggregated_values), 300):
         # if we are not near the end of the list calculate mean and std dev
         if i < (len(sorted_aggregated_values) - 300):
-            #for every transcript in this bin add the min exp to bin_values list
+            # for every transcript in this bin add the min exp to bin_values list
             bin_values = []
             for x in range(i, i + 300):
                 bin_values.append(sorted_aggregated_values[x][2])
-            #work out the mean and standard deviation of bin_values
+            # work out the mean and standard deviation of bin_values
             mean = np.mean(bin_values)
             standard_dev = np.std(bin_values)
             # Append mean and std dev to sorted_aggregated_values so we can work out z-score for each gene later
@@ -1556,16 +1256,13 @@ def diffquery():
                 sorted_aggregated_values[x].append(bin_list[-1][0])
                 sorted_aggregated_values[x].append(bin_list[-1][1])
     background_col = config.BACKGROUND_COL
-    uga_col = config.UGA_COL
-    uag_col = config.UAG_COL
-    uaa_col = config.UAA_COL
     title_size = config.TITLE_SIZE
     subheading_size = config.SUBHEADING_SIZE
     axis_label_size = config.AXIS_LABEL_SIZE
     marker_size = config.MARKER_SIZE
     if current_user.is_authenticated:
         user_id = current_user.id
-        #get a list of organism id's this user can access
+        # get a list of organism id's this user can access
         cursor.execute(
             "SELECT background_col,title_size,subheading_size,axis_label_size,marker_size from user_settings WHERE user_id = '{}';"
             .format(user_id))
@@ -1637,7 +1334,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                    autocommit=False,
                                    decode=my_decoder)
         else:
-            return prepare_return_str("error",
+            return prepare_return_str("error " +
                                       "File not found: {}".format(groupname))
         if region == "fiveprime":
             opendict = sqlite_db["{}_fiveprime_totals".format(ambig_type)]
@@ -1692,7 +1389,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                                decode=my_decoder)
         else:
             return prepare_return_str(
-                "error",
+                "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
         if region == "fiveprime":
@@ -1748,7 +1445,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                    decode=my_decoder)
         else:
             return prepare_return_str(
-                "error",
+                "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
         if region == "fiveprime":
@@ -1803,7 +1500,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                    decode=my_decoder)
         else:
             return prepare_return_str(
-                "error",
+                "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
         if region == "fiveprime":
@@ -1851,7 +1548,6 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                     transcript]
 
     current_min_reads_list = []
-    diff_expressed = []
 
     if mapped_reads_norm == True:
         ribo1_modifier = riboseq1_tot_reads / riboseq2_tot_reads
@@ -1992,20 +1688,17 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             current_min_reads_list.append(
                 [transcript, geometric_mean, fold_change, gene, skip])
 
-    positive_fc_final_list = []
-    negative_fc_final_list = []
-
     sorted_current_min_reads_list = sorted(current_min_reads_list,
                                            key=lambda x: x[1])
     bin_list = []
     for i in range(0, len(sorted_current_min_reads_list), 300):
         # if we are not near the end of the list calculate mean and std dev
         if i < (len(sorted_current_min_reads_list) - 300):
-            #for every transcript in this bin add the min exp to bin_values list
+            # for every transcript in this bin add the min exp to bin_values list
             bin_values = []
             for x in range(i, i + 300):
                 bin_values.append(sorted_current_min_reads_list[x][2])
-            #work out the mean and standard deviation of bin_values
+            # work out the mean and standard deviation of bin_values
             mean = np.mean(bin_values)
             standard_dev = np.std(bin_values)
             # Append mean and std dev to sorted_current_min_reads_list so we can work out z-score for each gene later

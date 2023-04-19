@@ -1,6 +1,5 @@
 import string
 import pandas as pd
-from math import floor
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
@@ -30,7 +29,7 @@ class User(UserMixin):
 
 
 def fetch_user():
-    '''Fetches active user from cookies if present.'''
+    '''Fetches active user from cookies if present and returns username and login status.'''
     consent = request.cookies.get("cookieconsent_status")
     #If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":

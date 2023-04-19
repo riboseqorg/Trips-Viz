@@ -5,7 +5,7 @@ from sqlitedict import SqliteDict
 import os
 import config
 import pickle
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user
+from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code
 import riboflask_compare
 from flask_login import current_user
 import json
@@ -24,8 +24,7 @@ comparison_plotpage_blueprint = Blueprint("comparisonpage",
 @comparison_plotpage_blueprint.route('/<organism>/<transcriptome>/comparison/')
 def comparisonpage(organism, transcriptome):
     #global user_short_passed
-    user_short_passed = False
-    global local
+    global local  # TODO: Fix global issue
     try:
         print(local)
     except:
@@ -36,7 +35,6 @@ def comparisonpage(organism, transcriptome):
                                                 config.DATABASE_NAME))
     connection.text_factory = str
     cursor = connection.cursor()
-    user, logged_in = fetch_user()
 
     cursor.execute(
         "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}';"
@@ -53,6 +51,7 @@ def comparisonpage(organism, transcriptome):
     default_tran = result[3]
     studyinfo_dict = fetch_study_info(organism)
     user_file_dict = {}
+    color = 'white'  # temp color
     if str(request.args.get('files')) != "None":
         colors = str(request.args.get('files')).split("_")
         for filelist in colors:
@@ -70,7 +69,7 @@ def comparisonpage(organism, transcriptome):
         colors = str(request.args.get('labels')).split("_")
         for label in colors:
             all_items = label.split(",")
-            for item in all_items:
+            for item in all_items:  # TODO: fix this
                 if "#" in item:
                     color = item
                 else:
@@ -92,7 +91,7 @@ def comparisonpage(organism, transcriptome):
         "transcriptome": str(transcriptome)
     }
 
-    accepted_studies = fetch_studies(user, organism, transcriptome)
+    accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     print(local)
@@ -124,13 +123,10 @@ comparisonquery_blueprint = Blueprint("comparequery",
 def comparequery():
     #global user_short_passed
     user_short_passed = False
-    tran_dict = {}
     data = json.loads(request.data)
     tran = data['transcript'].upper().strip()
     organism = data['organism']
     transcriptome = data['transcriptome']
-
-    user, logged_in = fetch_user()
 
     trips_connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                       config.DATABASE_NAME))
@@ -159,12 +155,7 @@ def comparequery():
     cursor.execute(
         "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
     result = cursor.fetchone()
-    inputtran = True
-    if result != None:
-        newtran = result[0]
-    else:
-        inputtran = False
-    if inputtran == False:
+    if not result:
         cursor.execute(
             "SELECT * from transcripts WHERE gene = '{}'".format(tran))
         result = cursor.fetchall()
@@ -261,10 +252,6 @@ def comparequery():
                             }), 200, {
                                 'Location': ""
                             }
-                    #if maxread != 150:
-                    #	read_lengths = sqlite_db["read_lengths"]
-                    #	for i in range(master_filepath_dict[color]["minread"],master_filepath_dict[color]["maxread"]+1):
-                    #		master_filepath_dict[color]["mapped_reads"] += read_lengths[i]
 
                     if "noncoding_counts" in sqlite_db and "coding_counts" in sqlite_db:
                         master_filepath_dict[color]["mapped_reads"] += float(
@@ -340,9 +327,6 @@ def comparequery():
             .format(user_id))
         result = (trips_cursor.fetchone())
         background_col = result[0]
-        uga_col = result[1]
-        uag_col = result[2]
-        uaa_col = result[3]
         title_size = result[4]
         subheading_size = result[5]
         axis_label_size = result[6]
@@ -354,13 +338,11 @@ def comparequery():
 
     if tran != "":
         return riboflask_compare.generate_compare_plot(
-            tran, ambiguous, minread, maxread, master_filepath_dict, "y", {},
-            ribocoverage, organism, normalize, short_code, background_col,
-            hili_start, hili_stop, comp_uag_col, comp_uga_col, comp_uaa_col,
-            title_size, subheading_size, axis_label_size, marker_size,
-            cds_marker_size, cds_marker_colour, legend_size, transcriptome)
+            tran, ambiguous, master_filepath_dict, ribocoverage, organism,
+            normalize, short_code, background_col, hili_start, hili_stop,
+            comp_uag_col, comp_uga_col, comp_uaa_col, title_size,
+            subheading_size, axis_label_size, marker_size, cds_marker_size,
+            cds_marker_colour, legend_size, transcriptome)
 
-    else:
-        return_str = "ERROR! Could not find any transcript corresponding to {}".format(
-            tran)
-        return return_str
+    return "ERROR! Could not find any transcript corresponding to {}".format(
+        tran)

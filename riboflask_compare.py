@@ -24,14 +24,12 @@ def merge_dict(dict1, dict2):
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
 
-def generate_compare_plot(tran, ambig, min_read, max_read,
-                          master_filepath_dict, lite, offset_dict,
-                          ribocoverage, organism, normalize, short_code,
-                          background_col, hili_start, hili_stop, comp_uag_col,
-                          comp_uga_col, comp_uaa_col, title_size,
-                          subheading_size, axis_label_size, marker_size,
-                          cds_marker_size, cds_marker_colour, legend_size,
-                          transcriptome):
+def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
+                          organism, normalize, short_code, background_col,
+                          hili_start, hili_stop, comp_uag_col, comp_uga_col,
+                          comp_uaa_col, title_size, subheading_size,
+                          axis_label_size, marker_size, cds_marker_size,
+                          cds_marker_colour, legend_size, transcriptome):
     labels = []
     start_visible = []
     line_collections = []
@@ -99,7 +97,6 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
-    strand = traninfo["strand"]
 
     if cds_start == 'NULL' or cds_start == None:
         cds_start = 0
@@ -192,25 +189,22 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
         for i in range(0, len(item[3])):
             file_paths["riboseq"][item[3][i]] = item[4][i]
         file_names = item[1][0]
-        file_descs = item[2]
         if item[5] == "riboseq":
-            filename_reads, seqvar_dict = get_reads(ambig, item[6], item[7],
-                                                    tran, file_paths, tranlen,
-                                                    ribocoverage, organism,
-                                                    False, False, "fiveprime",
-                                                    "riboseq", 1)
+            filename_reads, _ = get_reads(ambig, item[6], item[7], tran,
+                                          file_paths, tranlen, ribocoverage,
+                                          organism, False, False, "fiveprime",
+                                          "riboseq", 1)
         else:
-            filename_reads, seqvar_dict = get_reads(ambig, item[6], item[7],
-                                                    tran, file_paths, tranlen,
-                                                    True, organism, False,
-                                                    False, "fiveprime",
-                                                    "riboseq", 1)
+            filename_reads, _ = get_reads(ambig, item[6], item[7], tran,
+                                          file_paths, tranlen, True, organism,
+                                          False, False, "fiveprime", "riboseq",
+                                          1)
         if normalize == False:
             try:
                 max_val = max(filename_reads.values()) * 1.1
                 if max_val > y_max:
                     y_max = max_val
-            except Exception as e:
+            except:
                 pass
             labels.append(file_names)
             start_visible.append(True)
@@ -234,7 +228,7 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
                 max_val = max(normalized_reads.values()) * 1.1
                 if max_val > y_max:
                     y_max = max_val
-            except Exception as e:
+            except:
                 pass
             labels.append(file_names)
             start_visible.append(True)
@@ -316,7 +310,6 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
                          color='white',
                          zorder=5,
                          linewidth=2)
-        stops = [(item, 1) for item in start_stop_dict[frame]['stops']]
         uag_stops = [(item, 1)
                      for item in start_stop_dict[frame]['stops']['TAG']]
         uaa_stops = [(item, 1)
@@ -388,6 +381,5 @@ def generate_compare_plot(tran, ambig, min_read, max_read,
     ax_main.grid(color="white", linewidth=20, linestyle="solid")
     graph = "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
-    tot_prog = 100
     graph += mpld3.fig_to_html(fig)
     return graph

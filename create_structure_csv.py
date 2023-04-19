@@ -32,12 +32,12 @@ for row in result:
             if i in shape_counts["unambig"][1]:
                 if shape_counts["unambig"][1][i] > 0:
                     if gene == "AGL":
-                        print "success", i, shape_counts["unambig"][1][i]
+                        print("success", i, shape_counts["unambig"][1][i])
                     cov += 1
                 shape_count += shape_counts["unambig"][1][i]
     avg_shape_count = shape_count / 300
     coverage = cov / 300
     if gene == "AGL":
-        print "cov, cds_len, coverage", cov, cds_len, coverage
+        print("cov, cds_len, coverage", cov, cds_len, coverage)
     if avg_shape_count > 0:  # and coverage > 0.5:
         outfile.write("{},{}\n".format(gene, avg_shape_count))

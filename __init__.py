@@ -3,8 +3,8 @@ import os
 import time
 from datetime import date
 import sys
-
 import sqlite3
+import riboflask_datasets
 import logging
 from flask import Flask, get_flashed_messages, render_template, request, send_from_directory, flash, redirect, url_for
 from flask_xcaptcha import XCaptcha
@@ -31,12 +31,8 @@ from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
 import stats_plots
 import re
 
-if sys.version_info[0] == 2:
-    from email.MIMEMultipart import MIMEMultipart
-    from email.MIMEText import MIMEText
-elif sys.version_info[0] == 3:
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 root_logger = logging.getLogger()
 # lhStdout = root_logger.handlers[0]
@@ -249,8 +245,6 @@ def statisticspage():
 def contactus():
     if request.method == "POST":
         if xcaptcha.verify():
-            name = str(request.form['name'])
-            email = str(request.form['email'])
             fromaddr = "ribopipe@gmail.com"
             toaddr = "tripsvizsite@gmail.com"
             msg = MIMEMultipart()
@@ -360,7 +354,7 @@ def settingspage():
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if user == None:
         return redirect(
@@ -529,6 +523,7 @@ def uploadspage():
         "SELECT organism_name,transcriptome_list,organism_id from organisms where private = 0 OR owner = {};"
         .format(user_id))
     result = cursor.fetchall()
+    transcriptome = None  # TODO: Remove this part after correcting code
     for row in result:
         organism = row[0]
         transcriptome = row[1]
@@ -647,7 +642,7 @@ def upload_file():
         filename = f.filename
         # filename = secure_filename(f.filename)
         print(filename)
-        file_ext = (filename.split("."))[-1]
+        file_ext = filename.split(".")[-1]
         if file_ext != "sqlite":
             flash("Error: File extension should be sqlite not {}".format(
                 file_ext))
@@ -661,11 +656,12 @@ def upload_file():
         organism = request.form["organism"]
         assembly = request.form["assembly"]
         filetype_radio = request.form["filetype"]
+        filetype = None  # TODO: remove it later
         if filetype_radio == "riboseq":
             filetype = "riboseq"
         elif filetype_radio == "rnaseq":
             filetype = "rnaseq"
-        elif filetype_radio == "other":
+        elif filetype_radio == "other":  # TODO: check it for correct type
             filetype = (request.form["seq_type"]).lower().strip()
 
         # if this filetype is new for this user insert a new entry into seq_rules table
@@ -915,7 +911,7 @@ def reset():
 @app.route('/anno_query', methods=['POST'])
 def anno_query():
     data = json.loads(request.data)
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     cursor = connection.cursor()
@@ -993,10 +989,8 @@ def saved():
 # Retrieves saved ORFs
 @app.route('/savedquery', methods=['POST'])
 def savedquery():
-    start_time = time.time()
-    acceptable = 0
     data = json.loads(request.data)
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     cursor = connection.cursor()
@@ -1019,7 +1013,6 @@ def savedquery():
         start_codons.append("None")
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
-    accepted_orf_dict = {}
     if organism != 'Select an Organism':
         if label == "":
             cursor.execute(
@@ -1053,13 +1046,7 @@ def savedquery():
         score = str(row[5])
         label = str(row[18])
         start_codon = str(row[7])
-        cds_overlap = str(row[8])
-        start_score = str(row[9])
-        stop_score = str(row[10])
-        entropy = str(row[11])
-        te = str(row[12])
-        coverage = str(row[13])
-        cds_ratio = str(row[14])
+
         trips_link = str(row[15])
 
         # Limit the number of returned cases to 1000, as datatable is memory intensive
@@ -1156,10 +1143,6 @@ def viewfile(folder, filename):
 # This is the short url page, user supplies a short code which will be converted to a full url which user will then be redirected to
 @app.route('/short/<short_code>/')
 def short(short_code):
-    try:
-        user = current_user.name
-    except:
-        user = None
     # First convert short code to an integer
     integer = base62_to_integer(short_code)
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -1252,7 +1235,6 @@ def homepage(message=""):
     logging.debug("homepage Closing trips.sqlite connection")
     connection.close()
     print(organism_list)
-    # organism_list = list(organism_list.keys())
 
     message = sanitize_get_request(request.args.get('message'))
     return render_template('landing.html',
@@ -1288,7 +1270,7 @@ def settingsquery():
         if new_password != "" or new_password2 != "":
             if new_password != new_password2:
                 return "ERROR: New passwords do not match"
-            curr_password_hash = generate_password_hash(curr_password)
+            generate_password_hash(curr_password)
             cursor.execute(
                 "SELECT password FROM users WHERE username = '{}'".format(
                     user))
@@ -1420,7 +1402,7 @@ def settingsquery():
 def deletequery():
     data = json.loads(request.data)
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str
@@ -1525,7 +1507,7 @@ def deletestudyquery():
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
 
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
@@ -1684,7 +1666,7 @@ def deletetranscriptomequery():
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
 
     cursor.execute(
         "SELECT user_id from users WHERE username = '{}';".format(user))
@@ -1731,7 +1713,6 @@ def deletetranscriptomequery():
             study_names = []
             if result != None:
                 for row in result:
-                    file_id = row[0]
                     filename = row[3]
                     study_id = row[2]
                     study_ids.append(study_id)
@@ -1773,7 +1754,7 @@ def seqrulesquery():
     connection.text_factory = str
     cursor = connection.cursor()
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
 
     # get user_id
     cursor.execute(
@@ -1804,8 +1785,6 @@ def dataset_breakdown(organism, transcriptome):
         print(local)
     except:
         local = False
-
-    user, logged_in = fetch_user()
 
     organism = str(organism)
     print(organism, transcriptome)
@@ -1861,17 +1840,10 @@ def dataset_breakdown(organism, transcriptome):
         study_id = int(result[0])
         filenames.append(result[1].replace(".sqlite", ""))
         file_descs.append(result[2])
-        if True:
-            controls.append("True")
-            control_colors.append("#4ef46f")
-        else:
-            controls.append("False")
-            control_colors.append("#000000")
+        controls.append("True")
+        control_colors.append("#4ef46f")
         cell_lines.append("HEK293")
-        if True:
-            cell_line_colors.append(cell_color_dict["HEK293"])
-        else:
-            cell_line_colors.append("#bababa")
+        cell_line_colors.append(cell_color_dict["HEK293"])
 
         ylist.append(raw_count / (float(10000) / 100000))
         orfquery_cursor.execute(

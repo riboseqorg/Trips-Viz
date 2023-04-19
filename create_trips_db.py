@@ -136,7 +136,7 @@ allfiles_shelve = shelve.open(
 file_id = 1
 
 for org in allfiles_shelve:
-    print org
+    print(org)
     cursor.execute(
         "SELECT organism_id from organisms WHERE organism_name = '{}';".format(
             org))
