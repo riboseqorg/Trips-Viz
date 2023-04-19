@@ -127,9 +127,9 @@ def fetch_files(accepted_studies):
     files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', ''))
     files['study'] = files.apply(lambda x: (x['study_id'], x['study_name']),
-                                 axis=1)  # Paired info
+                                 axis=1)  # Paired info (ID, Name)
     files['file'] = files.apply(lambda x: (x['file_id'], x['file_name']),
-                                axis=1)  # Paired info
+                                axis=1)  # Paired info (ID, Name)
     files = files.drop(['study_id', 'study_name', 'file_id', 'file_name'],
                        axis=1)
 
@@ -139,34 +139,16 @@ def fetch_files(accepted_studies):
 
 # Gets a list of all studies associated with an organism
 def fetch_study_info(organism):
-    studyinfo_dict = {}
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT study_id,paper_authors,srp_nos,paper_year,paper_pmid,paper_link,gse_nos,adapters,paper_title,description,study_name from studies;"
-        .format(organism))
-    result = (cursor.fetchall())
-    connection.close()
-
-    for row in result:
-        # string as javascript cant handle numerical keys
-        study_id = "study" + str(row[0])
-        studyinfo_dict[study_id] = {
-            "paper_authors": row[1],
-            "srp_nos": row[2],
-            "paper_year": row[3],
-            "paper_pmid": row[4],
-            "paper_link": row[5].strip('"'),
-            "gse_nos": row[6],
-            "adapters": row[7],
-            "paper_title": row[8],
-            "description": row[9],
-            "study_name": row[10]
-        }
-    connection.close()
-    return studyinfo_dict
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    studies = sqlquery(dbpath, "studies")[[
+        "study_id", "paper_authors", "srp_nos,paper_year", "paper_pmid",
+        "paper_link", "gse_nos", "adapters", "paper_title", "description",
+        "study_name"
+        #, "organism_id" # TODO: Consider this for selecting
+    ]]
+    # "paper_link": row[5].strip('"'),  # generate link using pubmed id
+    return table2dict(studies, ["study_id"])
+    
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
