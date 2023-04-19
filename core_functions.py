@@ -3,8 +3,7 @@ from math import floor
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
-from sqlqueries import sqlquery
-import pandas as pd
+from sqlqueries import sqlquery, table2dict
 import uuid
 import config
 import logging
@@ -86,7 +85,6 @@ def fetch_user():
 # Given a username and an organism returns a list of relevant studies.
 def fetch_studies(organism, transcriptome):
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    accepted_studies = {}
     study_access_list = []
     #get a list of organism id's this user can access
     if current_user.is_authenticated:
@@ -102,51 +100,34 @@ def fetch_studies(organism, transcriptome):
     # Getting organism id
     result = sqlquery(dbpath, "organisms")  # users is name of table
     organism_id = result.loc[(
-        result.organism_name == organism
-        & result.transcriptome == transcriptome), "organism_id"].values[
+        result.organism_name == organism and result.transcriptome ==
+        transcriptome), "organism_id"].values[
             0]  # NOTE: Expecting it has to be true as it is encoded in form
+    organism_id = int(organism_id)  # TODO: Check if it is int from start
 
     # Getting studies
-    result = sqlquery(dbpath, "studies")  # users is name of table
-    result = result.loc[result.organism_id == organism_id,
-                        ["study_id", "study_name", "private"]]
-    if not result.empty:
-        result = pd.concat([
-            result[result.private == 0],
-            result[result.study_id.isin(study_access_list)]
-        ])
-
-    cursor.execute(
-        "SELECT organism_id from organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    result = cursor.fetchone()
-    if result:
-        organism_id = int(result[0])
-        #keys are converted from int to str as javascript will not accept a dictionary with ints for keys.
-        cursor.execute(
-            "SELECT study_id,study_name,private from studies WHERE organism_id = '{}';"
-            .format(organism_id))
-        result = cursor.fetchall()
-    if result != []:
-        if result[0]:
-            for row in result:
-                if row[2] == 0:
-                    accepted_studies[str(row[0])] = {
-                        "filetypes": [],
-                        "study_name": row[1]
-                    }
-                elif row[2] == 1:
-                    if row[0] in study_access_list:
-                        accepted_studies[str(row[0])] = {
-                            "filetypes": [],
-                            "study_name": row[1]
-                        }
-    connection.close()
-    return accepted_studies
+    studies = sqlquery(dbpath, "studies")  # users is name of table
+    studies = studies.loc[studies.organism_id == organism_id,
+                          ["study_id", "study_name", "private"]]
+    studies = studies.loc[
+        studies.private == 0 or studies.study_id.isin(study_access_list),
+        ["study_id", "study_name"]]
+    return studies  # Accepted studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
 def fetch_files(accepted_studies):
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    result = sqlquery(dbpath, "files")
+    result = result.loc[
+        result.study_id.isin(accepted_studies['study_id']),
+        ["file_id", "study_id", "file_name", "file_description", "file_type"
+         ]].sort_values("file_description")  # Files Details
+    result['file_name'] = result['file_name'].apply(
+        lambda x: x.replace('.self', ''))
+
+    result = table2dict(result, ['file_type', 'study_id', 'file_id'])
+
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
 
