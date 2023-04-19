@@ -118,53 +118,23 @@ def fetch_studies(organism, transcriptome):
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
 def fetch_files(accepted_studies):
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    result = sqlquery(dbpath, "files")
-    result = result.loc[
-        result.study_id.isin(accepted_studies['study_id']),
+    files = sqlquery(dbpath, "files")
+    files = files.loc[
+        files.study_id.isin(accepted_studies['study_id']),
         ["file_id", "study_id", "file_name", "file_description", "file_type"
          ]].sort_values("file_description")  # Files Details
-    result['file_name'] = result['file_name'].apply(
+    files = files.merge(accepted_studies, on='study_id')
+    files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', ''))
+    files['study'] = files.apply(lambda x: (x['study_id'], x['study_name']),
+                                 axis=1)  # Paired info
+    files['file'] = files.apply(lambda x: (x['file_id'], x['file_name']),
+                                axis=1)  # Paired info
+    files = files.drop(['study_id', 'study_name', 'file_id', 'file_name'],
+                       axis=1)
 
-    result = table2dict(result, ['file_type', 'study_id', 'file_id'])
-
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-
-    connection.text_factory = str
-    cursor = connection.cursor()
-    accepted_files = {}
-    seq_types = []
-    file_id_to_name_dict = {}
-    cursor.execute(
-        "SELECT file_id,study_id,file_name,file_description,file_type from files ORDER BY file_description;"
-    )
-    result = cursor.fetchall()
-
-    for row in result:
-        if row[4] not in accepted_files:
-            accepted_files[row[4]] = {}
-        #accepted file keys are strings due to javascript, so convert to string before checking
-        #if the study id is not in accepted_studies skip it
-        if str(row[1]) not in accepted_studies.keys():
-            continue
-
-        if str(row[1]) not in accepted_files[row[4]]:
-            accepted_files[row[4]][str(row[1])] = {}
-
-        #add the seq type to seq_types if it's not already in there
-        if row[4] not in seq_types:
-            seq_types.append(row[4])
-        accepted_files[row[4]][str(row[1])][str(row[0])] = {
-            "file_name": row[2].replace(".shelf", ""),
-            "file_description": row[3],
-            "file_type": row[4]
-        }
-        if row[4] not in accepted_studies[str(row[1])]["filetypes"]:
-            accepted_studies[str(row[1])]["filetypes"].append(row[4])
-        file_id_to_name_dict[str(row[0])] = row[2].replace(".shelf", "")
-    connection.close()
-    return file_id_to_name_dict, accepted_studies, accepted_files, seq_types
+    files = table2dict(files, ['file_type', 'study', 'file'])
+    return files
 
 
 # Gets a list of all studies associated with an organism
