@@ -1,4 +1,5 @@
 import string
+import pandas as pd
 from math import floor
 import sqlite3
 from flask import session, request
@@ -29,6 +30,7 @@ class User(UserMixin):
 
 
 def fetch_user():
+    '''Fetches active user from cookies if present.'''
     consent = request.cookies.get("cookieconsent_status")
     #If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":
@@ -84,7 +86,8 @@ def fetch_user():
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(organism, transcriptome):
+def fetch_studies(organism: str, transcriptome: str) -> pd.DataFrame:
+    '''Fetches studies from database using organism and transcriptome information.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     study_access_list = []
     #get a list of organism id's this user can access
@@ -117,7 +120,8 @@ def fetch_studies(organism, transcriptome):
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
-def fetch_files(accepted_studies):
+def fetch_files(accepted_studies: pd.DataFrame) -> dict:
+    '''Fetches files from database for give studies.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     files = sqlquery(dbpath, "files")
     files = files.loc[
@@ -139,7 +143,8 @@ def fetch_files(accepted_studies):
 
 
 # Gets a list of all studies associated with an organism
-def fetch_study_info(organism):
+def fetch_study_info(organism: str) -> dict:
+    '''Fetches studies from database for organism.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")[[
         "study_id", "paper_authors", "srp_nos,paper_year", "paper_pmid",
@@ -631,7 +636,8 @@ def generate_short_code(data, organism, transcriptome, plot_type):
 
 
 # Converts an integer to base62, needed to encode short urls
-def integer_to_base62(num):
+def integer_to_base62(num: int) -> str:
+    '''Converts an integer to base62, needed to encode short urls.'''
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     r = num % 62
     res = base[r]
@@ -644,7 +650,8 @@ def integer_to_base62(num):
 
 
 # Converts a base62 encoded string to an integer, needed to decode short urls
-def base62_to_integer(base62_str):
+def base62_to_integer(base62_str: str) -> int:
+    '''Converts a base62 encoded string to an integer, needed to decode short urls.'''
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     res = 0
     for i in base62_str:
@@ -653,7 +660,8 @@ def base62_to_integer(base62_str):
 
 
 #Takes a nucleotide string and returns the amino acide sequence
-def nuc_to_aa(nuc_seq):
+def nuc_to_aa(nuc_seq: str) -> str:
+    '''Takes a nucleotide string and returns the amino acide sequence.'''
     return str(Seq(nuc_seq).translate())
 
 
@@ -931,9 +939,9 @@ def fetch_rld(sqlite_db, ambig_type):
     return rld
 
 
-def fetch_filename_file_id(file_id):
+def fetch_filename_file_id(file_id: int) -> str:
     '''
-	return the filename from the database given a file id
+	Return the filename from the database given a file id.
 	'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     files = sqlquery(dbpath, "files")
