@@ -14,8 +14,8 @@ def sqlquery(sqlfilepath, tablename):
     return sqlTable
 
 
-def table2dict(table, keys_col, values_col):
-    dict = {}
-    for index, row in table.iterrows():
-        dict[row[keys_col]] = row[values_col]
-    return dict
+def table2dict(table, keys):
+    return {
+        n: grp.loc[n].to_dict('index')
+        for n, grp in table.set_index(keys).groupby(level=keys[0])
+    }
