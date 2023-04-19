@@ -655,7 +655,7 @@ def base62_to_integer(base62_str: str) -> int:
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     res = 0
     for i in base62_str:
-        res = 62 * res + base.find(base62_str[i])
+        res = 62 * res + base.find(i)
     return res
 
 
@@ -666,8 +666,7 @@ def nuc_to_aa(nuc_seq: str) -> str:
 
 
 # Calculates the coverage of each gene, for 5' leader, cds and 3' trailer for unambiguous and ambigous reads, needed for diff exp
-def calculate_coverages(sqlite_db, longest_tran_list, ambig_type, region,
-                        traninfo_dict):
+def calculate_coverages(sqlite_db, longest_tran_list, traninfo_dict):
     coverage_dict = {
         "unambig_fiveprime_coverage": {},
         "unambig_cds_coverage": {},

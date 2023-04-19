@@ -10,7 +10,7 @@ from random import shuffle
 from math import log
 import config
 import subprocess
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user
+from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user, calculate_coverages
 import riboflask_diff
 from flask_login import current_user
 import json
@@ -1652,8 +1652,8 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             riboseq1_tot_reads += float(sqlite_db["coding_counts"])
         if min_cov > 0:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
-                calculate_coverages(sqlite_db, longest_tran_list, ambig_type,
-                                    region, traninfo_dict)
+                calculate_coverages(sqlite_db, longest_tran_list,
+                                    traninfo_dict)
             if region == "fiveprime":
                 covdict = sqlite_db["{}_fiveprime_coverage".format(ambig_type)]
             elif region == "cds":
@@ -1708,8 +1708,8 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             riboseq2_tot_reads += float(sqlite_db["coding_counts"])
         if min_cov > 0:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
-                calculate_coverages(sqlite_db, longest_tran_list, ambig_type,
-                                    region, traninfo_dict)
+                calculate_coverages(sqlite_db, longest_tran_list,
+                                    traninfo_dict)
             if region == "fiveprime":
                 covdict = sqlite_db["{}_fiveprime_coverage".format(ambig_type)]
             elif region == "cds":
@@ -1764,8 +1764,8 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             rnaseq1_tot_reads += float(sqlite_db["coding_counts"])
         if min_cov > 0:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
-                calculate_coverages(sqlite_db, longest_tran_list, ambig_type,
-                                    region, traninfo_dict)
+                calculate_coverages(sqlite_db, longest_tran_list,
+                                    traninfo_dict)
             if region == "fiveprime":
                 covdict = sqlite_db["{}_fiveprime_coverage".format(ambig_type)]
             elif region == "cds":
@@ -1819,8 +1819,8 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             rnaseq2_tot_reads += float(sqlite_db["coding_counts"])
         if min_cov > 0:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
-                calculate_coverages(sqlite_db, longest_tran_list, ambig_type,
-                                    region, traninfo_dict)
+                calculate_coverages(sqlite_db, longest_tran_list,
+                                    traninfo_dict)
             if region == "fiveprime":
                 covdict = sqlite_db["{}_fiveprime_coverage".format(ambig_type)]
             elif region == "cds":
