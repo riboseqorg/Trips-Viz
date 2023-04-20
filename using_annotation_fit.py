@@ -104,7 +104,7 @@ def region_scores_calculation_to_csv(sqlite, output, ambig, minread, maxread,
             transcript_id = transcript[0]
             try:
                 cds = transcript_architecture_dict[transcript_id]['coding']
-            except:
+            except Exception:
                 continue
             coding_regions = get_merged_cds_coordinates(
                 transcript_id, cds, connection)
