@@ -9,6 +9,7 @@ import config
 from scipy.spatial.distance import cosine
 
 from scipy.stats import pearsonr
+from flask_login import current_user
 
 gene_regulation_page = Blueprint("gene_regulation_page",
                                  __name__,
@@ -20,7 +21,7 @@ def gene_regulationpage(organism, transcriptome):
     #ip = request.environ['REMOTE_ADDR']
     global local
     try:
-        print local
+        print(local)
     except:
         local = False
     try:

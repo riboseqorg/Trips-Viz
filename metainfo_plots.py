@@ -45,8 +45,14 @@ def my_decoder(obj):
     return pickle.loads(obj)
 
 
-def mismatches(master_dict, title, short_code, background_col, title_size,
-               axis_label_size, subheading_size, marker_size):
+def mismatches(
+        master_dict,
+        title,
+        short_code,
+        background_col,
+        title_size,
+        # axis_label_size, subheading_size,
+        marker_size):
     fig, ax = plt.subplots(figsize=(13, 8))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Position', fontsize="26")
@@ -117,7 +123,7 @@ def readlen_dist(master_dict, title, short_code, background_col,
     title_str = "{} ({})".format(title, short_code)
     ax.set_title(title_str, y=1.05, fontsize=title_size)
     #logging.warn("Width is ", width)
-    read_length_list = test_list = [int(i) for i in master_dict.keys()]
+    read_length_list = [int(i) for i in master_dict.keys()]
     ax.bar(read_length_list,
            master_dict.values(),
            width,
@@ -146,9 +152,16 @@ def readlen_dist(master_dict, title, short_code, background_col,
     return graph
 
 
-def mismatch_pos(master_dict, title, short_code, background_col,
-                 readlength_col, title_size, axis_label_size, subheading_size,
-                 marker_size):
+def mismatch_pos(
+        master_dict,
+        title,
+        short_code,
+        background_col,
+        readlength_col,
+        title_size,
+        axis_label_size,
+        #subheading_size,
+        marker_size):
     fig, ax = plt.subplots(figsize=(13, 8))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Read Length', fontsize="26")
@@ -188,10 +201,23 @@ def mismatch_pos(master_dict, title, short_code, background_col,
     return graph
 
 
-def nuc_comp(master_dict, maxreadlen, title, nuc_comp_type, nuc_comp_direction,
-             short_code, background_col, a_col, t_col, g_col, c_col,
-             title_size, axis_label_size, subheading_size, marker_size,
-             legend_size):
+def nuc_comp(
+        master_dict,
+        maxreadlen,
+        title,
+        nuc_comp_type,
+        nuc_comp_direction,
+        short_code,
+        background_col,
+        a_col,
+        t_col,
+        g_col,
+        c_col,
+        title_size,
+        axis_label_size,
+        #subheading_size,
+        marker_size,
+        legend_size):
 
     labels = ["A", "T", "G", "C"]
     returnstr = "Position,A,T,G,C\n"
@@ -220,7 +246,6 @@ def nuc_comp(master_dict, maxreadlen, title, nuc_comp_type, nuc_comp_direction,
         ax.set_xlim(0, maxreadlen)
     elif nuc_comp_direction == "nuc_comp_three":
         ax.set_xlim((maxreadlen * -1), -1)
-    width = 0.95
     #plot it
 
     title_str = "{} ({})".format(title, short_code)
@@ -266,11 +291,19 @@ def nuc_comp(master_dict, maxreadlen, title, nuc_comp_type, nuc_comp_direction,
     return graph
 
 
-def mrna_dist_readlen(mrna_dist_dict, mrna_readlen_per, short_code,
-                      background_col, title_size, axis_label_size,
-                      subheading_size, marker_size, legend_size):
+def mrna_dist_readlen(
+    mrna_dist_dict,
+    mrna_readlen_per,
+    short_code,
+    background_col,
+    title_size,
+    axis_label_size,
+    # subheading_size,
+    marker_size,
+    #legend_size
+):
 
-    if mrna_readlen_per == False:
+    if not mrna_readlen_per:
         mrna_dist_dict, factor = calc_mrnadist_factor(mrna_dist_dict)
     returnstr = "Readlength,5_leader,start_codon,cds,stop_codon,3_trailer\n"
 
@@ -295,16 +328,15 @@ def mrna_dist_readlen(mrna_dist_dict, mrna_readlen_per, short_code,
             if mrna_dist_dict[pos][readlen] > maxheight:
                 maxheight = mrna_dist_dict[pos][readlen]
 
-    if mrna_readlen_per == False:
+    if not mrna_readlen_per:
         ax.set_ylim(0, maxheight * 1.1)
         ax.set_ylabel('Count (x 10 {})'.format(factor),
                       fontsize=axis_label_size,
                       labelpad=100)
-    elif mrna_readlen_per == True:
+    else:
         ax.set_ylim(0, 100)
         ax.set_ylabel('Percent %', fontsize=axis_label_size, labelpad=100)
     ax.set_xlim(15, 100)
-    width = 0.95
     #plot it
 
     title_str = "mRNA distribution vs Readlengths ({})".format(short_code)
@@ -357,8 +389,13 @@ def mrna_dist_readlen(mrna_dist_dict, mrna_readlen_per, short_code,
     return graph
 
 
-def dinuc_bias(master_count_dict, short_code, background_col, title_size,
-               axis_label_size, subheading_size, marker_size):
+def dinuc_bias(
+        master_count_dict,
+        short_code,
+        background_col,
+        title_size,
+        axis_label_size,  # subheading_size, 
+        marker_size):
     master_count_dict, factor = calc_factor(master_count_dict)
     fig, ax = plt.subplots(figsize=(13, 8))
     N = 16
@@ -366,12 +403,12 @@ def dinuc_bias(master_count_dict, short_code, background_col, title_size,
     bar_l = [i for i in range(16)]
     tick_pos = [i + (bar_width / 2) for i in bar_l]
     ind = np.arange(N)  # the x locations for the groups
-    p1 = plt.bar(ind,
-                 master_count_dict.values(),
-                 bar_width,
-                 color='#9ACAFF',
-                 linewidth=4,
-                 edgecolor='#9ACAFF')
+    plt.bar(ind,
+            master_count_dict.values(),
+            bar_width,
+            color='#9ACAFF',
+            linewidth=4,
+            edgecolor='#9ACAFF')
     plt.ylabel('Count (x 10 {})'.format(factor),
                fontsize=axis_label_size,
                labelpad=100)
@@ -402,18 +439,31 @@ def calc_meta_factor(inlist):
     return inlist, zeroes
 
 
-def metagene_plot(readlen_list, fiveprime_list, threeprime_list, metagene_type,
-                  title, minreadlen, maxreadlen, short_code, background_col,
-                  metagene_fiveprime_col, metagene_threeprime_col, title_size,
-                  axis_label_size, subheading_size, marker_size, metagene_end,
-                  metagene_aggregate):
+def metagene_plot(
+        readlen_list,
+        fiveprime_list,
+        threeprime_list,
+        metagene_type,
+        title,
+        minreadlen,
+        maxreadlen,
+        short_code,
+        background_col,
+        metagene_fiveprime_col,
+        metagene_threeprime_col,
+        title_size,
+        axis_label_size,
+        # subheading_size,
+        marker_size,
+        metagene_end,
+        metagene_aggregate):
     fig, ax = plt.subplots(figsize=(13, 8))
     ind = np.array(readlen_list)
     file_colors = [
         "#FF4A45", "#4286f4", "#42f450", "#f4f142", "#ff9e16", "#a800aa"
     ]
 
-    if metagene_aggregate == True:
+    if metagene_aggregate:
         width = 0.35  # the width of the bars
         returnstr = "Position,Count\n"
         if metagene_end == "metagene_five":
@@ -501,7 +551,7 @@ def metagene_plot(readlen_list, fiveprime_list, threeprime_list, metagene_type,
                 returnstr += "{},0\n".format(i)
     #ilp = InteractiveLegendPlugin([rects1,rects2], ["5'","3'"], alpha_unsel=0,alpha_sel=0.75)
     # add some text for labels, title and axes ticks
-    if metagene_aggregate == True:
+    if metagene_aggregate:
         ax.set_ylabel('Count x (10 x{})'.format(factor),
                       labelpad=25,
                       fontsize=axis_label_size)
@@ -521,7 +571,7 @@ def metagene_plot(readlen_list, fiveprime_list, threeprime_list, metagene_type,
     plt.xlim(minreadlen, maxreadlen)
 
     ax.set_facecolor(background_col)
-    if metagene_aggregate == True:
+    if metagene_aggregate:
         plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
                         DownloadPNG(returnstr=title_str),
                         DownloadProfile(returnstr=returnstr))
@@ -667,11 +717,23 @@ def make_autopct(values):
     return my_autopct
 
 
-def mapped_reads_plot(unmapped, mapped_coding, mapped_noncoding, labels,
-                      ambiguous, cutadapt_removed, rrna_removed, short_code,
-                      background_col, title_size, axis_label_size,
-                      subheading_size, marker_size, breakdown_per,
-                      pcr_duplicates, legend_size):
+def mapped_reads_plot(
+        unmapped,
+        mapped_coding,
+        mapped_noncoding,
+        labels,
+        ambiguous,
+        cutadapt_removed,
+        rrna_removed,
+        short_code,
+        background_col,
+        title_size,
+        axis_label_size,
+        #subheading_size,
+        marker_size,
+        breakdown_per,
+        pcr_duplicates,
+        legend_size):
     fig, ax = plt.subplots(figsize=(13, 8))
     N = len(unmapped)
     bar_width = 0.35
@@ -746,7 +808,7 @@ def mapped_reads_plot(unmapped, mapped_coding, mapped_noncoding, labels,
         per = (pcr_duplicates[i] / totals[i]) * 100
         pcr_duplicates_per.append(per)
 
-    if breakdown_per == False:
+    if not breakdown_per:
         plt.ylabel('Count', fontsize=axis_label_size, labelpad=100)
         p1 = plt.bar(ind,
                      cutadapt_removed,
@@ -947,7 +1009,7 @@ def single_tran_de(single_tran_de_transcript, sorted_master_list,
     file_descs = []
     study_names = []
 
-    if single_tran_de_study == False:
+    if not single_tran_de_study:
         for tup in sorted_master_list:
             file_id = tup[0]
             filename = tup[1]
@@ -1125,9 +1187,17 @@ def tran_corr(tran_corr_transcript1, tran_corr_transcript2, sorted_master_list,
     return graph
 
 
-def explore_offsets(f0_counts, f1_counts, f2_counts, labels, short_code,
-                    background_col, title_size, axis_label_size,
-                    subheading_size, marker_size):
+def explore_offsets(
+        f0_counts,
+        f1_counts,
+        f2_counts,
+        labels,
+        short_code,
+        background_col,
+        title_size,
+        axis_label_size,
+        # subheading_size,
+        marker_size):
     width = 0.25
     pos = list(range(len(f0_counts)))
     fig, ax = plt.subplots(figsize=(13, 8))
@@ -1328,10 +1398,10 @@ def heatplot(min_readlen, max_readlen, min_pos, max_pos, positions,
     rgb = colormap(0.5)[:3]
     hexval = matplotlib.colors.rgb2hex(rgb)
 
-    if reverse_scale == True:
+    if reverse_scale:
         color_pallete_list = color_pallete_list[::-1]
 
-    if maxscaleval == "None":
+    if maxscaleval == "None":  # TODO: Need to be checked and fixed
         color_mapper = LogColorMapper(palette=color_pallete_list,
                                       low=1,
                                       high=max(
@@ -1729,10 +1799,19 @@ def calc_mrnadist_factor(mrna_dist_dict):
     return mrna_dist_dict, zeroes
 
 
-def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
-              axis_label_size, subheading_size, marker_size, mrna_dist_per,
-              md_start, md_stop, legend_size):
-    if mrna_dist_per == False:
+def mrna_dist(
+        mrna_dist_dict,
+        short_code,
+        background_col,
+        title_size,
+        axis_label_size,
+        # subheading_size,
+        marker_size,
+        mrna_dist_per,
+        md_start,
+        md_stop,
+        legend_size):
+    if not mrna_dist_per:
         mrna_dist_dict, factor = calc_mrnadist_factor(mrna_dist_dict)
     fig, ax = plt.subplots(figsize=(13, 8))
     returnstr = "Sample, 5' leader, Start codon, CDS, Stop codon, 3' trailer\n"
@@ -1773,7 +1852,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
         three_trailers.append(mrna_dist_dict[key]["3_trailer"])
         three_trailers_per.append(
             (mrna_dist_dict[key]["3_trailer"] / total) * 100)
-        if md_start == True and md_stop == True:
+        if md_start and md_stop:
             start_codons.append(mrna_dist_dict[key]["start_codon"])
             start_codons_per.append(
                 (mrna_dist_dict[key]["start_codon"] / total) * 100)
@@ -1782,7 +1861,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
             stop_codons.append(mrna_dist_dict[key]["stop_codon"])
             stop_codons_per.append(
                 (mrna_dist_dict[key]["stop_codon"] / total) * 100)
-        elif md_start == True and md_stop == False:
+        elif md_start and not md_stop:
             start_codons.append(mrna_dist_dict[key]["start_codon"])
             start_codons_per.append(
                 (mrna_dist_dict[key]["start_codon"] / total) * 100)
@@ -1792,7 +1871,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
                              mrna_dist_dict[key]["stop_codon"]) / total) * 100)
             stop_codons.append(0)
             stop_codons_per.append(0)
-        elif md_start == False and md_stop == True:
+        elif not md_start and md_stop:
             stop_codons.append(mrna_dist_dict[key]["stop_codon"])
             stop_codons_per.append(
                 (mrna_dist_dict[key]["stop_codon"] / total) * 100)
@@ -1803,7 +1882,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
                   mrna_dist_dict[key]["start_codon"]) / total) * 100)
             start_codons.append(0)
             start_codons_per.append(0)
-        elif md_start == False and md_stop == False:
+        else:
             cds.append(mrna_dist_dict[key]["cds"] +
                        mrna_dist_dict[key]["start_codon"] +
                        mrna_dist_dict[key]["stop_codon"])
@@ -1830,7 +1909,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
     cds_per.append(0)
     stop_codons_per.append(0)
     three_trailers_per.append(0)
-    if mrna_dist_per == False:
+    if not mrna_dist_per:
         p1 = plt.bar(ind,
                      five_leaders,
                      bar_width,
@@ -1907,7 +1986,7 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
                                       cds_per, stop_codons_per)
             ],
             linewidth=0)
-    if mrna_dist_per == False:
+    if not mrna_dist_per:
         plt.ylabel('Count (x 10 {})'.format(factor),
                    fontsize=axis_label_size,
                    labelpad=100)
@@ -1921,20 +2000,20 @@ def mrna_dist(mrna_dist_dict, short_code, background_col, title_size,
         xlabel_size = marker_size / (len(labels) / 5.0)
 
     plt.xticks(tick_pos, labels, fontsize=xlabel_size)
-    if md_start == True and md_stop == True:
+    if md_start and md_stop:
         plt.legend((p5[0], p4[0], p3[0], p2[0], p1[0]),
                    ('Three trailers', 'Stop codons', 'Cds', 'Start codons',
                     'Five leaders'),
                    fontsize=legend_size)
-    elif md_start == True and md_stop == False:
+    elif md_start and not md_stop:
         plt.legend((p5[0], p3[0], p2[0], p1[0]),
                    ('Three trailers', 'Cds', 'Start codons', 'Five leaders'),
                    fontsize=legend_size)
-    elif md_start == False and md_stop == True:
+    elif not md_start and md_stop:
         plt.legend((p5[0], p4[0], p3[0], p1[0]),
                    ('Three trailers', 'Stop codons', 'Cds', 'Five leaders'),
                    fontsize=legend_size)
-    elif md_start == False and md_stop == False:
+    else:
         plt.legend((p5[0], p3[0], p1[0]),
                    ('Three trailers', 'Cds', 'Five leaders'),
                    fontsize=legend_size)

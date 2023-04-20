@@ -399,6 +399,7 @@ def generate_plot():
                 1: collections.OrderedDict(),
                 2: collections.OrderedDict()
             }
+            frame = 0
             for key in alt_sequence_reads:
                 start = key
                 rem = start % 3
@@ -667,7 +668,7 @@ def generate_plot():
                                              zorder=4,
                                              color='black',
                                              linewidth=5)
-            except Exception as e:
+            except Exception:
                 hili_sequences = ax_f1.plot((slip, slip), (0, 0.5),
                                             alpha=1,
                                             label=labels,
@@ -682,7 +683,7 @@ def generate_plot():
                                              zorder=4,
                                              color='black',
                                              linewidth=5)
-            except:
+            except Exception:
                 hili_sequences = ax_f2.plot((slip, slip), (0, 0.5),
                                             alpha=1,
                                             label=labels,
@@ -697,7 +698,7 @@ def generate_plot():
                                              zorder=4,
                                              color='black',
                                              linewidth=5)
-            except:
+            except Exception:
                 hili_sequences = ax_f3.plot((slip, slip), (0, 0.5),
                                             alpha=1,
                                             label=labels,
