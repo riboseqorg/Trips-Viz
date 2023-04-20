@@ -36,7 +36,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
     all_stops = ["TAG", "TAA", "TGA"]
     returnstr = "Position,"
     y_max = 50
-    if normalize == True:
+    if normalize:
         y_max = 0
 
     connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
@@ -98,9 +98,9 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
 
-    if cds_start == 'NULL' or cds_start == None:
+    if cds_start == 'NULL' or not  cds_start:
         cds_start = 0
-    if cds_stop == 'NULL' or cds_stop == None:
+    if cds_stop == 'NULL' or not cds_stop:
         cds_stop = 0
 
     all_starts = traninfo["start_list"]
@@ -145,7 +145,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
 
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
-    if normalize != True:
+    if not normalize:
         label = 'Read count'
     else:
         label = 'Normalized read count'
@@ -154,7 +154,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
     ax_main.set_xlabel(label, fontsize=axis_label_size, labelpad=10)
 
     #if normalize is true work out the factors for each colour
-    if normalize == True:
+    if normalize:
         all_mapped_reads = []
         for color in master_filepath_dict:
             all_mapped_reads.append(
@@ -199,12 +199,12 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
                                           file_paths, tranlen, True, organism,
                                           False, False, "fiveprime", "riboseq",
                                           1)
-        if normalize == False:
+        if not  normalize:
             try:
                 max_val = max(filename_reads.values()) * 1.1
                 if max_val > y_max:
                     y_max = max_val
-            except:
+            except Exception:
                 pass
             labels.append(file_names)
             start_visible.append(True)
@@ -228,7 +228,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
                 max_val = max(normalized_reads.values()) * 1.1
                 if max_val > y_max:
                     y_max = max_val
-            except:
+            except Exception:
                 pass
             labels.append(file_names)
             start_visible.append(True)
