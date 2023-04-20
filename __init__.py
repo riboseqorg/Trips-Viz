@@ -4,6 +4,7 @@ import time
 from datetime import date
 import sys
 import sqlite3
+from sqlqueries import sqlquery, get_user_id, get_table
 import riboflask_datasets
 import logging
 from flask import Flask, get_flashed_messages, render_template, request, send_from_directory, flash, redirect, url_for
@@ -141,38 +142,20 @@ login_manager.session_protection = 'basic'
 # Provides statistics on trips such as number of organisms, number of files, number of studies etc and lists updates.
 @app.route('/stats/')
 def statisticspage():
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
+    organisms = get_table('organisms')
+    organisms = organisms[organisms.private == 0]
+    no_organisms = len(organisms)
 
-    cursor.execute("SELECT organism_id from organisms WHERE private = 0;")
-    result = (cursor.fetchall())
-    no_organisms = len(result)
-
-    public_studies = []
-    cursor.execute("SELECT study_id from studies WHERE private = 0;")
-    result = (cursor.fetchall())
-    for row in result:
-        study_id = row[0]
-        public_studies.append(study_id)
+    public_studies = get_table('studies')
+    public_studies = public_studies.loc[public_studies.private == 0,
+                                        'study_id'].values
     no_studies = len(public_studies)
 
-    riboseq_files = 0
-    cursor.execute(
-        "SELECT study_id,file_id from files WHERE file_type = 'riboseq';")
-    result = (cursor.fetchall())
-    for row in result:
-        if row[0] in public_studies:
-            riboseq_files += 1
-
-    rnaseq_files = 0
-    cursor.execute(
-        "SELECT study_id,file_id from files WHERE file_type = 'rnaseq';")
-    result = (cursor.fetchall())
-    for row in result:
-        if row[0] in public_studies:
-            rnaseq_files += 1
+    files = get_table('files')
+    files = files[files.study_id.isin(public_studies)]
+    riboseq_files = files[files.file_type == 'riboseq'].shape[0]
+    rnaseq_files = files[files.file_type == 'rnaseq'].shape[0]
+    #NOTE: Till here
 
     # Create the graph which breaksdown the number of studies per organism
     org_dict = {}
@@ -280,40 +263,33 @@ def create():
         username = str(request.form['username'])
         password = str(request.form['password'])
         password2 = str(request.form['password2'])
-        if xcaptcha.verify() or local == True:
+        if xcaptcha.verify() or local:
             username_dict = {}
             logging.debug("Connecting to trips.sqlite")
-            connection = sqlite3.connect('{}/trips.sqlite'.format(
-                config.SCRIPT_LOC))
-            connection.text_factory = str
-            cursor = connection.cursor()
-            cursor.execute("SELECT username,password from users;")
-            result = (cursor.fetchall())
+
+            # Added by anmol
+            dbpath = '{}/trips.sqlite'.format(config.SCRIPT_LOC)
+            users = sqlquery(dbpath, 'users')
+            max_user_id = users['user_id'].max()
+            users = users[['username', 'password']]
+            username_dict = users.set_index('username').to_dict()['password']
+
             logging.debug("Closing trips.sqlite connection")
-            connection.close()
-            for row in result:
-                username_dict[row[0]] = row[1]
+
             if username in username_dict:
                 error = "Error: {} is already registered".format(username)
                 return render_template('create.html', error=error)
             if password == "":
                 error = "Password cannot be empty"
                 return render_template('create.html', error=error)
-            if password != password2:
+            if password != password2:  # TODO: Add JS to test
                 error = "Passwords do not match"
                 return render_template('create.html', error=error)
             hashed_pass = generate_password_hash(password)
-            logging.debug("Connecting to trips.sqlite")
-            connection = sqlite3.connect('{}/trips.sqlite'.format(
-                config.SCRIPT_LOC))
-            connection.text_factory = str
-            cursor = connection.cursor()
-            cursor.execute("SELECT MAX(user_id) from users;")
-            result = cursor.fetchone()
-            max_user_id = int(result[0])
             user_id = max_user_id + 1
             # Add -1 to study access list, causes problems when adding study id's later if we don't
             # Last value is temp_user, set to 0 because this is not a temporary user (temporary users identified by uuid in session cookie only, no username or pw)
+            # TODO: create code for updating tabel
             cursor.execute(
                 "INSERT INTO users VALUES ({},'{}','{}','-1','',0,0);".format(
                     user_id, username, hashed_pass))
@@ -347,7 +323,7 @@ def settingspage():
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
@@ -364,62 +340,38 @@ def settingspage():
                 "To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
     # get user_id
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
-    cursor.execute(
-        "SELECT background_col,readlength_col,metagene_fiveprime_col,metagene_threeprime_col,nuc_comp_a_col,nuc_comp_t_col,nuc_comp_g_col,nuc_comp_c_col,uag_col,uaa_col,uga_col,comp_uag_col,comp_uaa_col,comp_uga_col,title_size,subheading_size,axis_label_size,marker_size,cds_marker_width,cds_marker_colour,legend_size,ribo_linewidth from user_settings WHERE user_id = {};"
-        .format(user_id))
-    result = (cursor.fetchone())
-    background_colour = result[0]
-    readlength_colour = result[1]
-    metagene_fiveprime_colour = result[2]
-    metagene_threeprime_colour = result[3]
-    nuc_comp_a_col = result[4]
-    nuc_comp_t_col = result[5]
-    nuc_comp_g_col = result[6]
-    nuc_comp_c_col = result[7]
-    uag_col = result[8]
-    uaa_col = result[9]
-    uga_col = result[10]
-    comp_uag_col = result[11]
-    comp_uaa_col = result[12]
-    comp_uga_col = result[13]
-    title_size = result[14]
-    subheading_size = result[15]
-    axis_label_size = result[16]
-    marker_size = result[17]
-    cds_marker_size = result[18]
-    cds_marker_colour = result[19]
-    legend_size = result[20]
-    ribo_linewidth = result[21]
-    connection.close()
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    user_id = get_user_id(user)
+    user_settings = sqlquery(dbpath, 'user_settings')
+    user_settings = user_settings[user_settings['user_id'] == user_id].to_dict(
+        orient='records')[0]
+
     return render_template(
         'settings.html',
         local=local,
-        background_colour=background_colour,
-        readlength_colour=readlength_colour,
-        metagene_fiveprime_colour=metagene_fiveprime_colour,
-        metagene_threeprime_colour=metagene_threeprime_colour,
-        nuc_comp_a_col=nuc_comp_a_col,
-        nuc_comp_t_col=nuc_comp_t_col,
-        nuc_comp_g_col=nuc_comp_g_col,
-        nuc_comp_c_col=nuc_comp_c_col,
-        uag_col=uag_col,
-        uaa_col=uaa_col,
-        uga_col=uga_col,
-        comp_uag_col=comp_uag_col,
-        comp_uaa_col=comp_uaa_col,
-        comp_uga_col=comp_uga_col,
-        title_size=title_size,
-        subheading_size=subheading_size,
-        axis_label_size=axis_label_size,
-        marker_size=marker_size,
-        cds_marker_width=cds_marker_size,
-        cds_marker_colour=cds_marker_colour,
-        legend_size=legend_size,
-        ribo_linewidth=ribo_linewidth)
+        background_colour=user_settings[
+            'background_col'],  # TODO: Change the name for this variable for easy integration
+        readlength_colour=user_settings['readlength_col'],
+        metagene_fiveprime_colour=user_settings['metagene_fiveprime_col'],
+        metagene_threeprime_colour=user_settings['metagene_threeprime_col'],
+        nuc_comp_a_col=user_settings['nuc_comp_a_col'],
+        nuc_comp_t_col=user_settings['nuc_comp_t_col'],
+        nuc_comp_g_col=user_settings['nuc_comp_g_col'],
+        nuc_comp_c_col=user_settings['nuc_comp_c_col'],
+        uag_col=user_settings['uag_col'],
+        uaa_col=user_settings['uaa_col'],
+        uga_col=user_settings['uga_col'],
+        comp_uag_col=user_settings['comp_uag_col'],
+        comp_uaa_col=user_settings['comp_uaa_col'],
+        comp_uga_col=user_settings['comp_uga_col'],
+        title_size=user_settings['title_size'],
+        subheading_size=user_settings['subheading_size'],
+        axis_label_size=user_settings['axis_label_size'],
+        marker_size=user_settings['marker_size'],
+        cds_marker_width=user_settings['cds_marker_width'],
+        cds_marker_colour=user_settings['cds_marker_colour'],
+        legend_size=user_settings['legend_size'],
+        ribo_linewidth=user_settings['ribo_linewidth'])
 
 
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
@@ -428,7 +380,7 @@ def downloadspage():
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
     organism_dict = {
         "Scripts": [
@@ -437,35 +389,26 @@ def downloadspage():
             "create_transcriptomic_to_genomic_sqlite.py"
         ]
     }
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     try:
         user = current_user.name
-    except:
+    except Exception:
         user = None
+    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    organisms = sqlquery(dbpath, 'organisms')
+    organisms.loc[organisms.private == 0, 'organism_name'].values
 
-    cursor.execute("SELECT organism_name from organisms where private = 0")
-    result = cursor.fetchall()
-    for row in result:
-        organism = row[0]
+    for organism in organisms:
         organism_dict[organism] = []
     trips_annotation_dir = "{}/{}/".format(config.SCRIPT_LOC,
                                            config.ANNOTATION_DIR)
-    for org in os.listdir(trips_annotation_dir):
-        if org not in organism_dict:
-            continue
+    for org in set(os.listdir(trips_annotation_dir)) & set(organisms):
         for filename in os.listdir(trips_annotation_dir + "/" + org):
-            if "." in filename:
-                ext = filename.split(".")[-1]
-                if ext == "fa" or ext == "gtf":
-                    organism_dict[org].append(filename)
-                elif ext == "sqlite":
-                    if "transcriptomic" in filename or org in filename:
-                        organism_dict[org].append(filename)
-
-    connection.close()
+            ext = os.path.splitext(filename)[-1]
+            if (ext in [
+                    "fa", "gtf"
+            ]) or (ext == "sqlite" and
+                   ("transcriptomic" in filename or org in filename)):
+                organism_dict[org].append(filename)
 
     return render_template('downloads.html',
                            local=local,
@@ -493,7 +436,7 @@ def uploadspage():
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
     organism_dict = {}
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -503,22 +446,22 @@ def uploadspage():
 
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
-    if user == None:
+    if not user:
         return redirect(
             url_for(
                 'homepage',
                 message=
                 "To use the uploads page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
-    if logged_in == False:
+    if not logged_in:
         flash(
             "You are not logged in, uploaded data will only be kept for a period of one day."
         )
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+
+    user_id = get_user_id(user)
+
     org_id_dict = {}
+
     cursor.execute(
         "SELECT organism_name,transcriptome_list,organism_id from organisms where private = 0 OR owner = {};"
         .format(user_id))
