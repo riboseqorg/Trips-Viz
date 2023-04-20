@@ -346,32 +346,9 @@ def settingspage():
     user_settings = user_settings[user_settings['user_id'] == user_id].to_dict(
         orient='records')[0]
 
-    return render_template(
-        'settings.html',
-        local=local,
-        background_colour=user_settings[
-            'background_col'],  # TODO: Change the name for this variable for easy integration
-        readlength_colour=user_settings['readlength_col'],
-        metagene_fiveprime_colour=user_settings['metagene_fiveprime_col'],
-        metagene_threeprime_colour=user_settings['metagene_threeprime_col'],
-        nuc_comp_a_col=user_settings['nuc_comp_a_col'],
-        nuc_comp_t_col=user_settings['nuc_comp_t_col'],
-        nuc_comp_g_col=user_settings['nuc_comp_g_col'],
-        nuc_comp_c_col=user_settings['nuc_comp_c_col'],
-        uag_col=user_settings['uag_col'],
-        uaa_col=user_settings['uaa_col'],
-        uga_col=user_settings['uga_col'],
-        comp_uag_col=user_settings['comp_uag_col'],
-        comp_uaa_col=user_settings['comp_uaa_col'],
-        comp_uga_col=user_settings['comp_uga_col'],
-        title_size=user_settings['title_size'],
-        subheading_size=user_settings['subheading_size'],
-        axis_label_size=user_settings['axis_label_size'],
-        marker_size=user_settings['marker_size'],
-        cds_marker_width=user_settings['cds_marker_width'],
-        cds_marker_colour=user_settings['cds_marker_colour'],
-        legend_size=user_settings['legend_size'],
-        ribo_linewidth=user_settings['ribo_linewidth'])
+    return render_template('settings.html',
+                           local=local,
+                           user_settings=user_settings)
 
 
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
