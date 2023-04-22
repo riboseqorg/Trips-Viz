@@ -1,6 +1,5 @@
 import matplotlib
 
-matplotlib.use('agg')
 from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.text import TextPath
@@ -21,6 +20,8 @@ from bokeh.models import (
     ColumnDataSource,
     HoverTool,
 )
+import fixed_values
+matplotlib.use('agg')
 #ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
 try:
     import RNA
@@ -1309,82 +1310,9 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     allyvals = []
     alllabels = []
     amino_acids = []
-    aa_dict = {
-        "TTT": "Phenylalanine",
-        "TTC": "Phenylalanine",
-        "TTA": "Leucine",
-        "TTG": "Leucine",
-        "TCT": "Serine",
-        "TCC": "Serine",
-        "TCA": "Serine",
-        "TCG": "Serine",
-        "TAT": "Tyrosine",
-        "TAC": "Tyrosine",
-        "TAA": "*",
-        "TAG": "*",
-        "TGT": "Cysteine",
-        "TGC": "Cysteine",
-        "TGA": "*",
-        "TGG": "Tryptophan",
-        "CTT": "Leucine",
-        "CTC": "Leucine",
-        "CTA": "Leucine",
-        "CTG": "Leucine",
-        "CCT": "Proline",
-        "CCC": "Proline",
-        "CCA": "Proline",
-        "CCG": "Proline",
-        "CAT": "Histidine",
-        "CAC": "Histidine",
-        "CAA": "Glutamine",
-        "CAG": "Glutamine",
-        "CGT": "Arginine",
-        "CGC": "Arginine",
-        "CGA": "Arginine",
-        "CGG": "Arginine",
-        "ATT": "Isoleucine",
-        "ATC": "Isoleucine",
-        "ATA": "Isoleucine",
-        "ATG": "Methionine",
-        "ACT": "Threonine",
-        "ACC": "Threonine",
-        "ACA": "Threonine",
-        "ACG": "Threonine",
-        "AAT": "Asparagine",
-        "AAC": "Asparagine",
-        "AAA": "Lysine",
-        "AAG": "Lysine",
-        "AGT": "Serine",
-        "AGC": "Serine",
-        "AGA": "Arginine",
-        "AGG": "Arginine",
-        "GTT": "Valine",
-        "GTC": "Valine",
-        "GTA": "Valine",
-        "GTG": "Valine",
-        "GCT": "Alanine",
-        "GCC": "Alanine",
-        "GCA": "Alanine",
-        "GCG": "Alanine",
-        "GAT": "Aspartic Acid",
-        "GAC": "Aspartic Acid",
-        "GAA": "Glutamic Acid",
-        "GAG": "Glutamic Acid",
-        "GGT": "Glycine",
-        "GGC": "Glycine",
-        "GGA": "Glycine",
-        "GGG": "Glycine"
-    }
+    aa_dict = fixed_values.codon_aa_full.copy() 
 
-    codon_list = [
-        "ATG", "TTT", "TTC", "CTT", "CTC", "CTA", "CTG", "TTA", "TTG", "AGT",
-        "AGC", "TCT", "TCC", "TCA", "TCG", "TAT", "TAC", "TGT", "TGC", "TGG",
-        "CCT", "CCC", "CCA", "CCG", "CAT", "CAC", "CAA", "CAG", "AGA", "AGG",
-        "CGT", "CGC", "CGA", "CGG", "ATT", "ATC", "ATA", "ACT", "ACC", "ACA",
-        "ACG", "AAT", "AAC", "AAA", "AAG", "GTT", "GTC", "GTA", "GTG", "GCT",
-        "GCC", "GCA", "GCG", "GAT", "GAC", "GAA", "GAG", "GGT", "GGC", "GGA",
-        "GGG", "TAG", "TAA", "TGA"
-    ]
+    codon_list = fixed_values.codon_list.copy() 
 
     curr_count = 0
     for codon in codon_list:

@@ -8,6 +8,7 @@ from core_functions import fetch_studies, fetch_files, fetch_study_info, generat
 import traninfo_plots
 from flask_login import current_user
 import json
+import fixed_values
 
 traninfo_plotpage_blueprint = Blueprint("traninfo_plotpage",
                                         __name__,
@@ -1124,72 +1125,7 @@ def traninfoquery():
         #return traninfo_plots.nuc_comp(master_dict, nuc_maxreadlen,title, nuc_comp_type,nuc_comp_direction,short_code,background_col,a_col,t_col,g_col,c_col,title_size, axis_label_size, subheading_size,marker_size)
 
     elif plottype == "codon_usage":
-        aa_dict = {
-            "TTT": "Phenylalanine",
-            "TTC": "Phenylalanine",
-            "TTA": "Leucine",
-            "TTG": "Leucine",
-            "TCT": "Serine",
-            "TCC": "Serine",
-            "TCA": "Serine",
-            "TCG": "Serine",
-            "TAT": "Tyrosine",
-            "TAC": "Tyrosine",
-            "TAA": "*",
-            "TAG": "*",
-            "TGT": "Cysteine",
-            "TGC": "Cysteine",
-            "TGA": "*",
-            "TGG": "Tryptophan",
-            "CTT": "Leucine",
-            "CTC": "Leucine",
-            "CTA": "Leucine",
-            "CTG": "Leucine",
-            "CCT": "Proline",
-            "CCC": "Proline",
-            "CCA": "Proline",
-            "CCG": "Proline",
-            "CAT": "Histidine",
-            "CAC": "Histidine",
-            "CAA": "Glutamine",
-            "CAG": "Glutamine",
-            "CGT": "Arginine",
-            "CGC": "Arginine",
-            "CGA": "Arginine",
-            "CGG": "Arginine",
-            "ATT": "Isoleucine",
-            "ATC": "Isoleucine",
-            "ATA": "Isoleucine",
-            "ATG": "Methionine",
-            "ACT": "Threonine",
-            "ACC": "Threonine",
-            "ACA": "Threonine",
-            "ACG": "Threonine",
-            "AAT": "Asparagine",
-            "AAC": "Asparagine",
-            "AAA": "Lysine",
-            "AAG": "Lysine",
-            "AGT": "Serine",
-            "AGC": "Serine",
-            "AGA": "Arginine",
-            "AGG": "Arginine",
-            "GTT": "Valine",
-            "GTC": "Valine",
-            "GTA": "Valine",
-            "GTG": "Valine",
-            "GCT": "Alanine",
-            "GCC": "Alanine",
-            "GCA": "Alanine",
-            "GCG": "Alanine",
-            "GAT": "Aspartic Acid",
-            "GAC": "Aspartic Acid",
-            "GAA": "Glutamic Acid",
-            "GAG": "Glutamic Acid",
-            "GGT": "Glycine",
-            "GGC": "Glycine",
-            "GGA": "Glycine",
-            "GGG": "Glycine"
-        }
+        aa_dict = fixed_values.codon_aa_full.copy()
         filename = organism + "_codon_usage_" + str(time.time()) + ".csv"
         cu_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                        "w")

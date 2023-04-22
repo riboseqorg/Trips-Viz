@@ -1,6 +1,5 @@
 import matplotlib
 
-matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import os
 import operator
@@ -10,7 +9,8 @@ import mpld3
 from mpld3 import plugins
 import pandas as pd
 import numpy as np
-from new_plugins import InteractiveLegendPlugin, TopToolbar, DownloadProfile, DownloadPNG
+from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
+                         DownloadPNG)
 from scipy.stats.stats import spearmanr, pearsonr
 import matplotlib.cm as cm
 from bokeh.plotting import figure, output_file
@@ -19,10 +19,12 @@ from bokeh.resources import CDN
 from bokeh.palettes import all_palettes
 import bokeh.models as bmo
 import pickle
+import fixed_values
 from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
 
+matplotlib.use('agg')
 redhex = "#FF5F5B"
 greenhex = "#90E090"
 bluehex = "#9ACAFF"
@@ -1489,28 +1491,7 @@ def rust_dwell(codon_count_dict, short_code, background_col, title_size,
     min_count = float(min(codon_count_dict.values())) + 0.000001
     max_count = float(max(codon_count_dict.values()))
     max_rust_ratio = (max_count / (min_count))
-    aa_dict = {
-        "gly": ["GGT", "GGC", "GGA", "GGG"],
-        "arg": ["AGA", "AGG", "CGT", "CGC", "CGA", "CGG"],
-        "ser": ["AGT", "AGC", "TCT", "TCC", "TCA", "TCG"],
-        "trp": ["TGG"],
-        "cys": ["TGT", "TGC"],
-        "glu": ["GAA", "GAG"],
-        "asp": ["GAT", "GAC"],
-        "lys": ["AAA", "AAG"],
-        "asn": ["AAT", "AAC"],
-        "gln": ["CAA", "CAG"],
-        "his": ["CAT", "CAC"],
-        "tyr": ["TAT", "TAC"],
-        "ala": ["GCT", "GCC", "GCA", "GCG"],
-        "thr": ["ACT", "ACC", "ACA", "ACG"],
-        "pro": ["CCT", "CCC", "CCA", "CCG"],
-        "val": ["GTT", "GTC", "GTA", "GTG"],
-        "met": ["ATG"],
-        "ile": ["ATA", "ATT", "ATC"],
-        "leu": ["CTT", "CTC", "CTA", "CTG", "TTA", "TTG"],
-        "phe": ["TTT", "TTC"]
-    }
+    aa_dict =fixed_values.aa_short_codon_list.copy() 
     avg_dict = {}
     for aa in aa_dict:
         tot = 0.0
@@ -1586,82 +1567,9 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     allyvals = []
     alllabels = []
     amino_acids = []
-    aa_dict = {
-        "TTT": "Phenylalanine",
-        "TTC": "Phenylalanine",
-        "TTA": "Leucine",
-        "TTG": "Leucine",
-        "TCT": "Serine",
-        "TCC": "Serine",
-        "TCA": "Serine",
-        "TCG": "Serine",
-        "TAT": "Tyrosine",
-        "TAC": "Tyrosine",
-        "TAA": "*",
-        "TAG": "*",
-        "TGT": "Cysteine",
-        "TGC": "Cysteine",
-        "TGA": "*",
-        "TGG": "Tryptophan",
-        "CTT": "Leucine",
-        "CTC": "Leucine",
-        "CTA": "Leucine",
-        "CTG": "Leucine",
-        "CCT": "Proline",
-        "CCC": "Proline",
-        "CCA": "Proline",
-        "CCG": "Proline",
-        "CAT": "Histidine",
-        "CAC": "Histidine",
-        "CAA": "Glutamine",
-        "CAG": "Glutamine",
-        "CGT": "Arginine",
-        "CGC": "Arginine",
-        "CGA": "Arginine",
-        "CGG": "Arginine",
-        "ATT": "Isoleucine",
-        "ATC": "Isoleucine",
-        "ATA": "Isoleucine",
-        "ATG": "Methionine",
-        "ACT": "Threonine",
-        "ACC": "Threonine",
-        "ACA": "Threonine",
-        "ACG": "Threonine",
-        "AAT": "Asparagine",
-        "AAC": "Asparagine",
-        "AAA": "Lysine",
-        "AAG": "Lysine",
-        "AGT": "Serine",
-        "AGC": "Serine",
-        "AGA": "Arginine",
-        "AGG": "Arginine",
-        "GTT": "Valine",
-        "GTC": "Valine",
-        "GTA": "Valine",
-        "GTG": "Valine",
-        "GCT": "Alanine",
-        "GCC": "Alanine",
-        "GCA": "Alanine",
-        "GCG": "Alanine",
-        "GAT": "Aspartic Acid",
-        "GAC": "Aspartic Acid",
-        "GAA": "Glutamic Acid",
-        "GAG": "Glutamic Acid",
-        "GGT": "Glycine",
-        "GGC": "Glycine",
-        "GGA": "Glycine",
-        "GGG": "Glycine"
-    }
+    aa_dict = fixed_values.codon_aa_full.copy() 
 
-    codon_list = [
-        "ATG", "TTT", "TTC", "CTT", "CTC", "CTA", "CTG", "TTA", "TTG", "AGT",
-        "AGC", "TCT", "TCC", "TCA", "TCG", "TAT", "TAC", "TGT", "TGC", "TGG",
-        "CCT", "CCC", "CCA", "CCG", "CAT", "CAC", "CAA", "CAG", "AGA", "AGG",
-        "CGT", "CGC", "CGA", "CGG", "ATT", "ATC", "ATA", "ACT", "ACC", "ACA",
-        "ACG", "AAT", "AAC", "AAA", "AAG", "GTT", "GTC", "GTA", "GTG", "GCT",
-        "GCC", "GCA", "GCG", "GAT", "GAC", "GAA", "GAG", "GGT", "GGC", "GGA",
-        "GGG", "TAG", "TAA", "TGA"
-    ]
+    codon_list = fixed_values.codon_list.copy()
 
     curr_count = 0
     for codon in codon_list:
