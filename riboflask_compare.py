@@ -1,14 +1,16 @@
 import matplotlib
 
-matplotlib.use('agg')
 from matplotlib import pyplot as plt
 import mpld3
 from mpld3 import plugins
-from new_plugins import InteractiveLegendPlugin, TopToolbar, DownloadProfile, DownloadPNG
+from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
+                         DownloadPNG)
 from fetch_shelve_reads2 import get_reads
 import sqlite3
 import os
 import config
+
+matplotlib.use('agg')
 
 
 def merge_dict(dict1, dict2):
@@ -98,7 +100,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
 
-    if cds_start == 'NULL' or not  cds_start:
+    if cds_start == 'NULL' or not cds_start:
         cds_start = 0
     if cds_stop == 'NULL' or not cds_stop:
         cds_stop = 0
@@ -199,7 +201,7 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
                                           file_paths, tranlen, True, organism,
                                           False, False, "fiveprime", "riboseq",
                                           1)
-        if not  normalize:
+        if not normalize:
             try:
                 max_val = max(filename_reads.values()) * 1.1
                 if max_val > y_max:
@@ -257,10 +259,8 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
 
     ax_main.set_ylim(0, y_max)
     # draw cds start
-    #plt.plot((cds_start,cds_start), (0, y_max), cds_marker_colour,linestyle = ':',linewidth=cds_marker_size)
 
     # draw cds end
-    #plt.plot((cds_stop, cds_stop), (0, y_max), cds_marker_colour,linestyle = ':',linewidth=cds_marker_size)
 
     cds_markers = ax_main.plot((cds_start, cds_start), (0, y_max * 0.97),
                                color=cds_marker_colour,
@@ -272,12 +272,6 @@ def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
                  fontsize=18,
                  color="black",
                  ha="center")
-    #ax_main.annotate('axes fraction',xy=(3, 1), xycoords='data',xytext=(0.8, 0.95), textcoords='axes fraction',arrowprops=dict(facecolor='black', shrink=0.05),horizontalalignment='right', verticalalignment='top')
-    #trans = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    #ax_main.annotate('CDS RELATIVE START',(100,100),transform=trans)
-    #tform = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    #r=10
-    #ax_main.text(cds_start, 0.9, "CDS START OR WHATEVER", fontsize='xx-large', color='r', transform=tform)
     cds_markers += ax_main.plot((cds_stop + 1, cds_stop + 1),
                                 (0, y_max * 0.97),
                                 color=cds_marker_colour,

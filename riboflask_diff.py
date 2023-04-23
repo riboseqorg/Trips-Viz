@@ -1,33 +1,15 @@
 import matplotlib
 
-matplotlib.use('agg')
 from math import log
 from bokeh.plotting import figure, output_file
 from bokeh.embed import file_html
 from bokeh.resources import CDN
 from scipy.stats.stats import pearsonr
-from bokeh.models import (TapTool, OpenURL, Label, ColumnDataSource, HoverTool)
+from bokeh.models import TapTool, OpenURL, Label, ColumnDataSource, HoverTool
 
 import logging
 
-#import seaborn
-
-#seaborn.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white'})
-#seaborn.set_style("whitegrid", {'axes.grid' : False})
-
-#Defaults
-#lite = "y"
-#min_read = 25
-#max_read = 35
-#ribo = "a"
-#rna = "a"
-#subcodon = "d"
-#tran = ""
-#ambig = "u"
-#user_ribo_files  = []
-#user_rna_files  = []
-#offset_dict = {}
-
+matplotlib.use('agg')
 # Define some CSS to control our custom labels
 point_tooltip_css = """
 table
@@ -116,10 +98,10 @@ def get_near_cog_starts(seq):
     return near_cog_starts
 
 
-def generate_plot(sorted_min_exp_list, bin_list, organism, label,
+def generate_plot(sorted_min_exp_list, bin_list, organism,# label,
                   transcriptome, riboseq1, riboseq2, rnaseq1, rnaseq2,
                   background_color, short_code, normalized, filename,
-                  no_groups, title_size, axis_label_size, subheading_size,
+                  no_groups, title_size, axis_label_size, #subheading_size,
                   marker_size, ambiguous, gene_list):
     #Convert gene_list from string to list
     logging.debug("generate plot called")
@@ -164,11 +146,7 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
         cur_count += 1
         if cur_count == 300:
             #To x we add the log2(min exp) of the 300th (or multiple of) item in min exp list
-            bin_count += 1
-            try:
-                tst = bin_list[bin_count]
-            except:
-                bin_count -= 1
+
             cur_count = 0
             upper_thresholds_x.append(sorted_min_exp_list[(bin_count) *
                                                           300][1])
@@ -184,8 +162,7 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
             lower_thresholds_y.append(bin_list[bin_count][3])
         if bin_list[bin_count][1] == 0.0:
             continue
-        z_score = (sorted_min_exp_list[i][2] -
-                   bin_list[bin_count][0]) / (bin_list[bin_count][1])
+        
 
         if gene_list == "":
             if sorted_min_exp_list[i][2] <= bin_list[bin_count][
@@ -242,7 +219,6 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
                     (sorted_min_exp_list[i][2] - bin_list[bin_count][0]) /
                     (bin_list[bin_count][1]))
 
-    # Add z score thresholds for the last bin, which wouldn't have been covered in the above loop
     upper_thresholds_x.append((sorted_min_exp_list[-1][1]) * 0.99)
     upper_thresholds_y.append(bin_list[bin_count][2])
     lower_thresholds_x.append((sorted_min_exp_list[-1][1]) * 0.99)
@@ -287,8 +263,7 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
         'labels': nonde_labels,
         'genes': nonde_allgenes
     })
-    sct = p.scatter('x', 'y', source=source, alpha=1, color="grey", size=5)
-    #source = ColumnDataSource({'x': posallxvals,'y':posallyvals,'labels':posalllabels, 'genes':posallgenes,"zscores":poszscores})
+    p.scatter('x', 'y', source=source, alpha=1, color="grey", size=5)
     source = ColumnDataSource({
         'x': posallxvals,
         'y': posallyvals,
@@ -297,10 +272,8 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
     })
     p.scatter('x', 'y', source=source, alpha=1, color="green", size=10)
     hover = p.select(dict(type=HoverTool))
-    #hover.tooltips = [("Fold change", "@y"),("Geometric mean","@x"),("Transcript","@labels"),("Genes","@genes"), ("Z score","@zscores")]
     hover.tooltips = [("Fold change", "@y"), ("Geometric mean", "@x"),
                       ("Transcript", "@labels"), ("Genes", "@genes")]
-    #source = ColumnDataSource({'x': negallxvals,'y':negallyvals,'labels':negalllabels, 'genes':negallgenes,"zscores":negzscores})
     source = ColumnDataSource({
         'x': negallxvals,
         'y': negallyvals,
@@ -308,15 +281,11 @@ def generate_plot(sorted_min_exp_list, bin_list, organism, label,
         'genes': negallgenes
     })
     p.scatter('x', 'y', source=source, alpha=1, color="red", size=10)
-    #source = ColumnDataSource({'x': nonde_xvals,'y':nonde_yvals,'labels':nonde_labels, 'genes':nonde_allgenes,"zscores":nonde_zscores})
 
     output_file("scatter10k.html", title="Differential translation")
     hover = p.select(dict(type=HoverTool))
     hover.mode = 'mouse'
 
-    #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,%23ff1f00_228,%233BFF00_231,%23ffffff_232,%23000000_&transcript=YLR162W&normalize=F&cov=T&ambig=F&minread=25&maxread=100
-    #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,228,229,%23ff1f00_230,%233BFF00&transcript=YDR003W&normalize=T&cov=T&ambig=T&minread=18&maxread=45
-    #url = "http://143.239.109.139/tripsviz/{}/{}/interactive_plot/?transcript=@labels".format(organism, transcriptome)
     file_string = ""
     label_string = "&labels=RIBO-Seq Cond 1,%23007a02_RIBO-Seq Cond 2,%23960000_mRNA-Seq Cond 1,%2374ed76_mRNA-seq Cond 2,%23ff6d6d"
     if riboseq1:

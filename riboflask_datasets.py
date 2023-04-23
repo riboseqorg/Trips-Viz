@@ -1,7 +1,5 @@
 import matplotlib
 
-matplotlib.use('agg')
-
 from bokeh.plotting import figure, output_file, reset_output
 from bokeh.embed import file_html
 from bokeh.resources import CDN
@@ -14,6 +12,8 @@ from bokeh.models import (
     ColumnDataSource,
     HoverTool,
 )
+
+matplotlib.use('agg')
 
 # Define some CSS to control our custom labels
 point_tooltip_css = """
@@ -173,7 +173,6 @@ def plot_profile(xlist, ylist, filenames, file_descs, studies, raw_reads,
 
     #show(p)  # open a browser
     layout = column(color_select, p)
-    #graph = "<link href='https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.css' rel='stylesheet' type='text/css'><script src='https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js'></script><script src='https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js'></script>"
     graph = file_html(layout, CDN)
     reset_output()
     return graph
