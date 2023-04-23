@@ -4,7 +4,7 @@ import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
 from Bio.Seq import Seq
-from sqlqueries import sqlquery, table2dict
+from sqlqueries import sqlquery, table2dict, get_table
 import uuid
 import config
 import logging
@@ -31,7 +31,7 @@ class User(UserMixin):
 def fetch_user():
     '''Fetches active user from cookies if present and returns username and login status.'''
     consent = request.cookies.get("cookieconsent_status")
-    #If user rejects cookies then do not track them and delete all other cookies
+    # If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":
         return (None, False)
     logging.debug("fetch_user Connecting to trips.sqlite")
@@ -42,12 +42,12 @@ def fetch_user():
     if "uid" not in session:
         session["uid"] = uuid.uuid4()
     session_id = session["uid"]
-    #Check if this session uid is already in the users table
+    # Check if this session uid is already in the users table
     cursor.execute(
         "Select username from users where username = '{}';".format(session_id))
     result = cursor.fetchone()
     if result == None:
-        #Add session uid to user table
+        # Add session uid to user table
         cursor.execute(
             "INSERT INTO users VALUES (NULL,'{}',NULL,'-1','',0,1);".format(
                 session_id))
@@ -55,9 +55,9 @@ def fetch_user():
             "SELECT user_id FROM users WHERE username = '{}'".format(
                 session_id))
         user_id = cursor.fetchone()[0]
-        #marker_size, axis_label_size, subheading_size, title_size, user_id, background_col, readlength_col, metagene_fiveprime_col, metagene_threeprime_col, nuc_comp_a_col ,
-        #nuc_comp_t_col , nuc_comp_g_col , nuc_comp_c_col , uga_col , uag_col , uaa_col , comp_uga_col , comp_uag_col , comp_uaa_col , cds_marker_width ,
-        #cds_marker_colour VARCHAR, legend_size , ribo_linewidth
+        # marker_size, axis_label_size, subheading_size, title_size, user_id, background_col, readlength_col, metagene_fiveprime_col, metagene_threeprime_col, nuc_comp_a_col ,
+        # nuc_comp_t_col , nuc_comp_g_col , nuc_comp_c_col , uga_col , uag_col , uaa_col , comp_uga_col , comp_uag_col , comp_uaa_col , cds_marker_width ,
+        # cds_marker_colour VARCHAR, legend_size , ribo_linewidth
         cursor.execute(
             "INSERT INTO user_settings VALUES ('{0}','{1}','{2}','{3}',{4},'{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}',{19},'{20}',{21},{22});"
             .format(config.MARKER_SIZE, config.AXIS_LABEL_SIZE,
@@ -72,11 +72,11 @@ def fetch_user():
                     config.RIBO_LINEWIDTH))
         connection.commit()
 
-    #If user is logged in current_user.name will return a username, otherwise set the user to the session uid
+    # If user is logged in current_user.name will return a username, otherwise set the user to the session uid
     try:
         user = current_user.name
         logged_in = True
-    except:
+    except Exception:
         user = session_id
         logged_in = False
     logging.debug("fetch_user Closing trips.sqlite connection")
@@ -89,7 +89,7 @@ def fetch_studies(organism: str, transcriptome: str) -> pd.DataFrame:
     '''Fetches studies from database using organism and transcriptome information.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     study_access_list = []
-    #get a list of organism id's this user can access
+    # get a list of organism id's this user can access
     if current_user.is_authenticated:
         # getting user ID
         result = sqlquery(dbpath, "users")  # users is name of table
@@ -149,7 +149,7 @@ def fetch_study_info(organism: str) -> dict:
         "study_id", "paper_authors", "srp_nos,paper_year", "paper_pmid",
         "paper_link", "gse_nos", "adapters", "paper_title", "description",
         "study_name"
-        #, "organism_id" # TODO: Consider this for selecting
+        # , "organism_id" # TODO: Consider this for selecting
     ]]
     # "paper_link": row[5].strip('"'),  # generate link using pubmed id
     return table2dict(studies, ["study_id"])
@@ -158,11 +158,11 @@ def fetch_study_info(organism: str) -> dict:
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
 def fetch_file_paths(file_list, organism):
     file_path_dict = {"riboseq": {}, "rnaseq": {}, "proteomics": {}}
-    #Convert to a tuple so it works with mysql
+    # Convert to a tuple so it works with mysql
     try:
-        #Remove empty strings from file list
+        # Remove empty strings from file list
         file_list[:] = [x for x in file_list if x]
-        #Convert each string to an int
+        # Convert each string to an int
         int_file_list = [int(x) for x in file_list]
     except:
         return {}
@@ -236,7 +236,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
         for row in result:
             study_id = int(row[0])
 
-            #Now get all riboseq files that have this study_id, if all those ids are in file_list, add to riboseq studies and remove those files from file_list, do the same for rnaseq and proteomics
+            # Now get all riboseq files that have this study_id, if all those ids are in file_list, add to riboseq studies and remove those files from file_list, do the same for rnaseq and proteomics
             cursor.execute(
                 "SELECT file_id from files WHERE study_id = {} AND file_type = 'riboseq'"
                 .format(study_id))
@@ -245,7 +245,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
             for row in result:
                 if str(row[0]) not in data["file_list"]:
                     all_present = False
-            if all_present == True:
+            if all_present:
                 riboseq_studies.append(study_id)
                 for row in result:
                     data["file_list"].remove(str(row[0]))
@@ -261,7 +261,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
             for row in result:
                 if str(row[0]) not in data["file_list"]:
                     all_present = False
-            if all_present == True:
+            if all_present:
                 rnaseq_studies.append(study_id)
                 for row in result:
                     data["file_list"].remove(str(row[0]))
@@ -270,14 +270,12 @@ def generate_short_code(data, organism, transcriptome, plot_type):
                 "SELECT file_id from files WHERE study_id = {} AND file_type = 'proteomics'"
                 .format(study_id))
             result = cursor.fetchall()
-            all_present = True
             # If there are no files of that type for that study then don't bother adding it to the list
-            if not result:
-                all_present = False
+            all_present = True if result else False
             for row in result:
                 if str(row[0]) not in data["file_list"]:
                     all_present = False
-            if all_present == True:
+            if all_present:
                 proteomics_studies.append(study_id)
                 for row in result:
                     data["file_list"].remove(str(row[0]))
@@ -328,7 +326,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
 
     if plot_type == "traninfo_plot":
         url += "&plot={}".format(data['plottype'])
-        #nuc_comp_single, nuc_comp_multi, lengths_plot, gene_count, codon_usage, nuc_freq_plot, orfstats
+        # nuc_comp_single, nuc_comp_multi, lengths_plot, gene_count, codon_usage, nuc_freq_plot, orfstats
         if data["plottype"] == "nuc_comp_single":
             url += "&metagene_tranlist={}".format(data["metagene_tranlist"])
         if data["plottype"] == "nuc_comp_multi":
@@ -496,7 +494,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
             # Can't use # in html args so encode as %23 instead
             file_string += "{}_".format(color.replace("#", "%23"))
 
-        #remove the trailling _ from file_string
+        # remove the trailling _ from file_string
         file_string = file_string[:len(file_string) - 1]
 
         label_string = ""
@@ -506,7 +504,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
             # Can't use # in html args so encode as %23 instead
             label_string += "{}_".format(color.replace("#", "%23"))
 
-        #remove the trailling _ from file_string
+        # remove the trailling _ from file_string
         label_string = label_string[:len(label_string) - 1]
 
         url += file_string
@@ -622,11 +620,8 @@ def generate_short_code(data, organism, transcriptome, plot_type):
 
     cursor.execute("SELECT MAX(url_id) from urls;")
     result = cursor.fetchone()
-    #If the url table is empty result will return none
-    if result[0] == None:
-        url_id = 0
-    else:
-        url_id = int(result[0]) + 1
+    # If the url table is empty result will return none
+    url_id = 0 if not result[0] else int(result[0]) + 1
     cursor.execute("INSERT INTO urls VALUES({},'{}')".format(url_id, url))
     connection.commit()
     short_code = integer_to_base62(url_id)
@@ -658,7 +653,7 @@ def base62_to_integer(base62_str: str) -> int:
     return res
 
 
-#Takes a nucleotide string and returns the amino acide sequence
+# Takes a nucleotide string and returns the amino acide sequence
 def nuc_to_aa(nuc_seq: str) -> str:
     '''Takes a nucleotide string and returns the amino acide sequence.'''
     return str(Seq(nuc_seq).translate())
@@ -711,7 +706,7 @@ def calculate_coverages(sqlite_db, longest_tran_list, traninfo_dict):
                 cds_stop = float(cds_stop)
                 cds_len = cds_stop - cds_start
                 three_len = tranlen - cds_stop
-                #Use list comprehension to count number of entries less than cds_start
+                # Use list comprehension to count number of entries less than cds_start
                 if cds_start > 0:
                     coverage_dict["unambig_fiveprime_coverage"][tran] = sum(
                         i < cds_start for i in unambig_dict.keys()) / cds_start
@@ -749,46 +744,40 @@ def calculate_coverages(sqlite_db, longest_tran_list, traninfo_dict):
 
 # Builds a profile, applying offsets
 def build_profile(trancounts, offsets, ambig, minscore=None, scores=None):
-    #print ("trancounts", trancounts)
-    #print ("minscore", minscore)
+    # print ("trancounts", trancounts)
+    # print ("minscore", minscore)
     minreadlen = 15
     maxreadlen = 150
     profile = {}
     try:
         unambig_trancounts = trancounts["unambig"]
-    except:
+    except Exception:
         unambig_trancounts = {}
     try:
         ambig_trancounts = trancounts["ambig"]
-    except:
+    except Exception:
         ambig_trancounts = {}
     for readlen in unambig_trancounts:
-        #print ("readlen", readlen)
-        if minscore != None:
+        if minscore:
             if readlen in scores:
                 if scores[readlen] < minscore:
-                    #print ("continuing1",scores[readlen])
                     continue
             else:
-                #print ("continuing2")
                 continue
         if readlen < minreadlen or readlen > maxreadlen:
             continue
-        try:
-            offset = offsets[readlen] + 1
-        except:
-            offset = 15
+        offset = 15 if readlen in offsets else offsets[readlen] + 1
         for pos in unambig_trancounts[readlen]:
             count = unambig_trancounts[readlen][pos]
             offset_pos = pos + offset
             try:
                 profile[offset_pos] += count
-            except:
+            except Exception:
                 profile[offset_pos] = count
 
-    if ambig == True:
+    if ambig:
         for readlen in ambig_trancounts:
-            if minscore != None:
+            if minscore:
                 if readlen in scores:
                     if scores[readlen] < minscore:
                         continue
@@ -796,34 +785,30 @@ def build_profile(trancounts, offsets, ambig, minscore=None, scores=None):
                     continue
             if readlen < minreadlen or readlen > maxreadlen:
                 continue
-            try:
-                offset = offsets[readlen] + 1
-            except:
-                offset = 15
+            offset = 15 if readlen in offsets else offsets[readlen] + 1
+
             for pos in ambig_trancounts[readlen]:
                 count = ambig_trancounts[readlen][pos]
                 offset_pos = pos + offset
                 try:
                     profile[offset_pos] += 0
-                except:
+                except Exception:
                     profile[offset_pos] = count
-    #print ("RETURNING PROFILE", profile)
+    # print ("RETURNING PROFILE", profile)
     return profile
 
 
 # Builds a profile, applying offsets
-def build_proteomics_profile(trancounts, ambig):
+def build_proteomics_profile(trancounts
+                             # , ambig
+                             ):
     minreadlen = 15
     maxreadlen = 150
     profile = {}
     try:
         unambig_trancounts = trancounts["unambig"]
-    except:
+    except Exception:
         unambig_trancounts = {}
-    try:
-        ambig_trancounts = trancounts["ambig"]
-    except:
-        ambig_trancounts = {}
     for readlen in unambig_trancounts:
         if readlen < minreadlen or readlen > maxreadlen:
             continue
@@ -837,13 +822,16 @@ def build_proteomics_profile(trancounts, ambig):
             for x in range(pos, pos + readlen, 3):
                 try:
                     profile[x] += count
-                except:
+                except Exception:
                     profile[x] = count
     return profile
 
 
 # Creates nucleotide composition counts if they don't already exist.
-def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
+def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism
+                       # , transcriptome
+                       ):
+    dbpath = "{0}{1}/{1}.v2.sqlite".format(config.ANNOTATION_DIR, organism)
     transhelve = sqlite3.connect("{0}{1}/{1}.v2.sqlite".format(
         config.ANNOTATION_DIR, organism))
     cursor = transhelve.cursor()
@@ -851,20 +839,29 @@ def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
         "SELECT transcript,cds_start,cds_stop,sequence from transcripts WHERE principal = 1"
     )
     result = cursor.fetchall()
-    master_dict = {}
-    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
+    transcripts = sqlquery(dbpath, 'transcripts')
+    transcripts = transcripts.loc[
+        transcripts.principle == 1,
+        ["transcript", "cds_start", "cds_stop", "sequence"]]
+    transcripts[["cds_start", "cds_stop"]] = transcripts[[
+        "cds_start", "cds_stop"
+    ]].apply(lambda x: pd.to_numeric(x, downcast="integer"))
+    transcripts['sequnce'] = transcripts['sequence'].apply(lambda x: x.replace("T", "U"))''))
+
+    master_dict={}
+    offsets=sqlite_db["offsets"]["fiveprime"]["offsets"]
     for row in result:
-        tran = row[0]
-        cds_start = int(row[1])
-        cds_stop = int(row[2])
-        seq = row[3].replace("T", "U")
+        tran=row[0]
+        cds_start=int(row[1])
+        cds_stop=int(row[2])
+        seq=row[3].replace("T", "U")
         if tran in sqlite_db:
-            counts = sqlite_db[tran]["unambig"]
+            counts=sqlite_db[tran]["unambig"]
             for readlen in counts:
                 if readlen not in master_dict:
-                    master_dict[readlen] = {}
+                    master_dict[readlen]={}
                     for i in range(0, int(readlen)):
-                        master_dict[readlen][i] = {
+                        master_dict[readlen][i]={
                             "A": 0,
                             "T": 0,
                             "G": 0,
@@ -872,33 +869,29 @@ def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
                             "N": 0
                         }
                 for pos in counts[readlen]:
-                    count = counts[readlen][pos]
+                    count=counts[readlen][pos]
                     if readlen in offsets:
-                        offset_pos = pos + offsets[readlen]
+                        offset_pos=pos + offsets[readlen]
                     else:
-                        offset_pos = pos + 15
+                        offset_pos=pos + 15
                     if offset_pos >= cds_start and offset_pos <= cds_stop:
-                        readframe = offset_pos % 3
-                        cds_frame = (cds_start + 2) % 3
-                        if readframe == cds_frame:
-                            inframe = True
-                        else:
-                            inframe = False
-                        if nuccomp_reads == "inframe" and inframe == False:
+                        readframe=offset_pos % 3
+                        cds_frame=(cds_start + 2) % 3
+                        inframe=readframe == cds_frame
+                        if ((nuccomp_reads == "inframe" and not inframe)
+                                or (nuccomp_reads == "offrame" and inframe)):
                             continue
-                        if nuccomp_reads == "offrame" and inframe == True:
-                            continue
-                        readseq = seq[pos:pos + readlen]
+                        readseq=seq[pos:pos + readlen]
                         for i in range(0, len(readseq)):
-                            char = readseq[i].replace("U", "T")
+                            char=readseq[i].replace("U", "T")
                             master_dict[readlen][i][char] += count
-    #save results so they won't have to be computed again later
+    # save results so they won't have to be computed again later
     if "nuc_counts" in sqlite_db:
-        new_nuc_counts = sqlite_db["nuc_counts"]
-        new_nuc_counts[nuccomp_reads] = master_dict
-        sqlite_db["nuc_counts"] = new_nuc_counts
+        new_nuc_counts=sqlite_db["nuc_counts"]
+        new_nuc_counts[nuccomp_reads]=master_dict
+        sqlite_db["nuc_counts"]=new_nuc_counts
     else:
-        sqlite_db["nuc_counts"] = {nuccomp_reads: master_dict}
+        sqlite_db["nuc_counts"]={nuccomp_reads: master_dict}
     sqlite_db.commit()
     transhelve.close()
     return master_dict
@@ -906,34 +899,30 @@ def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
 
 # Creates a dictionary of readlength counts
 def fetch_rld(sqlite_db, ambig_type):
-    rld = {}
+    rld={}
     for transcript in sqlite_db:
-        try:
-            transcript_dict = sqlite_db[transcript]["unambig"]
-        except:
-            continue
-        try:
+        try:  # TODO: Simplify this code using pandas
+            transcript_dict=sqlite_db[transcript]["unambig"]
             for rl in transcript_dict:
                 for pos in transcript_dict[rl]:
-                    count = transcript_dict[rl][pos]
+                    count=transcript_dict[rl][pos]
                     if rl not in rld:
-                        rld[rl] = 0
+                        rld[rl]=0
                     rld[rl] += count
                 if ambig_type == "ambig":
-                    transcript_dict = sqlite_db[transcript]["ambig"]
+                    transcript_dict=sqlite_db[transcript]["ambig"]
                     for rl in transcript_dict:
                         for pos in transcript_dict[rl]:
-                            count = transcript_dict[rl][pos]
+                            count=transcript_dict[rl][pos]
                             if rl not in rld:
-                                rld[rl] = 0
+                                rld[rl]=0
                             rld[rl] += count
-        except Exception as e:
+        except Exception:
             continue
     if ambig_type == "unambig":
-        sqlite_db["unambig_read_lengths"] = rld
+        sqlite_db["unambig_read_lengths"]=rld
     elif ambig_type == "ambig":
-        sqlite_db["read_lengths"] = rld
-    sqlite_db.commit()
+        sqlite_db["read_lengths"]=rld
     return rld
 
 
@@ -941,6 +930,5 @@ def fetch_filename_file_id(file_id: int) -> str:
     '''
 	Return the filename from the database given a file id.
 	'''
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    files = sqlquery(dbpath, "files")
+    files=get_table("files")
     return files.loc[files["file_id"] == file_id, 'file_name'].values[0]

@@ -146,7 +146,7 @@ def generate_plot(sorted_min_exp_list, bin_list, organism,# label,
         cur_count += 1
         if cur_count == 300:
             #To x we add the log2(min exp) of the 300th (or multiple of) item in min exp list
-
+            bin_count += 1 if (bin_count +1) in bin_list else 0
             cur_count = 0
             upper_thresholds_x.append(sorted_min_exp_list[(bin_count) *
                                                           300][1])

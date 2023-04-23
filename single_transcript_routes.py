@@ -3,7 +3,8 @@ from flask import current_app as app
 import sqlite3
 import os
 import config
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code, fetch_user)
 import riboflask
 from flask_login import current_user
 import logging
@@ -12,7 +13,7 @@ from sqlqueries import sqlquery
 try:
     from orfQuant import incl_OPM_run_orfQuant
     from tripsTPM import TPM
-except:
+except Exception:
     pass
 
 #This is the single transcript plot page, user chooses gene, files and other settings
@@ -28,7 +29,7 @@ def interactiveplotpage(organism, transcriptome):
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)
