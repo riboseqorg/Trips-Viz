@@ -1,4 +1,5 @@
 from threading import Lock
+import pandas as pd
 import os
 import time
 from datetime import date
@@ -142,77 +143,55 @@ login_manager.session_protection = 'basic'
 # Provides statistics on trips such as number of organisms, number of files, number of studies etc and lists updates.
 @app.route('/stats/')
 def statisticspage():
+    '''Display statistics'''
+
+    def rename_organism(organism):
+        '''
+        Rename the organism name to the short name
+        '''
+        if '_' in organism:
+            organism = organism.split('_')
+            organism = f"{organism[0][0]}.{organism[1]}"
+        return organism.capitalize()
+
     organisms = get_table('organisms')
-    organisms = organisms[organisms.private == 0]
+    organisms = organisms.loc[organisms.private == 0,
+                              ['organism_id', 'organism_name']]
+    organisms['organism_name'] = organisms['organism_name'].apply(
+        rename_organism)
+
     no_organisms = len(organisms)
 
-    public_studies = get_table('studies')
-    public_studies = public_studies.loc[public_studies.private == 0,
-                                        'study_id'].values
-    no_studies = len(public_studies)
-
-    files = get_table('files')
-    files = files[files.study_id.isin(public_studies)]
+    files = get_table('files')[['organism_id', 'file_type']]
     riboseq_files = files[files.file_type == 'riboseq'].shape[0]
     rnaseq_files = files[files.file_type == 'rnaseq'].shape[0]
-    #NOTE: Till here
+    files['file_type'] = files['file_type'].apply(
+        lambda x: f"{x.capitalize()} files")
+    org_files_count = organisms.merge(files, on='organism_id').groupby(
+        ['organism_name',
+         'file_type']).size().reset_index().rename(columns={
+             0: 'Count',
+             'organism_name': 'Organism'
+         })
+
+    # NOTE: Till here
 
     # Create the graph which breaksdown the number of studies per organism
-    org_dict = {}
-    cursor.execute(
-        "SELECT organism_id,organism_name from organisms WHERE private = 0;")
-    result = (cursor.fetchall())
-    for row in result:
-        if "_" in row[1]:
-            org_name = (row[1].split("_")[0][0]) + "." + (row[1].split("_")[1])
-        else:
-            org_name = row[1]
-        org_dict[row[0]] = {
-            "organism_name": org_name,
-            "riboseq_files": 0,
-            "rnaseq_files": 0
-        }
-    cursor.execute("SELECT file_type,organism_id from files;")
-    result = (cursor.fetchall())
-    for row in result:
-        if row[1] in org_dict:
-            if row[0] == "riboseq":
-                org_dict[row[1]]["riboseq_files"] += 1
-            elif row[0] == "rnaseq":
-                org_dict[row[1]]["rnaseq_files"] += 1
-    read_dict = {"organisms": [], "riboseq_files": [], "rnaseq_files": []}
-    for org in org_dict:
-        read_dict["organisms"].append(org_dict[org]["organism_name"])
-        read_dict["riboseq_files"].append(org_dict[org]["riboseq_files"])
-        read_dict["rnaseq_files"].append(org_dict[org]["rnaseq_files"])
-    org_breakdown_graph = stats_plots.org_breakdown_plot(read_dict)
+
+    org_breakdown_graph = stats_plots.org_breakdown_plot(org_files_count)
 
     # Create the graph which breaks down studies published per year
-    year_dict = {}
-    cursor.execute("SELECT paper_year from studies WHERE private = 0;")
-    result = cursor.fetchall()
-    for row in result:
-        if row[0] == "None" or row[0] == "NULL" or row[0] == "":
-            continue
-        if int(row[0]) not in year_dict:
-            year_dict[int(row[0])] = 0
-        year_dict[int(row[0])] += 1
-    final_year_dict = {"year": [], "no_studies": []}
-    min_year = min(year_dict.keys())
-    max_year = max(year_dict.keys())
-    for i in range(min_year, max_year + 1):
-        final_year_dict["year"].append(str(i))
-        if i in year_dict:
-            final_year_dict["no_studies"].append(year_dict[i])
-        else:
-            final_year_dict["no_studies"].append(0)
-    year_plot = stats_plots.year_dist(final_year_dict)
-    news_string = ""
-    cursor.execute("SELECT * from updates ORDER BY date DESC;")
-    result = cursor.fetchall()
-    for row in result:
-        news_string += "<tr><td>{}</td><td>{}</td></tr>".format(row[0], row[1])
-    connection.close()
+    public_studies = get_table('studies')
+    public_studies = public_studies[((public_studies.private == 0) and
+                                     (~pd.isnull(public_studies.paper_year)))]
+    no_studies = len(public_studies)
+    year_dist = public_studies.groupby(
+        ['paper_year']).size().reset_index().rename(columns={0: 'Count'})
+
+    year_plot = stats_plots.year_dist(year_dist)
+    updates = get_table('updates')
+    updates = updates.sort_values(by='date', ascending=False).to_html(classes='')
+    
     return render_template('statistics.html',
                            no_organisms=no_organisms,
                            no_studies=no_studies,
@@ -220,7 +199,7 @@ def statisticspage():
                            rnaseq_files=rnaseq_files,
                            org_breakdown_graph=org_breakdown_graph,
                            year_plot=year_plot,
-                           news_string=news_string)
+                           news_string=updates)
 
 
 # Contact page
