@@ -832,36 +832,28 @@ def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism
                        # , transcriptome
                        ):
     dbpath = "{0}{1}/{1}.v2.sqlite".format(config.ANNOTATION_DIR, organism)
-    transhelve = sqlite3.connect("{0}{1}/{1}.v2.sqlite".format(
-        config.ANNOTATION_DIR, organism))
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT transcript,cds_start,cds_stop,sequence from transcripts WHERE principal = 1"
-    )
-    result = cursor.fetchall()
+    
     transcripts = sqlquery(dbpath, 'transcripts')
     transcripts = transcripts.loc[
         transcripts.principle == 1,
         ["transcript", "cds_start", "cds_stop", "sequence"]]
+    #TODO: Remove rows which has missing values
     transcripts[["cds_start", "cds_stop"]] = transcripts[[
         "cds_start", "cds_stop"
     ]].apply(lambda x: pd.to_numeric(x, downcast="integer"))
-    transcripts['sequnce'] = transcripts['sequence'].apply(lambda x: x.replace("T", "U"))''))
+    transcripts['sequnce'] = transcripts['sequence'].apply(
+        lambda x: x.replace("T", "U"))
 
-    master_dict={}
-    offsets=sqlite_db["offsets"]["fiveprime"]["offsets"]
-    for row in result:
-        tran=row[0]
-        cds_start=int(row[1])
-        cds_stop=int(row[2])
-        seq=row[3].replace("T", "U")
+    master_dict = {}
+    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
+    for row in transcripts.itertuples():
         if tran in sqlite_db:
-            counts=sqlite_db[tran]["unambig"]
+            counts = sqlite_db[tran]["unambig"]
             for readlen in counts:
                 if readlen not in master_dict:
-                    master_dict[readlen]={}
+                    master_dict[readlen] = {}
                     for i in range(0, int(readlen)):
-                        master_dict[readlen][i]={
+                        master_dict[readlen][i] = {
                             "A": 0,
                             "T": 0,
                             "G": 0,
@@ -869,60 +861,59 @@ def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism
                             "N": 0
                         }
                 for pos in counts[readlen]:
-                    count=counts[readlen][pos]
+                    count = counts[readlen][pos]
                     if readlen in offsets:
-                        offset_pos=pos + offsets[readlen]
+                        offset_pos = pos + offsets[readlen]
                     else:
-                        offset_pos=pos + 15
+                        offset_pos = pos + 15
                     if offset_pos >= cds_start and offset_pos <= cds_stop:
-                        readframe=offset_pos % 3
-                        cds_frame=(cds_start + 2) % 3
-                        inframe=readframe == cds_frame
+                        readframe = offset_pos % 3
+                        cds_frame = (cds_start + 2) % 3
+                        inframe = readframe == cds_frame
                         if ((nuccomp_reads == "inframe" and not inframe)
                                 or (nuccomp_reads == "offrame" and inframe)):
                             continue
-                        readseq=seq[pos:pos + readlen]
+                        readseq = seq[pos:pos + readlen]
                         for i in range(0, len(readseq)):
-                            char=readseq[i].replace("U", "T")
+                            char = readseq[i].replace("U", "T")
                             master_dict[readlen][i][char] += count
     # save results so they won't have to be computed again later
     if "nuc_counts" in sqlite_db:
-        new_nuc_counts=sqlite_db["nuc_counts"]
-        new_nuc_counts[nuccomp_reads]=master_dict
-        sqlite_db["nuc_counts"]=new_nuc_counts
+        new_nuc_counts = sqlite_db["nuc_counts"]
+        new_nuc_counts[nuccomp_reads] = master_dict
+        sqlite_db["nuc_counts"] = new_nuc_counts
     else:
-        sqlite_db["nuc_counts"]={nuccomp_reads: master_dict}
+        sqlite_db["nuc_counts"] = {nuccomp_reads: master_dict}
     sqlite_db.commit()
-    transhelve.close()
     return master_dict
 
 
 # Creates a dictionary of readlength counts
 def fetch_rld(sqlite_db, ambig_type):
-    rld={}
+    rld = {}
     for transcript in sqlite_db:
         try:  # TODO: Simplify this code using pandas
-            transcript_dict=sqlite_db[transcript]["unambig"]
+            transcript_dict = sqlite_db[transcript]["unambig"]
             for rl in transcript_dict:
                 for pos in transcript_dict[rl]:
-                    count=transcript_dict[rl][pos]
+                    count = transcript_dict[rl][pos]
                     if rl not in rld:
-                        rld[rl]=0
+                        rld[rl] = 0
                     rld[rl] += count
                 if ambig_type == "ambig":
-                    transcript_dict=sqlite_db[transcript]["ambig"]
+                    transcript_dict = sqlite_db[transcript]["ambig"]
                     for rl in transcript_dict:
                         for pos in transcript_dict[rl]:
-                            count=transcript_dict[rl][pos]
+                            count = transcript_dict[rl][pos]
                             if rl not in rld:
-                                rld[rl]=0
+                                rld[rl] = 0
                             rld[rl] += count
         except Exception:
             continue
     if ambig_type == "unambig":
-        sqlite_db["unambig_read_lengths"]=rld
+        sqlite_db["unambig_read_lengths"] = rld
     elif ambig_type == "ambig":
-        sqlite_db["read_lengths"]=rld
+        sqlite_db["read_lengths"] = rld
     return rld
 
 
@@ -930,5 +921,5 @@ def fetch_filename_file_id(file_id: int) -> str:
     '''
 	Return the filename from the database given a file id.
 	'''
-    files=get_table("files")
+    files = get_table("files")
     return files.loc[files["file_id"] == file_id, 'file_name'].values[0]
