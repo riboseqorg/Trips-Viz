@@ -4,6 +4,7 @@ from sqlitedict import SqliteDict
 import pickle
 import os
 import time
+import fixed_values
 import re
 import operator
 from math import log
@@ -169,26 +170,14 @@ def create_custom_metagene(
 
     result = cursor.fetchall()
     mgc = {"fiveprime": {}, "threeprime": {}}
-    iupac_dict = {
-        "R": "[AG]",
-        "Y": "[CU]",
-        "S": "[GC]",
-        "W": "[AU]",
-        "K": "[GU]",
-        "M": "[AC]",
-        "B": "[CGU]",
-        "D": "[AGU]",
-        "H": "[ACU]",
-        "V": "[ACG]",
-        "N": "[AUGC]"
-    }
+    iupac_dict = fixed_values.iupac_dict.copy()
 
     subseq_list = []
     for subseq in custom_seq_list.split(","):
         subseq = subseq.upper()
         subseq = subseq.replace("T", "U").replace(" ", "")
-        for code in iupac_dict:
-            subseq = subseq.replace(code, iupac_dict[code])
+        for ambig_nuc in fixed_values.ambig_nucs:
+            subseq = subseq.replace(ambig_nuc, f"[{iupac_dict[ambig_nuc]}]")
         subseq_list.append(subseq)
     for row in result:
         tran = row[0]

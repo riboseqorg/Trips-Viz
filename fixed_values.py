@@ -1,20 +1,21 @@
 iupac_dict = {
-    "A": ["A"],
-    "U": ["U"],
-    "G": ["G"],
-    "C": ["C"],
-    "R": ["A", "G"],
-    "Y": ["C", "U"],
-    "S": ["G", "C"],
-    "W": ["A", "U"],
-    "K": ["G", "U"],
-    "M": ["A", "C"],
-    "B": ["C", "G", "U"],
-    "D": ["A", "G", "U"],
-    "H": ["A", "C", "U"],
-    "V": ["A", "C", "G"],
-    "N": ["A", "U", "G", "C"]
+    "A": "A",
+    "U": "U",
+    "G": "G",
+    "C": "C",
+    "R": "AG",
+    "Y": "CU",
+    "S": "GC",
+    "W": "AU",
+    "K": "GU",
+    "M": "AC",
+    "B": "CGU",
+    "D": "AGU",
+    "H": "ACU",
+    "V": "ACG",
+    "N": "AUGC"
 }
+ambig_nucs = "RYKMSWBDHVN"
 
 aa_short_codon_list = {
     "gly": ["GGT", "GGC", "GGA", "GGG"],
