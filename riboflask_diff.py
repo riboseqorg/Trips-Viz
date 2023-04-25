@@ -34,16 +34,6 @@ table, th, td
 """
 
 
-def merge_dict(dict1, dict2):
-    master_dict = dict1
-    for key in dict2:
-        if key in master_dict:
-            master_dict[key] += dict2[key]
-        else:
-            master_dict[key] = dict2[key]
-    return master_dict
-
-
 def set_axis_color(axis, color, alpha=None):
     """Sets the spine color of all sides of an axis (top, right, bottom, left)."""
     for side in ('top', 'right', 'bottom', 'left'):
@@ -98,11 +88,25 @@ def get_near_cog_starts(seq):
     return near_cog_starts
 
 
-def generate_plot(sorted_min_exp_list, bin_list, organism,# label,
-                  transcriptome, riboseq1, riboseq2, rnaseq1, rnaseq2,
-                  background_color, short_code, normalized, filename,
-                  no_groups, title_size, axis_label_size, #subheading_size,
-                  marker_size, ambiguous, gene_list):
+def generate_plot(
+        sorted_min_exp_list,
+        bin_list,
+        organism,  # label,
+        transcriptome,
+        riboseq1,
+        riboseq2,
+        rnaseq1,
+        rnaseq2,
+        background_color,
+        short_code,
+        normalized,
+        filename,
+        no_groups,
+        title_size,
+        axis_label_size,  #subheading_size,
+        marker_size,
+        ambiguous,
+        gene_list):
     #Convert gene_list from string to list
     logging.debug("generate plot called")
     #logging.debug("sorted_min_exp_list: {}".format(sorted_min_exp_list))
@@ -146,7 +150,7 @@ def generate_plot(sorted_min_exp_list, bin_list, organism,# label,
         cur_count += 1
         if cur_count == 300:
             #To x we add the log2(min exp) of the 300th (or multiple of) item in min exp list
-            bin_count += 1 if (bin_count +1) in bin_list else 0
+            bin_count += 1 if (bin_count + 1) in bin_list else 0
             cur_count = 0
             upper_thresholds_x.append(sorted_min_exp_list[(bin_count) *
                                                           300][1])
@@ -162,7 +166,6 @@ def generate_plot(sorted_min_exp_list, bin_list, organism,# label,
             lower_thresholds_y.append(bin_list[bin_count][3])
         if bin_list[bin_count][1] == 0.0:
             continue
-        
 
         if gene_list == "":
             if sorted_min_exp_list[i][2] <= bin_list[bin_count][

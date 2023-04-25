@@ -12,17 +12,6 @@ import config
 
 matplotlib.use('agg')
 
-
-def merge_dict(dict1, dict2):
-    master_dict = dict1
-    for key in dict2:
-        if key in master_dict:
-            master_dict[key] += dict2[key]
-        else:
-            master_dict[key] = dict2[key]
-    return master_dict
-
-
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
 

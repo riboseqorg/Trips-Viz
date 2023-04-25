@@ -1,21 +1,8 @@
 import os
 import collections
 from bokeh.palettes import all_palettes
+from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
-
-
-# Merge two dictionaries
-def merge_dicts(dict1, dict2):
-    for readlen in dict2:
-        if readlen not in dict1:
-            dict1[readlen] = dict2[readlen]
-        else:
-            for pos in dict2[readlen]:
-                if pos in dict1[readlen]:
-                    dict1[readlen][pos] += dict2[readlen][pos]
-                else:
-                    dict1[readlen][pos] = dict2[readlen][pos]
-    return dict1
 
 
 # Create dictionary of read counts at each position in a transcript

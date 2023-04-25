@@ -39,16 +39,6 @@ table, th, td
 """
 
 
-def merge_dict(dict1, dict2):
-    master_dict = dict1
-    for key in dict2:
-        if key in master_dict:
-            master_dict[key] += dict2[key]
-        else:
-            master_dict[key] = dict2[key]
-    return master_dict
-
-
 def set_axis_color(axis, color, alpha=None):
     """Sets the spine color of all sides of an axis (top, right, bottom, left)."""
     for side in ('top', 'right', 'bottom', 'left'):

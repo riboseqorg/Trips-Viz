@@ -67,19 +67,6 @@ def get_user_defined_seqs(seq, seqhili):
     return near_cog_starts, signalhtml
 
 
-def merge_dicts(dict1, dict2):
-    for nuc in dict2:
-        if nuc not in dict1:
-            dict1[nuc] = dict2[nuc]
-        else:
-            for pos in dict2[nuc]:
-                if pos not in dict1[nuc]:
-                    dict1[nuc][pos] = dict2[nuc][pos]
-                else:
-                    dict1[nuc][pos] += dict2[nuc][pos]
-    return dict1
-
-
 def generate_plot(
         tran,
         ambig,
@@ -305,7 +292,7 @@ def generate_plot(
                                                      secondary_readscore,
                                                      pcr,
                                                      get_mismatches=mismatches)
-    seq_var_dict = merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
+    seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
     try:
         rnamax = max(all_rna_reads.values())
     except Exception:

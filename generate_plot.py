@@ -1,4 +1,5 @@
-from new_plugins import InteractiveLegendPlugin, PointHTMLTooltip, TopToolbar, DownloadProfile, DownloadPNG, DownloadSVG
+from new_plugins import (InteractiveLegendPlugin, PointHTMLTooltip, TopToolbar,
+                         DownloadProfile, DownloadPNG, DownloadSVG)
 import pickle
 import config
 import os
@@ -9,12 +10,12 @@ from sqlitedict import SqliteDict
 import collections
 from mpld3 import plugins
 import mpld3
-from bokeh.layouts import gridplot, column
-from bokeh.plotting import figure, output_file, show
+from bokeh.plotting import figure, output_file
 import matplotlib.pyplot as plt
 import matplotlib
 
 import altair as alt
+import fixed_values
 
 matplotlib.use('agg')
 
@@ -45,24 +46,7 @@ color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
 
 def get_user_defined_seqs(seq, seqhili):
-    iupac_dict = {
-        "A": ["A"],
-        "U": ["U"],
-        "G": ["G"],
-        "C": ["C"],
-        "R": ["A", "G"],
-        "Y": ["C", "U"],
-        "S": ["G", "C"],
-        "W": ["A", "U"],
-        "K": ["G", "U"],
-        "M": ["A", "C"],
-        "B": ["C", "G", "U"],
-        "D": ["A", "G", "U"],
-        "D": ["A", "G", "U"],
-        "H": ["A", "C", "U"],
-        "V": ["A", "C", "G"],
-        "N": ["A", "U", "G", "C"]
-    }
+    iupac_dict = fixed_values.iupac_dict.copy()
     signalhtml = {0: [], 1: [], 2: []}
     seq = seq.replace("T", "U")
     near_cog_starts = {0: [], 1: [], 2: []}
@@ -89,19 +73,6 @@ def get_user_defined_seqs(seq, seqhili):
     return near_cog_starts, signalhtml
 
 
-def merge_dicts(dict1, dict2):
-    for nuc in dict2:
-        if nuc not in dict1:
-            dict1[nuc] = dict2[nuc]
-        else:
-            for pos in dict2[nuc]:
-                if pos not in dict1[nuc]:
-                    dict1[nuc][pos] = dict2[nuc][pos]
-                else:
-                    dict1[nuc][pos] += dict2[nuc][pos]
-    return dict1
-
-
 # trips_shelves/rnaseq/escherichia_coli/Li14/SRR1067774.sqlite : reads, each gene each position, mismaches
 # trips_annotation: gtf file annotation, also contain sequnce                    spec
 
@@ -115,14 +86,14 @@ def generate_plot():
         lite,  # line ot bar graph TODO: Boolean  y for line in the code
         ribocoverage,  # if yes, plot count  TODO: Convert to Boolean. TODO: More details when Jack is back
         organism,
-        readscore,  # Not thing to do with plot, will check later 
+        readscore,  # Not thing to do with plot, will check later
         noisered,  # Noise reduction, About data selection
-        primetype,  # Data selection 
-        minfiles,  # TODO: Remove 
-        nucseq,  # shows nucletide sequence at the bottom. TODO: Add more tracks for other frames 
+        primetype,  # Data selection
+        minfiles,  # TODO: Remove
+        nucseq,  # shows nucletide sequence at the bottom. TODO: Add more tracks for other frames
         user_hili_starts,  # sequences to highlight
         user_hili_stops,  # sequences to highlight
-        uga_diff,  # TODO: Remove 
+        uga_diff,  # TODO: Remove
         file_paths_dict,
         short_code,
         color_readlen_dist,  # TODO: Remove
@@ -145,7 +116,7 @@ def generate_plot():
         ribo_linewidth,
         secondary_readscore,  # TODO: need to check
         pcr,  # PCR are duplicates
-        mismatches,  # Hight mismaches 
+        mismatches,  # Hight mismaches
         hili_start,
         hili_stop) = pickle.load(open("first_plot.pkl", "rb"))
     print(tran, ambig, min_read, max_read, lite, ribocoverage, organism,
@@ -343,7 +314,7 @@ def generate_plot():
                                                      secondary_readscore,
                                                      pcr,
                                                      get_mismatches=mismatches)
-    seq_var_dict = merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
+    seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
     try:
         rnamax = max(all_rna_reads.values())
     except:

@@ -116,3 +116,16 @@ codon_aa_full = {
     "GGA": "Glycine",
     "GGG": "Glycine"
 }
+
+
+def merge_dicts(dict1, dict2):
+    for nuc in dict2:
+        if nuc not in dict1:
+            dict1[nuc] = dict2[nuc]
+        else:
+            for pos in dict2[nuc]:
+                if pos not in dict1[nuc]:
+                    dict1[nuc][pos] = dict2[nuc][pos]
+                else:
+                    dict1[nuc][pos] += dict2[nuc][pos]
+    return dict1
