@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, abort, request, url_for, jsonify
 from flask import current_app as app
 import sqlite3
 from sqlitedict import SqliteDict
-import pickle5
+import pickle
 import ast
 import os
 import time
@@ -19,7 +19,7 @@ import json
 
 
 def my_decoder(obj):
-	return pickle5.loads(obj)
+	return pickle.loads(obj)
 
 
 metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage", __name__, template_folder="templates")

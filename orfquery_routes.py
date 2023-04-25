@@ -41,10 +41,10 @@ import numpy as np
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import pickle5
+import pickle
 
 def my_decoder(obj):
-	return pickle5.loads(obj)
+	return pickle.loads(obj)
 
 
 

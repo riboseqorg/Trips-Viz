@@ -11,7 +11,7 @@ import subprocess
 from core_functions import fetch_studies, fetch_files,fetch_study_info,fetch_file_paths,generate_short_code,build_profile,build_proteomics_profile,nuc_to_aa,fetch_user, fetch_filename_file_id
 import collections
 import json
-import pickle5
+import pickle
 from flask_login import current_user
 from bokeh.plotting import figure, show, output_file
 from bokeh.embed import file_html, components
@@ -45,7 +45,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 def my_decoder(obj):
-	return pickle5.loads(obj)
+	return pickle.loads(obj)
 
 
 #This page is used to detect pauses

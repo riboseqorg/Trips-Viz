@@ -18,10 +18,10 @@ import riboflask_diff
 import collections
 from flask_login import current_user
 import json
-import pickle5
+import pickle
 
 def my_decoder(obj):
-	return pickle5.loads(obj)
+	return pickle.loads(obj)
 	
 	
 # Differential expression page, used to find diffentially expressed genes via z-score
@@ -1258,7 +1258,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 		if os.path.isfile(riboseq1_filepath):
 			sqlite_db = SqliteDict(f"{riboseq1_filepath}", autocommit=False, decode=my_decoder)
 		else:
-			return prepare_return_str("error","File not found: {}".format(groupname))
+			return prepare_return_str("error""File not found: {}".format(groupname))
 		if region == "fiveprime":
 			opendict = sqlite_db["{}_fiveprime_totals".format(ambig_type)]
 		elif region == "cds":
@@ -1297,7 +1297,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 		if os.path.isfile(riboseq2_filepath):
 			sqlite_db = sqlite_db = SqliteDict(f"{riboseq2_filepath}", autocommit=False, decode=my_decoder)
 		else:
-			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
+			return prepare_return_str("error""File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":
 			opendict = sqlite_db["{}_fiveprime_totals".format(ambig_type)]
 		elif region == "cds":
@@ -1336,7 +1336,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 		if os.path.isfile(rnaseq1_filepath):
 			sqlite_db = SqliteDict(f"{rnaseq1_filepath}", autocommit=False, decode=my_decoder)
 		else:
-			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
+			return prepare_return_str("error""File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":
 			opendict = sqlite_db["{}_fiveprime_totals".format(ambig_type)]
 		elif region == "cds":
@@ -1374,7 +1374,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 		if os.path.isfile(rnaseq2_filepath):
 			sqlite_db = SqliteDict(f"{rnaseq2_filepath}", autocommit=False, decode=my_decoder)
 		else:
-			return prepare_return_str("error","File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
+			return prepare_return_str("error""File not found, please report this to tripsvizsite@gmail.com or via the contact page.")
 		if region == "fiveprime":
 			opendict = sqlite_db["{}_fiveprime_totals".format(ambig_type)]
 		elif region == "cds":
@@ -1574,6 +1574,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath, rna
 	transcript_dict["ribo2_modifier"] = ribo2_modifier
 	transcript_dict["rna1_modifier"] = rna1_modifier
 	transcript_dict["rna2_modifier"] = rna2_modifier
+	print(transcript_dict, groupname, "Anmol")
 	
 
 	return transcript_dict,groupname

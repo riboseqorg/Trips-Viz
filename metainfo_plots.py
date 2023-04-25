@@ -14,7 +14,7 @@ import shelve
 import mpld3
 import operator
 import logging
-import pickle5
+import pickle
 from sqlitedict import SqliteDict
 from math import log
 from mpld3 import plugins,utils
@@ -74,7 +74,7 @@ line_tooltip_css = """
 """
 
 def my_decoder(obj):
-	return pickle5.loads(obj)
+	return pickle.loads(obj)
 
 
 

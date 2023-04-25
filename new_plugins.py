@@ -1,17 +1,10 @@
 import mpld3
-from mpld3 import plugins,utils
-
+from mpld3 import plugins, utils
 
 import collections
 import json
 import uuid
 import matplotlib
-
-
-
-
-
-
 
 
 class PointLabelTooltip(plugins.PluginBase):
@@ -35,21 +28,29 @@ class PointLabelTooltip(plugins.PluginBase):
     >>> plugins.connect(fig, PointLabelTooltip(points[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 labels=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "tooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LineLabelTooltip(plugins.PluginBase):
@@ -73,17 +74,25 @@ class LineLabelTooltip(plugins.PluginBase):
     >>> plugins.connect(fig, LineLabelTooltip(lines[0]))
     >>> fig_to_html(fig)
     """
-    def __init__(self, points, label=None,
-                 hoffset=0, voffset=10, location="mouse"):
-        if location not in ["bottom left", "top left", "bottom right",
-                            "top right", "mouse"]:
+
+    def __init__(self,
+                 points,
+                 label=None,
+                 hoffset=0,
+                 voffset=10,
+                 location="mouse"):
+        if location not in [
+                "bottom left", "top left", "bottom right", "top right", "mouse"
+        ]:
             raise ValueError("invalid location: {0}".format(location))
-        self.dict_ = {"type": "tooltip",
-                      "id": plugins.get_id(points),
-                      "labels": label if label is None else [label],
-                      "hoffset": hoffset,
-                      "voffset": voffset,
-                      "location": location}
+        self.dict_ = {
+            "type": "tooltip",
+            "id": plugins.get_id(points),
+            "labels": label if label is None else [label],
+            "hoffset": hoffset,
+            "voffset": voffset,
+            "location": location
+        }
 
 
 class LinkedBrush(plugins.PluginBase):
@@ -125,10 +134,12 @@ class LinkedBrush(plugins.PluginBase):
         else:
             suffix = None
 
-        self.dict_ = {"type": "linkedbrush",
-                      "button": button,
-                      "enabled": enabled,
-                      "id": plugins.get_id(points, suffix)}
+        self.dict_ = {
+            "type": "linkedbrush",
+            "button": button,
+            "enabled": enabled,
+            "id": plugins.get_id(points, suffix)
+        }
 
 
 class PointHTMLTooltip(plugins.PluginBase):
@@ -189,8 +200,7 @@ class PointHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None,
-                 hoffset=0, voffset=10, css=None):
+    def __init__(self, points, labels=None, hoffset=0, voffset=10, css=None):
         self.points = points
         self.labels = labels
         self.voffset = voffset
@@ -200,11 +210,13 @@ class PointHTMLTooltip(plugins.PluginBase):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "htmltooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "htmltooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class LineHTMLTooltip(plugins.PluginBase):
@@ -266,23 +278,23 @@ class LineHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, line, label=None,
-                 hoffset=0, voffset=10,
-                 css=None):
+    def __init__(self, line, label=None, hoffset=0, voffset=10, css=None):
         self.line = line
         self.label = label
         self.voffset = voffset
         self.hoffset = hoffset
         self.css_ = css or ""
-        self.dict_ = {"type": "linehtmltooltip",
-                      "id": plugins.get_id(line),
-                      "label": label,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "linehtmltooltip",
+            "id": plugins.get_id(line),
+            "label": label,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class InteractiveLegendPlugin(plugins.PluginBase):
-	"""A plugin for an interactive legends.
+    """A plugin for an interactive legends.
 
 	Inspired by http://bl.ocks.org/simzou/6439398
 
@@ -331,7 +343,7 @@ class InteractiveLegendPlugin(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 	mpld3.register_plugin("interactive_legend", InteractiveLegend);
 	InteractiveLegend.prototype = Object.create(mpld3.Plugin.prototype);
 	InteractiveLegend.prototype.constructor = InteractiveLegend;
@@ -475,70 +487,81 @@ class InteractiveLegendPlugin(plugins.PluginBase):
 	};
 	"""
 
-	css_ = """
+    css_ = """
 	.legend-box {
 	  cursor: pointer;
 	}
 	"""
 
-	def __init__(self, plot_elements, labels, ax=None,
-				 alpha_sel=1, alpha_unsel=0.2, xoffset=0, yoffset=0,start_visible=False,fontsize=18):
+    def __init__(self,
+                 plot_elements,
+                 labels,
+                 ax=None,
+                 alpha_sel=1,
+                 alpha_unsel=0.2,
+                 xoffset=0,
+                 yoffset=0,
+                 start_visible=False,
+                 fontsize=18):
 
-		self.ax = ax
+        self.ax = ax
 
-		if ax:
-			ax = plugins.get_id(ax)
+        if ax:
+            ax = plugins.get_id(ax)
 
-		# start_visible could be a list
-		if isinstance(start_visible, bool):
-			start_visible = [start_visible] * len(labels)
-		elif not len(start_visible) == len(labels):
-			raise ValueError("{} out of {} visible params has been set".format(len(start_visible), len(labels)))
+        # start_visible could be a list
+        if isinstance(start_visible, bool):
+            start_visible = [start_visible] * len(labels)
+        elif not len(start_visible) == len(labels):
+            raise ValueError("{} out of {} visible params has been set".format(
+                len(start_visible), len(labels)))
 
-		mpld4_element_ids = self._determine_mpld4ids(plot_elements)
-		self.mpld4_element_ids = mpld4_element_ids
-		self.dict_ = {"type": "interactive_legend",
-					  "element_ids": mpld4_element_ids,
-					  "labels": labels,
-					  "ax": ax,
-					  "alpha_sel": alpha_sel,
-					  "alpha_unsel": alpha_unsel,
-					  "xoffset":xoffset,
-					  "yoffset":yoffset,
-					  "start_visible":start_visible,
-					  "fontsize":fontsize}
+        mpld4_element_ids = self._determine_mpld4ids(plot_elements)
+        self.mpld4_element_ids = mpld4_element_ids
+        self.dict_ = {
+            "type": "interactive_legend",
+            "element_ids": mpld4_element_ids,
+            "labels": labels,
+            "ax": ax,
+            "alpha_sel": alpha_sel,
+            "alpha_unsel": alpha_unsel,
+            "xoffset": xoffset,
+            "yoffset": yoffset,
+            "start_visible": start_visible,
+            "fontsize": fontsize
+        }
 
-	def _determine_mpld4ids(self, plot_elements):
-		"""
+    def _determine_mpld4ids(self, plot_elements):
+        """
 		Helper function to get the mpld4_id for each
 		of the specified elements.
 		"""
-		mpld4_element_ids = []
+        mpld4_element_ids = []
 
-		# There are two things being done here. First,
-		# we make sure that we have a list of lists, where
-		# each inner list is associated with a single legend
-		# item. Second, in case of Line2D object we pass
-		# the id for both the marker and the line.
-		# on the javascript side we filter out the nulls in
-		# case either the line or the marker has no equivalent
-		# D3 representation.
-		for entry in plot_elements:
-			ids = []
-			if isinstance(entry, collections.Iterable):
-				for element in entry:
-					mpld4_id = plugins.get_id(element)
-					ids.append(mpld4_id)
-					if isinstance(element, matplotlib.lines.Line2D):
-						mpld4_id = plugins.get_id(element, 'pts')
-						ids.append(mpld4_id)
-			else:
-				ids.append(plugins.get_id(entry))
-				if isinstance(entry, matplotlib.lines.Line2D):
-					mpld4_id = plugins.get_id(entry, 'pts')
-					ids.append(mpld4_id)
-			mpld4_element_ids.append(ids)
-		return mpld4_element_ids
+        # There are two things being done here. First,
+        # we make sure that we have a list of lists, where
+        # each inner list is associated with a single legend
+        # item. Second, in case of Line2D object we pass
+        # the id for both the marker and the line.
+        # on the javascript side we filter out the nulls in
+        # case either the line or the marker has no equivalent
+        # D3 representation.
+        for entry in plot_elements:
+            ids = []
+            if isinstance(entry, collections.Iterable):
+                for element in entry:
+                    mpld4_id = plugins.get_id(element)
+                    ids.append(mpld4_id)
+                    if isinstance(element, matplotlib.lines.Line2D):
+                        mpld4_id = plugins.get_id(element, 'pts')
+                        ids.append(mpld4_id)
+            else:
+                ids.append(plugins.get_id(entry))
+                if isinstance(entry, matplotlib.lines.Line2D):
+                    mpld4_id = plugins.get_id(entry, 'pts')
+                    ids.append(mpld4_id)
+            mpld4_element_ids.append(ids)
+        return mpld4_element_ids
 
 
 class PointClickableHTMLTooltip(plugins.PluginBase):
@@ -610,8 +633,13 @@ class PointClickableHTMLTooltip(plugins.PluginBase):
     };
     """
 
-    def __init__(self, points, labels=None, targets=None,
-                 hoffset=2, voffset=-6, css=None):
+    def __init__(self,
+                 points,
+                 labels=None,
+                 targets=None,
+                 hoffset=2,
+                 voffset=-6,
+                 css=None):
         self.points = points
         self.labels = labels
         self.targets = targets
@@ -623,17 +651,18 @@ class PointClickableHTMLTooltip(plugins.PluginBase):
         else:
             styled_targets = None
 
-
         if isinstance(points, matplotlib.lines.Line2D):
             suffix = "pts"
         else:
             suffix = None
-        self.dict_ = {"type": "clickablehtmltooltip",
-                      "id": plugins.get_id(points, suffix),
-                      "labels": labels,
-                      "targets": styled_targets,
-                      "hoffset": hoffset,
-                      "voffset": voffset}
+        self.dict_ = {
+            "type": "clickablehtmltooltip",
+            "id": plugins.get_id(points, suffix),
+            "labels": labels,
+            "targets": styled_targets,
+            "hoffset": hoffset,
+            "voffset": voffset
+        }
 
 
 class MouseXPosition(plugins.PluginBase):
@@ -678,16 +707,19 @@ class MouseXPosition(plugins.PluginBase):
     >>> plugins.connect(fig, plugins.MouseXPosition())
     >>> fig_to_html(fig)
     """
-    def __init__(self, fontsize=12, fmt="8.0f"):
-        self.dict_ = {"type": "mousexposition",
-                      "fontsize": fontsize,
-                      "fmt": fmt}
-        
-        
-class TopToolbar(plugins.PluginBase):
-	"""Plugin for moving toolbar to top of figure"""
 
-	JAVASCRIPT = """
+    def __init__(self, fontsize=12, fmt="8.0f"):
+        self.dict_ = {
+            "type": "mousexposition",
+            "fontsize": fontsize,
+            "fmt": fmt
+        }
+
+
+class TopToolbar(plugins.PluginBase):
+    """Plugin for moving toolbar to top of figure"""
+
+    JAVASCRIPT = """
 	mpld3.register_plugin("toptoolbar", TopToolbar);
 	TopToolbar.prototype = Object.create(mpld3.Plugin.prototype);
 	TopToolbar.prototype.constructor = TopToolbar;
@@ -734,14 +766,17 @@ class TopToolbar(plugins.PluginBase):
 	  this.fig.toolbar.draw = function() {}
 	}
 	"""
-	def __init__(self,xoffset=0, yoffset=0):
-		self.dict_ = {"type": "toptoolbar",
-					  "xoffset":xoffset,
-					  "yoffset":yoffset} 
-        
+
+    def __init__(self, xoffset=0, yoffset=0):
+        self.dict_ = {
+            "type": "toptoolbar",
+            "xoffset": xoffset,
+            "yoffset": yoffset
+        }
+
 
 class DownloadProfile(plugins.PluginBase):
-	"""A Plugin to enable an HTML tooltip:
+    """A Plugin to enable an HTML tooltip:
 	formated text which hovers over points.
 
 	Parameters
@@ -766,7 +801,7 @@ class DownloadProfile(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 
 
 
@@ -1004,19 +1039,15 @@ class DownloadProfile(plugins.PluginBase):
 
 	"""
 
-	def __init__(self,returnstr=2017,css=None):
-		self.returnstr = returnstr
-		self.css_ = css or ""
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
 
-		self.dict_ = {"type": "downloadprofile",
-					  "returnstr": returnstr}
-
+        self.dict_ = {"type": "downloadprofile", "returnstr": returnstr}
 
 
-
-
-class DownloadPNG(plugins.PluginBase):
-	"""A Plugin to enable an HTML tooltip:
+class DownloadSVG(plugins.PluginBase):
+    """A Plugin to enable an HTML tooltip:
 	formated text which hovers over points.
 
 	Parameters
@@ -1041,7 +1072,7 @@ class DownloadPNG(plugins.PluginBase):
 	>>> fig_to_html(fig)
 	"""
 
-	JAVASCRIPT = """
+    JAVASCRIPT = """
 
 	/* FileSaver.js
 	 * A saveAs() FileSaver implementation.
@@ -1402,9 +1433,402 @@ class DownloadPNG(plugins.PluginBase):
 
 	"""
 
-	def __init__(self,returnstr=2017,css=None):
-		self.returnstr = returnstr
-		self.css_ = css or ""
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
 
-		self.dict_ = {"type": "downloadpng",
-					  "returnstr": returnstr}
+        self.dict_ = {"type": "downloadpng", "returnstr": returnstr}
+
+
+class DownloadPNG(plugins.PluginBase):
+    """A Plugin to enable an HTML tooltip:
+	formated text which hovers over points.
+
+	Parameters
+	----------
+	points : matplotlib Collection or Line2D object
+		The figure element to apply the tooltip to
+	labels : list
+		The labels for each point in points, as strings of unescaped HTML.
+	hoffset, voffset : integer, optional
+		The number of pixels to offset the tooltip text.  Default is
+		hoffset = 0, voffset = 10
+	css : str, optional
+		css to be included, for styling the label html if desired
+	Examples
+	--------
+	>>> import matplotlib.pyplot as plt
+	>>> from mpld3 import fig_to_html, plugins
+	>>> fig, ax = plt.subplots()
+	>>> points = ax.plot(range(10), 'o')
+	>>> labels = ['<h1>{title}</h1>'.format(title=i) for i in range(10)]
+	>>> plugins.connect(fig, PointHTMLTooltip(points[0], labels))
+	>>> fig_to_html(fig)
+	"""
+
+    JAVASCRIPT = """
+
+	/* FileSaver.js
+	 * A saveAs() FileSaver implementation.
+	 * 1.3.8
+	 * 2018-03-22 14:03:47
+	 *
+	 * By Eli Grey, https://eligrey.com
+	 * License: MIT
+	 *   See https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md
+	 */
+
+	/*global self */
+	/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
+
+	/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/src/FileSaver.js */
+
+	var saveAs = saveAs || (function(view) {
+	"use strict";
+	// IE <10 is explicitly unsupported
+	if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
+		return;
+	}
+	var
+	doc = view.document
+	// only get URL when necessary in case Blob.js hasn't overridden it yet
+	, get_URL = function() {
+		return view.URL || view.webkitURL || view;
+	}
+	, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+	, can_use_save_link = "download" in save_link
+	, click = function(node) {
+		var event = new MouseEvent("click");
+		node.dispatchEvent(event);
+	}
+	, is_safari = /constructor/i.test(view.HTMLElement) || view.safari
+	, is_chrome_ios =/CriOS\/[\d]+/.test(navigator.userAgent)
+	, setImmediate = view.setImmediate || view.setTimeout
+	, throw_outside = function(ex) {
+		setImmediate(function() {
+			throw ex;
+		}, 0);
+	}
+	, force_saveable_type = "application/octet-stream"
+	// the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
+	, arbitrary_revoke_timeout = 1000 * 40 // in ms
+	, revoke = function(file) {
+		var revoker = function() {
+			if (typeof file === "string") { // file is an object URL
+				get_URL().revokeObjectURL(file);
+			} else { // file is a File
+				file.remove();
+			}
+		};
+		setTimeout(revoker, arbitrary_revoke_timeout);
+	}
+	, dispatch = function(filesaver, event_types, event) {
+		event_types = [].concat(event_types);
+		var i = event_types.length;
+		while (i--) {
+			var listener = filesaver["on" + event_types[i]];
+			if (typeof listener === "function") {
+				try {
+					listener.call(filesaver, event || filesaver);
+				} catch (ex) {
+					throw_outside(ex);
+				}
+			}
+		}
+	}
+	, auto_bom = function(blob) {
+		// prepend BOM for UTF-8 XML and text/* types (including HTML)
+		// note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
+		if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+			//return new Blob([String.fromCharCode(0xFEFF), blob], {type: blob.type});
+			return new Blob(["\uFEFF", blob], {type: blob.type});
+		}
+		return blob;
+	}
+	, FileSaver = function(blob, name, no_auto_bom) {
+		if (!no_auto_bom) {
+			blob = auto_bom(blob);
+		}
+		// First try a.download, then web filesystem, then object URLs
+		var
+		filesaver = this
+		, type = blob.type
+		, force = type === force_saveable_type
+		, object_url
+		, dispatch_all = function() {
+			dispatch(filesaver, "writestart progress write writeend".split(" "));
+		}
+		// on any filesys errors revert to saving with object URLs
+		, fs_error = function() {
+			if ((is_chrome_ios || (force && is_safari)) && view.FileReader) {
+				// Safari doesn't allow downloading of blob urls
+				var reader = new FileReader();
+				reader.onloadend = function() {
+					var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
+					var popup = view.open(url, '_blank');
+					if(!popup) view.location.href = url;
+							   url=undefined; // release reference before dispatching
+							   filesaver.readyState = filesaver.DONE;
+					dispatch_all();
+				};
+				reader.readAsDataURL(blob);
+				filesaver.readyState = filesaver.INIT;
+				return;
+			}
+			// don't create more object URLs than needed
+			if (!object_url) {
+				object_url = get_URL().createObjectURL(blob);
+			}
+			if (force) {
+				view.location.href = object_url;
+			} else {
+				var opened = view.open(object_url, "_blank");
+				if (!opened) {
+					// Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
+					view.location.href = object_url;
+				}
+			}
+			filesaver.readyState = filesaver.DONE;
+			dispatch_all();
+			revoke(object_url);
+		}
+		;
+		filesaver.readyState = filesaver.INIT;
+
+		if (can_use_save_link) {
+			object_url = get_URL().createObjectURL(blob);
+			setImmediate(function() {
+				save_link.href = object_url;
+				save_link.download = name;
+				click(save_link);
+				dispatch_all();
+				revoke(object_url);
+				filesaver.readyState = filesaver.DONE;
+			}, 0);
+			return;
+		}
+
+		fs_error();
+	}
+	, FS_proto = FileSaver.prototype
+	, saveAs = function(blob, name, no_auto_bom) {
+		return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+	}
+	;
+
+	// IE 10+ (native saveAs)
+	if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+		return function(blob, name, no_auto_bom) {
+			name = name || blob.name || "download";
+
+			if (!no_auto_bom) {
+				blob = auto_bom(blob);
+			}
+			return navigator.msSaveOrOpenBlob(blob, name);
+		};
+	}
+
+	// todo: detect chrome extensions & packaged apps
+	//save_link.target = "_blank";
+
+	FS_proto.abort = function(){};
+	FS_proto.readyState = FS_proto.INIT = 0;
+	FS_proto.WRITING = 1;
+	FS_proto.DONE = 2;
+
+	FS_proto.error =
+	FS_proto.onwritestart =
+	FS_proto.onprogress =
+	FS_proto.onwrite =
+	FS_proto.onabort =
+	FS_proto.onerror =
+	FS_proto.onwriteend =
+	null;
+
+	return saveAs;
+	}(
+		typeof self !== "undefined" && self
+		|| typeof window !== "undefined" && window
+		|| this
+	));
+
+
+
+	function getSVGString( svgNode ) {
+		svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+		var cssStyleText = getCSSStyles( svgNode );
+		appendCSS( cssStyleText, svgNode );
+	
+		var serializer = new XMLSerializer();
+		var svgString = serializer.serializeToString(svgNode);
+		svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+		svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+	
+		return svgString;
+	
+		function getCSSStyles( parentElement ) {
+			var selectorTextArr = [];
+	
+			// Add Parent element Id and Classes to the list
+			selectorTextArr.push( '#'+parentElement.id );
+			for (var c = 0; c < parentElement.classList.length; c++)
+					if ( !contains('.'+parentElement.classList[c], selectorTextArr) )
+						selectorTextArr.push( '.'+parentElement.classList[c] );
+	
+			// Add Children element Ids and Classes to the list
+			var nodes = parentElement.getElementsByTagName("*");
+			for (var i = 0; i < nodes.length; i++) {
+				var id = nodes[i].id;
+				if ( !contains('#'+id, selectorTextArr) )
+					selectorTextArr.push( '#'+id );
+	
+				var classes = nodes[i].classList;
+				for (var c = 0; c < classes.length; c++)
+					if ( !contains('.'+classes[c], selectorTextArr) )
+						selectorTextArr.push( '.'+classes[c] );
+			}
+	
+			// Extract CSS Rules
+			var extractedCSSText = "";
+			for (var i = 0; i < document.styleSheets.length; i++) {
+				var s = document.styleSheets[i];
+				
+				try {
+					if(!s.cssRules) continue;
+				} catch( e ) {
+						if(e.name !== 'SecurityError') throw e; // for Firefox
+						continue;
+					}
+	
+				var cssRules = s.cssRules;
+				for (var r = 0; r < cssRules.length; r++) {
+					if ( contains( cssRules[r].selectorText, selectorTextArr ) )
+						extractedCSSText += cssRules[r].cssText;
+				}
+			}
+			
+	
+			return extractedCSSText;
+	
+			function contains(str,arr) {
+				return arr.indexOf( str ) === -1 ? false : true;
+			}
+	
+		}
+	
+		function appendCSS( cssText, element ) {
+			var styleElement = document.createElement("style");
+			styleElement.setAttribute("type","text/css"); 
+			styleElement.innerHTML = cssText;
+			var refNode = element.hasChildNodes() ? element.children[0] : null;
+			element.insertBefore( styleElement, refNode );
+		}
+	}
+
+	function svgString2Image( svgString, width, height, format, callback ) {
+		var format = format ? format : 'png';
+	
+		var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
+	
+		var canvas = document.createElement("canvas");
+		var context = canvas.getContext("2d");
+	
+		canvas.width = width;
+		canvas.height = height;
+	
+		var image = new Image();
+		image.onload = function() {
+			context.clearRect ( 0, 0, width, height );
+			context.drawImage(image, 0, 0, width, height);
+	
+			canvas.toBlob( function(blob) {
+				var filesize = Math.round( blob.length/1024 ) + ' KB';
+				if ( callback ) callback( blob, filesize );
+			});
+	
+			
+		};
+	
+		image.src = imgsrc;
+	}
+
+
+	var my_save_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAjCAMAAAAOqcKDAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGd27GMAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMTczbp9jAAAAk0lEQVRIS+2LSQ6AMAwD6f8/DU7iLFWpCkiIAz40Ezeztev5nTedjbGiotIR6XVPjhWE4kir6RxcOGRHOsYc78dOVMDkGOAVCMcL5KBVB5MZOni8iAPmmWNTB59odCLmMDcc/uhIeOqgnzmIsP8wXDETYhJXHTsROnVMCnSaON1lZM2p1sypP1gQoDaX8jtfdlrbAc3PBRcmkelCAAAAAElFTkSuQmCC";
+
+	mpld3.register_plugin("downloadpng", DownloadPNG);
+	DownloadPNG.prototype = Object.create(mpld3.Plugin.prototype);
+
+	DownloadPNG.prototype.constructor = DownloadPNG;
+	DownloadPNG.prototype.requiredProps = ["returnstr"];
+	DownloadPNG.prototype.defaultProps = {};
+
+
+	function saveCanvas(x_canvas){
+		x_canvas.toBlob(function(blob) {
+			saveAs(
+				blob
+				, "screenshot.png"
+			);
+		}, "image/png");
+	}
+	function DownloadPNG(fig, props){
+		mpld3.Plugin.call(this, fig, props);
+		var n = (this.props.returnstr).toString();
+
+		var ResetButton = mpld3.ButtonFactory({
+		buttonID: "reset",
+		sticky: false,
+		onActivate: function() {
+			//var blob = new Blob([n], {
+			//	type: "text/plain;charset=utf-8;",
+			//});
+			//saveAs(blob, "Image.html");
+			//base_image = new Image();
+			//base_image.src = 'data:image/png;base64,'+n
+			//var canvas = document.createElement('canvas');
+			//canvas.id     = "YourCanvas";
+			//var canvas = document.getElementById('YourCanvas');
+			//context = canvas.getContext('2d');
+			// Draw image within
+			//context.drawImage(base_image, 0,0);
+			//canvas.toBlob(function(blob) {
+			//	saveAs(blob, "Image.png");
+			//}, "image/png");
+			
+			var svgs = document.getElementsByClassName("mpld3-figure");
+			svgString = getSVGString(svgs[0])
+			svgString2Image( svgString, 2300, 1200, 'png', save ); // passes Blob and filesize String to the callback
+			
+			function save( dataBlob, filesize ){
+				saveAs( dataBlob, n ); // FileSaver.js function
+			}
+			console.log("svg string"+svgString);
+			
+			
+			base_image = new Image();
+			base_image.src ='data:image/png;base64,'+n;
+			base_image.onload = function(){
+				var canvas = document.createElement('canvas');
+				canvas.width = 2300;
+				canvas.height = 1100;
+				context = canvas.getContext('2d');
+				// Draw image within
+				context.drawImage(base_image, 0,0);
+				// Save the canvas
+				//saveCanvas(canvas);
+				// Remove it
+				
+			};
+		},
+		icon: function(){return my_save_icon;}
+		});
+		this.fig.buttons.push(ResetButton);
+	};
+
+	"""
+
+    def __init__(self, returnstr=2017, css=None):
+        self.returnstr = returnstr
+        self.css_ = css or ""
+
+        self.dict_ = {"type": "downloadpng", "returnstr": returnstr}
