@@ -126,7 +126,7 @@ def sanitize_get_request(request):
 try:
     if sys.argv[1] == "true":
         pass
-except:
+except Exception:
     app.config.update(
         SESSION_REFRESH_EACH_REQUEST=False,
         SESSION_COOKIE_HTTPONLY=False,
@@ -592,7 +592,7 @@ def upload_file():
             config.SCRIPT_LOC, foldername, filename))
         try:
             file_description = sqlite_db["description"]
-        except:
+        except Exception:
             file_description = "NULL"
         sqlite_db.close()
         # get file id
@@ -837,7 +837,7 @@ def saved():
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
@@ -969,7 +969,7 @@ def del_query():
     cursor = connection.cursor()
     try:
         user = current_user.name
-    except:
+    except Exception:
         user = None
         return "Error user not signed in"
     cursor.execute(
@@ -1146,7 +1146,7 @@ def homepage(message=""):
 def plogpage(organism, transcriptome):
     try:  # TODO: Integrate login details in main page and remove this function
         user = current_user.name
-    except:
+    except Exception:
         user = None
     return render_template('plot_types.html', current_username=user)
 
@@ -1682,7 +1682,7 @@ def dataset_breakdown(organism, transcriptome):
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)
@@ -1729,7 +1729,7 @@ def dataset_breakdown(organism, transcriptome):
             raw_count = sqlite_db[table_name][transcript][stop][start][
                 "profile_count"]
             raw_reads.append(raw_count)
-        except:
+        except Exception:
             raw_count = 0
             raw_reads.append(raw_count)
         orfquery_cursor.execute(
@@ -1765,11 +1765,11 @@ if __name__ == '__main__':
     try:
         if sys.argv[1] == "true":
             local = True
-    except:
+    except Exception:
         pass
     try:
         port_no = int(sys.argv[2])
-    except:
+    except Exception:
         port_no = 5000
     if local == False:
         app.run(host='0.0.0.0', debug=False)

@@ -1491,7 +1491,7 @@ def rust_dwell(codon_count_dict, short_code, background_col, title_size,
     min_count = float(min(codon_count_dict.values())) + 0.000001
     max_count = float(max(codon_count_dict.values()))
     max_rust_ratio = (max_count / (min_count))
-    aa_dict =fixed_values.aa_short_codon_list.copy() 
+    aa_dict = fixed_values.aa_short_codon_list.copy()
     avg_dict = {}
     for aa in aa_dict:
         tot = 0.0
@@ -1561,134 +1561,6 @@ def rust_dwell(codon_count_dict, short_code, background_col, title_size,
     return graph
 
 
-def codon_usage(codon_dict, short_code, title_size, axis_label_size,
-                marker_size):
-    allxvals = []
-    allyvals = []
-    alllabels = []
-    amino_acids = []
-    aa_dict = fixed_values.codon_aa_full.copy() 
-
-    codon_list = fixed_values.codon_list.copy()
-
-    curr_count = 0
-    for codon in codon_list:
-        curr_count += 1
-        allxvals.append(curr_count)
-        allyvals.append(codon_dict[codon]["ribo_count"] /
-                        codon_dict[codon]["codon_count"])
-        alllabels.append(codon)
-        amino_acids.append(aa_dict[codon])
-    full_title = "Codon usage ({})".format(short_code)
-    x_lab = ''
-    y_lab = 'Normalised Count'
-    min_y = min(0, min(allyvals)) - .02
-    max_y = max(allyvals) + .02
-    p = figure(plot_width=1300,
-               plot_height=750,
-               x_axis_label=x_lab,
-               y_axis_label=y_lab,
-               title=full_title,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,hover,tap",
-               logo=None,
-               y_range=(min_y, max_y))
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = "14pt"
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_color
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
-    color_palette_list = []
-    colormap = cm.get_cmap(
-        "gist_rainbow")  #choose any matplotlib colormap here
-    start_val = 0.75
-    for i in range(0, 21):
-        start_val -= 0.0293
-        rgb = colormap(start_val)[:3]
-        hexval = matplotlib.colors.rgb2hex(rgb)
-        color_palette_list.append(hexval)
-
-    color_map = bmo.CategoricalColorMapper(factors=[
-        "Phenylalanine", "Leucine", "Serine", "Tyrosine", "*", "Cysteine",
-        "Tryptophan", "Proline", "Histidine", "Glutamine", "Arginine",
-        "Isoleucine", "Methionine", "Threonine", "Asparagine", "Lysine",
-        "Valine", "Alanine", "Aspartic Acid", "Glutamic Acid", "Glycine"
-    ],
-                                           palette=color_palette_list)
-    p.quad(
-        top=[
-            max_y, max_y, max_y, max_y, max_y, max_y, max_y, max_y, max_y,
-            max_y, max_y
-        ],
-        bottom=[
-            min_y, min_y, min_y, min_y, min_y, min_y, min_y, min_y, min_y,
-            min_y, min_y
-        ],
-        left=[0.5, 3.5, 15.5, 19.5, 24.5, 28.5, 37.5, 43.5, 49.5, 55.5, 61.5],
-        right=[1.5, 9.5, 17.5, 20.5, 26.5, 34.5, 41.5, 45.5, 53.5, 57.5, 64.5],
-        color="#e0e0e0")
-
-    source = ColumnDataSource({
-        'x': allxvals,
-        'y': allyvals,
-        'labels': alllabels,
-        'amino_acids': amino_acids
-    })
-    p.scatter('x',
-              'y',
-              source=source,
-              alpha=1,
-              color={
-                  'field': 'amino_acids',
-                  'transform': color_map
-              },
-              size=16,
-              line_color="black")
-    p.xaxis.ticker = [
-        1, 2.5, 6.5, 12.5, 16.5, 18.5, 20, 22.5, 25.5, 27.5, 31.5, 36, 39.5,
-        42.5, 44.5, 47.5, 51.5, 54.5, 56.5, 59.5, 63
-    ]
-    p.xaxis.major_label_overrides = {
-        1: "Met",
-        2.5: "Phe",
-        6.5: "Leu",
-        12.5: "Ser",
-        16.5: "Tyr",
-        18.5: "Cys",
-        20: "Trp",
-        22.5: "Pro",
-        25.5: "His",
-        27.5: "Gln",
-        31.5: "Arg",
-        36: "Ile",
-        39.5: "Thr",
-        42.5: "Asn",
-        44.5: "Lys",
-        47.5: "Val",
-        51.5: "Ala",
-        54.5: "Asp",
-        56.5: "Glu",
-        59.5: "Gly",
-        63: "Stop"
-    }
-    #p.vbar(x=[1], width=1,bottom=0,color="gray",top=[1])
-
-    hover = p.select(dict(type=HoverTool))
-    hover.tooltips = [("Count", "@y"), ("Codon", "@labels"),
-                      ("Amino acid", "@amino_acids")]
-
-    output_file("scatter10k.html", title="Codon usage")
-    hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
-
-    graph = file_html(p, CDN)
-    return graph
-
-
 def calc_mrnadist_factor(mrna_dist_dict):
     maxval = 0
     for key in mrna_dist_dict:
@@ -1747,7 +1619,7 @@ def mrna_dist(
     for key in mrna_dist_dict:
         #try:
         #	total = float(mrna_dist_dict[key]["total"])
-        #except:
+        #except Exception:
         total = float(mrna_dist_dict[key]["5_leader"] +
                       mrna_dist_dict[key]["start_codon"] +
                       mrna_dist_dict[key]["cds"] +

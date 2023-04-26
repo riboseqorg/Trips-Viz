@@ -194,12 +194,12 @@ def generate_plot():
     print(traninfo)
     try:
         traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
-    except:
+    except Exception:
         traninfo["stop_list"] = []
 
     try:
         traninfo["start_list"] = [int(x) for x in traninfo["start_list"]]
-    except:
+    except Exception:
         traninfo["start_list"] = []
 
     if str(traninfo["exon_junctions"][0]) != "":
@@ -317,11 +317,11 @@ def generate_plot():
     seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
     try:
         rnamax = max(all_rna_reads.values())
-    except:
+    except Exception:
         rnamax = 0
     try:
         subcodonmax = max(all_subcodon_reads.values())
-    except:
+    except Exception:
         subcodonmax = 0
     y_max = max(1, rnamax, subcodonmax) * 1.1
 
@@ -803,7 +803,7 @@ def generate_plot():
                                              [y_max, y_max],
                                              alpha=0.75,
                                              color="#fffbaf")
-            except:
+            except Exception:
                 hili = ax_main.fill_between([user_hili_start, user_hili_stop],
                                             [y_max, y_max],
                                             alpha=0.75,
@@ -875,7 +875,7 @@ def generate_plot():
 
             try:
                 in_out_ratio = orf_ribo / outframe_ribo
-            except:
+            except Exception:
                 in_out_ratio = "Null"
 
             datadict = {

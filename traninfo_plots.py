@@ -4,29 +4,27 @@ from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.text import TextPath
 from matplotlib.patches import PathPatch
-from matplotlib.font_manager import FontProperties
 import mpld3
 from mpld3 import plugins
-from new_plugins import InteractiveLegendPlugin, TopToolbar, DownloadProfile, DownloadPNG
+from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
+                         DownloadPNG)
 import collections
 import pandas as pd
 import numpy as np
-import matplotlib.cm as cm
-from bokeh.plotting import figure, output_file
+from bokeh.plotting import figure
 from bokeh.embed import file_html
 from bokeh.resources import CDN
-import bokeh.models as bmo
 from bokeh.models import (
     ColumnDataSource,
     HoverTool,
 )
-import fixed_values
+
 matplotlib.use('agg')
 #ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
 try:
     import RNA
     vienna_rna = True
-except:
+except Exception:
     print(
         "Could not import the RNA module, ViennaRNA needs to be installed (https://github.com/ViennaRNA/ViennaRNA), MFE will not be plotted on traninfo plot"
     )
@@ -83,12 +81,6 @@ def nuc_freq_plot(master_dict, title, short_code, background_col,
     maxheight = max(max(a_counts), max(t_counts), max(g_counts), max(c_counts))
     ax.set_ylim(0, maxheight)
     ax.set_ylabel('Count', fontsize=axis_label_size, labelpad=100)
-    #if nuc_comp_direction == "nuc_comp_five":
-    #	ax.set_xlim(0,maxreadlen)
-    #elif nuc_comp_direction == "nuc_comp_three":
-    #	ax.set_xlim((maxreadlen*-1),-1)
-    width = 0.95
-    #plot it
     ax = plt.subplot(111)
     title_str = "{} ({})".format(title, short_code)
     ax.set_title(title_str, y=1.05, fontsize=title_size)
@@ -129,12 +121,12 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
     color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
     try:
         traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
-    except:
+    except Exception:
         traninfo["stop_list"] = []
 
     try:
         traninfo["start_list"] = [int(x) for x in traninfo["start_list"]]
-    except:
+    except Exception:
         traninfo["start_list"] = []
 
     if str(traninfo["exon_junctions"][0]) != "":
@@ -147,9 +139,9 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
-    if cds_start == "NULL" or cds_start == None:
+    if cds_start == "NULL" or not cds_start:
         cds_start = 0
-    if cds_stop == "NULL" or cds_stop == None:
+    if cds_stop == "NULL" or not cds_stop:
         cds_stop = 0
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
@@ -207,7 +199,6 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
 
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
     ax_main.spines['bottom'].set_visible(False)
-    #ax_main.set_ylabel(label,  fontsize=axis_label_size, labelpad=30)
     label = 'Position (nucleotides)'
     ax_main.set_xlabel(label, fontsize=axis_label_size)
     ax_main.set_ylim(0, y_max)
@@ -300,7 +291,7 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
 
     plot_gc = True
     plot_mfe = True
-    if plot_mfe == True and vienna_rna == True:
+    if plot_mfe and vienna_rna:
         step_size = 2
         window_size = 60
         mfe_dict = collections.OrderedDict()
@@ -310,7 +301,7 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
             mfe_dict[i + (window_size / 2)] = abs(mfe)
     else:
         mfe_dict = {}
-    if plot_gc == True:
+    if plot_gc:
         step_size = 2
         window_size = 60
         a_dict = collections.OrderedDict()
@@ -411,36 +402,32 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
                                   start_visible=start_visible,
                                   fontsize=30,
                                   xoffset=leg_offset)
-    htmllabels = {1: [], 2: [], 3: []}
     all_start_points = {1: [], 2: [], 3: []}
 
-    points1 = ax_f1.plot(all_start_points[1],
-                         [0.75] * len(all_start_points[1]),
-                         'o',
-                         color='b',
-                         mec='k',
-                         ms=13,
-                         mew=1,
-                         alpha=0,
-                         zorder=3)
-    points2 = ax_f2.plot(all_start_points[2],
-                         [0.75] * len(all_start_points[2]),
-                         'o',
-                         color='b',
-                         mec='k',
-                         ms=13,
-                         mew=1,
-                         alpha=0,
-                         zorder=3)
-    points3 = ax_f3.plot(all_start_points[3],
-                         [0.75] * len(all_start_points[3]),
-                         'o',
-                         color='b',
-                         mec='k',
-                         ms=13,
-                         mew=1,
-                         alpha=0,
-                         zorder=3)
+    ax_f1.plot(all_start_points[1], [0.75] * len(all_start_points[1]),
+               'o',
+               color='b',
+               mec='k',
+               ms=13,
+               mew=1,
+               alpha=0,
+               zorder=3)
+    ax_f2.plot(all_start_points[2], [0.75] * len(all_start_points[2]),
+               'o',
+               color='b',
+               mec='k',
+               ms=13,
+               mew=1,
+               alpha=0,
+               zorder=3)
+    ax_f3.plot(all_start_points[3], [0.75] * len(all_start_points[3]),
+               'o',
+               color='b',
+               mec='k',
+               ms=13,
+               mew=1,
+               alpha=0,
+               zorder=3)
 
     ax_f3.axes.get_yaxis().set_ticks([])
     ax_f2.axes.get_yaxis().set_ticks([])
@@ -468,8 +455,6 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
                 axis_label_size, subheading_size, marker_size, traninfo):
     labels = ["CDS markers"]
     start_visible = [True]
-    stop_codons = ["TAG", "TAA", "TGA"]
-    frame_orfs = {1: [], 2: [], 3: []}
     color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
     gene = ""
     y_max = 100
@@ -488,9 +473,6 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
                                 color="black",
                                 linestyle='solid',
                                 linewidth=2)
-    #ax_nucseq.set_xlabel('Transcript: {} Length: {} nt'.format(tran, tranlen), fontsize=subheading_size, labelpad=10)
-    xy = 0
-    color_list = ["#FF4A45", "#64FC44", "#5687F9"]
     for label in ax_main.xaxis.get_majorticklabels():
         label.set_fontsize(36)
 
@@ -500,7 +482,7 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
 
     plot_gc = True
     plot_mfe = False
-    if plot_mfe == True and vienna_rna == True:
+    if plot_mfe and vienna_rna:
         step_size = 10
         window_size = 60
         mfe_dict = collections.OrderedDict()
@@ -528,7 +510,7 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
         for per in mfe_dict:
             mfe_dict[per] = sum(mfe_dict[per]) / len(mfe_dict[per])
 
-    if plot_gc == True:
+    if plot_gc:
         step_size = 10
         window_size = 60
         a_dict = {}
@@ -536,19 +518,8 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
         g_dict = {}
         c_dict = {}
         gc_dict = {}
-        sorted_a_dict = collections.OrderedDict()
-        sorted_t_dict = collections.OrderedDict()
-        sorted_g_dict = collections.OrderedDict()
-        sorted_c_dict = collections.OrderedDict()
         sorted_gc_dict = collections.OrderedDict()
-        #for i in range(0,1503):
-        #	a_dict[i] = [0]
-        #	t_dict[i] = [0]
-        #	g_dict[i] = [0]
-        #	c_dict[i] = [0]
-        #	gc_dict[i] = [0]
         for item in traninfo:
-            transcript = item[0]
             cds_start = float(item[1])
             cds_stop = float(item[2])
             seq = item[3]
@@ -666,15 +637,14 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
                                zorder=1,
                                color='grey',
                                linewidth=4)
-        if plot_mfe == True:
-            mfe_plot = ax_main.plot(mfe_dict.keys(),
-                                    mfe_dict.values(),
-                                    alpha=0.01,
-                                    label=labels,
-                                    zorder=1,
-                                    color='#df8500',
-                                    linewidth=4)
-        #for item,lbl,viz in [(a_plot,"A%",False),(t_plot,"T%",False),(g_plot,"G%",False),(c_plot,"C%",False),(gc_plot,"GC%",True),(mfe_plot,"MFE",False)]:
+        if plot_mfe:
+            ax_main.plot(mfe_dict.keys(),
+                         mfe_dict.values(),
+                         alpha=0.01,
+                         label=labels,
+                         zorder=1,
+                         color='#df8500',
+                         linewidth=4)
         for item, lbl, viz in [(a_plot, "A%", False), (t_plot, "T%", False),
                                (g_plot, "G%", False), (c_plot, "C%", False),
                                (gc_plot, "GC%", True)]:
@@ -693,7 +663,6 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
                                   start_visible=start_visible,
                                   fontsize=30,
                                   xoffset=leg_offset)
-    htmllabels = {1: [], 2: [], 3: []}
 
     plugins.connect(fig, ilp, TopToolbar(yoffset=420, xoffset=130))
 
@@ -717,7 +686,6 @@ def gc_metagene(title, short_code, background_col, readlength_col, title_size,
                  ha="center")
     #hide x axis set_ticks
     ax_main.axes.get_xaxis().set_ticks([])
-    #Without this style tag the markers sizes will appear correct on browser but be original size when downloaded via png
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
     graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
@@ -792,12 +760,6 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     p.xaxis.major_label_text_font_size = marker_size
     p.yaxis.axis_label_text_font_size = axis_label_size
     p.yaxis.major_label_text_font_size = marker_size
-    #p.title.text_font_size = title_size
-    #p.xaxis.axis_label_text_font_size = axis_label_size
-    #p.xaxis.major_label_text_font_size = marker_size
-    #p.yaxis.axis_label_text_font_size = axis_label_size
-    #p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_col
     p.xgrid.grid_line_color = "#cccccc"
     p.ygrid.grid_line_color = "#cccccc"
     p.scatter('x',
@@ -837,8 +799,6 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     hover.tooltips = [("GC%", "@y"), ("Count", "@x"), ("Transcript", "@trans")]
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     return graph
 
@@ -909,12 +869,6 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     p.xaxis.major_label_text_font_size = marker_size
     p.yaxis.axis_label_text_font_size = axis_label_size
     p.yaxis.major_label_text_font_size = marker_size
-    #p.title.text_font_size = title_size
-    #p.xaxis.axis_label_text_font_size = axis_label_size
-    #p.xaxis.major_label_text_font_size = marker_size
-    #p.yaxis.axis_label_text_font_size = axis_label_size
-    #p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_col
     p.xgrid.grid_line_color = "#cccccc"
     p.ygrid.grid_line_color = "#cccccc"
     p.scatter('x',
@@ -954,8 +908,6 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     hover.tooltips = [("GC%", "@y"), ("Count", "@x"), ("Transcript", "@trans")]
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     return graph
 
@@ -1122,7 +1074,7 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
             try:
                 outx.append(keys[0])
                 outy.append(out.loc[keys[0]].loc[keys[1]])
-            except:
+            except Exception:
                 pass
     full_title = "{}% ({})".format(nucleotide, short_code)
     y_lab = '{} %'.format(nucleotide)
@@ -1140,10 +1092,8 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
     p.xaxis.major_label_text_font_size = marker_size
     p.yaxis.axis_label_text_font_size = axis_label_size
     p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_color
     p.xgrid.grid_line_color = "white"
     p.ygrid.grid_line_color = "white"
-    # if no outliers, shrink gcs of stems to be no longer than the minimums or maximums
     qmin = groups.quantile(q=0.00)
     qmax = groups.quantile(q=1.00)
     upper.gc = [
@@ -1174,8 +1124,6 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
 
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     return graph
 
@@ -1298,137 +1246,6 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
 
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
-    graph += file_html(p, CDN)
-    return graph
-
-
-def codon_usage(codon_dict, short_code, title_size, axis_label_size,
-                marker_size, filename):
-    allxvals = []
-    allyvals = []
-    alllabels = []
-    amino_acids = []
-    aa_dict = fixed_values.codon_aa_full.copy() 
-
-    codon_list = fixed_values.codon_list.copy() 
-
-    curr_count = 0
-    for codon in codon_list:
-        curr_count += 1
-        allxvals.append(curr_count)
-        if codon in codon_dict:
-            allyvals.append(codon_dict[codon])
-        else:
-            allyvals.append(0)
-        alllabels.append(codon)
-        amino_acids.append(aa_dict[codon])
-    full_title = "Codon usage ({})".format(short_code)
-    x_lab = ''
-    y_lab = 'Count'
-    min_y = min(0, min(allyvals)) - .02
-    max_y = max(allyvals) * 1.05
-    p = figure(plot_width=1300,
-               plot_height=1300,
-               x_axis_label=x_lab,
-               y_axis_label=y_lab,
-               title=full_title,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,hover,tap,save",
-               y_range=(min_y, max_y))
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = "14pt"
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_color
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
-    color_palette_list = []
-    colormap = cm.get_cmap(
-        "gist_rainbow")  #choose any matplotlib colormap here
-    start_val = 0.75
-    for i in range(0, 21):
-        start_val -= 0.0293
-        rgb = colormap(start_val)[:3]
-        hexval = matplotlib.colors.rgb2hex(rgb)
-        color_palette_list.append(hexval)
-
-    color_map = bmo.CategoricalColorMapper(factors=[
-        "Phenylalanine", "Leucine", "Serine", "Tyrosine", "*", "Cysteine",
-        "Tryptophan", "Proline", "Histidine", "Glutamine", "Arginine",
-        "Isoleucine", "Methionine", "Threonine", "Asparagine", "Lysine",
-        "Valine", "Alanine", "Aspartic Acid", "Glutamic Acid", "Glycine"
-    ],
-                                           palette=color_palette_list)
-    p.quad(
-        top=[
-            max_y, max_y, max_y, max_y, max_y, max_y, max_y, max_y, max_y,
-            max_y, max_y
-        ],
-        bottom=[
-            min_y, min_y, min_y, min_y, min_y, min_y, min_y, min_y, min_y,
-            min_y, min_y
-        ],
-        left=[0.5, 3.5, 15.5, 19.5, 24.5, 28.5, 37.5, 43.5, 49.5, 55.5, 61.5],
-        right=[1.5, 9.5, 17.5, 20.5, 26.5, 34.5, 41.5, 45.5, 53.5, 57.5, 64.5],
-        color="#e0e0e0")
-    source = ColumnDataSource({
-        'x': allxvals,
-        'y': allyvals,
-        'labels': alllabels,
-        'amino_acids': amino_acids
-    })
-    p.scatter('x',
-              'y',
-              source=source,
-              alpha=1,
-              color={
-                  'field': 'amino_acids',
-                  'transform': color_map
-              },
-              size=16,
-              line_color="black")
-    p.xaxis.ticker = [
-        1, 2.5, 6.5, 12.5, 16.5, 18.5, 20, 22.5, 25.5, 27.5, 31.5, 36, 39.5,
-        42.5, 44.5, 47.5, 51.5, 54.5, 56.5, 59.5, 63
-    ]
-    p.xaxis.major_label_overrides = {
-        1: "Met",
-        2.5: "Phe",
-        6.5: "Leu",
-        12.5: "Ser",
-        16.5: "Tyr",
-        18.5: "Cys",
-        20: "Trp",
-        22.5: "Pro",
-        25.5: "His",
-        27.5: "Gln",
-        31.5: "Arg",
-        36: "Ile",
-        39.5: "Thr",
-        42.5: "Asn",
-        44.5: "Lys",
-        47.5: "Val",
-        51.5: "Ala",
-        54.5: "Asp",
-        56.5: "Glu",
-        59.5: "Gly",
-        63: "Stop"
-    }
-    #p.vbar(x=[1], width=1,bottom=0,color="gray",top=[1])
-
-    hover = p.select(dict(type=HoverTool))
-    hover.tooltips = [("Count", "@y"), ("Codon", "@labels"),
-                      ("Amino acid", "@amino_acids")]
-
-    output_file("scatter10k.html", title="Codon usage")
-    hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
-        filename)
     graph += file_html(p, CDN)
     return graph
 
@@ -1456,8 +1273,6 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
     title_str = "Reads breakdown ({})".format(short_code)
     plt.title(title_str, fontsize=title_size)
     plt.xticks(tick_pos, labels)
-    #plt.yticks(np.arange(0, 81, 10))
-    #plt.legend((p1[0], p2[0], p3[0],p4[0],p5[0],p6[0]), ('Cutadapt removed', 'rRNA removed', 'Unmapped', 'Ambiguous','Mapped noncoding', 'Mapped coding'))
 
     ax.set_facecolor(background_col)
     ax.tick_params('y', labelsize=marker_size)
@@ -1494,7 +1309,7 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
     p8 = plt.bar(ind, totals, bar_width, color='#5e0003', linewidth=0, alpha=0)
 
     #Dummy plot point so we can add total reads to the legend
-    total_reads_plot = plt.plot(0, 0, alpha=0)
+    plt.plot(0, 0, alpha=0)
     plt.legend((p2[0], p1[0]), ('Non Coding: {:,}'.format(
         sum(noncoding)), 'Coding {:,}'.format(sum(coding))))
     for i, bar in enumerate(p8.get_children()):
@@ -1532,7 +1347,7 @@ def letterAt(letter, x, y, yscale=1, ax=None):
     t = mpl.transforms.Affine2D().scale(1*globscale, yscale*globscale) + \
      mpl.transforms.Affine2D().translate(x,y) + ax.transData
     p = PathPatch(text, lw=0, fc=COLOR_SCHEME[letter], transform=t)
-    if ax != None:
+    if ax:
         ax.add_artist(p)
 
 

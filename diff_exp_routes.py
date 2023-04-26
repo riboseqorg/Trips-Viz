@@ -32,7 +32,7 @@ def diffpage(organism, transcriptome):
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)
@@ -231,7 +231,7 @@ def diffquery():
         for seq_type in file_paths_dict:
             for file_id in file_paths_dict[seq_type]:
                 rnaseq2_filepaths[file_id] = file_paths_dict[seq_type][file_id]
-    except:
+    except Exception:
         rnaseq1_filepaths = {}
         rnaseq2_filepaths = {}
     deseq_basename = "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename)
@@ -994,7 +994,7 @@ def diffquery():
                             "max_cov"] > max_group_cov:
                         max_group_cov = master_transcript_dict[group][tran][
                             "max_cov"]
-                except:
+                except Exception:
                     pass
             if max_group_cov < min_cov:
                 del_list.append(tran)
@@ -1068,11 +1068,11 @@ def diffquery():
                         ]))
                     try:
                         valb = float(p_val_dict[abs(z_score)]) / 10
-                    except:
+                    except Exception:
                         fdr = 1
                     try:
                         fdr = round(valb / (vala), 4)
-                    except:
+                    except Exception:
                         fdr = 0.00001
                     if fdr > 1:
                         fdr = 1
@@ -1208,11 +1208,11 @@ def diffquery():
                         (2**transcript_dict[tran]["rnaseq2"]) - 0.0001))
         try:
             average_geo_mean = (sum(geo_mean_list) / len(geo_mean_list))
-        except:
+        except Exception:
             average_geo_mean = 0
         try:
             average_fc_mean = (sum(fc_list) / len(fc_list))
-        except:
+        except Exception:
             average_fc_mean = 0
         average_z_score = sum(z_scores) / len(z_scores)
         master_dict[tran]["z_score"] = average_z_score

@@ -27,7 +27,7 @@ def comparisonpage(organism, transcriptome):
     global local  # TODO: Fix global issue
     try:
         print(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)

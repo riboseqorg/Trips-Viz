@@ -219,12 +219,12 @@ def create_profiles(
     #			try:
     #				offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
     #				offset_dict[file_id] = offsets
-    #			except:
+    #			except Exception:
     #				offset_dict[file_id] = {}
     #			try:
     #				scores  = sqlite_db["offsets"]["fiveprime"]["read_scores"]
     #				score_dict[file_id] = scores
-    #			except:
+    #			except Exception:
     #				score_dict[file_id] = {}
     #			sqlite_db.close()
     profile_dict = {}

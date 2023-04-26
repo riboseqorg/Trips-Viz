@@ -28,7 +28,7 @@ def pause_detection_page(organism, transcriptome):
     global local
     try:
         logging.debug(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)
@@ -192,7 +192,7 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
                     try:
                         profile_dict[file_id][transcript][seq_type][
                             pos] += subprofile[pos]
-                    except:
+                    except Exception:
                         profile_dict[file_id][transcript][seq_type][
                             pos] = subprofile[pos]
         sqlite_db.close()
@@ -483,7 +483,7 @@ def find_pauses(data, user, logged_in):
         try:
             cds_start = int(row[1])
             cds_stop = int(row[2])
-        except:
+        except Exception:
             cds_start = row[1]
             cds_stop = row[2]
         length = int(row[3])

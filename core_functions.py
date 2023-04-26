@@ -164,7 +164,7 @@ def fetch_file_paths(file_list, organism):
         file_list[:] = [x for x in file_list if x]
         # Convert each string to an int
         int_file_list = [int(x) for x in file_list]
-    except:
+    except Exception:
         return {}
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")[["study_id", "study_name"]]

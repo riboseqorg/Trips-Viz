@@ -11,7 +11,7 @@ import json
 try:
     from orfQuant import incl_OPM_run_orfQuant
     from tripsTPM import TPM
-except:
+except Exception:
     pass
 
 #This is the single transcript plot page, user chooses gene, files and other settings
@@ -27,7 +27,7 @@ def interactiveplotpage_genomic(organism, transcriptome):
     global local
     try:
         print(local)
-    except:
+    except Exception:
         local = False
 
     organism = str(organism)
@@ -108,14 +108,14 @@ def interactiveplotpage_genomic(organism, transcriptome):
         for item in user_hili.split(","):
             user_hili_starts.append(int(item.split("_")[0]))
             user_hili_stops.append(int(item.split("_")[1]))
-    except:
+    except Exception:
         user_hili_start = None
         user_hili_stop = None
 
     try:
         user_minread = int(user_minread)
         user_maxread = int(user_maxread)
-    except:
+    except Exception:
         user_minread = None
         user_maxread = None
     advanced = 'True'
@@ -202,7 +202,7 @@ def query_genomic():
     #global user_short_passed
     try:
         user = current_user.name
-    except:
+    except Exception:
         user = None
     #print "user", user
     tran_dict = {}

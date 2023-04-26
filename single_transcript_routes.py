@@ -113,13 +113,13 @@ def interactiveplotpage(organism, transcriptome):
         for item in user_hili.split(","):
             user_hili_starts.append(int(item.split("_")[0]))
             user_hili_stops.append(int(item.split("_")[1]))
-    except:
+    except Exception:
         pass
 
     try:
         user_minread = int(user_minread)
         user_maxread = int(user_maxread)
-    except:
+    except Exception:
         user_minread = None
         user_maxread = None
     advanced = 'True'
@@ -176,7 +176,7 @@ def query():
     #global user_short_passed
     try:
         user = current_user.name
-    except:
+    except Exception:
         user = None
     #print "user", user
     tran_dict = {}
