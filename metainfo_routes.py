@@ -3742,10 +3742,3 @@ def sample_counts(file_paths_dict, traninfo_dict, longest_tran_list, region,
             table_str += input_str
     table_str = "TE?~" + str(total_rows) + "?~" + table_str
     return table_str
-
-
-def calc_gc(seq):
-    count_dict = {"A": 0.0, "T": 0.0, "G": 0.0, "C": 0.0}
-    for char in seq:
-        count_dict[char] += 1
-    return count_dict
