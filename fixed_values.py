@@ -1,3 +1,5 @@
+import pandas as pd
+
 iupac_dict = {
     "A": "A",
     "U": "U",
@@ -271,3 +273,37 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
         filename)
     graph += file_html(p, CDN)
     return graph
+
+
+import pickle
+
+
+def my_decoder(obj):
+    return pickle.load(open(obj, "rb"))
+
+
+def get_user_defined_seqs(seq, seqhili):
+    signalhtml = {0: [], 1: [], 2: []}
+    seq = seq.replace("T", "U")
+    near_cog_starts = {0: [], 1: [], 2: []}
+    for i in range(0, len(seq)):
+        for subseq in seqhili:
+            subseq = subseq.upper()
+            subseq = subseq.replace("T", "U").replace(" ", "")
+            partial_seq = list(seq[i:i + len(subseq)])
+            if len(partial_seq) != len(subseq):
+                continue
+            x = 0
+            for x in range(0, len(subseq)):
+                char = subseq[x]
+                if partial_seq[x] in iupac_dict[char]:
+                    partial_seq[x] = char
+            partial_seq = "".join(partial_seq)
+            if partial_seq == subseq:
+                near_cog_starts[(i) % 3].append(i + 1)
+                datadict = {'sequence': [subseq]}
+                df = pd.DataFrame(datadict, columns=(["sequence"]))
+                label = df.iloc[[0], :].T
+                label.columns = ["Position: {}".format(i)]
+                signalhtml[(i) % 3].append(str(label.to_html()))
+    return near_cog_starts, signalhtml

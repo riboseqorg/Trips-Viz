@@ -16,6 +16,7 @@ import matplotlib
 
 import altair as alt
 import fixed_values
+from fixed_values import get_user_defined_seqs
 
 matplotlib.use('agg')
 
@@ -43,34 +44,6 @@ table, th, td
 """
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
-
-
-def get_user_defined_seqs(seq, seqhili):
-    iupac_dict = fixed_values.iupac_dict.copy()
-    signalhtml = {0: [], 1: [], 2: []}
-    seq = seq.replace("T", "U")
-    near_cog_starts = {0: [], 1: [], 2: []}
-    for i in range(0, len(seq)):
-        for subseq in seqhili:
-            subseq = subseq.upper()
-            subseq = subseq.replace("T", "U").replace(" ", "")
-            partial_seq = list(seq[i:i + len(subseq)])
-            if len(partial_seq) != len(subseq):
-                continue
-            x = 0
-            for x in range(0, len(subseq)):
-                char = subseq[x]
-                if partial_seq[x] in iupac_dict[char]:
-                    partial_seq[x] = char
-            partial_seq = "".join(partial_seq)
-            if partial_seq == subseq:
-                near_cog_starts[(i) % 3].append(i + 1)
-                datadict = {'sequence': [subseq]}
-                df = pd.DataFrame(datadict, columns=(["sequence"]))
-                label = df.iloc[[0], :].T
-                label.columns = ["Position: {}".format(i)]
-                signalhtml[(i) % 3].append(str(label.to_html()))
-    return near_cog_starts, signalhtml
 
 
 # trips_shelves/rnaseq/escherichia_coli/Li14/SRR1067774.sqlite : reads, each gene each position, mismaches
@@ -323,7 +296,7 @@ def generate_plot():
         subcodonmax = max(all_subcodon_reads.values())
     except Exception:
         subcodonmax = 0
-    y_max = max(1, rnamax, subcodonmax) * 1.1
+ get_user_defined_seqs   y_max = max(1, rnamax, subcodonmax) * 1.1
 
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)

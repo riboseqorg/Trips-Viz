@@ -1250,16 +1250,6 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
     return graph
 
 
-def make_autopct(values):
-
-    def my_autopct(pct):
-        total = sum(values)
-        val = int(round(pct * total / 100.0))
-        return '{p:.2f}% \nCount: ({v:d})'.format(p=pct, v=val)
-
-    return my_autopct
-
-
 def gene_count(short_code, background_col, title_size, axis_label_size,
                subheading_size, marker_size, coding, noncoding):
     labels = ["", "Genes", "Transcripts", ""]
@@ -1332,24 +1322,3 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
-
-
-def letterAt(letter, x, y, yscale=1, ax=None):
-    fp = FontProperties(family="Arial", weight="bold")
-    LETTERS = {
-        "T": TextPath((-0.305, 0), "T", size=1, prop=fp),
-        "G": TextPath((-0.384, 0), "G", size=1, prop=fp),
-        "A": TextPath((-0.35, 0), "A", size=1, prop=fp),
-        "C": TextPath((-0.366, 0), "C", size=1, prop=fp)
-    }
-    text = LETTERS[letter]
-
-    t = mpl.transforms.Affine2D().scale(1*globscale, yscale*globscale) + \
-     mpl.transforms.Affine2D().translate(x,y) + ax.transData
-    p = PathPatch(text, lw=0, fc=COLOR_SCHEME[letter], transform=t)
-    if ax:
-        ax.add_artist(p)
-
-
-def ticker(tick):
-    return "{:.0f} + {:.2f}".format(tick, tick % 1)

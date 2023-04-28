@@ -17,9 +17,8 @@ from bokeh.plotting import figure, output_file
 from bokeh.embed import file_html
 from bokeh.resources import CDN
 from bokeh.palettes import all_palettes
-import bokeh.models as bmo
-import pickle
 import fixed_values
+from fixed_values import my_decoder
 from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
@@ -41,10 +40,6 @@ line_tooltip_css = """
 }
 
 """
-
-
-def my_decoder(obj):
-    return pickle.loads(obj)
 
 
 def mismatches(
@@ -707,16 +702,6 @@ def trip_periodicity_plot(read_dict, title, short_code, background_col,
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
-
-
-def make_autopct(values):
-
-    def my_autopct(pct):
-        total = sum(values)
-        val = int(round(pct * total / 100.0))
-        return '{p:.2f}% \nCount: ({v:d})'.format(p=pct, v=val)
-
-    return my_autopct
 
 
 def mapped_reads_plot(
@@ -1457,10 +1442,6 @@ def heatplot(min_readlen, max_readlen, min_pos, max_pos, positions,
         short_code)
     graph += file_html(p, CDN)
     return graph
-
-
-def ticker(tick):
-    return "{:.0f} + {:.2f}".format(tick, tick % 1)
 
 
 def rust_dwell(codon_count_dict, short_code, background_col, title_size,

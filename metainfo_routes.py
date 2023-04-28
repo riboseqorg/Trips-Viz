@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
-import pickle
+
 import os
 import time
 import fixed_values
+from fixed_values import my_decoder
 import re
 import operator
 from math import log
@@ -23,11 +24,6 @@ import collections
 from flask_login import current_user
 import subprocess
 import json
-
-
-def my_decoder(obj):
-    return pickle.loads(obj)
-
 
 metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
                                         __name__,

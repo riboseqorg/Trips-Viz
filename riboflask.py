@@ -1,4 +1,3 @@
-from new_plugins import InteractiveLegendPlugin, PointHTMLTooltip
 import config
 import os
 import sqlite3
@@ -10,6 +9,7 @@ import mpld3
 import matplotlib.pyplot as plt
 import matplotlib
 import fixed_values
+from fixed_values import get_user_defined_seqs
 
 matplotlib.use('agg')
 
@@ -37,34 +37,6 @@ table, th, td
 """
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
-
-
-def get_user_defined_seqs(seq, seqhili):
-    iupac_dict = fixed_values.iupac_dict.copy()
-    signalhtml = {0: [], 1: [], 2: []}
-    seq = seq.replace("T", "U")
-    near_cog_starts = {0: [], 1: [], 2: []}
-    for i in range(0, len(seq)):
-        for subseq in seqhili:
-            subseq = subseq.upper()
-            subseq = subseq.replace("T", "U").replace(" ", "")
-            partial_seq = list(seq[i:i + len(subseq)])
-            if len(partial_seq) != len(subseq):
-                continue
-            x = 0
-            for x in range(0, len(subseq)):
-                char = subseq[x]
-                if partial_seq[x] in iupac_dict[char]:
-                    partial_seq[x] = char
-            partial_seq = "".join(partial_seq)
-            if partial_seq == subseq:
-                near_cog_starts[(i) % 3].append(i + 1)
-                datadict = {'sequence': [subseq]}
-                df = pd.DataFrame(datadict, columns=(["sequence"]))
-                label = df.iloc[[0], :].T
-                label.columns = ["Position: {}".format(i)]
-                signalhtml[(i) % 3].append(str(label.to_html()))
-    return near_cog_starts, signalhtml
 
 
 def generate_plot(
@@ -114,7 +86,7 @@ def generate_plot(
         "Frame 1 profiles", "Frame 2 profiles", "Frame 3 profiles", "RNA",
         "Exon Junctions"
     ]
-    start_visible = [True, True, True, True, True]
+    start_visible = [True] * 5
     if mismatches:
         labels.append("Mismatches A")
         labels.append("Mismatches T")
@@ -171,7 +143,8 @@ def generate_plot(
         "principal": result[11]
     }
     try:
-        traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
+        traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]
+                                 ]  #TODO: make it sure that it is list of int
     except Exception:
         traninfo["stop_list"] = []
 
@@ -349,14 +322,7 @@ def generate_plot(
                     2: collections.OrderedDict()
                 }
                 for key in alt_sequence_reads:
-                    start = key
-                    rem = start % 3
-                    if rem == 1:  # frame 1
-                        frame = 2
-                    elif rem == 2:  # frame 2
-                        frame = 0
-                    elif rem == 0:  # frame 3
-                        frame = 1
+                    frame = (key + 1) % 3  # key is start pos
                     alt_frame_counts[frame][key] = alt_sequence_reads[key]
                 frame0_altseqplot = ax_main.plot(alt_frame_counts[0].keys(),
                                                  alt_frame_counts[0].values(),
@@ -424,12 +390,6 @@ def generate_plot(
                  fontsize=18,
                  color="black",
                  ha="center")
-    # ax_main.annotate('axes fraction',xy=(3, 1), xycoords='data',xytext=(0.8, 0.95), textcoords='axes fraction',arrowprops=dict(facecolor='black', shrink=0.05),horizontalalignment='right', verticalalignment='top')
-    # trans = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    # ax_main.annotate('CDS RELATIVE START',(100,100),transform=trans)
-    # tform = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    # r=10
-    # ax_main.text(cds_start, 0.9, "CDS START OR WHATEVER", fontsize='xx-large', color='r', transform=tform)
     cds_markers += ax_main.plot((cds_stop + 1, cds_stop + 1),
                                 (0, y_max * 0.97),
                                 color=cds_marker_colour,

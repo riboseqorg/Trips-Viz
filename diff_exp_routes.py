@@ -9,16 +9,13 @@ from random import shuffle
 from math import log
 import config
 import subprocess
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, calculate_coverages
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code,
+                            calculate_coverages)
 import riboflask_diff
 from flask_login import current_user
 import json
-import pickle
-
-
-def my_decoder(obj):
-    return pickle.loads(obj)
-
+from fixed_values import my_decoder
 
 # Differential expression page, used to find diffentially expressed genes via z-score
 diff_plotpage_blueprint = Blueprint("diffpage",

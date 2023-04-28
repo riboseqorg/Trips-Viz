@@ -4,16 +4,12 @@ import sqlite3
 from sqlitedict import SqliteDict
 import os
 import config
-import pickle
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code)
 import riboflask_compare
 from flask_login import current_user
 import json
-
-
-def my_decoder(obj):
-    return pickle.loads(obj)
-
+from fixed_values import my_decoder
 
 # Single transcript comparison page, user chooses a gene and groups of files to display
 comparison_plotpage_blueprint = Blueprint("comparisonpage",

@@ -15,6 +15,10 @@ def sqlquery(sqlfilepath, tablename):
     return sqlTable
 
 
+def sqldict2table(sqldict, tablename):
+    return pd.DataFrame(sqldict)
+
+
 def get_user_id(username: str) -> int:
     '''Return the user_id for a given username'''
     users = sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),

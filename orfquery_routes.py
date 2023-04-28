@@ -1,32 +1,32 @@
-from flask import Blueprint, render_template, request
+from flask impor Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
 import os
 import time
 import logging
 import config
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, build_profile, build_proteomics_profile, nuc_to_aa, fetch_user
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code,
+                            build_profile, build_proteomics_profile, nuc_to_aa,
+                            fetch_user)
 import json
+import pandas as pd
 from flask_login import current_user
 import random
 
 import numpy as np
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import pickle
+from fixed_values import my_decoder
 
 
-def my_decoder(obj):
-    return pickle.loads(obj)
-
-
-HEADER = "Gene, transcript,start, stop, start_codon, type, sru, coverage,median_diff,read_density,split,first_diff\n"
+HEADER = "Gene,transcript,start,stop,start_codon,type,sru,coverage,median_diff,read_density,split,first_diff\n"
 MIN_READ_DENSITY = 3
 MIN_COVERAGE = 0.33
 MAX_ATTEMPTS = 20
 CASES_PER_TRAN = 2
 
-#This page is used to detect translated open reading frames
+# This page is used to detect translated open reading frames
 translated_orf_blueprint = Blueprint("orf_translationpage",
                                      __name__,
                                      template_folder="templates")
@@ -34,7 +34,7 @@ translated_orf_blueprint = Blueprint("orf_translationpage",
 
 @translated_orf_blueprint.route('/<organism>/<transcriptome>/orf_translation/')
 def orf_translationpage(organism, transcriptome):
-    #ip = request.environ['REMOTE_ADDR']
+    # ip = request.environ['REMOTE_ADDR']
     global local
     try:
         logging.debug(local)
@@ -56,8 +56,8 @@ def orf_translationpage(organism, transcriptome):
         "max_start_inc": str(request.args.get('max_start_inc')),
         "min_stop_dec": str(request.args.get('min_stop_dec')),
         "max_stop_dec": str(request.args.get('max_stop_dec')),
-        #"min_cds_rat":str(request.args.get('min_cds_rat')),
-        #"max_cds_rat":str(request.args.get('max_cds_rat')),
+        # "min_cds_rat":str(request.args.get('min_cds_rat')),
+        # "max_cds_rat":str(request.args.get('max_cds_rat')),
         "min_lfd": str(request.args.get('min_lfd')),
         "max_lfd": str(request.args.get('max_lfd')),
         "min_hfd": str(request.args.get('min_hfd')),
@@ -87,7 +87,7 @@ def orf_translationpage(organism, transcriptome):
         "#" + str(x).strip(" ") for x in html_args["start_codons"].split(",")
     ] if html_args["start_codons"] else []
 
-    #If ever need to use other seq types than these modify fetch_files to return a proper list
+    # If ever need to use other seq types than these modify fetch_files to return a proper list
     seq_types = ["riboseq", "proteomics"]
     # If seq type not riboseq remove it from accepted files as orf translation is only appicable to riboseq
     del_types = []
@@ -112,14 +112,13 @@ def orf_translationpage(organism, transcriptome):
 
 
 def tran_to_genome(tran, pos, transcriptome_info_dict):
-    if tran in transcriptome_info_dict:
-        traninfo = transcriptome_info_dict[tran]
-    else:
+    if tran not in transcriptome_info_dict:
         return ("Null", 0)
+    traninfo = transcriptome_info_dict[tran]
     chrom = traninfo["chrom"]
     strand = traninfo["strand"]
     exons = traninfo["exons"]
-    #logging.debug(exons)
+    # logging.debug(exons)
     if strand == "+":
         exon_start = 0
         for tup in exons:
@@ -130,7 +129,7 @@ def tran_to_genome(tran, pos, transcriptome_info_dict):
             else:
                 break
         genomic_pos = (exon_start + pos) - 1
-    elif strand == "-":
+    else:
         exon_start = 0
         for tup in exons[::-1]:
             exon_start = tup[1]
@@ -154,10 +153,10 @@ def create_aggregate(file_paths_dict, study_path, seq_type):
         sqlite_dict = SqliteDict(f"{file_paths_dict[seq_type][file_id]}",
                                  autocommit=False,
                                  decode=my_decoder)
-        #sqlite_dict = SqliteDict(file_paths_dict[seq_type][file_id])
+        # sqlite_dict = SqliteDict(file_paths_dict[seq_type][file_id])
         sqlite_db = dict(sqlite_dict)
         sqlite_dict.close()
-        #offsets = offset_dict[file_id]
+        # offsets = offset_dict[file_id]
         offsets = {}
         scores = {}
         if seq_type == "riboseq":
@@ -203,30 +202,30 @@ def create_profiles(
         ambig,
         # total_files,
         minscore):
-    #logging.debug(file_paths_dict)
-    #If
+    # logging.debug(file_paths_dict)
+    # If
     file_count = 0
     # This will be populated with the users chosen file_ids and passed to the table, so that the trips link can use these files aswell.
     file_string = ""
     ribo_study_string = "&ribo_studies="
     proteomics_study_string = "&proteomics_studies="
     seq_types = ["riboseq", "proteomics"]
-    #for seq_type in seq_types:
-    #	if seq_type in file_paths_dict:
-    #		for file_id in file_paths_dict[seq_type]:
-    #			file_string += "{};".format(file_id)
-    #			sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
-    #			try:
-    #				offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-    #				offset_dict[file_id] = offsets
-    #			except Exception:
-    #				offset_dict[file_id] = {}
-    #			try:
-    #				scores  = sqlite_db["offsets"]["fiveprime"]["read_scores"]
-    #				score_dict[file_id] = scores
-    #			except Exception:
-    #				score_dict[file_id] = {}
-    #			sqlite_db.close()
+    # for seq_type in seq_types:
+    # if seq_type in file_paths_dict:
+    # for file_id in file_paths_dict[seq_type]:
+    # file_string += "{};".format(file_id)
+    # sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
+    # try:
+    # offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
+    # offset_dict[file_id] = offsets
+    # except Exception:
+    # offset_dict[file_id] = {}
+    # try:
+    # scores  = sqlite_db["offsets"]["fiveprime"]["read_scores"]
+    # score_dict[file_id] = scores
+    # except Exception:
+    # score_dict[file_id] = {}
+    # sqlite_db.close()
     profile_dict = {}
 
     tot_file_ids = 0.0
@@ -240,11 +239,9 @@ def create_profiles(
         for file_id in file_paths_dict[seq_type]:
             file_count += 1
 
-            #logging.debug("file_id", file_id)
             sqlite_db = SqliteDict(f"{file_paths_dict[seq_type][file_id]}",
                                    autocommit=False,
                                    decode=my_decoder)
-            #sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
             if type(file_id) == str:
                 if "STUDY" in file_id:
                     if seq_type == "riboseq":
@@ -253,9 +250,6 @@ def create_profiles(
                     else:
                         proteomics_study_string += "{};".format(
                             file_id.replace("STUDY_", ""))
-                    #for sub_file_id in subfiles:
-                    #	file_string += "{};".format(sub_file_id)
-                    #logging.debug("success")
                     for transcript in accepted_transcript_list:
                         if transcript not in profile_dict:
                             profile_dict[transcript] = {
@@ -263,9 +257,7 @@ def create_profiles(
                                 "proteomics": {}
                             }
                         if transcript in sqlite_db:
-                            #logging.debug("tran in sqlite")
                             subprofile = sqlite_db[transcript][seq_type]
-                            #logging.debug("subprofile", subprofile)
                             for pos in subprofile:
                                 try:
                                     profile_dict[transcript][seq_type][
@@ -310,9 +302,8 @@ def create_profiles(
                         except Exception:
                             profile_dict[transcript][seq_type][
                                 pos] = subprofile[pos]
-            #logging.debug("{}/{} files read".format(file_count, total_files))
             sqlite_db.close()
-    #logging.debug("profile_dict", profile_dict["ENST00000233893"])
+    # logging.debug("profile_dict", profile_dict["ENST00000233893"])
     file_string += ribo_study_string
     file_string += proteomics_study_string
     return (profile_dict, file_string)
@@ -324,32 +315,37 @@ def geo_mean(iterable):
 
 
 def extract_features(start, stop, profile):
+    # selected_range = np.array(range(start - 9, stop + 12))
+    selected_range = np.array(range(start - 10, stop + 13))
+    profile = pd.DataFrame({
+        "pos": list(profile.keys()),
+        "counts": list(profile.values())
+    }).merge(pd.DataFrame({"pos": selected_range}), how="right").fillna(0)
+    inframe_values = profile.loc[profile.pos % 3 == 0, "counts"].values
+    minusone_values = profile.loc[profile.pos % 3 == 2, "counts"].values
+    plusone_values = profile.loc[profile.pos % 3 == 0, "counts"].values
+    oof_val = np.maximum(
+        minusone_values,
+        plusone_values)[4:-4]  # Pairwise compration and trimming
+    if_val = inframe_values[4:-4]
+    diff_list = if_val / (oof_val + if_val + 1)
+    standard_cov = sum(if_val > 0)
+    if_count = sum(if_val > (oof_val + 1))
+    # Till here
+
     if_cov = 0.0
     if_len = stop - start
-    inframe_values = []
-    minusone_values = []
-    plusone_values = []
-    for i in range(start - 9, stop + 12, 3):
-        if i - 1 in profile:
-            minusone_values.append(profile[i - 1])
-        else:
-            minusone_values.append(0)
-        if i in profile:
-            inframe_values.append(profile[i])
-        else:
-            inframe_values.append(0)
-        if i + 1 in profile:
-            plusone_values.append(profile[i + 1])
-        else:
-            plusone_values.append(0)
-    max_inframe = max(inframe_values[5:-5])
+
+    max_inframe = max(
+        inframe_values[5:-5]
+    )  # What if sequences is smaller that 10 nuc. I know it is not possible
     for i in range(5, len(inframe_values) - 5):
         if inframe_values[i] == max_inframe:
             inframe_values[i] = 0
             break
     sru = (sum(inframe_values[4:8])) / (sum(inframe_values[:8]) + 4.0)
-    minusone_sum = float(sum(sorted(minusone_values[4:-4])))
-    plusone_sum = float(sum(sorted(plusone_values[4:-4])))
+    minusone_sum = sum(minusone_values[4:-4]) * 1.
+    plusone_sum = sum(plusone_values[4:-4]) * 1.
     if_count = 0.0
     standard_cov = 0.0
     first_diff = False
@@ -357,7 +353,7 @@ def extract_features(start, stop, profile):
     for i in range(4, len(inframe_values) - 4):
         if_val = inframe_values[i]
         oof_val = max(minusone_values[i], plusone_values[i])
-        diff = float(if_val) / float(oof_val + if_val + 1)
+        diff = if_val * 1. / (oof_val + if_val + 1)
         if not first_diff:
             first_diff = diff
         diff_list.append(diff)
@@ -385,11 +381,11 @@ def create_training_set(profile_dict, traninfo_dict, short_code, MINLEN):
     filename = short_code + ".training.csv"
     outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
     outfile.write(HEADER)
-    #Positive cases
+    # Positive cases
     acceptable_trans = []
     tot_positive = 0
     tot_negative = 0
-    #Positives
+    # Positives
     for transcript in traninfo_dict:
         if not traninfo_dict[transcript]["cds_start"]:
             continue
@@ -417,7 +413,7 @@ def create_training_set(profile_dict, traninfo_dict, short_code, MINLEN):
                 acceptable_cases += 1
                 tot_positive += 1
 
-    #Negative cases, wrong frame (min highrame)
+    # Negative cases, wrong frame (min highrame)
     for transcript in acceptable_trans:
         if not traninfo_dict[transcript]["cds_start"]:
             continue
@@ -446,7 +442,7 @@ def create_training_set(profile_dict, traninfo_dict, short_code, MINLEN):
                 acceptable_cases += 1
                 tot_negative += 1
 
-    #negative cases 3'trailer
+    # negative cases 3'trailer
     for transcript in acceptable_trans:
         if not traninfo_dict[transcript]["cds_start"]:
             continue
@@ -463,7 +459,7 @@ def create_training_set(profile_dict, traninfo_dict, short_code, MINLEN):
             except Exception:
                 continue
             cds_stop = cds_start + MINLEN
-            #Try 20 times to find a position with at least 2 inframe reads
+            # Try 20 times to find a position with at least 2 inframe reads
 
             cds_start = random.randint(
                 traninfo_dict[transcript]["cds_stop"] + 12,
@@ -489,19 +485,19 @@ def create_test_set(
         region):
     filename = short_code + ".test.csv"
     outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
-    #outfile = open("test.csv","w")
+    # outfile = open("test.csv","w")
     outfile.write(HEADER)
-    #Positive cases
+    # Positive cases
     for transcript in orf_dict:
         try:
             gene = traninfo_dict[transcript]["gene"]
         except Exception:
             gene = transcript
-        #if transcript != "ENST00000262030":
-        #	continue
+        # if transcript != "ENST00000262030":
+        # continue
         for stop in orf_dict[transcript]:
-            #if stop != 1239:
-            #	continue
+            # if stop != 1239:
+            # continue
             for start in orf_dict[transcript][stop]:
                 [sru, if_cov, median_diff, read_density, _, split, first_diff
                  ] = extract_features(start, stop,
@@ -532,16 +528,16 @@ def create_model(columns):
                            center=True,
                            scale=True))
     model.add(Dropout(0.33, input_shape=(columns - 1, )))
-    #model.add(Dropout(0.33))
-    #model.add(BatchNormalization(axis=-1,momentum=0.99,epsilon=0.001,center=True,scale=True))
+    # model.add(Dropout(0.33))
+    # model.add(BatchNormalization(axis=-1,momentum=0.99,epsilon=0.001,center=True,scale=True))
     model.add(Dense(2, kernel_initializer='uniform', activation='relu'))
-    #model.add(Dropout(0.5))
-    #model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
-    #model.add(Dropout(0.5))
-    #model.add(BatchNormalization(axis=-1,momentum=0.99,epsilon=0.001,center=True,scale=True))
-    #model.add(Dense(10, kernel_initializer='uniform', activation='relu'))
-    #model.add(Dropout(0.1))
-    #model.add(Dense(10, kernel_initializer='uniform', activation='relu'))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+    # model.add(Dropout(0.5))
+    # model.add(BatchNormalization(axis=-1,momentum=0.99,epsilon=0.001,center=True,scale=True))
+    # model.add(Dense(10, kernel_initializer='uniform', activation='relu'))
+    # model.add(Dropout(0.1))
+    # model.add(Dense(10, kernel_initializer='uniform', activation='relu'))
     model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
     opt = optimizers.Adam(learning_rate=0.001)
     # Compile model
@@ -619,7 +615,7 @@ def neural_net(short_code, feature_list, organism, transcriptome, file_string):
         start = splitrow[2]
         stop = splitrow[3]
 
-        #	continue
+        # continue
         prediction = predictions[tup_count][0]
         tup_count += 1
         splitrow.append(prediction)
@@ -644,7 +640,7 @@ def neural_net(short_code, feature_list, organism, transcriptome, file_string):
             prev_row = splitrow
     outfile.close()
 
-    #Open outfile again, read in all lines with probablity > 0.5 and sort
+    # Open outfile again, read in all lines with probablity > 0.5 and sort
     result_list = []
     results = open("{}/static/tmp/{}".format(config.SCRIPT_LOC,
                                              prediction_filename)).readlines()
@@ -795,7 +791,7 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
                 high_frame_count = inframe_sum - highframe_sum
                 lowest_frame_count = inframe_sum - lowframe_sum
 
-                #Ratios
+                # Ratios
                 start_ratio = float(sum(inframe_values[4:8])) / float(
                     (sum(inframe_values[:4]) + 1))
                 stop_ratio = float(sum(inframe_values[-8:-4])) / float(
@@ -818,7 +814,7 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
                     final_score_values.append(if_cov)
                 final_score_values.append(float(inframe_sum) / float(if_len))
 
-                #TO DO: Instead of just summing these, they should be normalised over the current best value and then compared. The way it works now, coverage
+                # TO DO: Instead of just summing these, they should be normalised over the current best value and then compared. The way it works now, coverage
                 # has very little affect on the final outcome as it's a number below one. Instead normalise everything to whatever is highest between the current
                 # value and the best value, e.g if current start score is 50 and best start score is 100, current start becomes 0.5 and best becomes 1,
                 # another e.g if current coverage is 0.8 and best coverage is 0.2, current coverage becomes 1, best coverage becomes 0.25
@@ -892,8 +888,8 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
             prev_value = curr_value
         row[11] = rank
     sorted_all_values = sorted(all_values, key=lambda x: x[6], reverse=True)
-    #FDR correction
-    #sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
+    # FDR correction
+    # sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
     rank = 1
     prev_value = sorted_all_values[0][6]
     for row in sorted_all_values:
@@ -904,8 +900,8 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
         row[12] = rank
 
     sorted_all_values = sorted(all_values, key=lambda x: x[7], reverse=True)
-    #FDR correction
-    #sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
+    # FDR correction
+    # sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
     rank = 1
     prev_value = sorted_all_values[0][7]
     for row in sorted_all_values:
@@ -916,8 +912,8 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
         row[13] = rank
 
     sorted_all_values = sorted(all_values, key=lambda x: x[8], reverse=True)
-    #FDR correction
-    #sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
+    # FDR correction
+    # sorted_all_values = multipletests(sorted_all_values_no_corr, alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)
     rank = 1
     prev_value = sorted_all_values[0][8]
     for row in sorted_all_values:
@@ -949,28 +945,28 @@ def extract_values(accepted_orf_dict, data, tran_gene_dict, selected_seq_types,
 
     for row in all_values:
         normalised_score_values = []
-        #inframe count
+        # inframe count
         normalised_score_values.append(row[16])
         if "coverage_check" in data:
             normalised_score_values.append(row[15])
         if "start_increase_check" in data:
-            #if row[13] >0.05:
-            #	continue
+            # if row[13] >0.05:
+            # continue
             normalised_score_values.append(row[14])
         if "stop_decrease_check" in data:
-            #if row[12] >0.05:
-            #	continue
+            # if row[12] >0.05:
+            # continue
             normalised_score_values.append(row[13])
         if "lowest_frame_diff_check" in data:
-            #if row[11] >0.05:
-            #	continue
+            # if row[11] >0.05:
+            # continue
             normalised_score_values.append(row[12])
         if "highest_frame_diff_check" in data:
-            #if row[10] >0.05:
-            #	continue
+            # if row[10] >0.05:
+            # continue
             normalised_score_values.append(row[11])
         normalised_score = sum(normalised_score_values)
-        #logging.debug("normalised_score_values, normalised score", normalised_score_values, normalised_score)
+        # logging.debug("normalised_score_values, normalised score", normalised_score_values, normalised_score)
         row.append(round(normalised_score, 2))
     logging.debug("sorting all values")
     sorted_all_values = sorted(all_values, key=lambda x: x[-1], reverse=False)
@@ -992,7 +988,7 @@ def write_to_file(sorted_all_values, filename, sequence_dict, organism,
         "Gene,Tran,Start,Stop,Length,Global_Rank,Type,Trips-viz link,Start Codon,Highframe rank,Highframe value,Lowframe rank,Lowframe value,Stop rank,Stop value,Start rank,Start value,Coverage rank,Coverage value,Inframe Count Rank,Inframe Count Value,Amino acid sequence,Proteomics count,Read density\n"
     )
     tup_count = 0
-    #logging.debug("writing to file",len(sorted_all_values))
+    # logging.debug("writing to file",len(sorted_all_values))
     for tup in sorted_all_values:
         gene = tup[0]
         transcript = tup[1]
@@ -1008,7 +1004,7 @@ def write_to_file(sorted_all_values, filename, sequence_dict, organism,
         except Exception:
             seq = ""
         start_codon = seq[:3]
-        #Get amino acid sequence of this ORF, excluding the stop codon.
+        # Get amino acid sequence of this ORF, excluding the stop codon.
         while len(seq) % 3 != 0:
             seq = seq[:-1]
 
@@ -1029,8 +1025,6 @@ def write_to_file(sorted_all_values, filename, sequence_dict, organism,
                 gene, transcript, start, stop, length, global_rank, orftype,
                 trips_link)
         tup_count += 1
-        #if tup_count%100 == 0:
-        #	logging.debug("tup count", tup_count)
     return returnstr
 
 
@@ -1051,7 +1045,7 @@ def find_orfs(data, user, logged_in):
 
     minscore = float(data["minscore"])
     output = data["output"]
-    #break progress down into 4 subsections, aggregating data, building orf dict, creating profiles, and extracting features
+    # break progress down into 4 subsections, aggregating data, building orf dict, creating profiles, and extracting features
     prog_count = 0
     if "nnet_check" in data:
         output = "nnet"
@@ -1064,7 +1058,7 @@ def find_orfs(data, user, logged_in):
             total_files)
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
-    #Find out which studies have all files of a specific sequence type selected (to create aggregates)
+    # Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
     aggregate_dict = {}
     full_studies = []
@@ -1093,19 +1087,19 @@ def find_orfs(data, user, logged_in):
                 for row in result:
                     study_file_ids.append(row[0])
                 logging.debug("study id {}".format(study_id))
-                #Do not create an aggregate if there is only one file in the study:
+                # Do not create an aggregate if there is only one file in the study:
                 if len(study_file_ids) > 1:
                     logging.debug("length over 1")
-                    #Check if all the file_ids in this study are present in all_file_ids, if they are this study is "full" and an aggreagate will be made
+                    # Check if all the file_ids in this study are present in all_file_ids, if they are this study is "full" and an aggreagate will be made
                     if set(study_file_ids).issubset(all_file_ids):
-                        #This is a full study, create an aggregate for it if non exits
-                        #Get path to study directory
+                        # This is a full study, create an aggregate for it if non exits
+                        # Get path to study directory
                         study_path = "/".join(
                             (file_paths_dict[seq_type][study_file_ids[0]]
                              ).split("/")[:-1])
                         logging.debug("study_path {}".format(study_path))
                         full_studies.append(study_id)
-                        #Check if aggregate file exists
+                        # Check if aggregate file exists
                         agg_filename = "{}/aggregate_0.5_{}.sqlite".format(
                             study_path, seq_type)
                         if not os.path.isfile(agg_filename):
@@ -1114,15 +1108,15 @@ def find_orfs(data, user, logged_in):
                                 sub_file_paths_dict[seq_type][
                                     file_id] = file_paths_dict[seq_type][
                                         file_id]
-                            #create_aggregate(sub_file_paths_dict,study_path, seq_type)
+                            # create_aggregate(sub_file_paths_dict,study_path, seq_type)
                             aggregate_dict[study_path] = [
                                 sub_file_paths_dict, seq_type
                             ]
-                            #logging.debug("aggregate created")
-                        #Remove all file_ids associated with this study from file_paths_dict
+                            # logging.debug("aggregate created")
+                        # Remove all file_ids associated with this study from file_paths_dict
                         for file_id in study_file_ids:
                             del file_paths_dict[seq_type][file_id]
-                        #Add the aggregate to file_paths_dict
+                        # Add the aggregate to file_paths_dict
                         file_paths_dict[seq_type]["STUDY_" + str(
                             study_id)] = "{}/aggregate_0.5_{}.sqlite".format(
                                 study_path, seq_type)
@@ -1135,15 +1129,15 @@ def find_orfs(data, user, logged_in):
                          aggregate_dict[study_path][1])
 
     logging.debug("Full studies {}".format(full_studies))
-    #return str(full_studies)
-    #return str(all_study_ids)
+    # return str(full_studies)
+    # return str(all_study_ids)
 
     html_args = data["html_args"]
     returnstr = ""
 
     start_codons = []
 
-    #Used to extract columns from csv for neural neural_net
+    # Used to extract columns from csv for neural neural_net
     feature_list = ["Type"]
     if "sc_aug" in data:
         start_codons.append("ATG")
@@ -1153,22 +1147,22 @@ def find_orfs(data, user, logged_in):
         start_codons.append("GTG")
     if "sc_none" in data:
         start_codons.append("any")
-    #start_codons.append("any")
+    # start_codons.append("any")
     logging.debug("start codons {}".format(start_codons))
-    #min_start_increase = float(data["min_start_increase"])
-    #max_start_increase = float(data["max_start_increase"])
+    # min_start_increase = float(data["min_start_increase"])
+    # max_start_increase = float(data["max_start_increase"])
 
-    #min_stop_decrease = float(data["min_stop_decrease"])
-    #max_stop_decrease = float(data["max_stop_decrease"])
+    # min_stop_decrease = float(data["min_stop_decrease"])
+    # max_stop_decrease = float(data["max_stop_decrease"])
 
-    #min_coverage = float(data["min_coverage"])
-    #max_coverage = float(data["max_coverage"])
+    # min_coverage = float(data["min_coverage"])
+    # max_coverage = float(data["max_coverage"])
 
-    #min_lowest_frame_diff = float(data["min_lowest_frame_diff"])
-    #max_lowest_frame_diff = float(data["max_lowest_frame_diff"])
+    # min_lowest_frame_diff = float(data["min_lowest_frame_diff"])
+    # max_lowest_frame_diff = float(data["max_lowest_frame_diff"])
 
-    #min_highest_frame_diff = float(data["min_highest_frame_diff"])
-    #max_highest_frame_diff = float(data["max_highest_frame_diff"])
+    # min_highest_frame_diff = float(data["min_highest_frame_diff"])
+    # max_highest_frame_diff = float(data["max_highest_frame_diff"])
 
     min_cds = float(data["min_cds"])
     max_cds = float(data["max_cds"])
@@ -1195,9 +1189,9 @@ def find_orfs(data, user, logged_in):
     except Exception:
         cons_score = ""
     user_defined_transcripts = []
-    #tran_list is a radio button, user can choose between principal, all or a custom list
+    # tran_list is a radio button, user can choose between principal, all or a custom list
     tranlist = data["tran_list"]
-    #custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
+    # custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
     custom_tran_list = data["custom_tran_list"]
 
     ambig = True if "ambig_check" in data else False
@@ -1215,7 +1209,7 @@ def find_orfs(data, user, logged_in):
             connection = sqlite3.connect('{}/{}'.format(
                 config.SCRIPT_LOC, config.DATABASE_NAME))
             cursor = connection.cursor()
-            #if filter previously saved cases is turned on, then we query the sqlite database here and remove hits from transcript_list
+            # if filter previously saved cases is turned on, then we query the sqlite database here and remove hits from transcript_list
             cursor.execute(
                 "SELECT tran,stop FROM users_saved_cases WHERE user_id = '{}' and organism = '{}';"
                 .format(user_id, organism))
@@ -1241,7 +1235,7 @@ def find_orfs(data, user, logged_in):
 
     if "highest_frame_diff_check" in data:
         feature_list.append("Highframe value")
-    #feature_list.append("Inframe Count Value")
+    # feature_list.append("Inframe Count Value")
     if html_args["user_short"] == "None":
         short_code = generate_short_code(data, organism, data["transcriptome"],
                                          "orf_translation")
@@ -1326,7 +1320,7 @@ def find_orfs(data, user, logged_in):
             "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                 config.UPLOADS_DIR, owner, organism, transcriptome))
 
-    #traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
+    # traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
     traninfo_cursor = traninfo_connection.cursor()
 
     traninfo_dict = {}
@@ -1403,12 +1397,12 @@ def find_orfs(data, user, logged_in):
     result = traninfo_cursor.fetchall()
     for row in result:
         sequence_dict[row[0]] = row[1]
-    #logging.debug("sequence dict keys",sequence_dict.keys())
-    #Holds a list of all transcripts in accepted_orf_dict
+    # logging.debug("sequence dict keys",sequence_dict.keys())
+    # Holds a list of all transcripts in accepted_orf_dict
     accepted_transcript_list = []
     for table_name in accepted_orftypes:
-        #logging.debug("table_name", table_name)
-        #logging.debug("start codons", start_codons)
+        # logging.debug("table_name", table_name)
+        # logging.debug("start codons", start_codons)
         if "any" in start_codons:
             logging.debug("selecting any start")
             traninfo_cursor.execute(
@@ -1417,7 +1411,7 @@ def find_orfs(data, user, logged_in):
                         str(principal_transcripts).strip("[]")))
         else:
             logging.debug("selecting aug,cug,gug")
-            #logging.debug("SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE start_codon IN ({}) AND cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});".format(table_name, str(start_codons).strip("[]"),min_cds,max_cds,min_len, max_len, str(principal_transcripts).strip("[]")))
+            # logging.debug("SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE start_codon IN ({}) AND cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});".format(table_name, str(start_codons).strip("[]"),min_cds,max_cds,min_len, max_len, str(principal_transcripts).strip("[]")))
             traninfo_cursor.execute(
                 "SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE start_codon IN ({}) AND cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});"
                 .format(table_name,
@@ -1434,7 +1428,7 @@ def find_orfs(data, user, logged_in):
             if rows % 1000 == 0:
                 logging.debug("Rows: {}".format(rows))
                 prog_count = 100 + (100 * (rows / total_trans))
-            #logging.debug("row", row)
+            # logging.debug("row", row)
             transcript = str(row[0])
             start_codon = str(row[1])
             length = row[2]
@@ -1470,9 +1464,9 @@ def find_orfs(data, user, logged_in):
                 "transcript": transcript
             }
 
-    #logging.debug("accepted orf dict", accepted_orf_dict)
+    # logging.debug("accepted orf dict", accepted_orf_dict)
     logging.debug("accepted orf dict built")
-    #Now build a profile for every transcript in accepted_transcripts
+    # Now build a profile for every transcript in accepted_transcripts
 
     if file_paths_dict["rnaseq"] == {}:
         if "te_check" in data:
@@ -1537,11 +1531,11 @@ def find_orfs(data, user, logged_in):
     returnstr += "|{}".format(filename)
     returnstr += "|{}".format(
         str(data["file_list"]).strip("[]").replace("'", "").replace(" ", "")
-    )  #file_list is empty after passin through generate short_Code need to make a copy of it beforehand
+    )  # file_list is empty after passin through generate short_Code need to make a copy of it beforehand
     returnstr += "|{}".format(short_code)
     total_time = time.time() - start_time
     logging.debug("sending email")
-    #If the job was > 5 minutes and the user is using an email address, send an email to say the job is done
+    # If the job was > 5 minutes and the user is using an email address, send an email to say the job is done
     if current_user.is_authenticated:
         if total_time > 300 and logged_in:
             try:
@@ -1557,7 +1551,7 @@ def find_orfs(data, user, logged_in):
                         .format(short_code)))
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
-                #TODO, move this to the config file
+                # TODO, move this to the config file
                 server.login(fromaddr, "Ribosome")
                 text = msg.as_string()
                 logging.debug("sending now")

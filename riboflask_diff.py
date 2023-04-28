@@ -43,51 +43,6 @@ def set_axis_color(axis, color, alpha=None):
             spine.set_alpha(alpha)
 
 
-def get_color_palette(scheme):
-    """Return colors for a given scheme. Default colors are returned for an item
-	if undefined in scheme.
-
-	"""
-    color_schemes = {
-        'default': {
-            'frames': ['#FF4A45', '#64FC44', '#5687F9'],
-            'background': '#ffffff',
-            'color': '#616161',
-            'ticks': '#757575',
-            'start': '#ffffff',
-            'stop': '#909090',
-            'rna': '#BFBFBF',
-            'axis': '#e0e0e0',
-            'grey': '#bdbdbd'
-        },
-        'colorbrewer': {
-            'frames': ['#fc8d62', '#66c2a5', '#8da0cb']
-        },
-        'rgb': {
-            'frames': ['red', 'green', 'blue']
-        },
-        'greyorfs': {}
-    }
-
-    colors = {}
-    for k, v in color_schemes['default'].items():
-        try:
-            vals = color_schemes[scheme][k]
-        except KeyError:
-            vals = v
-        colors[k] = vals
-    return colors
-
-
-def get_near_cog_starts(seq):
-    near_cog_starts = {0: [], 1: [], 2: []}
-    for i in range(0, len(seq)):
-        codon = seq[i:i + 3]
-        if codon == "CTG":
-            near_cog_starts[(i + 1) % 3].append(i + 1)
-    return near_cog_starts
-
-
 def generate_plot(
         sorted_min_exp_list,
         bin_list,

@@ -6,14 +6,12 @@ import time
 import logging
 import config
 import subprocess
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, build_profile, build_proteomics_profile, nuc_to_aa, fetch_user, fetch_filename_file_id
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code,
+                            build_profile, build_proteomics_profile,
+                            fetch_user, fetch_filename_file_id)
 import json
-import pickle
-
-
-def my_decoder(obj):
-    return pickle.load(open(obj, 'rb'))
-
+from fixed_values import my_decoder
 
 #This page is used to detect pauses
 pause_detection_blueprint = Blueprint("pause_detection_page",
@@ -120,15 +118,10 @@ def tran_to_genome(tran, pos, transcriptome_info_dict):
 def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
                     min_read_length, max_read_length):
     ambig = False
-    minscore = 0
     file_count = 0
     # This will be populated with the users chosen file_ids and passed to the table, so that the trips link can use these files aswell.
     file_string = ""
     label_string = "&labels="
-    ribo_study_string = "&ribo_studies="
-    proteomics_study_string = "&proteomics_studies="
-    offset_dict = {}
-    score_dict = {}
     seq_types = ["riboseq", "proteomics"]
     color_list = [
         "%23ff0000", "%232bff00", "%230004ff", "%23ffa200", "%23c800ff",
@@ -162,13 +155,11 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
             if seq_type == "riboseq":
                 try:
                     offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-                except exception as e:
-                    print("e", e)
+                except Exception:
                     pass
                 try:
                     scores = sqlite_db["offsets"]["fiveprime"]["read_scores"]
-                except exception as e:
-                    print("e", e)
+                except Exception:
                     pass
             for transcript in accepted_transcript_list:
                 if transcript not in profile_dict[file_id]:
@@ -178,7 +169,7 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
                     }
                 try:
                     counts = sqlite_db[transcript]
-                except Exception as e:
+                except Exception:
                     continue
                 if seq_type == "riboseq":
                     subprofile = build_profile(counts,
@@ -211,7 +202,6 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
     for file_id in profile_dict:
         print("file id", file_id)
         for tran in profile_dict[file_id]:
-            #print ("tran", tran)
             if tran not in all_values_dict:
                 all_values_dict[tran] = {}
 
@@ -225,12 +215,8 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
             cds_start = traninfo_dict[tran]["cds_start"]
             cds_stop = traninfo_dict[tran]["cds_stop"]
             profile = profile_dict[file_id][tran]["riboseq"]
-            end_of_tran = False
             region = "non-coding"
-            #if gene == "ZFR":
-            #	print ("ZFR PROFILE", profile)
             for i in range(0, tranlen, step):
-                #print (i)
                 count = 0.0
                 cov_count = 0.0
                 for x in range(i, i + window + 15):
@@ -245,7 +231,7 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
                             pos_count = profile[x]
                             score = pos_count / avg
                             if score > min_fold_change:
-                                if cds_start != None:
+                                if cds_start:
                                     if x < cds_start - 3:
                                         region = "5' Leader"
                                     elif x >= cds_start - 3 and x <= cds_start + 3:
@@ -269,7 +255,7 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
                 for score in score_dict[pos]:
                     if score < min_fold_change:
                         all_over_min = False
-                if all_over_min == True:
+                if all_over_min:
                     avg_score = sum(score_dict[pos]) / len(score_dict[pos])
                     avg_cov = sum(cov_dict[pos]) / len(cov_dict[pos])
                     count = count_dict[pos]
@@ -361,19 +347,13 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
         cov = tup[6]
         count = round(tup[7], 2)
         region = tup[8]
-        #old_ebc_link = '<a href="'+config.DOMAIN+'/'+project_id+'/interactive_plot/?tran='+transcript+'&hili='+str(position-3)+"_"+str(position+3)+'&files='+file_string+'" target="_blank_" >View</a>'
 
         comparison_url = "https://trips.ucc.ie/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
             organism, transcriptome, file_string, label_string, transcript,
             position - 15, position + 15)
         ebc_link = '<a href="{}" target="_blank_" >View</a>'.format(
             comparison_url)
-        #ebc_link = '<a href="'+config.DOMAIN+'/'+project_id+'/comparison/?transcript='+transcript+'&hili='+str(position-3)+"_"+str(position+3)+'&files='+file_string+label_string+'" target="_blank_" >View</a>'
 
-        #ebc_link = '<a href="'+config.DOMAIN+'/'+project_id+'/comparison/?tran='+transcript+'&files=file1;%23007a02_file2;%23007a02_file3;%23007a02&hili='+str(position-3)+"_"+str(position+3)+'&files='+file_string+'" target="_blank_" >View</a>'
-
-        #print (old_ebc_link)
-        #print (ebc_link)
         tmp_result_file.write("{},{},{},{},{},{},{},{},{},{}\n".format(
             gene, transcript, position, region, cov, pause_score, upstream_seq,
             downstream_seq, count, ebc_link))
