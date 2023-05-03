@@ -309,11 +309,6 @@ def create_profiles(
     return (profile_dict, file_string)
 
 
-def geo_mean(iterable):
-    a = np.array(iterable)
-    return a.prod()**(1.0 / len(a))
-
-
 def extract_features(start, stop, profile):
     # selected_range = np.array(range(start - 9, stop + 12))
     selected_range = np.array(range(start - 10, stop + 13))

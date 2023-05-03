@@ -39,15 +39,6 @@ table, th, td
 """
 
 
-def set_axis_color(axis, color, alpha=None):
-    """Sets the spine color of all sides of an axis (top, right, bottom, left)."""
-    for side in ('top', 'right', 'bottom', 'left'):
-        spine = axis.spines[side]
-        spine.set_color(color)
-        if alpha is not None:
-            spine.set_alpha(alpha)
-
-
 def plot_profile(xlist, ylist, filenames, file_descs, studies, raw_reads,
                  controls, cell_lines, control_colors, study_colors,
                  cell_line_colors, transcript, start, stop):

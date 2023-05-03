@@ -595,7 +595,6 @@ def find_pauses(data, user, logged_in):
         str(data["file_list"]).strip("[]").replace("'", "").replace(" ", "")
     )  #file_list is empty after passin through generate short_Code need to make a copy of it beforehand
     returnstr += "|{}".format(short_code)
-    total_time = time.time() - start_time
 
     logging.debug("returning result")
     print("return returnstr")

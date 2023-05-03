@@ -30,6 +30,80 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
                                         template_folder="templates")
 
 
+def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
+    if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
+            transcriptome)):
+        transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome))
+    else:
+        return "Cannot find annotation file {}.{}.sqlite".format(
+            organism, transcriptome)
+    cursor = transhelve.cursor()
+    cursor.execute(
+        "SELECT transcript,cds_start,cds_stop,sequence from transcripts"
+        " WHERE principal = 1")
+    result = cursor.fetchall()
+    master_dict = {}
+    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
+
+    for row in result:
+        tran = row[0]
+        try:
+            cds_start = int(row[1])
+            cds_stop = int(row[2])
+        except Exception:
+            continue
+        seq = row[3].replace("T", "U")
+        if tran in sqlite_db:
+            counts = sqlite_db[tran]["unambig"]
+            for readlen in counts:
+                if readlen not in master_dict:
+                    master_dict[readlen] = {}
+                    for i in range(0, int(readlen)):
+                        master_dict[readlen][i] = {
+                            "A": 0,
+                            "T": 0,
+                            "G": 0,
+                            "C": 0,
+                            "N": 0,
+                        }
+                for pos in counts[readlen]:
+                    count = counts[readlen][pos]
+                    if readlen in offsets:
+                        offset_pos = pos + offsets[readlen]
+                    else:
+                        offset_pos = pos + 15
+
+                    if offset_pos >= cds_start and offset_pos <= cds_stop:
+                        readframe = offset_pos % 3
+                        cds_frame = (cds_start + 2) % 3
+
+                        if readframe == cds_frame:
+                            inframe = True
+                        else:
+                            inframe = False
+
+                        if (nuccomp_reads == "inframe"
+                                and not inframe) or (nuccomp_reads == "offrame"
+                                                     and inframe):
+                            continue
+                        readseq = seq[pos:pos + readlen]
+                        for i in range(0, len(readseq)):
+                            char = readseq[i].replace("U", "T")
+                            master_dict[readlen][i][char] += count
+    # save results so they won't have to be computed again later
+    if "nuc_counts" in sqlite_db:
+        new_nuc_counts = sqlite_db["nuc_counts"]
+        new_nuc_counts[nuccomp_reads] = master_dict
+        sqlite_db["nuc_counts"] = new_nuc_counts
+    else:
+        sqlite_db["nuc_counts"] = {nuccomp_reads: master_dict}
+
+    sqlite_db.commit()
+    return master_dict
+
+
 @metainfo_plotpage_blueprint.route("/<organism>/<transcriptome>/metainfo_plot/"
                                    )
 def metainfo_plotpage(organism, transcriptome):
@@ -154,10 +228,10 @@ def create_custom_metagene(
     transhelve,
     coverage=False,
 ):
+    custom_seq_list = custom_seq_list.upper().replace(" ",
+                                                      "").replace("T", "U")
     custom_metagene_id = "cmgc_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(
-        (custom_seq_list.upper()).replace(" ",
-                                          "").replace("T",
-                                                      "U").replace(",", "_"),
+        custom_seq_list.replace(",", "_"),
         custom_search_region,
         exclude_first,
         exclude_last,
@@ -170,6 +244,10 @@ def create_custom_metagene(
         metagene_tranlist,
     )
     offsets = sqlite_db["offsets"]
+    transcripts = get_table('transcripts')
+    # Apply filters
+    transctipts['sequence'] = transcripts['sequence'].apply(
+        lambda x: x.replace('T', 'U'))
     cursor = transhelve.cursor()
     if not metagene_tranlist:
         cursor.execute(
@@ -190,8 +268,6 @@ def create_custom_metagene(
 
     subseq_list = []
     for subseq in custom_seq_list.split(","):
-        subseq = subseq.upper()
-        subseq = subseq.replace("T", "U").replace(" ", "")
         for ambig_nuc in fixed_values.ambig_nucs:
             subseq = subseq.replace(ambig_nuc, f"[{iupac_dict[ambig_nuc]}]")
         subseq_list.append(subseq)
@@ -255,15 +331,12 @@ def create_custom_metagene(
                 profile["threeprime"][readlen] = {}
                 for pos in tran_reads[readlen]:
                     relative_frame = ((pos + offset) - cds_start) % 3
-                    if metagene_frame == "minus_frame":
-                        if relative_frame != 1:
-                            continue
-                    if metagene_frame == "in_frame":
-                        if relative_frame != 2:
-                            continue
-                    if metagene_frame == "plus_frame":
-                        if relative_frame != 0:
-                            continue
+                    if ((metagene_frame == "minus_frame"
+                         and relative_frame != 1) or
+                        (metagene_frame == "in_frame" and relative_frame != 2)
+                            or (metagene_frame == "plus_frame"
+                                and relative_frame != 0)):
+                        continue
                     three_pos = pos + readlen
                     count = tran_reads[readlen][pos]
                     if not coverage:
@@ -432,11 +505,11 @@ def metainfoquery():
     heatmap_endpos = int(data["heatmap_endpos"])
     maxscaleval = data["maxscaleval"]
 
-    if maxscaleval != "None" and maxscaleval != "":
+    if maxscaleval != "None" and not maxscaleval:
         try:
             maxscaleval = int(maxscaleval)
         except Exception:
-            maxscalval = "None"  # NOTE: is it maxscaleval??
+            maxscaleval = "None"  # NOTE: is it maxscaleval??
     color_palette = data["color_palette"]
     minimum_reads = int(data["minimum_reads"])
     te_minimum_reads = data["te_minimum_reads"]
@@ -659,15 +732,9 @@ def metainfoquery():
                     if diff > sw_diff_min_diff:
                         ratio = grp1_count / grp2_count
                         gene = gene_dict[tran]
-                        outfile.write("{},{},{},{},{},{},{}\n".format(
-                            gene,
-                            tran,
-                            i,
-                            grp1_count,
-                            grp2_count,
-                            ratio,
-                            (grp1_count - grp2_count),
-                        ))
+                        outfile.write(
+                            f"{gene},{tran},{i},{grp1_count},{grp2_count},"
+                            f"{ratio},{grp1_count - grp2_count}\n")
 
         connection.close()
         return filename
@@ -875,7 +942,8 @@ def metainfoquery():
                             for readlen in counts:
                                 if readlen not in master_dict:
                                     master_dict[readlen] = 0
-                                for pos in counts[readlen]:
+                                for pos in counts[
+                                        readlen]:  # This part can be replaced by numpy array
                                     cnt = counts[readlen][pos]
                                     if custom_search_region == "whole_gene":
                                         master_dict[readlen] += cnt
@@ -1095,7 +1163,7 @@ def metainfoquery():
             " WHERE principal = 1;")
         result = traninfo_cursor.fetchall()
         for row in result:
-            if row[2] != "None" and row[2] and row[2]:
+            if row[2] != "None" and row[2]:
                 principal_transcripts[str(row[0])] = {
                     "seq": str(row[1]),
                     "cds_start": int(row[2]),
@@ -3501,80 +3569,6 @@ def metainfoquery():
             print("unknown plot type", plottype)
     connection.close()
     return "Error, unknown plot type selected: {}".format(plottype)
-
-
-def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
-    if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-            transcriptome)):
-        transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome))
-    else:
-        return "Cannot find annotation file {}.{}.sqlite".format(
-            organism, transcriptome)
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT transcript,cds_start,cds_stop,sequence from transcripts"
-        " WHERE principal = 1")
-    result = cursor.fetchall()
-    master_dict = {}
-    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-
-    for row in result:
-        tran = row[0]
-        try:
-            cds_start = int(row[1])
-            cds_stop = int(row[2])
-        except Exception:
-            continue
-        seq = row[3].replace("T", "U")
-        if tran in sqlite_db:
-            counts = sqlite_db[tran]["unambig"]
-            for readlen in counts:
-                if readlen not in master_dict:
-                    master_dict[readlen] = {}
-                    for i in range(0, int(readlen)):
-                        master_dict[readlen][i] = {
-                            "A": 0,
-                            "T": 0,
-                            "G": 0,
-                            "C": 0,
-                            "N": 0,
-                        }
-                for pos in counts[readlen]:
-                    count = counts[readlen][pos]
-                    if readlen in offsets:
-                        offset_pos = pos + offsets[readlen]
-                    else:
-                        offset_pos = pos + 15
-
-                    if offset_pos >= cds_start and offset_pos <= cds_stop:
-                        readframe = offset_pos % 3
-                        cds_frame = (cds_start + 2) % 3
-
-                        if readframe == cds_frame:
-                            inframe = True
-                        else:
-                            inframe = False
-
-                        if (nuccomp_reads == "inframe"
-                                and not inframe) or (nuccomp_reads == "offrame"
-                                                     and inframe):
-                            continue
-                        readseq = seq[pos:pos + readlen]
-                        for i in range(0, len(readseq)):
-                            char = readseq[i].replace("U", "T")
-                            master_dict[readlen][i][char] += count
-    # save results so they won't have to be computed again later
-    if "nuc_counts" in sqlite_db:
-        new_nuc_counts = sqlite_db["nuc_counts"]
-        new_nuc_counts[nuccomp_reads] = master_dict
-        sqlite_db["nuc_counts"] = new_nuc_counts
-    else:
-        sqlite_db["nuc_counts"] = {nuccomp_reads: master_dict}
-
-    sqlite_db.commit()
-    return master_dict
 
 
 # Groups together counts from different filepaths for the metainformation counts table

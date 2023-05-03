@@ -37,3 +37,10 @@ def table2dict(table, keys):
         n: grp.loc[n].to_dict('index')
         for n, grp in table.set_index(keys).groupby(level=keys[0])
     }
+
+
+def form2filtered_data(data: pd.DataFrame, form: dict) -> pd.DataFrame:
+    '''Returns a dataframe based on the given form filters'''
+    form_keys = set(form.keys()) & set(data.columns)
+    # Add filters
+    return data

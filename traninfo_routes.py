@@ -909,9 +909,9 @@ def traninfoquery():
                                               codon_dict[codon]))
 
         return fixed_values.codon_usage(codon_dict, short_code,
-                                          str(title_size) + "pt",
-                                          str(axis_label_size) + "pt",
-                                          str(marker_size) + "pt", filename)
+                                        str(title_size) + "pt",
+                                        str(axis_label_size) + "pt",
+                                        str(marker_size) + "pt", filename)
     #This is the lengths plot
     elif plottype == "lengths_plot":
         cursor.execute(
@@ -1201,73 +1201,3 @@ def traninfoquery():
         if (plottype.strip(" ").replace("\n", "")) not in ["replicate_comp"]:
             print("Unknown plottype", plottype)
     return "Error, unknown plot type selected: {}".format(plottype)
-
-
-def get_nuc_comp_reads(sqlite_db, nuccomp_reads, organism, transcriptome):
-    cursor.execute("SELECT owner FROM organisms WHERE organism_name = '{}' and"
-                   " transcriptome_list = '{}';".format(
-                       organism, transcriptome))
-    owner = (cursor.fetchone())[0]
-    if owner == 1:
-        transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome))
-    else:
-        transhelve = sqlite3.connect(
-            "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT transcript,cds_start,cds_stop,sequence from transcripts"
-        " WHERE principal = 1")
-    result = cursor.fetchall()
-    master_dict = {}
-    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-    for row in result:
-        tran = row[0]
-        cds_start = int(row[1])
-        cds_stop = int(row[2])
-        seq = row[3].replace("T", "U")
-        if tran in sqlite_db:
-            counts = sqlite_db[tran]["unambig"]
-            for readlen in counts:
-                if readlen not in master_dict:
-                    master_dict[readlen] = {}
-                    for i in range(0, int(readlen)):
-                        master_dict[readlen][i] = {
-                            "A": 0,
-                            "T": 0,
-                            "G": 0,
-                            "C": 0,
-                            "N": 0
-                        }
-                for pos in counts[readlen]:
-                    count = counts[readlen][pos]
-                    if readlen in offsets:
-                        offset_pos = pos + offsets[readlen]
-                    else:
-                        offset_pos = pos + 15
-                    if offset_pos >= cds_start and offset_pos <= cds_stop:
-                        readframe = offset_pos % 3
-                        cds_frame = (cds_start + 2) % 3
-                        if readframe == cds_frame:
-                            inframe = True
-                        else:
-                            inframe = False
-                        if nuccomp_reads == "inframe" and not inframe:
-                            continue
-                        if nuccomp_reads == "offrame" and inframe:
-                            continue
-                        readseq = seq[pos:pos + readlen]
-                        for i in range(0, len(readseq)):
-                            char = readseq[i].replace("U", "T")
-                            master_dict[readlen][i][char] += count
-    #save results so they won't have to be computed again later
-    if "nuc_counts" in sqlite_db:
-        new_nuc_counts = sqlite_db["nuc_counts"]
-        new_nuc_counts[nuccomp_reads] = master_dict
-        sqlite_db["nuc_counts"] = new_nuc_counts
-    else:
-        sqlite_db["nuc_counts"] = {nuccomp_reads: master_dict}
-
-    sqlite_db.commit()
-    return master_dict
