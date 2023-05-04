@@ -26,25 +26,16 @@ def comparisonpage(organism, transcriptome):
     except Exception:
         local = False
 
-    organism = str(organism)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
+    organisms = get_tables("organisms")
+    organisms = organisms.loc[organisms.organism_name == organism, [
+        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
+    ]].iloc[0]
 
-    cursor.execute(
-        "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}';"
-        .format(organism))
-    result = (cursor.fetchone())
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
     gwips_info = {
-        "organism": gwips_org,
-        "clade": gwips_clade,
-        "database": gwips_db
+        "organism": organisms["gwips_organism"],
+        "clade": organisms["gwips_clade"],
+        "database": organisms["gwips_database"]
     }
-    default_tran = result[3]
     studyinfo_dict = fetch_study_info(organism)
     user_file_dict = {}
     color = 'white'  # temp color
@@ -91,17 +82,13 @@ def comparisonpage(organism, transcriptome):
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     print(local)
-    connection.close()
     return render_template('index_compare.html',
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
                            gwips_info=gwips_info,
-                           gwips_clade=gwips_clade,
-                           gwips_org=gwips_org,
-                           gwips_db=gwips_db,
                            organism=organism,
                            transcriptome=transcriptome,
-                           default_tran=default_tran,
+                           default_tran=organisms["default_transcript"],
                            local=local,
                            html_args=html_args,
                            file_id_to_name_dict=file_id_to_name_dict,
@@ -172,7 +159,7 @@ def comparequery():
                         principal = "principal"
                     else:
                         principal = ""
-                    if cds_start == "NULL" or cds_start == None:
+                    if cds_start == "NULL" or not cds_start:
                         cdslen = "NULL"
                         threeutrlen = "NULL"
                     else:
@@ -237,7 +224,7 @@ def comparequery():
                                                decode=my_decoder)
                     else:
                         return_str = "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
-                        if app.debug == True:
+                        if app.debug:
                             return return_str, "NO_CELERY", {'Location': None}
                         else:
                             return jsonify({
@@ -257,7 +244,7 @@ def comparequery():
                     else:
                         if "normalize" in data:
                             return_str = "One or more selected files is missing values for 'coding_counts' and 'non_coding_counts' so cannot normalize with these files, please report this to tripsvizsite@gmail.com or via the contact page."
-                            if app.debug == True:
+                            if app.debug:
                                 return return_str, "NO_CELERY", {
                                     'Location': None
                                 }
@@ -276,21 +263,12 @@ def comparequery():
                     master_filepath_dict[color]["file_descs"].append(result[1])
                     master_filepath_dict[color]["file_type"] = result[2]
 
-    if 'ribocoverage' in data:
-        ribocoverage = True
-    else:
-        ribocoverage = False
-    if "ambiguous" in data:
-        ambiguous = "ambig"
-    else:
-        ambiguous = "unambig"
+    ribocoverage = True if 'ribocoverage' in data else False
+    ambiguous = "ambig" if "ambiguous" in data else "unambig"
+    normalize = True if "normalize" in data else False
 
-    if "normalize" in data:
-        normalize = True
-    else:
-        normalize = False
     html_args = data["html_args"]
-    if html_args["user_short"] == "None" or user_short_passed == True:
+    if html_args["user_short"] == "None" or user_short_passed:
         short_code = generate_short_code(data, organism,
                                          html_args["transcriptome"],
                                          "comparison")
@@ -298,47 +276,16 @@ def comparequery():
         short_code = html_args["user_short"]
         user_short_passed = True
 
-    #set colours to default values, if user logged in these will be overwritten
-    background_col = config.BACKGROUND_COL
-    comp_uga_col = config.UGA_COL
-    comp_uag_col = config.UAG_COL
-    comp_uaa_col = config.UAA_COL
-    title_size = config.TITLE_SIZE
-    subheading_size = config.SUBHEADING_SIZE
-    axis_label_size = config.AXIS_LABEL_SIZE
-    marker_size = config.MARKER_SIZE
-    cds_marker_size = config.CDS_MARKER_SIZE
-    cds_marker_colour = config.CDS_MARKER_COLOUR
-    legend_size = config.LEGEND_SIZE
+    user_settings = config.USER_SETTINGS.copy()
     if current_user.is_authenticated:
-        user_name = current_user.name
-        trips_cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(
-                user_name))
-        result = (trips_cursor.fetchone())
-        user_id = result[0]
-        #get a list of organism id's this user can access
-        trips_cursor.execute(
-            "SELECT background_col,comp_uga_col,comp_uag_col,comp_uaa_col,title_size,subheading_size,axis_label_size,marker_size,cds_marker_width,cds_marker_colour,legend_size from user_settings WHERE user_id = '{}';"
-            .format(user_id))
-        result = (trips_cursor.fetchone())
-        background_col = result[0]
-        title_size = result[4]
-        subheading_size = result[5]
-        axis_label_size = result[6]
-        marker_size = result[7]
-        cds_marker_size = result[8]
-        cds_marker_colour = result[9]
-        legend_size = result[10]
-    trips_connection.close()
-
-    if tran != "":
+        user_id = get_user_id(current_user.name)
+        user_settings = get_table("user_settings")
+        user_settings = user_settings[user_settings.user_id == user_id].iloc[0]
+    if tran:
         return riboflask_compare.generate_compare_plot(
             tran, ambiguous, master_filepath_dict, ribocoverage, organism,
-            normalize, short_code, background_col, hili_start, hili_stop,
-            comp_uag_col, comp_uga_col, comp_uaa_col, title_size,
-            subheading_size, axis_label_size, marker_size, cds_marker_size,
-            cds_marker_colour, legend_size, transcriptome)
+            normalize, short_code, hili_start, hili_stop, user_settings,
+            transcriptome)
 
     return "ERROR! Could not find any transcript corresponding to {}".format(
         tran)

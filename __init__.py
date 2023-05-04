@@ -1,4 +1,3 @@
-from threading import Lock
 import pandas as pd
 import os
 import time
@@ -8,11 +7,12 @@ import sqlite3
 from sqlqueries import sqlquery, get_user_id, get_table
 import riboflask_datasets
 import logging
-from flask import Flask, get_flashed_messages, render_template, request, send_from_directory, flash, redirect, url_for
+from flask import (Flask, get_flashed_messages, render_template, request,
+                   send_from_directory, flash, redirect, url_for)
 from flask_xcaptcha import XCaptcha
 
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from flask_security import current_user
+from flask_login import (LoginManager, login_required, login_user, logout_user,
+                         current_user)
 from flask_mail import Mail
 from werkzeug.security import generate_password_hash, check_password_hash
 import config
@@ -23,8 +23,11 @@ import json
 from core_functions import fetch_file_paths, base62_to_integer, User, fetch_user
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery_blueprint
 from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
-from single_transcript_routes import single_transcript_plotpage_blueprint, single_transcript_query_blueprint
-from single_transcript_routes_genomic import single_transcript_plotpage_genomic_blueprint, single_transcript_query_genomic_blueprint
+from single_transcript_routes import (single_transcript_plotpage_blueprint,
+                                      single_transcript_query_blueprint)
+from single_transcript_routes_genomic import (
+    single_transcript_plotpage_genomic_blueprint,
+    single_transcript_query_genomic_blueprint)
 from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
 from pause_routes import pause_detection_blueprint, pausequery_blueprint
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery_blueprint
@@ -57,8 +60,6 @@ root_logger.addHandler(file_handler)
 
 # logging.basicConfig(filename=config.LOG_FILE,level=logging.DEBUG,format='%(asctime)s %(levelname)-8s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
 app = Flask(__name__, static_folder='static')
-
-lock = Lock()
 
 logging.debug('This will get logged to a file')
 
@@ -104,10 +105,6 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 
 mail = Mail(app)
-
-SPECIES_SHORT_NAMES = {
-    'escherichia_coli': 'E. coli',
-}
 
 
 def sanitize_get_request(request):
@@ -190,8 +187,9 @@ def statisticspage():
 
     year_plot = stats_plots.year_dist(year_dist)
     updates = get_table('updates')
-    updates = updates.sort_values(by='date', ascending=False).to_html(classes='')
-    
+    updates = updates.sort_values(by='date',
+                                  ascending=False).to_html(classes='')
+
     return render_template('statistics.html',
                            no_organisms=no_organisms,
                            no_studies=no_studies,
@@ -304,14 +302,10 @@ def settingspage():
         print(local)
     except Exception:
         local = False
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
 
     user = fetch_user()[0]
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
-    if user == None:
+    if not user:
         return redirect(
             url_for(
                 'homepage',
@@ -319,9 +313,8 @@ def settingspage():
                 "To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
     # get user_id
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     user_id = get_user_id(user)
-    user_settings = sqlquery(dbpath, 'user_settings')
+    user_settings = get_table('user_settings')
     user_settings = user_settings[user_settings['user_id'] == user_id].to_dict(
         orient='records')[0]
 
@@ -394,12 +387,6 @@ def uploadspage():
         print(local)
     except Exception:
         local = False
-    organism_dict = {}
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if not user:
@@ -415,8 +402,13 @@ def uploadspage():
         )
 
     user_id = get_user_id(user)
+    organisms = get_table('organisms')
+    organisms = organisms.loc[
+        not organisms.private | organisms.owner == user_id,
+        ["organism_name", "transcriptome_list", "organism_id"]]
 
-    org_id_dict = {}
+    organism_dict = table_to_dict(organisms)
+    organism_dict = {}
 
     cursor.execute(
         "SELECT organism_name,transcriptome_list,organism_id from organisms where private = 0 OR owner = {};"
@@ -441,7 +433,7 @@ def uploadspage():
             "SELECT organism_name,transcriptome_list from organisms where organism_id = {};"
             .format(organism_id))
         org_result = cursor.fetchone()
-        if org_result != None:
+        if org_result:
             organism_name = org_result[0]
             transcriptome = org_result[1]
             if organism_name not in organism_dict:
