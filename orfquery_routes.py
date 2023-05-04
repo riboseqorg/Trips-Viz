@@ -1026,16 +1026,12 @@ def write_to_file(sorted_all_values, filename, sequence_dict, organism,
 def find_orfs(data, user, logged_in):
     logging.debug("orfquery called")
     global user_short_passed
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    cursor = connection.cursor()
+    organisms = get_table("organisms")
+    owner = organisms.loc[(organisms["organism_name"] == data["organism"]
+                          & organisms["transcriptome_list"] == data["transcriptome"]),
+                          "owner"].values[0]
+    # TODO: Check transcriptome list option
 
-    organism = data["organism"]
-    transcriptome = data["transcriptome"]
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
     start_time = time.time()
 
     minscore = float(data["minscore"])
@@ -1054,26 +1050,20 @@ def find_orfs(data, user, logged_in):
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
     # Find out which studies have all files of a specific sequence type selected (to create aggregates)
+    files = get_table("files")
 
     aggregate_dict = {}
     full_studies = []
     if minscore == 0:
         for seq_type in file_paths_dict:
-            all_study_ids = []
             all_file_ids = list(file_paths_dict[seq_type].keys())
-            print("SELECT DISTINCT study_id FROM files WHERE file_id IN ({})".
-                  format(str(all_file_ids).strip("[").strip("]")))
-            cursor.execute(
-                "SELECT DISTINCT study_id FROM files WHERE file_id IN ({})".
-                format(str(all_file_ids).strip("[").strip("]")))
-            result = cursor.fetchall()
-            for row in result:
-                all_study_ids.append(row[0])
-            logging.debug("for seq type {} here are the study ids: {}".format(
-                seq_type, all_study_ids))
+            all_study_ids = files.loc[(files["file_id"].isin(
+                all_file_ids) & files["file_type"] == seq_type),
+                ["study_id", "file_id"]].unique()
+            prog_count += 100.
+            # NOTE: Till here
 
             for study_id in all_study_ids:
-                prog_count += 100 * (1.0 / float(len(all_study_ids)))
                 cursor.execute(
                     "SELECT file_id FROM files WHERE study_id = {} AND file_type = '{}'"
                     .format(study_id, seq_type))
@@ -1117,7 +1107,6 @@ def find_orfs(data, user, logged_in):
                                 study_path, seq_type)
     cursor.close()
     connection.close()
-    prog_count = 100
 
     for study_path in aggregate_dict:
         create_aggregate(aggregate_dict[study_path][0], study_path,
