@@ -20,15 +20,28 @@ class TripsSplice:
     def get_genes_principal(self, gene_id):
         return self.transcript_table.loc[self.transcript_table.gene == gene_id
                                          & self.transcript_table.principle,
-                                         "transcript"]
+                                         "transcript"].values[0]
 
     def get_transcript_info(self, transcript_id):
         return self.transcript_table[self.transcript_table.transcript ==
-                                     transcript_id]
+                                     transcript_id,
+                                     ['exon_junctions', 'sequence']].iloc[0]
+
+    def _exon_coordinates_list(lst, transcript_length):
+        # Return the list of integers from a list of strings. If the list is empty then return 0
+        if not lst:
+            return [0, transcript_length]
+        lst = [-1] + [int(i) for i in lst] + [transcript_length]
+        return [[lst[i] + 1, lst[i + 1]] for i in range(len(lst) - 1)]
 
     def get_exon_coordinates_for_orf(self, transcript_id):
-        return self.transcript_table[self.transcript_table.transcript ==
-                                     transcript_id]
+        transcript_info = self.get_transcript_info(transcript_id)
+        exon_junctions = self.string_to_integer_list(
+            transcript_info['exon_junctions'].split(","))
+
+        exon_coordinates = self._exon_coordinates_list(
+            exon_junctions, len(transcript_info['sequence']))
+        return exon_coordinates
 
     def get_protein_coding_transcript_ids(self, gene):
         return self.transcript_table[self.transcript_table.gene == gene]
@@ -42,56 +55,6 @@ class TripsSplice:
                                      transcript_id]
 
 
-def get_gene_info(gene_id, sqlite_path_organism):
-    # get the transcript ID, exon junctions and transcript sequence from the specified sqlite file for a given gene ID
-    gene_id = gene_id.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT transcript, exon_junctions, sequence FROM transcripts WHERE gene = (:gene);',
-        {'gene': gene_id})
-    gene_info = c.fetchall()
-    return gene_info
-
-
-def get_transcript_length(gene, sqlite_path_organism):
-    # get the transcript length from the specified sqlite file for a given gene ID
-    gene = gene.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT transcript, length FROM transcripts WHERE gene = (:gene);',
-        {'gene': gene})
-    transcript_length = c.fetchall()
-    length = {
-        transcript_len[0]: transcript_len[1]
-        for transcript_len in transcript_length
-    }
-    return length
-
-
-def get_genes_principal(gene_id, sqlite_path_organism):
-    # get the transcript ID for the given genes principal isoform as per APPRIS
-    gene_id = gene_id.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT transcript FROM transcripts '
-        'WHERE gene = (:gene) AND principal = 1;', {'gene': gene_id})
-    principal_transcript = c.fetchall()
-    return principal_transcript[0][0]
-
-
-def string_to_integer_list(lst):
-    # Return the list of integers from a list of strings. If the list is empty then return 0
-    if lst[0] == "":
-        lst[0] = "0"
-    new_lst = []
-    for i in range(len(lst)):
-        new_lst.append(int(lst[i]))
-    return new_lst
-
-
 def get_3prime_exon(junction_list, sequence):
     # Part of the process of producing the sequences of all exons in a transcript.
     # this function slices the 3' exon sequence from the transcript sequence returning
@@ -102,22 +65,11 @@ def get_3prime_exon(junction_list, sequence):
     return exon, seq_less_exon
 
 
-def get_transcript_info(transcript_id, sqlite_path_organism):
-    # Returns the exon junctions and sequences for the given transcript
-    transcript_id = transcript_id.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT exon_junctions, sequence FROM transcripts WHERE transcript = (:trans);',
-        {'trans': transcript_id})
-    transcript_info = c.fetchall()
-    return transcript_info
-
-
 def get_exon_coordinates_for_orf(transcript_id, sqlite_path_organism):
     # return the coordinates of the exons in a given transcript. 0 -> first junction, first junction -> second junction
     # last junction -> end
-    transcript_info = get_transcript_info(transcript_id, sqlite_path_organism)
+    tripsplice = TripsSplice(sqlite_path_organism)
+    transcript_info = tripsplice.get_transcript_info(transcript_id)
     exon_junctions = string_to_integer_list(
         str(transcript_info[0][0]).split(","))
     transcript_end = len(transcript_info[0][1])
@@ -208,7 +160,8 @@ def get_max_min_exon_genomic_positions(exon_info):
 def exons_of_transcript(transcript_id, sqlite_path_organism):
     # For a given transcript return the exon sequences in a list in 5' to 3' direction
     exon_lst = []
-    trans_info = get_transcript_info(transcript_id, sqlite_path_organism)
+    tripsplice = TripsSplice(sqlite_path_organism)
+    trans_info = tripsplice.get_transcript_info(transcript_id)
     exon_junctions = trans_info[0][0].split(",")
     sequence = trans_info[0][1]
 
@@ -397,8 +350,9 @@ def get_reads_per_genomic_location_asite(gene,
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
+    trips_splice = TripsSplice(sqlite_path_organism)
 
-    gene_info = get_gene_info(gene, sqlite_path_organism)
+    gene_info = trips_splice.get_gene_info(gene)
     genomic_read_dictionary = {}
     counted_reads = []
     for read_file in sqlite_path_reads:
@@ -455,8 +409,9 @@ def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads,
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
+    trips_splice = TripsSplice(sqlite_path_organism)
 
-    gene_info = get_gene_info(gene, sqlite_path_organism)
+    gene_info = trips_splice.get_gene_info(gene)
     genomic_read_dictionary = {}
     counted_reads = []
     for read_file in sqlite_path_reads:
@@ -512,8 +467,9 @@ def get_read_ranges_genomic_location(gene, sqlite_path_reads,
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
+    trips_splice = TripsSplice(sqlite_path_organism)
 
-    gene_info = get_gene_info(gene, sqlite_path_organism)
+    gene_info = trips_splice.get_gene_info(gene)
     genomic_read_dictionary = {}
 
     for read_file in sqlite_path_reads:
@@ -564,7 +520,8 @@ def get_exonjunction_pileup_for_transcript(transcript_id, sqlite_path_organism,
                                            sqlite_path_reads):
     # count the number of reads in the read file that span each exon-exon junction. for a given transcript
     # returns a dictionary with junctions as keys and counts as values d
-    transcript_info = get_transcript_info(transcript_id, sqlite_path_organism)
+    trips_splice = TripsSplice(sqlite_path_organism)
+    transcript_info = trips_splice.get_transcript_info(transcript_id)
     exon_junctions = string_to_integer_list(transcript_info[0][0].split(","))
     counts = {}
 
