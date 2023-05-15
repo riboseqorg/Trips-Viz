@@ -1,5 +1,45 @@
 import sqlite3
+from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
+
+
+class TripsSplice:
+
+    def __init__(self, sqlite_path_organism):
+        self.transcript_table = sqlquery(sqlite_path_organism, 'transcripts')
+
+    def get_gene_info(self, gene_id):
+        return self.transcript_table.loc[
+            self.transcript_table.gene == gene_id,
+            ['transcript', 'exon_junctions', 'sequence']]
+
+    def get_transcript_length(self, gene):
+        return self.transcript_table.loc[self.transcript_table.gene == gene,
+                                         ["transcript", "length"]]
+
+    def get_genes_principal(self, gene_id):
+        return self.transcript_table.loc[self.transcript_table.gene == gene_id
+                                         & self.transcript_table.principle,
+                                         "transcript"]
+
+    def get_transcript_info(self, transcript_id):
+        return self.transcript_table[self.transcript_table.transcript ==
+                                     transcript_id]
+
+    def get_exon_coordinates_for_orf(self, transcript_id):
+        return self.transcript_table[self.transcript_table.transcript ==
+                                     transcript_id]
+
+    def get_protein_coding_transcript_ids(self, gene):
+        return self.transcript_table[self.transcript_table.gene == gene]
+
+    def get_start_stop_codon_positions(self, transcript_id):
+        return self.transcript_table[self.transcript_table.transcript ==
+                                     transcript_id]
+
+    def get_orf_exon_coordinates(self, transcript_id):
+        return self.transcript_table[self.transcript_table.transcript ==
+                                     transcript_id]
 
 
 def get_gene_info(gene_id, sqlite_path_organism):

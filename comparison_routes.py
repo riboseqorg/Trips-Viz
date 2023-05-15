@@ -11,6 +11,7 @@ from flask_login import current_user
 import json
 from fixed_values import my_decoder
 
+from sqlqueries import get_table, sqlquery
 # Single transcript comparison page, user chooses a gene and groups of files to display
 comparison_plotpage_blueprint = Blueprint("comparisonpage",
                                           __name__,
@@ -110,31 +111,22 @@ def comparequery():
     tran = data['transcript'].upper().strip()
     organism = data['organism']
     transcriptome = data['transcriptome']
+    organisms = get_table("organisms")
+    owner = organisms.loc[organisms.organism_name == organism
+                          & organisms.transcriptome_list == transcriptome,
+                          "owner"].values[0]
 
-    trips_connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                      config.DATABASE_NAME))
-    trips_connection.text_factory = str
-    trips_cursor = trips_connection.cursor()
-
-    trips_cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (trips_cursor.fetchone())[0]
-    if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
+    if owner:
+        transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
+        if not os.path.isfile(transhelve):
             return "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
     else:
-        transhelve = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-    cursor = transhelve.cursor()
+        transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, organism, transcriptome)
+    transcripts = sqlquery(transhelve, "transcripts")
+    transcripts = transcripts[transcripts.transcript == tran].iloc[0]
     cursor.execute(
         "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
     result = cursor.fetchone()

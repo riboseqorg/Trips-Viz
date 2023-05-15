@@ -137,8 +137,8 @@ def average_coverage_per_transcript(region_coverage):
         count = 0
         if (region_coverage[transcript] == None) and all(
                 region_coverage[transcript]):
-            print "transcript {transcript} had no unique regions".format(
-                transcript=transcript)
+            print("transcript {transcript} had no unique regions".format(
+                transcript=transcript))
             if transcript not in average_coverage:
                 average_coverage[transcript] = None
         else:

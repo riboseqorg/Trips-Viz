@@ -5,12 +5,17 @@ import config
 import pandas as pd
 
 
-def sqlquery(sqlfilepath, tablename):
+def _sql(sqlfilepath, tablename):
     engine = create_engine('sqlite:///' + sqlfilepath)
     Base = automap_base()
     Base.prepare(engine, reflect=True)
     session = Session(engine)
     sql = session.query(Base.classes[tablename])
+    return sql, engine
+
+
+def sqlquery(sqlfilepath, tablename):
+    sql, engine = _sql(sqlfilepath, tablename)
     sqlTable = pd.read_sql(sql, engine)
     return sqlTable
 
@@ -23,6 +28,7 @@ def get_user_id(username: str) -> int:
     '''Return the user_id for a given username'''
     users = sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),
                      'users')
+
     return users.loc[users['username'] == username, 'user_id'].values[0]
 
 
@@ -37,6 +43,19 @@ def table2dict(table, keys):
         n: grp.loc[n].to_dict('index')
         for n, grp in table.set_index(keys).groupby(level=keys[0])
     }
+
+
+def update_table(table, dct, task='delete'):
+    sqlfilepath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    sql, engine = _sql(sqlfilepath, table)
+    # TODO: Take case of list values
+    if task == 'delete':
+        sql.delete(dct)
+    if task == 'insert':
+        sql.insert(dct)
+    else:
+        sql.update(dct)
+    sql.commit()
 
 
 def form2filtered_data(data: pd.DataFrame, form: dict) -> pd.DataFrame:
