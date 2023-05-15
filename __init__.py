@@ -93,7 +93,7 @@ app.config['SECRET_KEY'] = config.FLASK_SECRET_KEY
 # Modify security messages so people can't tell which users have already signed up.
 app.config['SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED'] = ((
     "Thank you. Confirmation instructions have been sent to %(email)s."),
-                                                       "error")
+    "error")
 app.config['USER_DOES_NOT_EXIST'] = (("Invalid credentials"), "error")
 app.config['INVALID_PASSWORD'] = (("Invalid credentials"), "error")
 
@@ -109,8 +109,8 @@ mail = Mail(app)
 
 def sanitize_get_request(request):
     '''
-	take a get request and remove any XSS attempts
-	'''
+        take a get request and remove any XSS attempts
+        '''
     if isinstance(request, str):
         cleaned_request = re.sub("<.*>", "", request)
 
@@ -245,8 +245,7 @@ def create():
             logging.debug("Connecting to trips.sqlite")
 
             # Added by anmol
-            dbpath = '{}/trips.sqlite'.format(config.SCRIPT_LOC)
-            users = sqlquery(dbpath, 'users')
+            users = get_table('users')
             max_user_id = users['user_id'].max()
             users = users[['username', 'password']]
             username_dict = users.set_index('username').to_dict()['password']
@@ -267,24 +266,11 @@ def create():
             # Add -1 to study access list, causes problems when adding study id's later if we don't
             # Last value is temp_user, set to 0 because this is not a temporary user (temporary users identified by uuid in session cookie only, no username or pw)
             # TODO: create code for updating tabel
-            cursor.execute(
-                "INSERT INTO users VALUES ({},'{}','{}','-1','',0,0);".format(
-                    user_id, username, hashed_pass))
-            cursor.execute(
-                "INSERT INTO user_settings VALUES ('{0}','{1}','{2}','{3}',{4},'{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}',{19},'{20}',{21},{22});"
-                .format(config.MARKER_SIZE, config.AXIS_LABEL_SIZE,
-                        config.SUBHEADING_SIZE, config.TITLE_SIZE, user_id,
-                        config.BACKGROUND_COL, config.READLENGTH_COL,
-                        config.METAGENE_FIVEPRIME_COL,
-                        config.METAGENE_THREEPRIME_COL, config.A_COL,
-                        config.T_COL, config.G_COL, config.C_COL,
-                        config.UGA_COL, config.UAG_COL, config.UAA_COL,
-                        config.UGA_COL, config.UAG_COL, config.UAA_COL,
-                        config.CDS_MARKER_SIZE, config.CDS_MARKER_COLOUR,
-                        config.LEGEND_SIZE, config.RIBO_LINEWIDTH))
-            connection.commit()
+            update_table('users', {'user_id': user_id, 'username': username, 'password': hashed_pass,
+                         'f1': '-1', 'f2': '', 'f3': 0, 'f4': 0}, 'insert')  # TODO: Need to check what are f-fields
+            update_table('user_settings',
+                         config.DEFAULT_USER_SETTINGS, 'insert')
             logging.debug("Closing trips.sqlite connection")
-            connection.close()
             return redirect("/")
         else:
             error = 'Invalid Captcha. Please try again.'
@@ -309,8 +295,7 @@ def settingspage():
         return redirect(
             url_for(
                 'homepage',
-                message=
-                "To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
+                message="To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
     # get user_id
     user_id = get_user_id(user)
@@ -393,8 +378,7 @@ def uploadspage():
         return redirect(
             url_for(
                 'homepage',
-                message=
-                "To use the uploads page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
+                message="To use the uploads page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
             ))
     if not logged_in:
         flash(
@@ -403,104 +387,72 @@ def uploadspage():
 
     user_id = get_user_id(user)
     organisms = get_table('organisms')
-    organisms = organisms.loc[
-        not organisms.private | organisms.owner == user_id,
+    organisms_t = organisms.loc[
+        ~organisms.private | organisms.owner == user_id,
         ["organism_name", "transcriptome_list", "organism_id"]]
 
-    organism_dict = table_to_dict(organisms)
-    organism_dict = {}
+    organism_dict = table_to_dict(
+        organisms_t)  # key: organism name, value: transcriptome_list
+    org_id_dict = table_to_dict(
+        organisms_t)  # key: organism_id, value: [organism, transcriptome]
+    # -- Selected one
+    organism_access = get_table('organism_access')
+    organism_ids = organism_access[organism_access.user_id ==
+                                   user_id].organism_id
+    organisms_t = organisms[organisms.organism_id.isin(organism_ids)]
+    organism_dict = {**organism_dict, **table_to_dict(organisms_t)}
+    org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
-    cursor.execute(
-        "SELECT organism_name,transcriptome_list,organism_id from organisms where private = 0 OR owner = {};"
-        .format(user_id))
-    result = cursor.fetchall()
-    transcriptome = None  # TODO: Remove this part after correcting code
-    for row in result:
-        organism = row[0]
-        transcriptome = row[1]
-        if organism not in organism_dict:
-            organism_dict[organism] = [transcriptome]
-        else:
-            organism_dict[organism].append(transcriptome)
-        org_id_dict[row[2]] = [organism, transcriptome]
-    cursor.execute(
-        "SELECT organism_id from organism_access WHERE user_id = '{}';".format(
-            user_id))
-    result = (cursor.fetchall())
-    for row in result:
-        organism_id = row[0]
-        cursor.execute(
-            "SELECT organism_name,transcriptome_list from organisms where organism_id = {};"
-            .format(organism_id))
-        org_result = cursor.fetchone()
-        if org_result:
-            organism_name = org_result[0]
-            transcriptome = org_result[1]
-            if organism_name not in organism_dict:
-                organism_dict[organism_name] = [transcriptome]
-            else:
-                organism_dict[organism_name].append(transcriptome)
-            org_id_dict[organism_id] = [organism_name, transcriptome]
-    study_dict = {}
-    cursor.execute(
-        "SELECT study_id,study_name,organism_id from studies where owner = {}".
-        format(user_id))
-    result = cursor.fetchall()
-    for row in result:
-        # add to organism dict if not caught earlier (this only happens when database is modified manually)
-        if row[2] not in org_id_dict:
-            cursor.execute(
-                "SELECT organism_name,transcriptome_list,organism_id from organisms where organism_id =  {};"
-                .format(row[2]))
-            # organism_dict[organism] = [transcriptome]
-            org_id_dict[row[2]] = [row[0], transcriptome]
-        study_dict[int(row[0])] = [
-            row[1].replace("_{}".format(user_id), "", 1),
-            org_id_dict[row[2]][0], org_id_dict[row[2]][1], []
-        ]
+    study_dict = get_table('studies')
+    study_dict = study_dict[study_dict.owner == user_id][[
+        'study_id', 'study_name', 'organism_id'
+    ]]
+    organisms_t = organisms[organisms.organism_id.isin(
+        set(study_dict.organism_id) - set(org_id_dict))]
+    org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
-    transcriptome_dict = {}
-    cursor.execute(
-        "SELECT organism_id,organism_name,transcriptome_list from organisms where owner = {}"
-        .format(user_id))
-    result = cursor.fetchall()
-    for row in result:
-        transcriptome_dict[int(row[0])] = [row[1], row[2]]
+    study_dict[int(row[0])] = [  # TODO: Study dict format
+        row[1].replace("_{}".format(user_id), "", 1), org_id_dict[row[2]][0],
+        org_id_dict[row[2]][1], []
+    ]
+
+    transcriptome_dict = organisms[organism_access.user_id == user_id]
+    transcriptome_dict = table_to_dict(
+        transcriptome_dict
+    )  # key: organism_id, value: [organism_name, transcriptome_list]
+    study_access = get_table('study_access')
+    study_access = study_access[study_access.study_id.isin(study_dict)]
+    users = get_table('users')
+    users = users[users.user_id.isin(study_access.user_id)]
+    users = set(users.username) - set(study_dict.keys())
+    # NOTE : Till here
+
     for study_id in study_dict:
-        cursor.execute(
-            "SELECT user_id FROM study_access WHERE study_id = {}".format(
-                study_id))
-        result = cursor.fetchall()
-        for row in result:
-            cursor.execute(
-                "SELECT username FROM users WHERE user_id = {}".format(row[0]))
-            result2 = cursor.fetchone()
-            shared_user = result2[0]
-            if shared_user not in study_dict[study_id][3]:
-                study_dict[study_id][3].append(result2[0])
+        study_access = get_table('study_access')
+        user_ids = study_access[study_access.study_id == study_id].user_id
+        users = get_table('users')
+        user_names = users[users.user_id.isin(user_ids)].username
+        user_names = set(user_names) - set(study_dict[study_id][3])
+        study_dict[study_id][3] += list(user_names)
+    files = get_table('files')
+    # [file_name,study_id,file_id,file_description]
+    files = files[files.owner == user_id]
+    studies = get_table('studies')
+    studies = studies.merge(files, on='study_id')
+    studies['study_name'] = studies['study_name'].apply(
+        lambda x: x.replace("_{}".format(user_id), "", 1))
+
+    # key: file_name, value: [study_name,file_id,file_description]
     file_dict = {}
-    cursor.execute(
-        "SELECT file_name,study_id,file_id,file_description from files where owner = {}"
-        .format(user_id))
-    result = cursor.fetchall()
-    for row in result:
-        cursor.execute(
-            "SELECT study_name from studies where study_id = {}".format(
-                row[1]))
-        study_name = (cursor.fetchone())
-        if study_name != None:
-            file_dict[row[0]] = [
-                study_name[0].replace("_{}".format(user_id), "", 1), row[2],
-                row[3]
-            ]
-    seq_dict = {}
-    cursor.execute(
-        "SELECT seq_name,frame_breakdown from seq_rules where user_id = {}".
-        format(user_id))
-    result = cursor.fetchall()
-    for row in result:
-        seq_dict[row[0]] = [row[1]]
-    connection.close()
+    for _, row in studies.iterrows():  # TODO: Table 2 dict
+        file_dict[row['file_name']] = [
+            row['study_name'], row['file_id'],
+            row['file_description']
+        ]
+    seq_dict = get_table('seq_rules')
+    seq_dict = table_to_dict(
+        seq_dict[seq_dict.user_id == user_id], ['seq_name', 'frame_breakdown']
+    )
     return render_template('uploads.html',
                            local=local,
                            user=user,
@@ -520,16 +472,8 @@ def upload_file():
         f = request.files["file"]
         print(request.form)
         print(request.files)
-        connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                    config.DATABASE_NAME))
-        connection.text_factory = str
-        cursor = connection.cursor()
         user, logged_in = fetch_user()
-
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(user))
-        result = (cursor.fetchone())
-        user_id = result[0]
+        user_id = get_user_id(user)
         filename = f.filename
         # filename = secure_filename(f.filename)
         print(filename)
@@ -556,15 +500,13 @@ def upload_file():
             filetype = (request.form["seq_type"]).lower().strip()
 
         # if this filetype is new for this user insert a new entry into seq_rules table
-        if filetype != "riboseq" and filetype != "rnaseq":
-            cursor.execute(
-                "SELECT * from seq_rules where user_id = {} and seq_name = '{}'"
-                .format(user_id, filetype))
-            result = cursor.fetchone()
-            if result == None:
-                cursor.execute(
-                    "INSERT INTO seq_rules VALUES ({},'{}',0)".format(
-                        user_id, filetype))
+        if filetype not in ["riboseq", "rnaseq"]:
+            seq_rule = get_table('seq_rules')
+            seq_rule = seq_rule[seq_rule.user_id ==
+                                user_id, seq_rule.seq_name == filetype]
+            if seq_rule.empty:
+                update_table('seq_rules', {
+                             'user_id': user_id, 'seq_name': filetype, 'f1': 0}, 'insert')  # TODO: What is f1
 
         if not os.path.isdir("{}/uploads/{}".format(config.SCRIPT_LOC,
                                                     foldername)):
@@ -588,21 +530,17 @@ def upload_file():
             file_description = "NULL"
         sqlite_db.close()
         # get file id
-        cursor.execute("SELECT MAX(file_id) FROM files;")
-        result = cursor.fetchone()
-        new_file_id = int(result[0]) + 1
-        cursor.execute(
-            "SELECT organism_id FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}';"
-            .format(organism, assembly))
-        result = cursor.fetchone()
-        organism_id = int(result[0])
-        # get study_id
-        cursor.execute(
-            "SELECT study_id FROM studies WHERE study_name = '{}' and organism_id = {} and owner = {}"
-            .format(foldername, organism_id, user_id))
-        result = cursor.fetchone()
-        if result != None:
-            study_id = int(result[0])
+        max_file_id = get_table('files').file_id.max()
+        new_file_id = max_file_id + 1
+        organism_id = get_table('organisms')
+        organism_id = organism_id.loc[organism_id.organism_name == organism &
+                                      organism_id.transcriptome_list == assembly, 'organism_id'].values[0]
+        studies = get_table('studies')
+        studies = studies.loc[studies.organism_id == organism_id,
+                              studies.owner == user_id, studies.study_name == foldername, "study_id"]
+
+        if not studies.empty:
+            study_id = studies.values[0]
         else:
             cursor.execute("SELECT MAX(study_id) FROM studies;")
             result = cursor.fetchone()
@@ -643,33 +581,18 @@ def upload_file():
 @app.route('/uploadtranscriptome', methods=['GET', 'POST'])
 # @login_required
 def upload_transcriptome():
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     user, logged_in = fetch_user()
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+    user_id = get_user_id(user)
     if request.method == 'POST':
         organism = (request.form["organism"]).lower().strip().replace(" ", "_")
         assembly = (request.form["assembly"]).lower().strip().replace(" ", "_")
         default_tran = (request.form["default_tran"]).lower().strip().replace(
             " ", "_")
         uploaded_annotation = request.files.getlist("anno_file")
-        if not os.path.isdir("{}/uploads/transcriptomes/{}".format(
-                config.SCRIPT_LOC, user_id)):
-            os.makedirs("{}/uploads/transcriptomes/{}".format(
-                config.SCRIPT_LOC, user_id))
-        if not os.path.isdir("{}/uploads/transcriptomes/{}/{}".format(
-                config.SCRIPT_LOC, user_id, organism)):
-            os.makedirs("{}/uploads/transcriptomes/{}/{}".format(
-                config.SCRIPT_LOC, user_id, organism))
-        if not os.path.isdir("{}/uploads/transcriptomes/{}/{}/{}".format(
-                config.SCRIPT_LOC, user_id, organism, assembly)):
-            os.makedirs("{}/uploads/transcriptomes/{}/{}/{}".format(
-                config.SCRIPT_LOC, user_id, organism, assembly))
+        fold_path = "{}/uploads/transcriptomes/{}/{}/{}".format(
+            config.SCRIPT_LOC, user_id, organism, assembly)
+        if not os.path.isdir(fold_path):
+            os.makedirs(fold_path, exist_ok=True)
         for f in uploaded_annotation:
             filename = secure_filename(f.filename)
             ext = filename.split(".")[-1]
@@ -679,11 +602,10 @@ def upload_transcriptome():
                     ext)
             # Instead of using filename of the uploaded file we rename it to organism_assembly.sqlite, to keep things consistent
             filename = "{}_{}.sqlite".format(organism, assembly)
-            full_path = "{}/uploads/transcriptomes/{}/{}/{}/{}".format(
-                config.SCRIPT_LOC, user_id, organism, assembly, filename)
+            full_path = "{}/{}".format(
+                fold_path, filename)
             f.save(full_path)
-            cursor.execute("SELECT MAX(organism_id) from organisms;")
-            max_org_id = (cursor.fetchone()[0]) + 1
+            max_org_id = get_table('organisms').organism_id.max() + 1
             cursor.execute(
                 "INSERT INTO organisms VALUES({},'{}','{}','NULL','NULL','NULL','NULL','{}',1,{})"
                 .format(max_org_id, organism, assembly, default_tran.upper(),
@@ -726,24 +648,14 @@ def login():
         username = str(request.form['username']).strip()
         password = str(request.form['password']).strip()
         if xcaptcha.verify() or local == True or username == "developer":
-            username_dict = {}
             logging.debug("login Connecting to trips.sqlite")
-            connection = sqlite3.connect('{}/trips.sqlite'.format(
-                config.SCRIPT_LOC))
-            connection.text_factory = str
-            cursor = connection.cursor()
-            cursor.execute("SELECT username,password from users;")
-            result = (cursor.fetchall())
+            username_dict = table_to_dict(
+                get_table('users'), ['username', 'password'])
             logging.debug("Closing trips.sqlite connection")
-            connection.close()
-            for row in result:
-                username_dict[row[0]] = row[1]
             if username in username_dict:
                 if check_password_hash(username_dict[username],
                                        password) == True or local == True:
-                    id = username
-                    user = User(id)
-                    login_user(user)
+                    login_user(User(username))
                     nxt = sanitize_get_request(request.args.get('next'))
                     if nxt != None:
                         if "<function login" in nxt:
@@ -776,21 +688,6 @@ def logout():
 @login_manager.user_loader
 def load_user(userid):
     return User(userid)
-
-
-# Forgot password page.
-# @app.route("/forgot", methods=["GET", "POST"])
-# def forgot():
-# if user is already logged in then redirect to homepage
-# if current_user.is_authenticated:
-# return redirect("/")
-# error=None
-# if request.method == 'POST':
-# emailaddress = str(request.form['emailaddress'])
-# print ("address is ", emailaddress)
-# return redirect("/")
-# else:
-# return render_template('forgot_password.html',error=error)
 
 
 @app.route("/reset", methods=["GET", "POST"])
@@ -845,32 +742,16 @@ def saved():
         return redirect(url_for('homepage'))
 
     user_id = -1
-    if user != None:
+    if user:
         if logged_in == True:
             flash("You are logged in as {}".format(user))
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(user))
-        result = (cursor.fetchone())
-        user_id = result[0]
-    cursor.execute(
-        "SELECT organism_id from organism_access WHERE user_id = '{}';".format(
-            user_id))
-    result = (cursor.fetchall())
-    organism_access_list = []
-    for row in result:
-        organism_access_list.append(row[0])
-    cursor.execute("SELECT organism_id,organism_name,private from organisms;")
-    organism_list = []
-    # List of all rows returned
-    result = (cursor.fetchall())
-    for row in result:
-        if row[2] == 0:
-            organism_list.append(str(row[1]))
-        elif row[2] == 1:
-            if row[0] in organism_access_list:
-                organism_list.append(str(row[1]))
-    connection.close()
-
+        user_id = get_user_id(username)
+    organism_access = get_table('organism_access')
+    organism_access_list = organism_access.loc[organism_access.user_id ==
+                                               user_id, 'organism_id'].values
+    organism_list = get_table('organisms')
+    organism_list = organism_list.loc[~organism_list.private | organism_list.organism_id.isin(
+        organism_access_list), 'organism_id'].values
     return render_template('user_saved_cases.html',
                            local=local,
                            advanced=advanced,
@@ -882,19 +763,13 @@ def saved():
 def savedquery():
     data = json.loads(request.data)
     user = fetch_user()[0]
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
     cursor = connection.cursor()
     organism = data["organism"]
     label = data["label"]
-    returnstr = ""
     # get user_id
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+    user_id = get_user_id(user)
     start_codons = []
-    if "sc_aug" in data:
+    if "sc_aug" in data:  # TODO: Srink this part
         start_codons.append("ATG")
     if "sc_cug" in data:
         start_codons.append("CTG")
@@ -904,51 +779,32 @@ def savedquery():
         start_codons.append("None")
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
+    user_saved_cases = get_table('users_saved_cases')
     if organism != 'Select an Organism':
         if label == "":
-            cursor.execute(
-                "SELECT * FROM users_saved_cases WHERE user_id = {} and organism = '{}';"
-                .format(user_id, organism))
+            user_saved_cases = user_saved_cases[
+                user_saved_cases.user_id == user_id & user_saved_cases.organism == organism
+            ]
         else:
             label_list = (label.strip(" ")).split(",")
-            str_list = str(label_list).strip("[]")
-            cursor.execute(
-                "SELECT * FROM users_saved_cases WHERE user_id = {} AND label IN ({}) and organism = '{}';"
-                .format(user_id, str_list, organism))
+            user_saved_cases = user_saved_cases[
+                user_saved_cases.user_id == user_id & user_saved_cases.organism == organism & user_saved_cases.label.isin(
+                    label_list)
+            ]
     else:
         if label == "":
-            cursor.execute(
-                "SELECT * FROM users_saved_cases WHERE user_id = {};".format(
-                    user_id))
+            user_saved_cases = user_saved_cases[
+                user_saved_cases.user_id == user_id]
         else:
             label_list = (label.strip(" ")).split(",")
-            str_list = str(label_list).strip("[]")
-            cursor.execute(
-                "SELECT * FROM users_saved_cases WHERE user_id = {} AND label IN ({});"
-                .format(user_id, str_list))
-    result = cursor.fetchall()
-    total_rows = 0
-    for row in result:
-        gene = str(row[0])
-        tran = str(row[1])
-        start = str(row[2])
-        stop = str(row[3])
-        length = str(row[4])
-        score = str(row[5])
-        label = str(row[18])
-        start_codon = str(row[7])
-
-        trips_link = str(row[15])
-
-        # Limit the number of returned cases to 1000, as datatable is memory intensive
-        if total_rows < 1000:
-            returnstr += "{},{},{},{},{},{},{},{},{}.,/".format(
-                gene, tran, start, stop, length, score, label, start_codon,
-                trips_link)
-            total_rows += 1
-        else:
-            break
-    connection.close()
+            user_saved_cases = user_saved_cases[
+                user_saved_cases.user_id == user_id & user_saved_cases.label.isin(
+                    label_list)
+            ]
+    user_saved_cases = user_saved_cases.head(1000)
+    returnstr = user_saved_cases.apply(
+        lambda x: f"{x['gene']},{x['transcript']},{x['start']},{x['stop']},{x['length']},{x['score']},{x['label']},{x['start_codon']},{x['trips_link']}", axis=1).values
+    returnstr = ".,/".join(returnstr)
     return returnstr
 
 
@@ -956,24 +812,14 @@ def savedquery():
 @app.route('/del_query', methods=['POST'])
 def del_query():
     data = json.loads(request.data)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    cursor = connection.cursor()
     try:
         user = current_user.name
     except Exception:
         user = None
         return "Error user not signed in"
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
-    cursor.execute(
-        "DELETE from users_saved_cases WHERE tran = '{}' and start = '{}' and stop = '{}' and trips_link = '{}' and label = '{}' and user_id = {};"
-        .format(data["transcript"], data["start"], data["stop"],
-                data["trips_link"], data["label"], user_id))
-    connection.commit()
-    connection.close()
+    user_id = get_user_id(user)
+    update_table('users_saved_cases', {'user_id': user_id, 'tran': data["transcript"], 'start': data[
+                 "start"], 'stop': data["stop"], 'trips_link': data["trips_link"], 'label': data["label"]})
     return ""
 
 
@@ -981,8 +827,8 @@ def del_query():
 # @app.route("/user/logout")
 # @login_required
 # def logout():
-#	logout_user()
-#	return redirect(login)
+# logout_user()
+# return redirect(login)
 
 
 # Points to robots.txt in static folder
@@ -1036,34 +882,19 @@ def viewfile(folder, filename):
 def short(short_code):
     # First convert short code to an integer
     integer = base62_to_integer(short_code)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute("SELECT url from urls WHERE url_id = '{}';".format(integer))
-    result = cursor.fetchone()
-    if result == None:
+    url = get_table('urls')
+    url = url[url.url_id == integer]
+    if url.empty:
         return "Short code not recognized."
-    url = ""
-    url += result[0]
+    url = url.url.values[0]
     # add a keyword to the url to prevent generating another shortcode
     url += "&short={}".format(short_code)
-    connection.close()
     return redirect(url)
 
 
 @app.after_request
 def after_request_func(response):
     consent = request.cookies.get("cookieconsent_status")
-    # if consent == "deny":
-    #	session.clear()
-    #	for cookie_name in request.cookies:
-    #		if cookie_name != "cookieconsent_status":
-    #			response.delete_cookie(cookie_name)
-    #			if cookie_name == "tripsviz_session" or cookie_name == "session":
-    #				response.delete_cookie(cookie_name,path='/',domain='trips.ucc.ie')
-    #			else:
-    #				response.delete_cookie(cookie_name,path='/',domain='.ucc.ie')
     return response
 
 
@@ -1074,62 +905,36 @@ def homepage(message=""):
     organism_access_list = []
     organism_list = {}
     logging.debug("homepage Connecting to trips.sqlite")
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     sanitize_get_request(request.cookies.get("cookieconsent_status"))
     user, logged_in = fetch_user()
 
     user_id = -1
-    if user != None:
+    if user:
         if logged_in == True:
             flash("You are logged in as {}".format(user))
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(user))
-        result = (cursor.fetchone())
-        user_id = result[0]
+        user_id = get_user_id(user)
+        organism_access_list = get_table('organism_access')
+        organism_access_list = organism_access_list.loc[
+            organism_access_list.user_id == user_id, 'organism_id'
+        ].values
         # get a list of organism id's this user can access
-        cursor.execute(
-            "SELECT organism_id from organism_access WHERE user_id = '{}';".
-            format(user_id))
-        result = (cursor.fetchall())
-        for row in result:
-            organism_access_list.append(int(row[0]))
 
     # returns a tuple with each field as a seperate string
-    cursor.execute(
-        "SELECT organism_id,organism_name,private,owner from organisms;"
-    )  #TODO: Seq uniq
-    # List of all rows returned
-    result = (cursor.fetchall())
-    for row in result:  # TODO: Need to make it more efficient
-        if row[2] == 0:
-            if row[1] not in organism_list:
-                organism_list[row[1]] = []
-        elif row[2] == 1:
-            if row[0] in organism_access_list or row[3] == user_id:
-                if row[1] not in organism_list:
-                    organism_list[row[1]] = []
+    organisms = get_table('organisms')
+    orgsnisms = organisms.loc[(~organisms.private | organisms.organism_id.isin(
+        organism_access_list
+    ) & organisms.organism_name == organism), ['organism_name', 'transcriptome_list']]
+    organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
+        list
+    ).reset_index()
     # organism_list.sort()
 
-    for organism in organism_list:
-        cursor.execute(
-            "SELECT transcriptome_list from organisms WHERE organism_name = '{}' AND (private = 0 OR organism_id IN ({})) ;"
-            .format(organism,
-                    str(organism_access_list).strip("[]")))
-        result = cursor.fetchall()
-        if result:
-            for row in result:
-                organism_list[organism].append(row[0])
-
     logging.debug("homepage Closing trips.sqlite connection")
-    connection.close()
-    print(organism_list)
+    print(organisms)
 
     message = sanitize_get_request(request.args.get('message'))
     return render_template('landing.html',
-                           organisms=organism_list,
+                           organisms=orgsnisms,
                            message=message)
 
 
@@ -1162,11 +967,10 @@ def settingsquery():
             if new_password != new_password2:
                 return "ERROR: New passwords do not match"
             generate_password_hash(curr_password)
-            cursor.execute(
-                "SELECT password FROM users WHERE username = '{}'".format(
-                    user))
-            result = cursor.fetchone()
-            old_password_hash = result[0]
+            users = get_table('users')
+            old_hasged_password = users.loc[users.username ==
+                                            user, 'password'].values[0]
+
             if check_password_hash(old_password_hash, curr_password) == True:
                 new_password_hash = generate_password_hash(new_password)
                 cursor.execute(
@@ -1176,10 +980,7 @@ def settingsquery():
             else:
                 return "ERROR: Current password is not correct"
     # get user_id
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+    user_id = get_user_id(user)
 
     if "advanced" in data:
         cursor.execute(
@@ -1294,30 +1095,18 @@ def deletequery():
     data = json.loads(request.data)
 
     user = fetch_user()[0]
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "Select user_id from users where username = '{}';".format(user))
-    result = cursor.fetchone()
-    user_id = result[0]
+    user_id = get_user_id(user)
+    files_all = get_table("files")
+    studies_all = get_table("studies")
+    organisms_all = get_table("organisms")
     for key in data:
         file_id = data[key]["file_id"]
         if "filecheck" in data[key]:
-            cursor.execute(
-                "SELECT owner, study_id, file_name FROM files WHERE file_id = {}"
-                .format(file_id))
-            result = cursor.fetchone()
-            owner = result[0]
-            study_id = result[1]
-            filename = result[2]
-            cursor.execute(
-                "SELECT * FROM studies WHERE study_id = {}".format(study_id))
-            result = cursor.fetchone()
-            study_name = result[2]
-            full_path = "{}{}/{}".format(config.UPLOADS_DIR, study_name,
-                                         filename)
+            files = files_all[files_all["file_id"] == file_id].iloc[0]
+            studies = studies_all[studies_all["study_id"]
+                                  == files.study_id].iloc[0]
+            full_path = "{}{}/{}".format(config.UPLOADS_DIR, studies.study_name,
+                                         files.filename)
             # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
             # The time to keep the file in seconds, currently set to 14 days
@@ -1333,14 +1122,9 @@ def deletequery():
             "UPDATE files SET file_description = '{}' WHERE file_id = {}".
             format(data[key]["file_desc"], file_id))
         if data[key]["cutadapt_removed"] != '0':
-            cursor.execute(
-                "SELECT organism_id FROM files WHERE file_id = {}".format(
-                    file_id))
-            result = cursor.fetchone()
-            cursor.execute(
-                "SELECT organism_name FROM organisms WHERE organism_id = {}".
-                format(result[0]))
-            organism = cursor.fetchone()[0]
+            organism_id = files_all.loc[files_all["file_id"] == file_id, "organism_id""].values[0]
+            organism = organisms_all.loc[
+                organisms_all["organism_id"] == organism_id, "organism_name"].values[0]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1351,14 +1135,10 @@ def deletequery():
                     opendict.close()
 
         if data[key]["rrna_removed"] != '0':
-            cursor.execute(
-                "SELECT organism_id FROM files WHERE file_id = {}".format(
-                    file_id))
-            result = cursor.fetchone()
-            cursor.execute(
-                "SELECT organism_name FROM organisms WHERE organism_id = {}".
-                format(result[0]))
-            organism = cursor.fetchone()[0]
+            organism_id = files_all.loc[files.file_id ==
+                                        file_id, 'organism_id'].values[0]
+            organism = organism_all.loc[organism_all.organism_id ==
+                                        organism_id, 'organism_name'].values[0]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1367,14 +1147,11 @@ def deletequery():
                     opendict["rrna_removed"] = int(data[key]["rrna_removed"])
                     opendict.close()
         if data[key]["unmapped"] != '0':
-            cursor.execute(
-                "SELECT organism_id FROM files WHERE file_id = {}".format(
-                    file_id))
-            result = cursor.fetchone()
-            cursor.execute(
-                "SELECT organism_name FROM organisms WHERE organism_id = {}".
-                format(result[0]))
-            organism = cursor.fetchone()[0]
+            organism_id = files_all.loc[files.file_id ==
+                                        file_id, 'organism_id'].values[0]
+            organism = organism_all.loc[organism_all.organism_id ==
+                                        organism_id, 'organism_name'].values[0]
+
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1382,8 +1159,6 @@ def deletequery():
                     opendict = SqliteDict(filepath, autocommit=True)
                     opendict["unmapped_reads"] = int(data[key]["unmapped"])
                     opendict.close()
-    connection.commit()
-    connection.close()
     flash("File list updated")
     return redirect("https://trips.ucc.ie/uploads")
 
@@ -1393,17 +1168,8 @@ def deletequery():
 # @login_required
 def deletestudyquery():
     data = json.loads(request.data)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-
     user = fetch_user()[0]
-
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+    user_id = get_user_id(user)
     for study_id in data:
         studycheck = data[study_id][0]
         # Delete studies where the "delete" checkbox is checked
@@ -1411,56 +1177,37 @@ def deletestudyquery():
         if studycheck.split("_")[-1] != "undefined":
             study_id = studycheck.split("_")[-1]
             print("deleting study_id", study_id)
+            files = get_table('files')
+            files = files[files.study_id == study_id]
+            studies = get_table('studies')
+            studies_files = studies.merge(files, on='study_id')
+            if not studies_files.empty:
+                studies_files = studies_files[studies_files.owner == user_id]
+                studies_files['full_path'] = stydies_files.apply(
+                    lambda x: "{}{}/{}".format(config.UPLOADS_DIR, x.study_name, x.filename), axis=1)
+                studies_files = studies_files[studies_files['full_path'].apply(
+                    os.path.isfile)]
+                for _, row in studies_files.iterrows():
+                    curr_time = time.time()
+                    keep_time = 60 * 60 * 24 * 14
+                    deletion_time = curr_time + keep_time
+                    # TODO: Use cron for deletion
+                    update_table('deletions', {
+                                 'file_id': row['file_id'], 'full_path': row['full_path'], 'deletion_time': deletion_time})
 
-            # First delete all files on the server associated with this study, if there are any
-            cursor.execute(
-                "SELECT * FROM files WHERE study_id = {}".format(study_id))
-            result = cursor.fetchall()
-            if result != None:
-                for row in result:
-                    file_id = row[0]
-                    filename = row[3]
-                    cursor.execute(
-                        "SELECT owner, study_name FROM studies WHERE study_id = {}"
-                        .format(study_id))
-                    result = cursor.fetchone()
-                    owner = row[0]
-                    study_name = row[1]
-                    full_path = "{}{}/{}".format(config.UPLOADS_DIR,
-                                                 study_name, filename)
-                    if owner == user_id:
-                        if os.path.isfile(full_path):
-                            # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
-                            curr_time = time.time()
-                            # The time to keep the file in seconds, currently set to 14 days
-                            keep_time = 60 * 60 * 24 * 14
-                            deletion_time = curr_time + keep_time
-                            cursor.execute(
-                                "INSERT INTO deletions VALUES({},'{}',{})".
-                                format(file_id, full_path, deletion_time))
             # Now remove the study and the files associated with it from the db
-            cursor.execute(
-                "SELECT owner FROM studies WHERE study_id = {}".format(
-                    study_id))
-            result = cursor.fetchone()
-            study_owner = result[0]
+            study_owner = studies[studies.study_id == study_id].iloc[0].owner
             if study_owner == user_id:
                 # os.rename(study_path,study_path+"_REMOVE")
-                cursor.execute(
-                    "DELETE FROM studies WHERE study_id = {}".format(study_id))
-                cursor.execute(
-                    "DELETE FROM files WHERE study_id = {}".format(study_id))
-                connection.commit()
+                update_table('studies', {'study_id': study_id})
+                update_table('files', {'study_id': study_id})
                 continue
 
         # Modify access list next to studies
         study_access = data[study_id][1].split(",")
+        study_access = list(filter(('').__ne__, study_access))
         # check study_access against a list of all users
-        all_users = {}
-        cursor.execute("SELECT username,user_id FROM users;")
-        result = cursor.fetchall()
-        for row in result:
-            all_users[row[0]] = row[1]
+        all_users = table_to_dict(get_table('users'), ['username', 'user_id'])
         # Check that all users exist
         for username in study_access:
             if username:
@@ -1470,16 +1217,16 @@ def deletestudyquery():
                             username))
                     return str(get_flashed_messages())
                 else:
-                    cursor.execute(
-                        "SELECT * FROM study_access WHERE user_id = {} and study_id = {};"
-                        .format(all_users[username], study_id))
-                    result = cursor.fetchone()
-                    if result == None:
-                        cursor.execute(
-                            "\n\n\nINSERT INTO study_access VALUES({},{});".
-                            format(study_id, all_users[username]))
+                    study_access = get_table('study_access')
+                    study_access = study_access[study_access.user_id ==
+                                                all_users[username] & study_access.study_id == study_id]
+                    if study_access.empty:
+                        update_table('study_access', {
+                            'study_id': study_id, 'user_id': all_users[username]
+                        }, 'insert')
 
         # Modify study names if they have changed
+        # TODO: Till here
         new_study_name = "{}_{}".format(data[study_id][2], user_id)
         cursor.execute(
             "SELECT study_name FROM studies WHERE study_id = {}".format(
@@ -1552,85 +1299,62 @@ def deletestudyquery():
 # @login_required
 def deletetranscriptomequery():
     data = json.loads(request.data)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
 
     user = fetch_user()[0]
 
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
+    user_id = get_user_id(user)
     for organism_id in data:
-        transcriptomecheck = data[organism_id][0]
-        if transcriptomecheck.split("_")[-1] != "undefined":
-            organism_id = transcriptomecheck.split("_")[-1]
-            # Delete the annotation sqlite file
-            cursor.execute(
-                "SELECT organism_name, transcriptome_list, owner FROM organisms WHERE organism_id = {}"
-                .format(organism_id))
-            result = cursor.fetchone()
-            organism_name = result[0]
-            transcriptome_list = result[1]
-            owner = result[2]
-            if owner != user_id:
-                continue
-            sqlite_path = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, user_id, organism_name, transcriptome_list)
-            if os.path.isfile(sqlite_path):
-                # os.rename(sqlite_path,sqlite_path+"_REMOVE")
-                # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
-                curr_time = time.time()
-                # The time to keep the file in seconds, currently set to 14 days
-                keep_time = 60 * 60 * 24 * 14
-                deletion_time = curr_time + keep_time
-                cursor.execute(
-                    "INSERT INTO org_deletions VALUES({},'{}',{})".format(
-                        organism_id, sqlite_path, deletion_time))
-            # sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
-            # if os.path.isdir(sqlite_dir):
-            #	os.rename(sqlite_dir,sqlite_dir+"_REMOVE")
+        organism_id = data[organism_id][0].split("_")[-1]
+        if organism_id == "undefined":
+            continue
+        # Delete the annotation sqlite file
+        organisms = get_table("organisms")
+        organisms = organisms[organisms.organism_id == organism_id
+                              & organisms.owner == user_id].iloc[0][
+                                  "organism_name", "transcriptome_list"]
+        sqlite_path = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, user_id, organisms.organism_name,
+            organisms.transcriptome_list)
+        if os.path.isfile(sqlite_path):
+            # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
+            curr_time = time.time()
+            # The time to keep the file in seconds, currently set to 14 days
+            keep_time = 60 * 60 * 24 * 14
+            deletion_time = curr_time + keep_time
+            update_table(
+                "org_deletions", {"organism_id": organism_id,
+                                  "deletion_time": deletion_time, "sqlite_path": sqlite_path}, "insert"
+            )
+        # sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
+        # if os.path.isdir(sqlite_dir):
+        # os.rename(sqlite_dir,sqlite_dir+"_REMOVE")
+        update_table(
+            "organisms", {"organism_id": organism_id}
+        )
+        files = get_table("files")
+        files = files[files.organism_id == organism_id]
+        studies = get_table("studies")
+        files_studies = files.merge(
+            studies, on="study_id"
+        )
+        study_ids = files.study_id.unique()
+        study_names = files_studies.study_name.unique()
 
-            cursor.execute(
-                "DELETE FROM organisms WHERE organism_id = {}".format(
-                    organism_id))
-            # delete all files on the server associated with this organism, if there are any
-            cursor.execute("SELECT * FROM files WHERE organism_id = {}".format(
-                organism_id))
-            result = cursor.fetchall()
-            study_ids = []
-            study_names = []
-            if result != None:
-                for row in result:
-                    filename = row[3]
-                    study_id = row[2]
-                    study_ids.append(study_id)
-                    cursor.execute(
-                        "SELECT * FROM studies WHERE study_id = {}".format(
-                            study_id))
-                    result = cursor.fetchone()
-                    study_name = result[2]
-                    study_names.append(study_name)
-                    full_path = "{}{}/{}".format(config.UPLOADS_DIR,
-                                                 study_name, filename)
-                    if os.path.isfile(full_path):
-                        os.remove(full_path)
+        # delete all files on the server associated with this organism, if there are any
+        if _, row in files_studies.iterrows():
+            full_path = "{}{}/{}".format(config.UPLOADS_DIR, row.study_name,
+                                         row.file_name)
+            if os.path.isfile(full_path):
+                os.remove(full_path)
 
-            for study_name in study_names:
-                full_path = "{}{}".format(config.UPLOADS_DIR, study_name)
-                if os.path.isdir(full_path):
-                    os.rename(full_path, full_path + "_REMOVE")
+        for study_name in study_names:
+            full_path = "{}{}".format(config.UPLOADS_DIR, study_name)
+            if os.path.isdir(full_path):
+                os.rename(full_path, full_path + "_REMOVE")
 
-            # Now remove the study and the files associated with it from the db
-            for study_id in study_ids:
-                cursor.execute(
-                    "DELETE FROM studies WHERE study_id = {}".format(study_id))
-                cursor.execute(
-                    "DELETE FROM files WHERE study_id = {}".format(study_id))
-            connection.commit()
-    connection.close()
+        # Now remove the study and the files associated with it from the db
+        update_table("studies", {"study_id": study_ids})
+        update_table("files", {"study_id": study_ids})
     flash("Update successful")
     return redirect("https://trips.ucc.ie/uploads")
 
