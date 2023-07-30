@@ -1,4 +1,5 @@
 import string
+from typing import Dict, List
 import pandas as pd
 import sqlite3
 from flask import session, request
@@ -18,17 +19,17 @@ class User(UserMixin):
         self.name = str(id)
         self.password = self.name + "_secret"
 
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
         return self.is_authenticated
 
-    def get_id(self):
+    def get_id(self) -> str:
         return str(self.id)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
 
-def fetch_user():
+def fetch_user() -> Tuple[str, bool]:
     '''Fetches active user from cookies if present and returns username and login status.'''
     consent = request.cookies.get("cookieconsent_status")
     # If user rejects cookies then do not track them and delete all other cookies
@@ -119,7 +120,7 @@ def fetch_studies(organism: str, transcriptome: str) -> pd.DataFrame:
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
-def fetch_files(accepted_studies: pd.DataFrame) -> dict:
+def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
     '''Fetches files from database for give studies.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     files = sqlquery(dbpath, "files")
@@ -142,7 +143,7 @@ def fetch_files(accepted_studies: pd.DataFrame) -> dict:
 
 
 # Gets a list of all studies associated with an organism
-def fetch_study_info(organism: str) -> dict:
+def fetch_study_info() -> Dict[str, List[str]]:
     '''Fetches studies from database for organism.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")[[
@@ -156,7 +157,7 @@ def fetch_study_info(organism: str) -> dict:
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
-def fetch_file_paths(file_list, organism):
+def fetch_file_paths(file_list: List[str], organism: str) -> Dict[str, str]:
     file_path_dict = {"riboseq": {}, "rnaseq": {}, "proteomics": {}}
     # Convert to a tuple so it works with mysql
     try:
@@ -208,7 +209,8 @@ def fetch_file_paths(file_list, organism):
 
 
 # Builds a url and inserts it into sqlite database
-def generate_short_code(data, organism, transcriptome, plot_type):
+def generate_short_code(data, organism: str, transcriptome: str,
+                        plot_type: str) -> str:
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str
@@ -220,15 +222,21 @@ def generate_short_code(data, organism, transcriptome, plot_type):
     riboseq_studies = []
     rnaseq_studies = []
     proteomics_studies = []
+    oraganisms = get_table("organisms")
+    organism_id = oraganisms.loc[oraganisms.organism_name == organism,
+                                 "organism_id"].values[0]
+    studies = get_table("studies")
+    studies = studies.loc[studies.organism_id == organism_id,
+                          "study_id"].values
+    files = get_table("files")
+    riboseq_files = files.loc[files.study_id.isin(studies)
+                              & files.file_type == "riboseq", "file_id"].values
+    rnaseq_files = files.loc[files.study_id.isin(studies)
+                             & files.file_type == "rnaseq", "file_id"].values
+    proteomics_files = files.loc[files.study_id.isin(studies)
+                                 & files.file_type == "proteomics",
+                                 "file_id"].values
 
-    cursor.execute(
-        "SELECT organism_id from organisms WHERE organism_name = '{}'".format(
-            organism))
-    result = cursor.fetchone()
-    organism_id = int(result[0])
-    cursor.execute(
-        "SELECT study_id from studies WHERE organism_id = {}".format(
-            organism_id))
     result = cursor.fetchall()
 
     if plot_type == "interactive_plot" or plot_type == "metainfo_plot" or plot_type == "orf_translation":
@@ -324,7 +332,7 @@ def generate_short_code(data, organism, transcriptome, plot_type):
         else:
             url += "&crd=F"
 
-    if plot_type == "traninfo_plot":
+    if plot_type == "traninfo_plot":  # TODO: Hide these values some where in html
         url += "&plot={}".format(data['plottype'])
         # nuc_comp_single, nuc_comp_multi, lengths_plot, gene_count, codon_usage, nuc_freq_plot, orfstats
         if data["plottype"] == "nuc_comp_single":
@@ -660,90 +668,79 @@ def nuc_to_aa(nuc_seq: str) -> str:
 
 
 # Calculates the coverage of each gene, for 5' leader, cds and 3' trailer for unambiguous and ambigous reads, needed for diff exp
-def calculate_coverages(sqlite_db, longest_tran_list, traninfo_dict):
-    coverage_dict = {
-        "unambig_fiveprime_coverage": {},
-        "unambig_cds_coverage": {},
-        "unambig_threeprime_coverage": {},
-        "unambig_all_coverage": {},
-        "ambig_fiveprime_coverage": {},
-        "ambig_cds_coverage": {},
-        "ambig_threeprime_coverage": {},
-        "ambig_all_coverage": {}
-    }
-    total_trans = 0
-    for tran in longest_tran_list:
-        total_trans += 1
+def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
+                        longest_tran_list: List[str],
+                        traninfo_dict: Dict[str, Dict[str, int]]) -> None:
+    coverage_types = [
+        "unambig_fiveprime_coverage", "unambig_cds_coverage",
+        "unambig_threeprime_coverage", "unambig_all_coverage",
+        "ambig_fiveprime_coverage", "ambig_cds_coverage",
+        "ambig_threeprime_coverage", "ambig_all_coverage"
+    ]
+    coverage_dict = {}
+    for coverage_type in coverage_types:
+        coverage_dict[coverage_type] = {}
+        for tran in longest_tran_list:
+            coverage_dict[coverage_type][tran] = 0
+    for tran in set(sqlite_db) and set(traninfo_dict):
         unambig_dict = {}
         ambig_dict = {}
-        coverage_dict["unambig_fiveprime_coverage"][tran] = 0
-        coverage_dict["unambig_cds_coverage"][tran] = 0
-        coverage_dict["unambig_threeprime_coverage"][tran] = 0
-        coverage_dict["unambig_all_coverage"][tran] = 0
-        coverage_dict["ambig_fiveprime_coverage"][tran] = 0
-        coverage_dict["ambig_cds_coverage"][tran] = 0
-        coverage_dict["ambig_threeprime_coverage"][tran] = 0
-        coverage_dict["ambig_all_coverage"][tran] = 0
-        if tran in sqlite_db and tran in traninfo_dict:
-            cds_start = traninfo_dict[tran]["cds_start"]
-            cds_stop = traninfo_dict[tran]["cds_stop"]
-            tranlen = float(traninfo_dict[tran]["length"])
-            for readlen in sqlite_db[tran]["unambig"]:
-                for pos in sqlite_db[tran]["unambig"][readlen]:
-                    for i in range(pos, pos + readlen):
-                        unambig_dict[i] = ""
-                        ambig_dict[i] = ""
-            for readlen in sqlite_db[tran]["ambig"]:
-                for pos in sqlite_db[tran]["ambig"][readlen]:
-                    for i in range(pos, pos + readlen):
-                        ambig_dict[i] = ""
-            coverage_dict["unambig_all_coverage"][tran] = len(
-                unambig_dict.keys()) / tranlen
-            coverage_dict["ambig_all_coverage"][tran] = len(
-                ambig_dict.keys()) / tranlen
-            if cds_start != "None":
-                cds_start = float(cds_start)
-                cds_stop = float(cds_stop)
-                cds_len = cds_stop - cds_start
-                three_len = tranlen - cds_stop
-                # Use list comprehension to count number of entries less than cds_start
-                if cds_start > 0:
-                    coverage_dict["unambig_fiveprime_coverage"][tran] = sum(
-                        i < cds_start for i in unambig_dict.keys()) / cds_start
-                    coverage_dict["ambig_fiveprime_coverage"][tran] = sum(
-                        i < cds_start for i in ambig_dict.keys()) / cds_start
-                coverage_dict["unambig_cds_coverage"][tran] = sum(
-                    i > cds_start and i < cds_stop
-                    for i in unambig_dict.keys()) / cds_len
-                coverage_dict["ambig_cds_coverage"][tran] = sum(
-                    i > cds_start and i < cds_stop
-                    for i in ambig_dict.keys()) / cds_len
-                if three_len > 0:
-                    coverage_dict["unambig_threeprime_coverage"][tran] = sum(
-                        i > cds_stop for i in unambig_dict.keys()) / three_len
-                    coverage_dict["ambig_threeprime_coverage"][tran] = sum(
-                        i > cds_stop for i in ambig_dict.keys()) / three_len
-        sqlite_db["unambiguous_fiveprime_coverage"] = coverage_dict[
-            "unambig_fiveprime_coverage"]
-        sqlite_db["unambiguous_cds_coverage"] = coverage_dict[
-            "unambig_cds_coverage"]
-        sqlite_db["unambiguous_threeprime_coverage"] = coverage_dict[
-            "unambig_threeprime_coverage"]
-        sqlite_db["unambiguous_all_coverage"] = coverage_dict[
-            "unambig_all_coverage"]
-        sqlite_db["ambiguous_fiveprime_coverage"] = coverage_dict[
-            "ambig_fiveprime_coverage"]
-        sqlite_db["ambiguous_cds_coverage"] = coverage_dict[
-            "ambig_cds_coverage"]
-        sqlite_db["ambiguous_threeprime_coverage"] = coverage_dict[
-            "ambig_threeprime_coverage"]
-        sqlite_db["ambiguous_all_coverage"] = coverage_dict[
-            "ambig_all_coverage"]
+        ambig_range = [1000000, 0]
+        unambig_range = [1000000, 0]
+        cds_start = traninfo_dict[tran]["cds_start"]
+        cds_stop = traninfo_dict[tran]["cds_stop"]
+        tranlen = float(traninfo_dict[tran]["length"])
+        for readlen in sqlite_db[tran]["unambig"]:
+            for pos in sqlite_db[tran]["unambig"][readlen]:
+                if pos < unambig_range[0]:
+                    unambig_range[0] = pos
+                if pos + readlen > unambig_range[1]:
+                    unambig_range[1] = pos + readlen
+                # for i in range(pos, pos + readlen):
+                # unambig_dict[i] = ""  # TODO: Use list instead of dict
+        for readlen in sqlite_db[tran]["ambig"]:
+            for pos in sqlite_db[tran]["ambig"][readlen]:
+                if pos < ambig_range[0]:
+                    ambig_range[0] = pos
+                if pos + readlen > ambig_range[1]:
+                    ambig_range[1] = pos + readlen
+                # for i in range(pos, pos + readlen):
+                # ambig_dict[i] = ""  # TODO: Use list instead of dict
+        coverage_dict["unambig_all_coverage"][tran] = (
+            unambig_range[1] - unambig_range[0] + 1) / tranlen
+        coverage_dict["ambig_all_coverage"][tran] = (
+            ambig_range[1] - ambig_range[0] + 1) / tranlen
+        if cds_start != "None":
+            cds_start = float(cds_start)  # Why Float
+            cds_stop = float(cds_stop)
+            cds_len = cds_stop - cds_start
+            three_len = tranlen - cds_stop
+            # Use list comprehension to count number of entries less than cds_start
+            if cds_start > 0:  # TODO: Fix below as above
+                coverage_dict["unambig_fiveprime_coverage"][tran] = sum(
+                    i < cds_start for i in unambig_dict.keys()) / cds_start
+                coverage_dict["ambig_fiveprime_coverage"][tran] = sum(
+                    i < cds_start for i in ambig_dict.keys()) / cds_start
+            coverage_dict["unambig_cds_coverage"][tran] = sum(
+                i > cds_start and i < cds_stop
+                for i in unambig_dict.keys()) / cds_len
+            coverage_dict["ambig_cds_coverage"][tran] = sum(
+                i > cds_start and i < cds_stop
+                for i in ambig_dict.keys()) / cds_len
+            if three_len > 0:
+                coverage_dict["unambig_threeprime_coverage"][tran] = sum(
+                    i > cds_stop for i in unambig_dict.keys()) / three_len
+                coverage_dict["ambig_threeprime_coverage"][tran] = sum(
+                    i > cds_stop for i in ambig_dict.keys()) / three_len
+        for coverage in coverage_types:
+            sqlite_db[coverage] = coverage_dict[coverage]
         sqlite_db.commit()
 
 
 # Builds a profile, applying offsets
-def build_profile(trancounts, offsets, ambig, minscore=None, scores=None):
+def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
+                  offsets: Dict[int, int], ambig: bool, minscore: int,
+                  scores: Dict[int, int]):
     # print ("trancounts", trancounts)
     # print ("minscore", minscore)
     minreadlen = 15
@@ -799,9 +796,9 @@ def build_profile(trancounts, offsets, ambig, minscore=None, scores=None):
 
 
 # Builds a profile, applying offsets
-def build_proteomics_profile(trancounts
+def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
                              # , ambig
-                             ):
+                             ) -> Dict[int, int]:
     minreadlen = 15
     maxreadlen = 150
     profile = {}
@@ -828,7 +825,8 @@ def build_proteomics_profile(trancounts
 
 
 # Creates a dictionary of readlength counts
-def fetch_rld(sqlite_db, ambig_type):
+def fetch_rld(sqlite_db: Dict[str, Dict[str, Dict[str, Dict[int, int]]]],
+              ambig_type: str):
     rld = {}
     for transcript in sqlite_db:
         try:  # TODO: Simplify this code using pandas

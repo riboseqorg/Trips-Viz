@@ -15,12 +15,29 @@ matplotlib.use('agg')
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
 
-def generate_compare_plot(tran, ambig, master_filepath_dict, ribocoverage,
-                          organism, normalize, short_code, background_col,
-                          hili_start, hili_stop, comp_uag_col, comp_uga_col,
-                          comp_uaa_col, title_size, subheading_size,
-                          axis_label_size, marker_size, cds_marker_size,
-                          cds_marker_colour, legend_size, transcriptome):
+def generate_compare_plot(
+    tran: str,
+    ambig: str,
+    master_filepath_dict: dict,
+    ribocoverage: bool,
+    organism: str,
+    normalize: bool,
+    short_code: str,
+    background_col: str,
+    hili_start: str,
+    hili_stop: str,
+    comp_uag_col: str,
+    comp_uga_col: str,
+    comp_uaa_col: str,
+    title_size: int,
+    subheading_size: int,
+    axis_label_size: int,
+    marker_size: int,
+    cds_marker_size: int,
+    cds_marker_colour: int,
+    legend_size: int,
+    transcriptome: str,
+) -> str:
     labels = []
     start_visible = []
     line_collections = []

@@ -1,3 +1,4 @@
+from typing import Dict, Tuple, List, Union
 import sqlite3
 from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
@@ -133,7 +134,8 @@ def get_orf_exon_structure(start_stop, exon_coordinates):
     return structure
 
 
-def get_coding_regions_for_genes_transcripts(gene, sqlite_path_organism):
+def get_coding_regions_for_genes_transcripts(
+        gene: str, sqlite_path_organism: str) -> List[Tuple[int, int]]:
     # Returns the coding region coordinates annotated on each transcript for a given gene
     gene_id = gene.upper()
     conn = sqlite3.connect(sqlite_path_organism)
@@ -145,19 +147,19 @@ def get_coding_regions_for_genes_transcripts(gene, sqlite_path_organism):
     return coding_regions
 
 
-def get_max_min_exon_genomic_positions(exon_info):
+def get_max_min_exon_genomic_positions(
+        exon_info: List[Tuple[int, int, int]]) -> Tuple[int, int]:
     # Of all exons starts return the lowest position and highest position of all stops
     starts = []
-    for i, value in enumerate(exon_info):
-        starts.append(exon_info[i][1])
-
     stops = []
-    for i, value in enumerate(exon_info):
+    for i, _ in enumerate(exon_info):
+        starts.append(exon_info[i][1])
         stops.append(exon_info[i][2])
     return min(starts), max(stops)
 
 
-def exons_of_transcript(transcript_id, sqlite_path_organism):
+def exons_of_transcript(transcript_id: str,
+                        sqlite_path_organism: str) -> List[str]:
     # For a given transcript return the exon sequences in a list in 5' to 3' direction
     exon_lst = []
     tripsplice = TripsSplice(sqlite_path_organism)
@@ -176,8 +178,9 @@ def exons_of_transcript(transcript_id, sqlite_path_organism):
     return exon_lst[::-1]
 
 
-def get_exon_coordinate_ranges(sequence, exons, junctions):
-    # Return list of transcript coordinate ranges (start position, stop position).
+def get_exon_coordinate_ranges(sequence: str, exons: List[str],
+                               junctions: List[int]) -> List[Tuple[int, int]]:
+    """Return list of transcript coordinate ranges (start position, stop position)."""
     end = len(sequence) - 1
     junctions.append(end)
 
@@ -187,10 +190,10 @@ def get_exon_coordinate_ranges(sequence, exons, junctions):
     return ranges
 
 
-def get_exon_info(gene,
-                  sqlite_path_organism,
-                  supported_transcripts,
-                  filter=True):
+def get_exon_info(gene: str,
+                  sqlite_path_organism: str,
+                  supported_transcripts: List[str],
+                  filter: bool = True) -> List[Tuple[str, int, int]]:
     # Return the exon starts,stops and transcript for a given gene
     gene = gene.upper()
     conn = sqlite3.connect(sqlite_path_organism)
@@ -209,10 +212,11 @@ def get_exon_info(gene,
     return exon_info
 
 
-def genomic_exon_coordinate_ranges(gene,
-                                   sqlite_path_organism,
-                                   supported_transcripts,
-                                   filter=True):
+def genomic_exon_coordinate_ranges(
+        gene: str,
+        sqlite_path_organism: str,
+        supported_transcripts: List[str],
+        filter: bool = True) -> Dict[str, Tuple[int, int]]:
     # create a dictionary with transcript_ids as keys and exon coordinates in tuple (start, stop) as values
     # subtract the minumum start codon position of any exon for the gene
     exon_info = get_exon_info(gene,
@@ -235,11 +239,11 @@ def genomic_exon_coordinate_ranges(gene,
 
 def genomic_orf_coordinate_ranges(
     # gene,
-    sqlite_path_organism,
-    supported_transcripts,
-    genomic_coordinates,
+    sqlite_path_organism: str,
+    supported_transcripts: List[str],
+    genomic_coordinates: Dict[str, Tuple[int, int]],
     # filter=True
-):
+) -> Dict[str, List[Tuple[int, int]]]:
     # Translate the orf structure to genomic coordinates using genomic coordinates from the exons table of sqlite file
     orf_structures = {}
     genomic_orf_structures = {}
@@ -284,9 +288,9 @@ def genomic_junction_positions(
     # gene,
     # sqlite_path_organism,
     # supported_transcripts,
-    exons,
+    exons: Dict[str, List[Tuple[int, int]]],
     # filter=True
-):
+) -> Dict[str, List[Tuple[int, int]]]:
     genomic_junctions = {}
     for transcript in exons:
         if transcript not in genomic_junctions:
@@ -303,13 +307,13 @@ def genomic_junction_positions(
 
 def genomic_junction_scores(
     # gene_name,
-    sqlite_path_organism,
-    sqlite_path_reads,
-    supported_transcripts,
+    sqlite_path_organism: str,
+    sqlite_path_reads: str,
+    supported_transcripts: List[str],
     # exons,
-    genomic_junctions,
+    genomic_junctions: Dict[str, List[Tuple[int, int]]],
     # filter=True
-):
+) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
 
     scores = get_scores_per_exonjunction_for_gene(sqlite_path_organism,
                                                   sqlite_path_reads,
@@ -332,21 +336,23 @@ def genomic_junction_scores(
     return genomic_junctions_scores
 
 
-def get_reads_per_transcript_location(transcript_id, sqlite_path_reads):
+def get_reads_per_transcript_location(
+        transcript_id: str,
+        sqlite_path_reads: str) -> Union[None, Dict[int, List[int]]]:
     infile = SqliteDict(sqlite_path_reads)
     if transcript_id not in infile:
-        print("No unambiguous reads support this gene " + transcript_id)
+        # print("No unambiguous reads support this gene " + transcript_id)
         return None
-    reads = infile[transcript_id]["unambig"]
-    return reads
+    return infile[transcript_id]["unambig"]
 
 
-def get_reads_per_genomic_location_asite(gene,
-                                         sqlite_path_reads,
-                                         sqlite_path_organism,
-                                         supported_transcripts,
-                                         genomic_exon_coordinates,
-                                         filter=True):
+def get_reads_per_genomic_location_asite(
+        gene: str,
+        sqlite_path_reads: str,
+        sqlite_path_organism: str,
+        supported_transcripts: List[str],
+        genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
+        filter: bool = True) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
@@ -358,11 +364,10 @@ def get_reads_per_genomic_location_asite(gene,
     for read_file in sqlite_path_reads:
         infile = SqliteDict(read_file)
         for transcript in gene_info:
-            if filter:
-                if transcript[0] not in supported_transcripts:
-                    continue
+            if filter and transcript[0] not in supported_transcripts:
+                continue
             if transcript[0] not in infile:
-                print("No unambiguous reads support this gene")
+                # print("No unambiguous reads support this gene")
                 continue
             transcript_read_dictionary = infile[transcript[0]]["unambig"]
             genomic_ranges = sorted(genomic_exon_coordinates[transcript[0]])
@@ -402,10 +407,13 @@ def get_reads_per_genomic_location_asite(gene,
     return genomic_read_dictionary
 
 
-def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads,
-                                             sqlite_path_organism,
-                                             supported_transcripts,
-                                             genomic_exon_coordinates, filter):
+def get_reads_per_genomic_location_fiveprime(
+        gene: str,
+        sqlite_path_reads: str,
+        sqlite_path_organism: str,
+        supported_transcripts: List[str],
+        genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
+        filter: bool = False) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
@@ -460,10 +468,14 @@ def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads,
     return genomic_read_dictionary
 
 
-def get_read_ranges_genomic_location(gene, sqlite_path_reads,
-                                     sqlite_path_organism,
-                                     supported_transcripts,
-                                     genomic_exon_coordinates, filter):
+def get_read_ranges_genomic_location(
+    gene: str,
+    sqlite_path_reads: str,
+    sqlite_path_organism: str,
+    supported_transcripts: List[str],
+    genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
+    filter: bool = False
+) -> Union[Dict[str, Dict[str, List[Tuple[int, int]]]], None]:
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
@@ -516,43 +528,36 @@ def get_read_ranges_genomic_location(gene, sqlite_path_reads,
     return genomic_read_dictionary
 
 
-def get_exonjunction_pileup_for_transcript(transcript_id, sqlite_path_organism,
-                                           sqlite_path_reads):
+def get_exonjunction_pileup_for_transcript(
+        transcript_id: str, sqlite_path_organism: str,
+        sqlite_path_reads: str) -> Dict[str, int]:
     # count the number of reads in the read file that span each exon-exon junction. for a given transcript
     # returns a dictionary with junctions as keys and counts as values d
     trips_splice = TripsSplice(sqlite_path_organism)
     transcript_info = trips_splice.get_transcript_info(transcript_id)
     exon_junctions = string_to_integer_list(transcript_info[0][0].split(","))
     counts = {}
-
     for read_file in sqlite_path_reads:
         reads = get_reads_per_transcript_location(transcript_id, read_file)
         if not reads:
             continue
         for junction in exon_junctions:
+            if junction not in counts:
+                counts[junction] = 0
             for read_length in reads:
                 for position in reads[read_length]:
-                    if junction in range(position, position + read_length):
-
-                        if junction in counts:
-                            counts[junction] += reads[read_length][position]
-                        else:
-                            counts[junction] = reads[read_length][position]
-                    else:
-                        if junction in counts:
-                            counts[junction] += 0
-                        else:
-                            counts[junction] = 0
+                    if position <= junction < position + read_length:
+                        counts[junction] += reads[read_length][position]
     return counts
 
 
-def get_scores_per_exonjunction_for_gene(sqlite_path_organism,
-                                         sqlite_path_reads, supported):
+def get_scores_per_exonjunction_for_gene(sqlite_path_organism: str,
+                                         sqlite_path_reads: str,
+                                         supported: List[str]):
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     pileup = {}
     for trans in supported:
         pileup[trans] = get_exonjunction_pileup_for_transcript(
             trans, sqlite_path_organism, sqlite_path_reads)
-
     return pileup

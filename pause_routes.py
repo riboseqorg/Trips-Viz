@@ -1,8 +1,8 @@
+from typing import Dict, List, Tuple, Union
 from flask import Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
 import os
-import time
 import logging
 import config
 import subprocess
@@ -21,7 +21,7 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
 
 @pause_detection_blueprint.route('/<organism>/<transcriptome>/pause_detection/'
                                  )
-def pause_detection_page(organism, transcriptome):
+def pause_detection_page(organism: str, transcriptome: str) -> str:
     #ip = request.environ['REMOTE_ADDR']
     global local
     try:
@@ -51,7 +51,7 @@ def pause_detection_page(organism, transcriptome):
     }
 
     user_files = request.args.get('files')
-    if user_files != None:
+    if user_files:
         user_files = user_files.split(",")
         html_args["user_files"] = [str(x) for x in user_files]
     else:
@@ -83,11 +83,11 @@ def pause_detection_page(organism, transcriptome):
                            transcriptome=transcriptome)
 
 
-def tran_to_genome(tran, pos, transcriptome_info_dict):
+def tran_to_genome(tran: str, pos: int, transcriptome_info_dict: Dict) -> str:
     if tran in transcriptome_info_dict:
         traninfo = transcriptome_info_dict[tran]
     else:
-        return ("Null", 0)
+        return ("Null", 0)  # Fix same as another file
     chrom = traninfo["chrom"]
     strand = traninfo["strand"]
     exons = traninfo["exons"]
@@ -386,8 +386,6 @@ def find_pauses(data, user, logged_in):
         "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
         .format(organism, transcriptome))
     owner = (cursor.fetchone())[0]
-    start_time = time.time()
-    acceptable = 0
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
     #Find out which studies have all files of a specific sequence type selected (to create aggregates)
@@ -415,7 +413,6 @@ def find_pauses(data, user, logged_in):
     #custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
     custom_tran_list = data["custom_tran_list"]
 
-    filtered_transcripts = {}
     #feature_list.append("Inframe Count Value")
     if html_args["user_short"] == "None":
         short_code = generate_short_code(data, organism, data["transcriptome"],
@@ -431,7 +428,6 @@ def find_pauses(data, user, logged_in):
 
     tran_gene_dict = {}
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
-    accepted_orf_dict = {}
 
     if owner == 1:
         if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
@@ -532,21 +528,6 @@ def find_pauses(data, user, logged_in):
     #logging.debug("accepted orf dict", accepted_orf_dict)
     logging.debug("accepted orf dict built")
     #Now build a profile for every transcript in accepted_transcripts
-    master_profile_dict = {}
-
-    all_scores = []
-    all_te = []
-    all_start_increases = []
-    all_stop_decreases = []
-    #all_cds_ratios = []
-    all_results = []
-
-    cds_average_dict = {}
-    score_dict = {}
-
-    # keeps track of the number of hits per gene
-    gene_count_dict = {}
-    missing_file_ids = []
 
     if file_paths_dict["rnaseq"] == {}:
         if "te_check" in data:
@@ -554,7 +535,7 @@ def find_pauses(data, user, logged_in):
 
     if file_paths_dict["riboseq"] == {} and file_paths_dict[
             "proteomics"] == {}:
-        return_str = "Error no files selected"
+        returnstr = "Error no files selected"
         return returnstr
 
     total_files = 0
@@ -574,7 +555,7 @@ def find_pauses(data, user, logged_in):
     sorted_all_values, file_output_dict = extract_values(
         traninfo_dict, data, tran_gene_dict, selected_seq_types, profile_dict,
         min_fold_change, window, min_coverage, nuc_output)
-    if sorted_all_values == None:
+    if sorted_all_values:
         return ("No results, try making filters less restrictive")
 
     #TODO change extension to csv if only one file

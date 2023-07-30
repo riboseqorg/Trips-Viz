@@ -3,6 +3,7 @@ import sqlite3
 import os
 import time
 import config
+import pandas as pd
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             generate_short_code, fetch_user)
 import traninfo_plots
@@ -34,9 +35,9 @@ def traninfo_plotpage(organism, transcriptome):
         local = False
 
     organism = str(organism)
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     accepted_studies = fetch_studies(user, organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
+    _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     organisms = get_table("organisms")
 
@@ -71,7 +72,6 @@ def traninfo_plotpage(organism, transcriptome):
         "transcriptome": str(transcriptome),
         "metagene_tranlist": str(request.args.get('metagene_tranlist'))
     }
-    connection.close()
     return render_template('traninfo_index.html',
                            gwips_clade=gwips_clade,
                            gwips_org=gwips_org,
@@ -135,7 +135,6 @@ def traninfoquery():
     principal = "principal" in data
     exons = "exons" in data
 
-    user, logged_in = fetch_user()
     user_settings = config.DEFAULT_USER_SETTINGS.copy()
 
     # get a list of organism id's this user can access
@@ -159,7 +158,6 @@ def traninfoquery():
         filename = organism + "_sequences_" + str(time.time()) + ".fa"
         table_str = filename + "?~"
         splitlist = (gc_tranlist.replace(" ", ",")).split(",")
-        strlist = str(splitlist).strip("[]")
         tmp_fa_file = open(
             "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
         organisms = get_table("organisms")
@@ -167,14 +165,10 @@ def traninfoquery():
                               & organisms.transcriptome_list == transcriptome,
                               "owner"].values[0]
         if owner:
-            if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                    transcriptome)):
-                sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                    transcriptome)
-                transhelve = sqlite3.connect(sqlite_path_organism)
-            else:
+            sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
+                transcriptome)
+            if not os.path.isfile(sqlite_path_organism):
                 return_str = "Cannot find annotation file {}.{}.sqlite".format(
                     organism, transcriptome)
                 return return_str
@@ -183,65 +177,58 @@ def traninfoquery():
                                     "_{3}.sqlite".format(
                                         config.UPLOADS_DIR, owner, organism,
                                         transcriptome))
-            transhelve = sqlite3.connect(sqlite_path_organism)
+        transhelve = sqlite3.connect(sqlite_path_organism)
         cursor = transhelve.cursor()
+        transcripts = sqlquery(sqlite_path_organism, "transcripts")
+        transcripts = transcripts.loc[
+            transcripts.transcript.isin(splitlist),
+            ["gene", "transcript", "sequence", "cds_start", "cds_stop"
+             ]].drop_duplicates("transcript")
+        transcript_without_start = transcripts.loc[
+            pd.isna(transcripts["cds_start"]), "transcript"].value
 
-        cursor.execute(
-            "SELECT gene,transcript, sequence, cds_start, cds_stop FROM"
-            " transcripts WHERE transcript IN ({})".format(strlist))
-
-        # gc_location,exclude_first_val,exclude_last_val,include_first_val,include_last_val,gc_tranlist
-        # keep track of transcript that have been written to file to avoid duplicates
-        finished_trans = []
-        result = cursor.fetchall()
-        for row in result:
-            gene = row[0]
-            tran = row[1]
-            if tran in finished_trans:
-                continue
-            seq = row[2]
-            cds_start = row[3]
-            cds_stop = row[4]
-            if gc_location != "all" and not cds_start:
+        if gc_location != "all":
+            if transcript_without_start:
                 return "Error: {} is non-coding, region cannot be {}".format(
-                    tran, gc_location)
-            if gc_location != "all":
-                cds_start = int(cds_start) - 1
-                cds_stop = int(cds_stop)
-            if gc_location == "five":
-                seq = seq[:cds_start]
-            elif gc_location == "start":
-                seq = seq[cds_start - include_first_val:cds_start +
-                          include_last_val]
-            elif gc_location == "cds":
-                seq = seq[cds_start:cds_stop]
-            elif gc_location == "stop":
-                seq = seq[cds_stop - include_first_val:cds_stop +
-                          include_last_val]
-            elif gc_location == "three":
-                seq = seq[cds_stop:]
+                    ", ".join(transcript_without_start), gc_location)
+            transcripts["cds_start"] -= 1
 
-            subseq = ""
-            if sum([
-                    include_first_val, include_last_val, exclude_first_val,
-                    exclude_last_val
-            ]) == 0 or (gc_location in ["start", "stop"]):
-                subseq = seq
-            else:
-                if include_first_val != 0:
-                    subseq += seq[:include_first_val]
-                if include_last_val != 0:
-                    subseq += seq[(include_last_val * -1):]
-                if exclude_first_val != 0:
-                    seqlen = len(seq)
-                    subseq += seq[(seqlen - exclude_first_val) * -1:]
-                if exclude_last_val != 0:
-                    seqlen = len(seq)
-                    subseq += seq[:(seqlen - exclude_last_val)]
-            tmp_fa_file.write(">{}_{}\n{}\n".format(gene, tran, subseq))
-            finished_trans.append(tran)
+            # gc_location,exclude_first_val,exclude_last_val,include_first_val,include_last_val,gc_tranlist
+            # keep track of transcript that have been written to file to avoid duplicates
+        if gc_location == "five":
+            transcrips.seq = transcripts.seq.apply(lambda x: x[:cds_start])
+        elif gc_location == "start":
+            transcrips.seq = transcripts.seq.apply(lambda x: x[
+                cds_start - include_first_val:cds_start + include_last_val])
+        elif gc_location == "cds":
+            transcrips.seq = transcripts.seq.apply(
+                lambda x: x[cds_start:cds_end])
+        elif gc_location == "stop":
+            transcrips.seq = transcripts.seq.apply(
+                lambda x: x[:cds_stop + include_last_val])
+        else gc_location == "three":
+            transcrips.seq = transcripts.seq.apply(lambda x: x[cds_stop:])
+
+        subseq = ""  # TODO: This need to be corrected here
+        if sum([
+                include_first_val, include_last_val, exclude_first_val,
+                exclude_last_val
+        ]) == 0 or (gc_location in ["start", "stop"]):
+            subseq = seq
+        else:
+            if include_first_val != 0:
+                subseq += seq[:include_first_val]
+            if include_last_val != 0:
+                subseq += seq[(include_last_val * -1):]
+            if exclude_first_val != 0:
+                seqlen = len(seq)
+                subseq += seq[(seqlen - exclude_first_val) * -1:]
+            if exclude_last_val != 0:
+                seqlen = len(seq)
+                subseq += seq[:(seqlen - exclude_last_val)]
+        tmp_fa_file.write(">{}_{}\n{}\n".format(gene, tran, subseq))
         tmp_fa_file.close()
-        total_rows = len(finished_trans)
+        total_rows = transcripts.shape[0]
         table_str = "FA?~" + str(total_rows) + "?~" + table_str
 
         return table_str
@@ -256,23 +243,18 @@ def traninfoquery():
                               "owner"].values[0]
 
         if owner == 1:
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
                 config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
                 transcriptome))
         else:
-            transhelve = sqlite3.connect(
+            transhelve = (
                 "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                     config.UPLOADS_DIR, owner, organism, transcriptome))
-        cursor = transhelve.cursor()
-        if splitlist == []:
-            cursor.execute(
-                "SELECT transcript,cds_start,cds_stop,sequence from transcripts"
-            )
-        else:
-            cursor.execute(
-                "SELECT transcript,cds_start,cds_stop,sequence from transcripts"
-                " WHERE transcript IN ({})".format(str(splitlist).strip("[]")))
-        result = cursor.fetchall()
+        transcripts = sqlquery(transhelve, "transcrips")
+
+        if splitlist:
+            transcripts = transcripts[transcripts.transcript.isin(splitlist)]
+        result = transcrpts[transcript, cds_start, cds_stop, sequence]
         master_dict = {}
         for i in range(nuc_freq_plot_window * -1, nuc_freq_plot_window):
             master_dict[i] = {"A": 0, "T": 0, "G": 0, "C": 0}
@@ -323,7 +305,7 @@ def traninfoquery():
                             pass
             if nuc_freq_plot_anchor == "tts":
                 outfile.write(">{}\n{}\n".format(
-                    tran, seq[seqlen - nuc_freq_plot_window:seqlen]))
+                    tran, seq[-1 * nuc_freq_plot_window:]))
                 for i in range(nuc_freq_plot_window * -1, 0):
                     try:
                         master_dict[i][seq[seqlen + i]] += 1
@@ -332,37 +314,32 @@ def traninfoquery():
 
         title = nuc_freq_plot_anchor
         return traninfo_plots.nuc_freq_plot(master_dict, title, short_code,
-                                            background_col, readlength_col,
-                                            title_size, axis_label_size,
-                                            subheading_size, marker_size,
+                                            config.DEFAULT_USER_SETTING
                                             filename)
 
     # Nucleotide composition (single transcript)
     if plottype == "nuc_comp_single":
         master_dict = {}
         metagene_tranlist = metagene_tranlist.split(",")
-        if len(metagene_tranlist) == 1 and metagene_tranlist != ['']:
+        if len(metagene_tranlist) == 1:
             tran = metagene_tranlist[0]
             organisms = get_table("organisms")
             owner = organisms.loc[
                 organisms.organism_name == organism
+                # NOTE: Something is not right here, please recheck
                 & organisms.transcriptome_list == transcriptome,
                 "owner"].values[0]
 
             if owner == 1:
-                transhelve = sqlite3.connect(
+                transhelve = (
                     "{0}/{1}/{2}/{2}.{3}.sqlite".format(
                         config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
                         transcriptome))
             else:
-                transhelve = sqlite3.connect(
+                transhelve = (
                     "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                         config.UPLOADS_DIR, owner, organism, transcriptome))
-            cursor = transhelve.cursor()
-            cursor.execute(
-                "SELECT * from transcripts WHERE transcript = '{}'".format(
-                    tran.upper()))
-            result = cursor.fetchone()
+            result = sqlquery(transhelve, "transcript").iloc[0]
             traninfo = {
                 "transcript": result[0],
                 "gene": result[1],
@@ -379,12 +356,8 @@ def traninfoquery():
             }
 
             title = tran
-            connection.close()
             return traninfo_plots.nuc_comp_single(tran, master_dict, title,
-                                                  short_code, background_col,
-                                                  readlength_col, title_size,
-                                                  axis_label_size,
-                                                  subheading_size, marker_size,
+                                                  short_code, config.DEFAULT_USER_SETTING,
                                                   traninfo)
         else:
             organisms = get_table("organisms")
@@ -394,34 +367,26 @@ def traninfoquery():
                 "owner"].values[0]
 
             if owner == 1:
-                transhelve = sqlite3.connect(
+                transhelve = (
                     "{0}/{1}/{2}/{2}.{3}.sqlite".format(
                         config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
                         transcriptome))
             else:
-                transhelve = sqlite3.connect(
+                transhelve = (
                     "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                         config.UPLOADS_DIR, owner, organism, transcriptome))
-            cursor = transhelve.cursor()
-            if metagene_tranlist != ['']:
-                cursor.execute(
-                    "SELECT transcript,cds_start,cds_stop,sequence from"
-                    " transcripts WHERE transcript IN ({})".format(
-                        str(metagene_tranlist).strip("[]").replace("'", '"')))
+            transcripts = sqlquery(transhelve, "transcipts")
+            if metagene_tranlist:
+                transcrips = transcripts[transcripts.transcript.isin(
+                    metagene_tranlist)]
             else:
-                cursor.execute(
-                    "SELECT transcript,cds_start,cds_stop,sequence from"
-                    " transcripts WHERE tran_type = 1 and principal = 1")
-            result = cursor.fetchall()
-            traninfo = []
-            for row in result:
-                traninfo.append([row[0], row[1], row[2], row[3]])
+                transcrips = transcripts[transcripts.principle &
+                                         transcripts.tran_type]
+            traninfo = transcripts[[
+                "transcript", "cds_start", "cds_stop", "sequence"]].values.tolist()
             title = "GC metagene of {} genes".format(len(traninfo))
-            connection.close()
-            return traninfo_plots.gc_metagene(title, short_code,
-                                              background_col, readlength_col,
-                                              title_size, axis_label_size,
-                                              subheading_size, marker_size,
+            return traninfo_plots.gc_metagene(title, short_code, config.DEFAULT_USER_SETTING,
+
                                               traninfo)
 
     elif plottype == "orfstats":
@@ -455,7 +420,7 @@ def traninfoquery():
 
         input_list = []
         result = transcripts
-        for row in result:
+        for row in result:  # TODO: All these part should be cleaned
             gene = row[0]
             tran = row[1]
             start_codon = row[2]
@@ -482,8 +447,6 @@ def traninfoquery():
                 table_str += input_str
         table_str = "TE?~" + str(total_rows) + "?~" + table_str
         return table_str
-
-        return "ORF STATS"
 
     # Nucleotide composition (multiple transcripts)
     elif plottype == "nuc_comp_multi":
@@ -861,7 +824,7 @@ def traninfoquery():
                                         str(title_size) + "pt",
                                         str(axis_label_size) + "pt",
                                         str(marker_size) + "pt", filename)
-    #This is the lengths plot
+    # This is the lengths plot
     elif plottype == "lengths_plot":
         cursor.execute(
             "SELECT owner FROM organisms WHERE organism_name = '{}' and"

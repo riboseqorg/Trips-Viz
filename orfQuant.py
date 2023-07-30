@@ -1,17 +1,21 @@
-from tripsSplice import genomic_exon_coordinate_ranges
-from tripsSplice import genomic_orf_coordinate_ranges
-from tripsSplice import genomic_junction_positions
+#!/usr/bin/env python
+from typing import Dict, List
+
 from sqlitedict import SqliteDict
 
-from tripsSplice import get_protein_coding_transcript_ids
-from tripsSplice import get_reads_per_genomic_location_asite
-from tripsSplice import genomic_junction_scores
-from tripsSplice import get_start_stop_codon_positions
-
 from tripsCount import count_read_supporting_regions_per_transcript
+from tripsSplice import (
+    genomic_exon_coordinate_ranges,
+    genomic_junction_positions,
+    genomic_junction_scores,
+    get_protein_coding_transcript_ids,
+    get_reads_per_genomic_location_asite,
+    get_start_stop_codon_positions,
+)
 
 
-def classify_regions_shared_unique(regions):
+def classify_regions_shared_unique(
+        regions: Dict[str, List[str]]) -> Dict[str, List[str]]:
     # Takes in dictionary of genomic coordinates that make up the features for each transcript
     # for each region consider each transcript and count the number of occurences of this exact region in that transcript
     # If this count is > 1 it is considered not unique. Otherwise unique
@@ -32,7 +36,9 @@ def classify_regions_shared_unique(regions):
     return classified
 
 
-def get_orf_coordinate_junctions(orf_coordinates):
+def get_orf_coordinate_junctions(
+    orf_coordinates: Dict[str, Dict[int, List[int]]]
+) -> Dict[str, List[List[int]]]:
     # Get the coordinates of junctions within ORFs. Returns a dictionary with transcripts as keys and a list of jucntions
     # as values. Essentially reformats orf_coordinates to be junction oriented.
     junctions = {}
@@ -47,7 +53,9 @@ def get_orf_coordinate_junctions(orf_coordinates):
     return junctions
 
 
-def region_coverage(regions, counts):
+def region_coverage(
+        regions: Dict[str, List[str]],
+        counts: Dict[str, List[int]]) -> Dict[str, Dict[str, float]]:
     # Returns a dictioanry of coverage of each coding region. Calculated as counts/length rounded to 4 places
     region_counts = {}
     for transcript in regions:
@@ -68,7 +76,9 @@ def region_coverage(regions, counts):
     return coverage_region_transcript
 
 
-def coverage_junction_transcript(junction_scores):
+def coverage_junction_transcript(
+    junction_scores: Dict[str, Dict[str,
+                                    float]]) -> Dict[str, Dict[str, float]]:
     #function to calculate the normalised coverage of junction features. returns a nested dict.
     # 60 = 30 + 30 which is the sum of two riboseq read lengths.
     coverage_junction = {}
@@ -82,8 +92,11 @@ def coverage_junction_transcript(junction_scores):
     return coverage_junction
 
 
-def average_unique_coverage(unique_shared_exons, unique_shared_junctions,
-                            coverage_junction, coverage_exons):
+def average_unique_coverage(
+        unique_shared_exons: Dict[str, Dict[str, Dict[str, int]]],
+        unique_shared_junctions: Dict[str, Dict[str, Dict[str, int]]],
+        coverage_junction: Dict[str, Dict[str, float]],
+        coverage_exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     # Return the average coverage of all unique features. Sum of coverages over number of unique features
 
     average_features = {}
@@ -110,7 +123,9 @@ def average_unique_coverage(unique_shared_exons, unique_shared_junctions,
     return average_features
 
 
-def all_feature_average(coverage_junction, coverage_exons):
+def all_feature_average(
+        coverage_junction: Dict[str, Dict[str, float]],
+        coverage_exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     # Average of the coverage of all features. Sum of coverages over number of features
     average_features = {}
 
@@ -130,8 +145,9 @@ def all_feature_average(coverage_junction, coverage_exons):
     return average_features
 
 
-def cORF_ratio(average_unique, average_all):
-    # Calculate the ratio of average unique coverages to average all coverages
+def cORF_ratio(average_unique: Dict[str, float],
+               average_all: Dict[str, float]) -> Dict[str, float]:
+    """Calculate the ratio of average unique coverage to average all coverage."""
     cORF = {}
     for transcript in average_all:
         cORF[transcript] = average_unique[transcript] / average_all[transcript]
@@ -139,12 +155,15 @@ def cORF_ratio(average_unique, average_all):
     return cORF
 
 
-def adjusted_coverage_for_non_unique_orfs(transcript, coverage_exons,
-                                          coverage_junctions,
-                                          average_coverage_all):
-    # Calculate an adjusted value for cases where a transcript has no unique features
-    # This is coverage of exons - coverage of exons * sum of all coverages from that transcript
-    # Average is calculated of these adjusted values
+def adjusted_coverage_for_non_unique_orfs(
+        transcript: str, coverage_exons: Dict[str, Dict[str, float]],
+        coverage_junctions: Dict[str, Dict[str, float]],
+        average_coverage_all: Dict[str, float]) -> float:
+    """
+    This is coverage of exons - coverage of exons * sum of all coverages from that transcript
+    Calculate an adjusted value for cases where a transcript has no unique features
+    Average is calculated of these adjusted values
+    """
 
     adjusted_coverage_exons = {transcript: {}}
     for exon in coverage_exons[transcript]:
@@ -184,7 +203,10 @@ def adjusted_coverage_for_non_unique_orfs(transcript, coverage_exons,
     return cORF_transcript
 
 
-def shared_coverage(coverage_exons, coverage_junctions):
+def shared_coverage(
+    coverage_exons: Dict[str, Dict[str, float]],
+    coverage_junctions: Dict[str, Dict[str, float]]
+) -> Dict[str, Dict[str, float]]:
     # Calculate an adjusted average value where all features are shared between transcripts.
 
     shared_exon_coverage = {}
@@ -241,18 +263,18 @@ def shared_coverage(coverage_exons, coverage_junctions):
     return shared_cORF
 
 
-def aORF(cORF, counts):
+def aORF(cORF: Dict[str, float], counts: Dict[str, List]) -> Dict[str, float]:
     # Returns a dictionary of the number of a sites found in each transcript. Coverage by the sum of counts.
     a_sites_perORF = {}
     for transcript in cORF:
         if transcript not in a_sites_perORF:
-            a_sites_perORF[transcript] = cORF[transcript] * sum(
-                counts[transcript])
+            a_sites_perORF[transcript] = (cORF[transcript] *
+                                          sum(counts[transcript]))
 
     return a_sites_perORF
 
 
-def lORF(coding, sqlite_path_organism):
+def lORF(coding: List[str], sqlite_path_organism: str) -> Dict[str, int]:
     # Returns the lengths of each open reading frame in a dictionary. Transcript as keys, lengths as values
     lORFs = {}
 
@@ -265,7 +287,8 @@ def lORF(coding, sqlite_path_organism):
     return lORFs
 
 
-def ORFs_per_million(aORF, lORF):
+def ORFs_per_million(aORF: Dict[str, float],
+                     lORF: Dict[str, int]) -> Dict[str, float]:
     # Return the TPM like value OPM. Normalise coverage by length of each orf.
     # One million divided by scaling factor is the sum of all normalised coverages
 
@@ -284,27 +307,20 @@ def ORFs_per_million(aORF, lORF):
     return orfs_per_million
 
 
-def pct_gene_signal_per_orf(aORF):
+def pct_gene_signal_per_orf(aORF: Dict[str, float]) -> Dict[str, float]:
     # Value related to OPM above but as a proportional of expression from the locus. between 0 & 1
-    total_aORF = 0
-    for transcript in aORF:
-        total_aORF += aORF[transcript]
+    total_aORF = sum(aORF.values())
 
     pct_ORF = {}
     for transcript in aORF:
-        if transcript not in pct_ORF:
-            pct_ORF[transcript] = aORF[transcript] / total_aORF
+        pct_ORF[transcript] = aORF[transcript] / total_aORF
 
     return pct_ORF
 
 
-def orfQuant(
-    sqlite_path_organism,
-    sqlite_path_reads,
-    supported,
-    counts,
-    exons,
-):
+def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
+             supported: List[str], counts: Dict[str, List],
+             exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     # Main function for implementing method. Executes above functions and determines if all features are shared
     # Returms OPM values from ORFs_per_million function
     junctions = genomic_junction_positions(exons)
@@ -349,7 +365,8 @@ def orfQuant(
     return orfs_per_million
 
 
-def incl_OPM_run_orfQuant(gene, sqlite_path_organism, sqlite_path_reads):
+def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
+                          sqlite_path_reads: str) -> Dict[str, float]:
     # Run the ORFquant algorithm on the files that do not have a OPM value stored for the required trancripts
     # Store calculated OPMs for a file back in the read sqlitedict under "OPM"
     # Returns the average OPMs of the selected files for this locus

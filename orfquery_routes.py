@@ -1,4 +1,5 @@
-from flask impor Blueprint, render_template, request
+from typing import Dict, Tuple, List, Union
+from flask import Blueprint, render_template, request
 import sqlite3
 from sqlitedict import SqliteDict
 import os
@@ -17,8 +18,6 @@ import random
 import numpy as np
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from fixed_values import my_decoder
-
 
 HEADER = "Gene,transcript,start,stop,start_codon,type,sru,coverage,median_diff,read_density,split,first_diff\n"
 MIN_READ_DENSITY = 3
@@ -33,7 +32,7 @@ translated_orf_blueprint = Blueprint("orf_translationpage",
 
 
 @translated_orf_blueprint.route('/<organism>/<transcriptome>/orf_translation/')
-def orf_translationpage(organism, transcriptome):
+def orf_translationpage(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
     global local
     try:
@@ -111,9 +110,13 @@ def orf_translationpage(organism, transcriptome):
                            html_args=html_args)
 
 
-def tran_to_genome(tran, pos, transcriptome_info_dict):
+def tran_to_genome(
+    tran: str, pos: int,
+    transcriptome_info_dict: Dict[str, Dict[str, Union[str, List[Tuple[int,
+                                                                       int]]]]]
+) -> Union[str, Tuple[str, int]]:
     if tran not in transcriptome_info_dict:
-        return ("Null", 0)
+        return ("Null", 0)  # This test can be done before coming here
     traninfo = transcriptome_info_dict[tran]
     chrom = traninfo["chrom"]
     strand = traninfo["strand"]
@@ -142,7 +145,7 @@ def tran_to_genome(tran, pos, transcriptome_info_dict):
     return "{}_{}".format(chrom, genomic_pos)
 
 
-def create_aggregate(file_paths_dict, study_path, seq_type):
+def create_aggregate(file_paths_dict: Dict, study_path, seq_type):
     ambig = "unambig"
     file_count = 0
     profile_dict = {}
@@ -210,23 +213,6 @@ def create_profiles(
     ribo_study_string = "&ribo_studies="
     proteomics_study_string = "&proteomics_studies="
     seq_types = ["riboseq", "proteomics"]
-    # for seq_type in seq_types:
-    # if seq_type in file_paths_dict:
-    # for file_id in file_paths_dict[seq_type]:
-    # file_string += "{};".format(file_id)
-    # sqlite_db = SqliteDict(file_paths_dict[seq_type][file_id])
-    # try:
-    # offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-    # offset_dict[file_id] = offsets
-    # except Exception:
-    # offset_dict[file_id] = {}
-    # try:
-    # scores  = sqlite_db["offsets"]["fiveprime"]["read_scores"]
-    # score_dict[file_id] = scores
-    # except Exception:
-    # score_dict[file_id] = {}
-    # sqlite_db.close()
-    profile_dict = {}
 
     tot_file_ids = 0.0
     file_count = 0
@@ -318,7 +304,7 @@ def extract_features(start, stop, profile):
     }).merge(pd.DataFrame({"pos": selected_range}), how="right").fillna(0)
     inframe_values = profile.loc[profile.pos % 3 == 0, "counts"].values
     minusone_values = profile.loc[profile.pos % 3 == 2, "counts"].values
-    plusone_values = profile.loc[profile.pos % 3 == 0, "counts"].values
+    plusone_values = profile.loc[profile.pos % 3 == 1, "counts"].values
     oof_val = np.maximum(
         minusone_values,
         plusone_values)[4:-4]  # Pairwise compration and trimming
@@ -1027,8 +1013,9 @@ def find_orfs(data, user, logged_in):
     logging.debug("orfquery called")
     global user_short_passed
     organisms = get_table("organisms")
-    owner = organisms.loc[(organisms["organism_name"] == data["organism"]
-                          & organisms["transcriptome_list"] == data["transcriptome"]),
+    owner = organisms.loc[(
+        organisms["organism_name"] == data["organism"]
+        & organisms["transcriptome_list"] == data["transcriptome"]),
                           "owner"].values[0]
     # TODO: Check transcriptome list option
 
@@ -1057,9 +1044,9 @@ def find_orfs(data, user, logged_in):
     if minscore == 0:
         for seq_type in file_paths_dict:
             all_file_ids = list(file_paths_dict[seq_type].keys())
-            all_study_ids = files.loc[(files["file_id"].isin(
-                all_file_ids) & files["file_type"] == seq_type),
-                ["study_id", "file_id"]].unique()
+            all_study_ids = files.loc[(files["file_id"].isin(all_file_ids)
+                                       & files["file_type"] == seq_type),
+                                      ["study_id", "file_id"]].unique()
             prog_count += 100.
             # NOTE: Till here
 

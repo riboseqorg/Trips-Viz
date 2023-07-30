@@ -1,3 +1,4 @@
+from typing import List, Dict, Tuple, Union
 import os
 import collections
 from bokeh.palettes import all_palettes
@@ -7,24 +8,25 @@ from sqlitedict import SqliteDict
 
 # Create dictionary of read counts at each position in a transcript
 def get_reads(
-    read_type,
-    min_read,
-    max_read,
-    tran,
-    user_files,
-    tranlen,
+    read_type: str,
+    min_read: int,
+    max_read: int,
+    tran: str,
+    user_files: Dict[str, Dict[str, str]],
+    tranlen: int,
     coverage,
     # organism,
-    subcodon,
+    subcodon: bool,
     # noisered,
-    primetype,
-    filetype,
-    readscore,
+    primetype: str,
+    filetype: str,
+    readscore: int,
     # secondary_readscore=1,
-    pcr=False,
-    get_mismatches=False,
+    pcr: bool = False,
+    get_mismatches: bool = False,
     # self_obj=None
-):
+) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
+        str, Dict[str, Dict[int, int]]]]]:
     mismatch_dict = collections.OrderedDict()
     mismatch_dict["A"] = {}
     mismatch_dict["T"] = {}
@@ -254,18 +256,19 @@ def get_reads(
 
 # Create dictionary of counts at each position, averged by readlength
 def get_readlength_breakdown(
-        read_type,
-        min_read,
-        max_read,
-        tran,
-        user_files,
-        # offset_dict,
-        tranlen,
-        coverage,  # organism,
-        # subcodon, noisered, primetype, preprocess,
-    filetype,
-        colorbar_minread,
-        colorbar_maxread):
+    read_type: str,
+    min_read: int,
+    max_read: int,
+    tran: str,
+    user_files: Dict[str, Dict[str, str]],
+    # offset_dict,
+    tranlen: int,
+    coverage: int,  # organism,
+    # subcodon, noisered, primetype, preprocess,
+    filetype: str,
+    colorbar_minread: int,
+    colorbar_maxread: int,
+) -> Tuple[Dict[int, str], Dict[str, Dict[int, int]]]:
     master_dict = {}
     color_range = float(colorbar_maxread - colorbar_minread)
     color_list = all_palettes["RdYlGn"][10]
@@ -369,10 +372,11 @@ def get_readlength_breakdown(
 
 # Create a dictionary of mismatches at each position
 def get_seq_var(
-        user_files,
-        tranlen,
-        #organism,
-        tran):
+    user_files: Dict[str, Dict[str, str]],
+    tranlen: int,
+    #organism,
+    tran: str,
+) -> Union[str, Dict[str, Dict[str, int]]]:
     mismatch_dict = collections.OrderedDict()
     mismatch_dict["A"] = {}
     mismatch_dict["T"] = {}

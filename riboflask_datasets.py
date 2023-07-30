@@ -1,3 +1,4 @@
+from typing import List
 import matplotlib
 
 from bokeh.plotting import figure, output_file, reset_output
@@ -39,7 +40,8 @@ table, th, td
 """
 
 
-def plot_profile(xlist, ylist, filenames, file_descs, studies, raw_reads,
+def plot_profile(xlist: List[float], ylist: List[float], filenames: List[str],
+                 file_descs: List[str], studies: List[str], raw_reads,
                  controls, cell_lines, control_colors, study_colors,
                  cell_line_colors, transcript, start, stop):
     reset_output()

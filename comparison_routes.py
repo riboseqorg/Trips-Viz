@@ -1,6 +1,6 @@
+from typing import Tuple
 from flask import Blueprint, render_template, request, jsonify
 from flask import current_app as app
-import sqlite3
 from sqlitedict import SqliteDict
 import os
 import config
@@ -19,7 +19,7 @@ comparison_plotpage_blueprint = Blueprint("comparisonpage",
 
 
 @comparison_plotpage_blueprint.route('/<organism>/<transcriptome>/comparison/')
-def comparisonpage(organism, transcriptome):
+def comparisonpage(organism: str, transcriptome: str) -> str:
     #global user_short_passed
     global local  # TODO: Fix global issue
     try:
@@ -82,7 +82,6 @@ def comparisonpage(organism, transcriptome):
     accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
-    print(local)
     return render_template('index_compare.html',
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
@@ -104,7 +103,7 @@ comparisonquery_blueprint = Blueprint("comparequery",
 
 
 @comparisonquery_blueprint.route('/comparequery', methods=['POST'])
-def comparequery():
+def comparequery() -> Tuple:
     #global user_short_passed
     user_short_passed = False
     data = json.loads(request.data)

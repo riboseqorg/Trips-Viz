@@ -1,5 +1,5 @@
+from typing import Dict, List
 from flask import Blueprint, render_template, request
-import sqlite3
 from sqlitedict import SqliteDict
 import os
 import time
@@ -16,6 +16,7 @@ import riboflask_diff
 from flask_login import current_user
 import json
 from fixed_values import my_decoder
+from sqlqueries import get_table
 
 # Differential expression page, used to find diffentially expressed genes via z-score
 diff_plotpage_blueprint = Blueprint("diffpage",
@@ -24,29 +25,22 @@ diff_plotpage_blueprint = Blueprint("diffpage",
 
 
 @diff_plotpage_blueprint.route('/<organism>/<transcriptome>/differential/')
-def diffpage(organism, transcriptome):
+def diffpage(organism: str, transcriptome: str) -> str:
     # global user_short_passed
     global local
     try:
         print(local)
     except Exception:
         local = False
+    organisms = get_table("organism")
+    organisms = organisms.loc[organisms.organism_name == organism, [
+        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
+    ]].iloc[0]
 
-    organism = str(organism)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-
-    cursor.execute(
-        "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}';"
-        .format(organism))
-    result = (cursor.fetchone())
-
-    default_tran = result[3]
+    default_tran = organisms[3]
     studyinfo_dict = fetch_study_info(organism)
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = {
+    html_args = { # Send it to cokies side if possible
         "user_short": str(request.args.get('short')),
         "minreads": str(request.args.get('minread')),
         "minzscore": str(request.args.get('minzscore')),
@@ -88,11 +82,6 @@ def diffpage(organism, transcriptome):
                            seq_types=seq_types)
 
 
-def prepare_return_str(
-        input_string):  # TODO: remove this might not be required
-    return input_string
-
-
 # Creates/serves the z-score plot for differential expression
 diffquery_blueprint = Blueprint("diffquery",
                                 __name__,
@@ -109,7 +98,7 @@ def diffquery():
     genetype = data["genetype"]
     region = data["region"]  # can be all, cds,fiveprime, or threeprime
     if genetype != "coding" and region != "all":
-        return prepare_return_str(
+        return (
             "If gene type is not set to 'coding' then region has to be set to 'all'"
         )
     html_args = data["html_args"]
@@ -119,63 +108,44 @@ def diffquery():
     minreads = float(data["minreads"])
     transcript_list = ((data["transcript_list"].strip(" ")).replace(
         " ", ",")).split(",")
-    if data["min_cov"] != "undefined":
-        min_cov = float(data["min_cov"])
-    else:
-        min_cov = 0
+    min_cov = float(data["min_cov"]) if (data["min_cov"] != "undefined") else 0
     if min_cov > 1:
-        return prepare_return_str(
-            "Minimum coverage should be a value between 0 and 1")
-    filename = organism + "_differential_translation_" + str(
-        time.time()) + ".csv"
-    csv_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
-                    "w")
+        return "Minimum coverage should be a value between 0 and 1"
+    filename = f"{organism}_differential_translation_{time.time()}.csv"
+    csv_file = open(f"{config.SCRIPT_LOC}/static/tmp/{filename}", "w")
     master_file_dict = data["master_file_dict"]
-    # print ("master file dict", master_file_dict)
-    # return str(master_file_dict)
     master_transcript_dict = {}
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
+    organism = get_table(organism)
+    owner = organism.loc[(organism.organism_name == organism) &
+                         (organism.transcriptome_list == transcriptome),
+                         "owner"].values[0]
 
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
-
-    if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
-            return prepare_return_str(
-                "Cannot find annotation file {}.{}.sqlite".format(
-                    organism, transcriptome))
+    if owner:
+        sql_file = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                       config.ANNOTATION_DIR,
+                                                       organism, transcriptome)
+        if not os.path.isfile(sql_file):
+            return "Cannot find annotation file {}.{}.sqlite".format(
+                organism, transcriptome)
     else:
-        transhelve = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-    trancursor = transhelve.cursor()
+        sql_file = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, organism, transcriptome)
+    transcriptome = get_table(
+        transcriptome)  # TODO: Need to change the function
+
     if transcript_list == ['']:
-        if genetype == "all":
-            trancursor.execute("SELECT * from transcripts WHERE principal = 1")
-        elif genetype == "coding":
-            trancursor.execute(
-                "SELECT * from transcripts WHERE principal = 1 AND (tran_type = 'coding' OR tran_type = 1)"
-            )
-        elif genetype == "noncoding":
-            trancursor.execute(
-                "SELECT * from transcripts WHERE principal = 1 AND (tran_type = 'noncoding' OR tran_type = 0)"
-            )
+        transcriptome = transcriptome[transcriptome.principal == 1]
+
+        if genetype == "coding":
+            transcriptome = transcriptome[transcriptome.tran_type.isin(
+                ['coding', 1])]
+        else:
+            transcriptome = transcriptome[transcriptome.tran_type.isin(
+                ['noncoding', 0])]
     else:
-        trancursor.execute(
-            "SELECT * from transcripts WHERE transcript IN ({});".format(
-                str(transcript_list).strip("[]")))
-    result = trancursor.fetchall()
+        transcriptome = transcriptome[transcriptome.transcript.isin(
+            transcript_list)]
+    result = transcriptome  #.to_dict('records')
     traninfo_dict = {}
     for row in result:
         traninfo_dict[row[0]] = {
@@ -192,7 +162,6 @@ def diffquery():
             "tran_type": row[10],
             "principal": row[11]
         }
-    transhelve.close()
     longest_tran_list = traninfo_dict.keys()
 
     # This will hold one or more z-scores for every transcript
@@ -1307,19 +1276,17 @@ def diffquery():
 
 
 # Given either two or four filepaths, calculates a z-score, places the z-scores in a master dict
-def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
-                     rnaseq2_filepath, master_dict, longest_tran_list,
+def calculate_zscore(riboseq1_filepath: str, riboseq2_filepath: str,
+                     rnaseq1_filepath: str, rnaseq2_filepath: str,
+                     master_dict: Dict, longest_tran_list: List[str],
                      mapped_reads_norm, label, region, traninfo_dict, minreads,
-                     minzscore, ambiguous, min_cov):
+                     minzscore, ambiguous, min_cov: int):
     riboseq1_tot_reads = 0.001
     riboseq2_tot_reads = 0.001
     rnaseq1_tot_reads = 0.001
     rnaseq2_tot_reads = 0.001
     transcript_dict = {}
-    if ambiguous == False:
-        ambig_type = "unambiguous"
-    elif ambiguous == True:
-        ambig_type = "ambiguous"
+    ambig_type = "ambiguous" if ambiguous else "unambiguous"
 
     groupname = ""
     covdict = {}
@@ -1341,10 +1308,10 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             opendict = sqlite_db["{}_threeprime_totals".format(ambig_type)]
         elif region == "all":
             opendict = sqlite_db["{}_all_totals".format(ambig_type)]
-        if mapped_reads_norm == True:
+        if mapped_reads_norm:
             riboseq1_tot_reads += float(sqlite_db["noncoding_counts"])
             riboseq1_tot_reads += float(sqlite_db["coding_counts"])
-        if min_cov > 0:
+        if min_cov:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
                 calculate_coverages(sqlite_db, longest_tran_list,
                                     traninfo_dict)
@@ -1385,7 +1352,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                                autocommit=False,
                                                decode=my_decoder)
         else:
-            return prepare_return_str(
+            return (
                 "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
@@ -1397,10 +1364,10 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             opendict = sqlite_db["{}_threeprime_totals".format(ambig_type)]
         elif region == "all":
             opendict = sqlite_db["{}_all_totals".format(ambig_type)]
-        if mapped_reads_norm == True:
+        if mapped_reads_norm:
             riboseq2_tot_reads += float(sqlite_db["noncoding_counts"])
             riboseq2_tot_reads += float(sqlite_db["coding_counts"])
-        if min_cov > 0:
+        if min_cov:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
                 calculate_coverages(sqlite_db, longest_tran_list,
                                     traninfo_dict)
@@ -1441,7 +1408,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                    autocommit=False,
                                    decode=my_decoder)
         else:
-            return prepare_return_str(
+            return (
                 "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
@@ -1453,10 +1420,10 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             opendict = sqlite_db["{}_threeprime_totals".format(ambig_type)]
         elif region == "all":
             opendict = sqlite_db["{}_all_totals".format(ambig_type)]
-        if mapped_reads_norm == True:
+        if mapped_reads_norm:
             rnaseq1_tot_reads += float(sqlite_db["noncoding_counts"])
             rnaseq1_tot_reads += float(sqlite_db["coding_counts"])
-        if min_cov > 0:
+        if min_cov:
             if "{}_all_coverage".format(ambig_type) not in sqlite_db:
                 calculate_coverages(sqlite_db, longest_tran_list,
                                     traninfo_dict)
@@ -1496,7 +1463,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
                                    autocommit=False,
                                    decode=my_decoder)
         else:
-            return prepare_return_str(
+            return (
                 "error " +
                 "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
             )
@@ -1508,7 +1475,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
             opendict = sqlite_db["{}_threeprime_totals".format(ambig_type)]
         elif region == "all":
             opendict = sqlite_db["{}_all_totals".format(ambig_type)]
-        if mapped_reads_norm == True:
+        if mapped_reads_norm:
             rnaseq2_tot_reads += float(sqlite_db["noncoding_counts"])
             rnaseq2_tot_reads += float(sqlite_db["coding_counts"])
         if min_cov > 0:
@@ -1546,7 +1513,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
 
     current_min_reads_list = []
 
-    if mapped_reads_norm == True:
+    if mapped_reads_norm:
         ribo1_modifier = riboseq1_tot_reads / riboseq2_tot_reads
         if ribo1_modifier < 1:
             ribo1_modifier = 1
@@ -1715,7 +1682,7 @@ def calculate_zscore(riboseq1_filepath, riboseq2_filepath, rnaseq1_filepath,
         tran = row[0]
         if tran not in master_dict:
             master_dict[tran] = {"skip": False}
-        if row[4] == True:
+        if row[4]:
             master_dict[tran]["skip"] = True
         else:
             master_dict[tran][groupname] = {

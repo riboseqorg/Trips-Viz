@@ -1,3 +1,16 @@
+from typing import Dict, List, Tuple
+import pickle
+from bokeh.models import (
+    ColumnDataSource,
+    HoverTool,
+)
+import bokeh.models as bmo
+from bokeh.resources import CDN
+from bokeh.embed import file_html
+from bokeh.plotting import figure, output_file
+import matplotlib.cm as cm
+import matplotlib
+from typing import Dict
 import pandas as pd
 
 iupac_dict = {
@@ -120,7 +133,8 @@ codon_aa_full = {
 }
 
 
-def merge_dicts(dict1, dict2):
+def merge_dicts(dict1: Dict[str, Dict[int, int]],
+                dict2: Dict[str, Dict[int, int]]) -> Dict[str, Dict[int, int]]:
     for nuc in dict2:
         if nuc not in dict1:
             dict1[nuc] = dict2[nuc]
@@ -133,17 +147,7 @@ def merge_dicts(dict1, dict2):
     return dict1
 
 
-#----
-import matplotlib
-import matplotlib.cm as cm
-from bokeh.plotting import figure, output_file
-from bokeh.embed import file_html
-from bokeh.resources import CDN
-import bokeh.models as bmo
-from bokeh.models import (
-    ColumnDataSource,
-    HoverTool,
-)
+# ----
 
 
 def codon_usage(codon_dict, short_code, title_size, axis_label_size,
@@ -185,12 +189,12 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     p.xaxis.major_label_text_font_size = "14pt"
     p.yaxis.axis_label_text_font_size = axis_label_size
     p.yaxis.major_label_text_font_size = marker_size
-    #p.background_fill_color = background_color
+    # p.background_fill_color = background_color
     p.xgrid.grid_line_color = "white"
     p.ygrid.grid_line_color = "white"
     color_palette_list = []
     colormap = cm.get_cmap(
-        "gist_rainbow")  #choose any matplotlib colormap here
+        "gist_rainbow")  # choose any matplotlib colormap here
     start_val = 0.75
     for i in range(0, 21):
         start_val -= 0.0293
@@ -260,7 +264,7 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
         59.5: "Gly",
         63: "Stop"
     }
-    #p.vbar(x=[1], width=1,bottom=0,color="gray",top=[1])
+    # p.vbar(x=[1], width=1,bottom=0,color="gray",top=[1])
 
     hover = p.select(dict(type=HoverTool))
     hover.tooltips = [("Count", "@y"), ("Codon", "@labels"),
@@ -275,14 +279,9 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     return graph
 
 
-import pickle
-
-
-def my_decoder(obj):
-    return pickle.load(open(obj, "rb"))
-
-
-def get_user_defined_seqs(seq, seqhili):
+def get_user_defined_seqs(
+        seq: str, seqhili: List[str]
+) -> Tuple[Dict[int, List[int]], Dict[int, List[str]]]:
     signalhtml = {0: [], 1: [], 2: []}
     seq = seq.replace("T", "U")
     near_cog_starts = {0: [], 1: [], 2: []}

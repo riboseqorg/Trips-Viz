@@ -1,3 +1,4 @@
+from typing import Dict, List, Tuple
 import matplotlib
 
 from matplotlib import pyplot as plt
@@ -43,13 +44,14 @@ line_tooltip_css = """
 
 
 def mismatches(
-        master_dict,
-        title,
-        short_code,
-        background_col,
-        title_size,
-        # axis_label_size, subheading_size,
-        marker_size):
+    master_dict: Dict[str, int],
+    title: str,
+    short_code: str,
+    background_col: str,
+    title_size: int,
+    # axis_label_size, subheading_size,
+    marker_size: int,
+) -> str:
     fig, ax = plt.subplots(figsize=(13, 8))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Position', fontsize="26")
@@ -88,7 +90,7 @@ def mismatches(
     return graph
 
 
-def calc_factor(master_dict):
+def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
     maxval = max(master_dict.values())
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
@@ -99,9 +101,10 @@ def calc_factor(master_dict):
     return master_dict, zeroes
 
 
-def readlen_dist(master_dict, title, short_code, background_col,
-                 readlength_col, title_size, axis_label_size, subheading_size,
-                 marker_size):
+def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
+                 background_col: str, readlength_col: str, title_size: int,
+                 axis_label_size: int, subheading_size: int,
+                 marker_size: int) -> str:
     master_dict, factor = calc_factor(master_dict)
     returnstr = "Readlen,Count\n"
     for key in master_dict:
@@ -150,15 +153,16 @@ def readlen_dist(master_dict, title, short_code, background_col,
 
 
 def mismatch_pos(
-        master_dict,
-        title,
-        short_code,
-        background_col,
-        readlength_col,
-        title_size,
-        axis_label_size,
-        #subheading_size,
-        marker_size):
+    master_dict: Dict[str, int],
+    title: str,
+    short_code: str,
+    background_col: str,
+    readlength_col: str,
+    title_size: int,
+    axis_label_size: int,
+    #subheading_size,
+    marker_size: int,
+) -> str:
     fig, ax = plt.subplots(figsize=(13, 8))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Read Length', fontsize="26")
@@ -199,22 +203,23 @@ def mismatch_pos(
 
 
 def nuc_comp(
-        master_dict,
-        maxreadlen,
-        title,
-        nuc_comp_type,
-        nuc_comp_direction,
-        short_code,
-        background_col,
-        a_col,
-        t_col,
-        g_col,
-        c_col,
-        title_size,
-        axis_label_size,
-        #subheading_size,
-        marker_size,
-        legend_size):
+    master_dict: Dict[str, int],
+    maxreadlen: int,
+    title: str,
+    nuc_comp_type: str,
+    nuc_comp_direction: str,
+    short_code: str,
+    background_col: str,
+    a_col: str,
+    t_col: str,
+    g_col: str,
+    c_col: str,
+    title_size: int,
+    axis_label_size: int,
+    #subheading_size,
+    marker_size: int,
+    legend_size: int,
+) -> str:
 
     labels = ["A", "T", "G", "C"]
     returnstr = "Position,A,T,G,C\n"
@@ -289,14 +294,14 @@ def nuc_comp(
 
 
 def mrna_dist_readlen(
-    mrna_dist_dict,
-    mrna_readlen_per,
-    short_code,
-    background_col,
-    title_size,
-    axis_label_size,
+    mrna_dist_dict: Dict[str, Dict[str, int]],
+    mrna_readlen_per: bool,
+    short_code: str,
+    background_col: str,
+    title_size: int,
+    axis_label_size: int,
     # subheading_size,
-    marker_size,
+    marker_size: int,
     #legend_size
 ):
 
@@ -387,12 +392,13 @@ def mrna_dist_readlen(
 
 
 def dinuc_bias(
-        master_count_dict,
-        short_code,
-        background_col,
-        title_size,
-        axis_label_size,  # subheading_size, 
-        marker_size):
+    master_count_dict: Dict[str, int],
+    short_code: str,
+    background_col: str,
+    title_size: int,
+    axis_label_size: int,  # subheading_size, 
+    marker_size: int,
+) -> str:
     master_count_dict, factor = calc_factor(master_count_dict)
     fig, ax = plt.subplots(figsize=(13, 8))
     N = 16
@@ -425,7 +431,7 @@ def dinuc_bias(
     return graph
 
 
-def calc_meta_factor(inlist):
+def calc_meta_factor(inlist: List[float]) -> Tuple[List[float], int]:
     maxval = max(inlist)
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
@@ -437,23 +443,24 @@ def calc_meta_factor(inlist):
 
 
 def metagene_plot(
-        readlen_list,
-        fiveprime_list,
-        threeprime_list,
-        metagene_type,
-        title,
-        minreadlen,
-        maxreadlen,
-        short_code,
-        background_col,
-        metagene_fiveprime_col,
-        metagene_threeprime_col,
-        title_size,
-        axis_label_size,
-        # subheading_size,
-        marker_size,
-        metagene_end,
-        metagene_aggregate):
+    readlen_list: List[int],
+    fiveprime_list: List[int],
+    threeprime_list: List[int],
+    metagene_type: str,
+    title: str,
+    minreadlen: int,
+    maxreadlen: int,
+    short_code: str,
+    background_col: str,
+    metagene_fiveprime_col: str,
+    metagene_threeprime_col: str,
+    title_size: int,
+    axis_label_size: int,
+    # subheading_size,
+    marker_size: int,
+    metagene_end: str,
+    metagene_aggregate: bool,
+) -> str:
     fig, ax = plt.subplots(figsize=(13, 8))
     ind = np.array(readlen_list)
     file_colors = [
@@ -585,7 +592,9 @@ def metagene_plot(
     return graph
 
 
-def calc_trip_factor(read_dict):
+def calc_trip_factor(
+    read_dict: Dict[str, Dict[int, float]]
+) -> Tuple[Dict[str, Dict[int, float]], int]:
     maxval = 0
     for i in range(0, len(read_dict["frame1"])):
         count_list = [
@@ -606,9 +615,11 @@ def calc_trip_factor(read_dict):
     return read_dict, zeroes
 
 
-def trip_periodicity_plot(read_dict, title, short_code, background_col,
-                          title_size, axis_label_size, subheading_size,
-                          marker_size, legend_size):
+def trip_periodicity_plot(read_dict: Dict[str, Dict[int, float]], title: str,
+                          short_code: str, background_col: str,
+                          title_size: int, axis_label_size: int,
+                          subheading_size: int, marker_size: int,
+                          legend_size: int) -> str:
     read_dict, factor = calc_trip_factor(read_dict)
     tot_high_count = 0.01
     tot_low_count = 0.0
@@ -705,22 +716,22 @@ def trip_periodicity_plot(read_dict, title, short_code, background_col,
 
 
 def mapped_reads_plot(
-        unmapped,
-        mapped_coding,
-        mapped_noncoding,
-        labels,
-        ambiguous,
-        cutadapt_removed,
-        rrna_removed,
-        short_code,
-        background_col,
-        title_size,
-        axis_label_size,
+        unmapped: Dict[str, Dict[int, float]],
+        mapped_coding: Dict[str, Dict[int, float]],
+        mapped_noncoding: Dict[str, Dict[int, float]],
+        labels: List[str],
+        ambiguous: Dict[str, Dict[int, float]],
+        cutadapt_removed: Dict[str, Dict[int, float]],
+        rrna_removed: Dict[str, Dict[int, float]],
+        short_code: str,
+        background_col: str,
+        title_size: int,
+        axis_label_size: int,
         #subheading_size,
-        marker_size,
-        breakdown_per,
-        pcr_duplicates,
-        legend_size):
+        marker_size: int,
+        breakdown_per: int,
+        pcr_duplicates: Dict[str, Dict[int, float]],
+        legend_size: int) -> str:
     fig, ax = plt.subplots(figsize=(13, 8))
     N = len(unmapped)
     bar_width = 0.35
@@ -984,9 +995,14 @@ def mapped_reads_plot(
     return graph
 
 
-def single_tran_de(single_tran_de_transcript, sorted_master_list,
-                   study_master_list, organism, transcriptome,
-                   single_tran_de_study):
+def single_tran_de(single_tran_de_transcript: str,
+                   sorted_master_list: List[Tuple[str, str, float, float, str,
+                                                  str]],
+                   study_master_list: List[Tuple[str, str, float, float, str,
+                                                 str]],
+                   organism: str,
+                   transcriptome: str,
+                   single_tran_de_study: bool = False) -> str:
     xvals = []
     yvals = []
     labels = []
@@ -1096,8 +1112,10 @@ def single_tran_de(single_tran_de_transcript, sorted_master_list,
     return graph
 
 
-def tran_corr(tran_corr_transcript1, tran_corr_transcript2, sorted_master_list,
-              organism, transcriptome):
+def tran_corr(tran_corr_transcript1: str, tran_corr_transcript2: str,
+              sorted_master_list: List[Tuple[str, str, float, float, int,
+                                             int]], organism: str,
+              transcriptome: str) -> str:
     xvals = []
     yvals = []
     labels = []
@@ -1175,16 +1193,17 @@ def tran_corr(tran_corr_transcript1, tran_corr_transcript2, sorted_master_list,
 
 
 def explore_offsets(
-        f0_counts,
-        f1_counts,
-        f2_counts,
-        labels,
-        short_code,
-        background_col,
-        title_size,
-        axis_label_size,
-        # subheading_size,
-        marker_size):
+    f0_counts: Dict[str, int],
+    f1_counts: Dict[str, int],
+    f2_counts: Dict[str, int],
+    labels: List[str],
+    short_code: str,
+    background_col: str,
+    title_size: int,
+    axis_label_size: int,
+    # subheading_size,
+    marker_size: int,
+) -> str:
     width = 0.25
     pos = list(range(len(f0_counts)))
     fig, ax = plt.subplots(figsize=(13, 8))
@@ -1255,9 +1274,11 @@ def explore_offsets(
     return graph
 
 
-def replicate_comp(labels, transcript_dict, min_log_val, short_code,
-                   background_col, title_size, axis_label_size,
-                   subheading_size, marker_size, corr_type):
+def replicate_comp(labels: List[str], transcript_dict: Dict[str, Dict[str,
+                                                                      int]],
+                   min_log_val: int, short_code: str, background_col: str,
+                   title_size: str, axis_label_size: str, subheading_size: str,
+                   marker_size: str, corr_type: str) -> str:
     list_dict = {}
     corr_dict = {}
     for lbl in labels:
@@ -1307,7 +1328,8 @@ def replicate_comp(labels, transcript_dict, min_log_val, short_code,
     return tablehtml
 
 
-def most_freq_unmapped(file_paths_dict, short_code):
+def most_freq_unmapped(file_paths_dict: Dict[str, Dict[str, str]],
+                       short_code: str) -> str:
     master_dict = {}
     for filetype in file_paths_dict:
         for file_id in file_paths_dict[filetype]:
@@ -1347,15 +1369,13 @@ def most_freq_unmapped(file_paths_dict, short_code):
     return html_table
 
 
-def te_table(table_str):
-    return table_str
-
-
-def heatplot(min_readlen, max_readlen, min_pos, max_pos, positions,
-             readlengths, count_list, heatmap_metagene_type, title,
-             reverse_scale, color_palette, short_code, background_col,
-             maxscaleval, title_size, axis_label_size, subheading_size,
-             marker_size):
+def heatplot(min_readlen: int, max_readlen: int, min_pos: int, max_pos: int,
+             positions: List[int], readlengths: List[int],
+             count_list: List[int], heatmap_metagene_type: str, title: str,
+             reverse_scale: bool, color_palette: str, short_code: str,
+             background_col: str, maxscaleval: int, title_size: int,
+             axis_label_size: int, subheading_size: int,
+             marker_size: int) -> str:
     xlabs = []
     ylabs = []
     for i in range(min_readlen, max_readlen + 1):
@@ -1444,8 +1464,9 @@ def heatplot(min_readlen, max_readlen, min_pos, max_pos, positions,
     return graph
 
 
-def rust_dwell(codon_count_dict, short_code, background_col, title_size,
-               axis_label_size, subheading_size, marker_size):
+def rust_dwell(codon_count_dict: Dict[str, int], short_code: str,
+               background_col: str, title_size: int, axis_label_size: int,
+               subheading_size: int, marker_size: int) -> str:
     aa_color_dict = {
         "gly": "white",
         "arg": "blue",
@@ -1542,7 +1563,9 @@ def rust_dwell(codon_count_dict, short_code, background_col, title_size,
     return graph
 
 
-def calc_mrnadist_factor(mrna_dist_dict):
+def calc_mrnadist_factor(
+    mrna_dist_dict: Dict[str, Dict[str, float]]
+) -> Tuple[Dict[str, Dict[str, float]], int]:
     maxval = 0
     for key in mrna_dist_dict:
         for region in mrna_dist_dict[key]:
@@ -1561,17 +1584,18 @@ def calc_mrnadist_factor(mrna_dist_dict):
 
 
 def mrna_dist(
-        mrna_dist_dict,
-        short_code,
-        background_col,
-        title_size,
-        axis_label_size,
-        # subheading_size,
-        marker_size,
-        mrna_dist_per,
-        md_start,
-        md_stop,
-        legend_size):
+    mrna_dist_dict: Dict[str, Dict[str, float]],
+    short_code: str,
+    background_col: str,
+    title_size: int,
+    axis_label_size: int,
+    # subheading_size,
+    marker_size: int,
+    mrna_dist_per: bool = False,
+    md_start: bool = False,
+    md_stop: bool = False,
+    legend_size: int = 20,
+) -> str:
     if not mrna_dist_per:
         mrna_dist_dict, factor = calc_mrnadist_factor(mrna_dist_dict)
     fig, ax = plt.subplots(figsize=(13, 8))
