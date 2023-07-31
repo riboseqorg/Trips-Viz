@@ -1,3 +1,4 @@
+from typing import List, Tuple, Union, Dict
 import matplotlib
 
 from math import log
@@ -35,34 +36,32 @@ table, th, td
 
 
 def generate_plot(
-        sorted_min_exp_list,
-        bin_list,
-        organism,  # label,
-        transcriptome,
-        riboseq1,
-        riboseq2,
-        rnaseq1,
-        rnaseq2,
-        background_color,
-        short_code,
-        normalized,
-        filename,
-        no_groups,
-        title_size,
-        axis_label_size,  #subheading_size,
-        marker_size,
-        ambiguous,
-        gene_list):
+    sorted_min_exp_list: List[Tuple[float, float, float, float]],
+    bin_list: List[Tuple[float, float, float, float]],
+    organism: str,  # label,
+    transcriptome: str,
+    riboseq1: str,
+    riboseq2: str,
+    rnaseq1: str,
+    rnaseq2: str,
+    background_color: str,
+    short_code: str,
+    normalized: bool,
+    filename: str,
+    no_groups: int,
+    title_size: int,
+    axis_label_size: int,  #subheading_size,
+    marker_size: int,
+    ambiguous: bool,
+    gene_list: str,
+) -> str:
     #Convert gene_list from string to list
     logging.debug("generate plot called")
     #logging.debug("sorted_min_exp_list: {}".format(sorted_min_exp_list))
     logging.debug("bin_list: {}".format(bin_list))
-    if gene_list != "":
-        gene_list = gene_list.replace(",", " ").replace("\t", " ")
-        split_list = gene_list.split(" ")
-        gene_list = []
-        for item in split_list:
-            gene_list.append(item.strip(" ").upper())
+    if gene_list:
+        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
+        gene_list = [gene.strip() for gene in gene_list.split(" ")]
     posallxvals = []
     posallyvals = []
     posalllabels = []
@@ -263,7 +262,7 @@ def generate_plot(
     if file_string:
         file_string = file_string[:len(file_string) - 1]
 
-    if ambiguous == True:
+    if ambiguous:
         ambig = "T"
     else:
         ambig = "F"
@@ -296,17 +295,17 @@ def generate_plot(
     return graph
 
 
-def ribo_vs_rna(ribo_rna_dict, organism, transcriptome, riboseq1, riboseq2,
-                rnaseq1, rnaseq2, background_col, short_code, normalized,
-                filename, no_groups, title_size, axis_label_size,
-                subheading_size, marker_size, ambiguous, gene_list, label):
+def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
+                transcriptome: str, riboseq1: str, riboseq2: str, rnaseq1: str,
+                rnaseq2: str, background_col: str, short_code: str,
+                normalized: bool, filename: str, no_groups: int,
+                title_size: int, axis_label_size: int, subheading_size: int,
+                marker_size: int, ambiguous: bool, gene_list: str,
+                label: str) -> str:
     #Convert gene_list from string to list
-    if gene_list != "":
-        gene_list = gene_list.replace(",", " ").replace("\t", " ")
-        split_list = gene_list.split(" ")
-        gene_list = []
-        for item in split_list:
-            gene_list.append(item.strip(" ").upper())
+    if gene_list:
+        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
+        gene_list = [gene.strip() for gene in gene_list.split(" ")]
     x_values = []
     y_values = []
     genes = []
@@ -530,18 +529,17 @@ def ribo_vs_rna(ribo_rna_dict, organism, transcriptome, riboseq1, riboseq2,
     return graph
 
 
-def deseq2_plot(ribo_rna_dict, organism, transcriptome, riboseq1, riboseq2,
-                rnaseq1, rnaseq2, background_col, short_code, normalized,
-                filename, no_groups, title_size, axis_label_size,
-                subheading_size, marker_size, ambiguous, gene_list, label,
-                minzscore):
+def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
+                transcriptome: str, riboseq1: str, riboseq2: str, rnaseq1: str,
+                rnaseq2: str, background_col: str, short_code: str,
+                normalized: bool, filename: str, no_groups: bool,
+                title_size: int, axis_label_size: int, subheading_size: int,
+                marker_size: int, ambiguous: bool, gene_list: str, label: str,
+                minzscore: float) -> str:
     #Convert gene_list from string to list
     if gene_list != "":
-        gene_list = gene_list.replace(",", " ").replace("\t", " ")
-        split_list = gene_list.split(" ")
-        gene_list = []
-        for item in split_list:
-            gene_list.append(item.strip(" ").upper())
+        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
+        gene_list = [gene.strip(" ").upper() for gene in gene_list.split(" ")]
     x_values = []
     y_values = []
     basemeans = []
@@ -1058,19 +1056,36 @@ def deseq2_plot(ribo_rna_dict, organism, transcriptome, riboseq1, riboseq2,
     return graph
 
 
-def anota2seq_plot(ribo_rna_dict, organism, transcriptome, riboseq1, riboseq2,
-                   rnaseq1, rnaseq2, background_col, short_code, normalized,
-                   filename, no_groups, title_size, axis_label_size,
-                   subheading_size, marker_size, ambiguous, gene_list, label,
-                   minzscore, sig_translated, sig_rna, sig_buffering):
+def anota2seq_plot(
+    ribo_rna_dict: Dict[str, Dict[str, float]],
+    organism: str,
+    transcriptome: str,
+    riboseq1: str,
+    riboseq2: str,
+    rnaseq1: str,
+    rnaseq2: str,
+    background_col: str,
+    short_code: str,
+    normalized: bool,
+    filename: str,
+    no_groups: bool,
+    title_size: int,
+    axis_label_size: int,
+    subheading_size: int,
+    marker_size: int,
+    ambiguous: bool,
+    gene_list: str,
+    label: str,
+    minzscore: float,
+    sig_translated: bool,
+    sig_rna: bool,
+    sig_buffering: bool,
+) -> str:
     #Convert gene_list from string to list
     # ("gene list passed to deseq2_plot", gene_list)
     if gene_list != "":
-        gene_list = gene_list.replace(",", " ").replace("\t", " ")
-        split_list = gene_list.split(" ")
-        gene_list = []
-        for item in split_list:
-            gene_list.append(item.strip(" ").upper())
+        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
+        gene_list = [gene.strip() for gene in gene_list.split(" ")]
     x_values = []
     y_values = []
     basemeans = []

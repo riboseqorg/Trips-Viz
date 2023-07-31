@@ -1,3 +1,4 @@
+from typing import List, Dict
 import config
 import os
 import sqlite3
@@ -40,44 +41,44 @@ color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
 
 def generate_plot(
-        tran,
-        ambig,
-        min_read,
-        max_read,
-        lite,
-        ribocoverage,
-        organism,
-        readscore,
-        noisered,
-        primetype,
+        tran: str,
+        ambig: str,
+        min_read: int,
+        max_read: int,
+        lite: str,
+        ribocoverage: bool,
+        organism: str,
+        readscore: str,
+        noisered: str,
+        primetype: str,
         # minfiles,
-        nucseq,
-        user_hili_starts,
-        user_hili_stops,
+        nucseq: str,
+        user_hili_starts: str,
+        user_hili_stops: str,
         # uga_diff,
-        file_paths_dict,
-        short_code,
+        file_paths_dict: Dict[str, str],
+        short_code: str,
         # color_readlen_dist,
-        background_col,
-        uga_col,
-        uag_col,
-        uaa_col,
+        background_col: str,
+        uga_col: str,
+        uag_col: str,
+        uaa_col: str,
         # advanced, seqhili, seq_rules,
         # title_size,
-        subheading_size,
-        axis_label_size,
-        marker_size,
-        transcriptome,
-        trips_uploads_location,
-        cds_marker_size,
-        cds_marker_colour,
-        legend_size,
-        ribo_linewidth,
-        secondary_readscore,
-        pcr,
-        mismatches,
-        hili_start,
-        hili_stop):
+        subheading_size: int,
+        axis_label_size: int,
+        marker_size: int,
+        transcriptome: str,
+        trips_uploads_location: str,
+        cds_marker_size: int,
+        cds_marker_colour: int,
+        legend_size: int,
+        ribo_linewidth: int,
+        secondary_readscore: str,
+        pcr: bool,
+        mismatches: bool,
+        hili_start: bool,
+        hili_stop: bool) -> str:
 
     if lite == "n" and ribocoverage:
         return_str = "Error: Cannot display Ribo-Seq Coverage when 'Line Graph' is turned off"
@@ -88,14 +89,8 @@ def generate_plot(
     ]
     start_visible = [True] * 5
     if mismatches:
-        labels.append("Mismatches A")
-        labels.append("Mismatches T")
-        labels.append("Mismatches G")
-        labels.append("Mismatches C")
-        start_visible.append(False)
-        start_visible.append(False)
-        start_visible.append(False)
-        start_visible.append(False)
+        labels += [f"Mismatches {nuc}" for nuc in "ATGC"]
+        start_visible += [False] * 4
     start_visible.append(True)
     labels.append("CDS markers")
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels

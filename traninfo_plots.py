@@ -1,3 +1,4 @@
+from typing import List, Tuple, Union, Dict
 import matplotlib
 
 from matplotlib import pyplot as plt
@@ -48,9 +49,10 @@ line_tooltip_css = """
 """
 
 
-def nuc_freq_plot(master_dict, title, short_code, background_col,
-                  readlength_col, title_size, axis_label_size, subheading_size,
-                  marker_size, filename):
+def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
+                  short_code: str, background_col: str, readlength_col: str,
+                  title_size: int, axis_label_size: int, subheading_size: int,
+                  marker_size: int, filename: str) -> str:
     labels = ["A", "T", "G", "C"]
     returnstr = "Position,A,T,G,C\n"
     minpos = min(master_dict.keys())
@@ -451,8 +453,9 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
     return graph
 
 
-def gc_metagene(title, short_code, background_col, readlength_col, title_size,
-                axis_label_size, subheading_size, marker_size, traninfo):
+def gc_metagene(title: str, short_code: str, background_col: str,
+                readlength_col: str, title_size: int, axis_label_size: int,
+                subheading_size: int, marker_size: int, traninfo: str) -> str:
     labels = ["CDS markers"]
     start_visible = [True]
     color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}

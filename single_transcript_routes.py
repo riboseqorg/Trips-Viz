@@ -24,7 +24,7 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
 
 @single_transcript_plotpage_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot/')
-def interactiveplotpage(organism, transcriptome):
+def interactiveplotpage(organism: str, transcriptome: str) -> str:
     #global user_short_passed
     global local
     try:
@@ -172,7 +172,7 @@ single_transcript_query_blueprint = Blueprint("query",
 
 
 @single_transcript_query_blueprint.route('/query', methods=['POST'])
-def query():
+def query() -> str:
     #global user_short_passed
     try:
         user = current_user.name
@@ -295,7 +295,8 @@ def query():
 
                         max_orf = max(pre_orfQuant_res.values())
                         orfQuant_res = {
-                            transcript: round(
+                            transcript:
+                            round(
                                 (pre_orfQuant_res[transcript] / max_orf) * 100,
                                 2)
                             for transcript in pre_orfQuant_res
@@ -317,7 +318,8 @@ def query():
                                           "rna")
                         max_TPM_RNA = max(pre_TPM_RNA.values())
                         TPM_RNA = {
-                            transcript: round(
+                            transcript:
+                            round(
                                 (pre_TPM_RNA[transcript] / max_TPM_RNA) * 100,
                                 2)
                             for transcript in pre_TPM_RNA

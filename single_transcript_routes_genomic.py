@@ -21,7 +21,7 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
 
 @single_transcript_plotpage_genomic_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot_genomic/')
-def interactiveplotpage_genomic(organism, transcriptome):
+def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     #global user_short_passed
     user_short_passed = True
     global local
@@ -198,7 +198,7 @@ single_transcript_query_genomic_blueprint = Blueprint(
 
 @single_transcript_query_genomic_blueprint.route('/query_genomic',
                                                  methods=['POST'])
-def query_genomic():
+def query_genomic() -> str:
     #global user_short_passed
     try:
         user = current_user.name
@@ -320,7 +320,8 @@ def query_genomic():
 
                         max_orf = max(pre_orfQuant_res.values())
                         orfQuant_res = {
-                            transcript: round(
+                            transcript:
+                            round(
                                 (pre_orfQuant_res[transcript] / max_orf) * 100,
                                 2)
                             for transcript in pre_orfQuant_res
@@ -342,7 +343,8 @@ def query_genomic():
                                           "rna")
                         max_TPM_RNA = max(pre_TPM_RNA.values())
                         TPM_RNA = {
-                            transcript: round(
+                            transcript:
+                            round(
                                 (pre_TPM_RNA[transcript] / max_TPM_RNA) * 100,
                                 2)
                             for transcript in pre_TPM_RNA

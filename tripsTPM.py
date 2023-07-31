@@ -1,3 +1,4 @@
+from typing import Dict, List, Tuple, Union
 from tripsSplice import get_reads_per_transcript_location
 from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import get_start_stop_codon_positions
@@ -5,7 +6,7 @@ from tripsSplice import get_gene_info
 from tripsSplice import get_transcript_length
 
 
-def get_counts_meanFLD(transcripts, read_file):
+def get_counts_meanFLD(transcripts: str, read_file: str) -> Tuple[Dict, float]:
     length_freq = {}
     transcript_counts = {}
     for transcript in transcripts:
@@ -35,7 +36,9 @@ def get_counts_meanFLD(transcripts, read_file):
     return transcript_counts, mean_fld
 
 
-def transcript_reads_per_kilobase(transcript_counts, cds_lengths, meanFLD):
+def transcript_reads_per_kilobase(transcript_counts: Dict[str, int],
+                                  cds_lengths: Dict[str, int],
+                                  meanFLD: float) -> Dict[str, float]:
     RPK = {}
     for transcript in cds_lengths:
         effective_length = cds_lengths[transcript] - meanFLD + 1
@@ -50,14 +53,15 @@ def transcript_reads_per_kilobase(transcript_counts, cds_lengths, meanFLD):
     return RPK
 
 
-def TPM(gene, sqlite_path_organism, sqlite_path_reads, type):
+def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
+        type: str) -> Dict[str, float]:
     # Calculate transcripts per million for a given read type
-    if type == "ribo":
+    if type == "ribo":  # NOTE: type must not be used as variable
         transcripts = get_protein_coding_transcript_ids(
             gene, sqlite_path_organism)
         start_stops = {
-            transcript: get_start_stop_codon_positions(transcript,
-                                                       sqlite_path_organism)
+            transcript:
+            get_start_stop_codon_positions(transcript, sqlite_path_organism)
             for transcript in transcripts
         }
         lengths = {

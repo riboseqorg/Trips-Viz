@@ -26,7 +26,7 @@ def calc_gc(seq):
 
 @traninfo_plotpage_blueprint.route('/<organism>/<transcriptome>/traninfo_plot/'
                                    )
-def traninfo_plotpage(organism, transcriptome):
+def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     # global user_short_passed
     global local
     try:
@@ -96,7 +96,7 @@ traninfoquery_blueprint = Blueprint("traninfoquery",
 
 
 @traninfoquery_blueprint.route('/traninfoquery', methods=['POST'])
-def traninfoquery():
+def traninfoquery() -> str:
     # global user_short_passed
     user_short_passed = True
     data = json.loads(request.data)

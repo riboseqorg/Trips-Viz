@@ -6,36 +6,38 @@ from sqlitedict import SqliteDict
 
 class TripsSplice:
 
-    def __init__(self, sqlite_path_organism):
+    def __init__(self, sqlite_path_organism: str) -> None:
         self.transcript_table = sqlquery(sqlite_path_organism, 'transcripts')
 
-    def get_gene_info(self, gene_id):
+    def get_gene_info(self, gene_id: str) -> pd.DataFrame:
         return self.transcript_table.loc[
             self.transcript_table.gene == gene_id,
             ['transcript', 'exon_junctions', 'sequence']]
 
-    def get_transcript_length(self, gene):
+    def get_transcript_length(self, gene: str) -> pd.DataFrame:
         return self.transcript_table.loc[self.transcript_table.gene == gene,
                                          ["transcript", "length"]]
 
-    def get_genes_principal(self, gene_id):
+    def get_genes_principal(self, gene_id: str) -> str:
         return self.transcript_table.loc[self.transcript_table.gene == gene_id
                                          & self.transcript_table.principle,
                                          "transcript"].values[0]
 
-    def get_transcript_info(self, transcript_id):
+    def get_transcript_info(self, transcript_id: str) -> pd.DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id,
                                      ['exon_junctions', 'sequence']].iloc[0]
 
-    def _exon_coordinates_list(lst, transcript_length):
+    def _exon_coordinates_list(self, lst: List[int],
+                               transcript_length: int) -> List[List[int]]:
         # Return the list of integers from a list of strings. If the list is empty then return 0
         if not lst:
             return [0, transcript_length]
         lst = [-1] + [int(i) for i in lst] + [transcript_length]
         return [[lst[i] + 1, lst[i + 1]] for i in range(len(lst) - 1)]
 
-    def get_exon_coordinates_for_orf(self, transcript_id):
+    def get_exon_coordinates_for_orf(self,
+                                     transcript_id: str) -> List[List[int]]:
         transcript_info = self.get_transcript_info(transcript_id)
         exon_junctions = self.string_to_integer_list(
             transcript_info['exon_junctions'].split(","))
@@ -44,19 +46,21 @@ class TripsSplice:
             exon_junctions, len(transcript_info['sequence']))
         return exon_coordinates
 
-    def get_protein_coding_transcript_ids(self, gene):
+    def get_protein_coding_transcript_ids(self, gene: str) -> pd.DataFrame:
         return self.transcript_table[self.transcript_table.gene == gene]
 
-    def get_start_stop_codon_positions(self, transcript_id):
+    def get_start_stop_codon_positions(self,
+                                       transcript_id: str) -> pd.DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id]
 
-    def get_orf_exon_coordinates(self, transcript_id):
+    def get_orf_exon_coordinates(self, transcript_id: str) -> pd.DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id]
 
 
-def get_3prime_exon(junction_list, sequence):
+def get_3prime_exon(junction_list: List[int],
+                    sequence: str) -> Tuple[str, str]:
     # Part of the process of producing the sequences of all exons in a transcript.
     # this function slices the 3' exon sequence from the transcript sequence returning
     # both the exon sequence and the remaining sequence of the transcript
@@ -66,7 +70,8 @@ def get_3prime_exon(junction_list, sequence):
     return exon, seq_less_exon
 
 
-def get_exon_coordinates_for_orf(transcript_id, sqlite_path_organism):
+def get_exon_coordinates_for_orf(transcript_id: str,
+                                 sqlite_path_organism: str) -> List[List[int]]:
     # return the coordinates of the exons in a given transcript. 0 -> first junction, first junction -> second junction
     # last junction -> end
     tripsplice = TripsSplice(sqlite_path_organism)
@@ -88,7 +93,8 @@ def get_exon_coordinates_for_orf(transcript_id, sqlite_path_organism):
     return exon_coordinates
 
 
-def get_protein_coding_transcript_ids(gene, sqlite_path_organism):
+def get_protein_coding_transcript_ids(gene: str,
+                                      sqlite_path_organism: str) -> List[str]:
     # get transcript IDs for protein coding genes for the given gene
     # returns a list of strings
     gene_id = gene.upper()
@@ -103,7 +109,8 @@ def get_protein_coding_transcript_ids(gene, sqlite_path_organism):
     return protein_coding_transcripts
 
 
-def get_start_stop_codon_positions(transcript_id, sqlite_path_organism):
+def get_start_stop_codon_positions(
+        transcript_id: str, sqlite_path_organism: str) -> Tuple[int, int]:
     # Get start and stop codon positions from annotation sqlite
     transcript_id = transcript_id.upper()
     conn = sqlite3.connect(sqlite_path_organism)
@@ -115,7 +122,9 @@ def get_start_stop_codon_positions(transcript_id, sqlite_path_organism):
     return a
 
 
-def get_orf_exon_structure(start_stop, exon_coordinates):
+def get_orf_exon_structure(
+        start_stop: Tuple[int, int],
+        exon_coordinates: List[List[int]]) -> List[List[int]]:
     # determine the stucture of each ORF. Returns coordinates in the form:
     # Initiation site to junction, junction to junction, junction to translation stop
     start, stop = start_stop
@@ -551,9 +560,9 @@ def get_exonjunction_pileup_for_transcript(
     return counts
 
 
-def get_scores_per_exonjunction_for_gene(sqlite_path_organism: str,
-                                         sqlite_path_reads: str,
-                                         supported: List[str]):
+def get_scores_per_exonjunction_for_gene(
+        sqlite_path_organism: str, sqlite_path_reads: str,
+        supported: List[str]) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     pileup = {}

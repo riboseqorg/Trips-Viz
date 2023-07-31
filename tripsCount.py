@@ -1,3 +1,4 @@
+from typing import Dict, List
 from tripsSplice import get_reads_per_genomic_location_fiveprime
 from tripsSplice import get_reads_per_genomic_location_asite
 from tripsSplice import get_read_ranges_genomic_location
@@ -7,7 +8,9 @@ from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import genomic_orf_coordinate_ranges
 
 
-def get_unique_regions(genomic_exon_coordinates):
+def get_unique_regions(
+        genomic_exon_coordinates: Dict[str,
+                                       List[int]]) -> Dict[str, List[int]]:
     # return a dictionary with ensembl ids as keys and a list of tuples of the coordinates of the regions unique to each
     # exon of that transcript. This is achieved by comparing each exon which each other exon and pairing off the shared regions
     # one exact match between exon and coordinate is okay (matching with itself) greater than this is due to the exon
@@ -55,8 +58,9 @@ def get_unique_regions(genomic_exon_coordinates):
     return unique_regions
 
 
-def count_readranges_supporting_exons_per_transcript(regions,
-                                                     genomic_read_ranges):
+def count_readranges_supporting_exons_per_transcript(
+        regions: Dict[str, List[int]],
+        genomic_read_ranges: List[int]) -> Dict[str, List[int]]:
     # Count the number of reads that overlap with each exon
     exons_counts = {}
     for read in genomic_read_ranges:
@@ -82,8 +86,9 @@ def count_readranges_supporting_exons_per_transcript(regions,
     return exons_counts
 
 
-def count_read_supporting_regions_per_transcript(regions,
-                                                 genomic_read_positions):
+def count_read_supporting_regions_per_transcript(
+        regions: Dict[str, List[int]],
+        genomic_read_positions: List[int]) -> Dict[str, List[int]]:
     exons_counts = {}
     for read in genomic_read_positions:
         for transcript in regions:
@@ -103,7 +108,9 @@ def count_read_supporting_regions_per_transcript(regions,
     return exons_counts
 
 
-def get_coverage_per_region(regions, counts):
+def get_coverage_per_region(
+        regions: Dict[str, List[int]],
+        counts: Dict[str, List[int]]) -> Dict[str, List[float]]:
 
     region_lengths = {}
     for transcript in regions:
@@ -130,7 +137,8 @@ def get_coverage_per_region(regions, counts):
     return region_coverage
 
 
-def average_coverage_per_transcript(region_coverage):
+def average_coverage_per_transcript(
+        region_coverage: Dict[str, List[float]]) -> Dict[str, float]:
     average_coverage = {}
     for transcript in region_coverage:
         sum = 0
@@ -153,11 +161,11 @@ def average_coverage_per_transcript(region_coverage):
     return average_coverage
 
 
-def ribo_seq_read_counting(gene,
-                           sqlite_path_organism,
-                           sqlite_path_reads,
-                           count_type="range",
-                           unique=True):
+def ribo_seq_read_counting(gene: str,
+                           sqlite_path_organism: str,
+                           sqlite_path_reads: List[str],
+                           count_type: str = "range",
+                           unique: bool = True) -> Dict[str, List[int]]:
     supported = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
     exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism,
                                            supported)
