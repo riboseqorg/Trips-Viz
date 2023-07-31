@@ -206,7 +206,7 @@ def traninfoquery() -> str:
         elif gc_location == "stop":
             transcrips.seq = transcripts.seq.apply(
                 lambda x: x[:cds_stop + include_last_val])
-        else gc_location == "three":
+        else:  # gc_location == "three":
             transcrips.seq = transcripts.seq.apply(lambda x: x[cds_stop:])
 
         subseq = ""  # TODO: This need to be corrected here
@@ -314,7 +314,7 @@ def traninfoquery() -> str:
 
         title = nuc_freq_plot_anchor
         return traninfo_plots.nuc_freq_plot(master_dict, title, short_code,
-                                            config.DEFAULT_USER_SETTING
+                                            config.DEFAULT_USER_SETTING,
                                             filename)
 
     # Nucleotide composition (single transcript)
@@ -331,10 +331,9 @@ def traninfoquery() -> str:
                 "owner"].values[0]
 
             if owner == 1:
-                transhelve = (
-                    "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                        config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                        transcriptome))
+                transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
+                    transcriptome))
             else:
                 transhelve = (
                     "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
@@ -357,7 +356,8 @@ def traninfoquery() -> str:
 
             title = tran
             return traninfo_plots.nuc_comp_single(tran, master_dict, title,
-                                                  short_code, config.DEFAULT_USER_SETTING,
+                                                  short_code,
+                                                  config.DEFAULT_USER_SETTING,
                                                   traninfo)
         else:
             organisms = get_table("organisms")
@@ -367,10 +367,9 @@ def traninfoquery() -> str:
                 "owner"].values[0]
 
             if owner == 1:
-                transhelve = (
-                    "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                        config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                        transcriptome))
+                transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
+                    transcriptome))
             else:
                 transhelve = (
                     "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
@@ -380,13 +379,14 @@ def traninfoquery() -> str:
                 transcrips = transcripts[transcripts.transcript.isin(
                     metagene_tranlist)]
             else:
-                transcrips = transcripts[transcripts.principle &
-                                         transcripts.tran_type]
+                transcrips = transcripts[transcripts.principle
+                                         & transcripts.tran_type]
             traninfo = transcripts[[
-                "transcript", "cds_start", "cds_stop", "sequence"]].values.tolist()
+                "transcript", "cds_start", "cds_stop", "sequence"
+            ]].values.tolist()
             title = "GC metagene of {} genes".format(len(traninfo))
-            return traninfo_plots.gc_metagene(title, short_code, config.DEFAULT_USER_SETTING,
-
+            return traninfo_plots.gc_metagene(title, short_code,
+                                              config.DEFAULT_USER_SETTING,
                                               traninfo)
 
     elif plottype == "orfstats":
