@@ -1,0 +1,62 @@
+[{
+        "id": "hs",
+        "name": "Homo sapiens",
+        "assemblies": {
+                "gch25": "Gencode V25",
+                "gch39": "Gencode V39 RiboGalaxy"
+        }
+}, {
+        "id": "dm",
+        "name": "Drosophila melanogaster",
+        "assemblies": {
+                "fb": "Flybase"
+        }
+}, {
+        "id": "sc",
+        "name": "Saccharomyces cerevisiae",
+        "assemblies": {
+                "sgd": "Saccharomyces Genome Database"
+        }
+}, {
+        "id": "mm",
+        "name": "Mus musculus",
+        "assemblies": {
+                "gcm14": "Gencode M14"
+        }
+}, {
+        "id": "rn",
+        "name": "Rattus norvegicus",
+        "assemblies": {
+                "enr6": "Ensemble R6"
+        }
+}, {
+        "id": "ec",
+        "name": "Escherichia coli",
+        "assemblies": {
+                "enek12": "Ensemble K12 ASM584V2"
+        }
+}, {
+        "id": "ce",
+        "name": "Caenorhabditis elegans",
+        "assemblies": {
+                "enc2011": "Ensemble 2011"
+        }
+}, {
+        "id": "km",
+        "name": "Kluyveromyces marxianus",
+        "assemblies": {
+                "kmv2": "Kluyveromyces marxianus V2"
+        }
+}, {
+        "id": "sp",
+        "name": "Schizosaccharomyces pombe",
+        "assemblies": {
+                "enspm19": "Ensembl S. pombe 19"
+        }
+}, {
+        "id": "dr",
+        "name": "Danio rerio",
+        "assemblies": {
+                "endr98": "Ensembl D. rerio 98"
+        }
+}]
