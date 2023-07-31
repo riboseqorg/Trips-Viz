@@ -16,7 +16,6 @@ from flask_login import (LoginManager, login_required, login_user, logout_user,
                          current_user)
 from flask_mail import Mail
 from werkzeug.security import generate_password_hash, check_password_hash
-import werkzeug.wrappers.Response as wwResponse
 import config
 from werkzeug.utils import secure_filename
 from sqlitedict import SqliteDict
@@ -35,7 +34,6 @@ from pause_routes import pause_detection_blueprint, pausequery_blueprint
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery_blueprint
 # , taskstatus_blueprint
 from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
-import stats_plots
 import re
 
 from email.mime.multipart import MIMEMultipart
@@ -475,7 +473,7 @@ def uploadspage() -> str:
 # Called when user uploads something on the uploads page
 @app.route('/uploadquery', methods=['POST'])
 # @login_required
-def upload_file() -> wwResponse:
+def upload_file() -> Response:
     # uploaded_files = request.files.getlist("file")
     f = request.files["file"]
     print(request.form)

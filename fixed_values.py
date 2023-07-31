@@ -279,6 +279,10 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     return graph
 
 
+def my_decoder(obj):
+    return pickle.load(open(obj, "rb"))
+
+
 def get_user_defined_seqs(
         seq: str, seqhili: List[str]
 ) -> Tuple[Dict[int, List[int]], Dict[int, List[str]]]:
