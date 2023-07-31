@@ -4,9 +4,11 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import create_engine, insert
 import config
 import pandas as pd
+from sqlalchemy.orm.query import Query
+from sqlalchemy.engine.base import Engine
 
 
-def _sql(sqlfilepath: str, tablename: str) -> Tuple[Session, Engine]:
+def _sql(sqlfilepath: str, tablename: str) -> Tuple[Query, Engine]:
     engine = create_engine('sqlite:///' + sqlfilepath)
     Base = automap_base()
     Base.prepare(engine, reflect=True)

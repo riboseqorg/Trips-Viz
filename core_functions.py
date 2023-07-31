@@ -1,5 +1,5 @@
 import string
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import pandas as pd
 import sqlite3
 from flask import session, request
