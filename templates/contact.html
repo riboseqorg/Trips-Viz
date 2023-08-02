@@ -1,26 +1,57 @@
 {% extends "layout.html" %}
+{% block title %}Trips-Viz - Contact Us{% endblock %}
 {% block content %}
-
-
-<p align="center" style="padding:50px 0px">
-	Bug reports, feature requests or general questions can be sent to us via tripsvizsite@gmail.com <br>
-	You can also use the forum on <a href="https://gwips.ucc.ie/Forum/">Gwips-Viz</a><br>
-	Alternatively you can fill in the contact form below.
-<div align="center">
-	<form action="" method="post">
-		<input type="text" placeholder="Name" name="name" value="{{request.form.name }}"><br>
-		<input type="text" placeholder="E-mail address" name="email" value="{{request.form.email }}"><br>
-		<input type="text" placeholder="Subject" name="subject" value="{{request.form.subject }}"><br>
-		<textarea type="text" placeholder="Message" name="message"  style="height:200px;width:230px;font-size:15px;" value="{{request.form.message }}"></textarea><br>
-		{{ recaptcha }}
-		<input class="btn btn-default" type="submit" value="Send">
-	</form>
-</div>
-
-</p>
-
-<script>
-</script>
-
-
+    <p align="center" style="padding:50px 0px">
+        Bug reports, feature requests or general questions can be sent to us via tripsvizsite@gmail.com
+        <br>
+        You can also use the forum on <a href="https://gwips.ucc.ie/Forum/">Gwips-Viz</a>
+        <br>
+        Alternatively you can fill in the contact form below.
+        <div align="center">
+            <form action="" method="post">
+                <!--TODO: CSRF key-->
+                <div class="form-outline mb-4">
+                    <input type="text"
+                           placeholder="Name"
+                           name="name"
+                           value="{{ request.form.name }}"
+                           class="form-control form-control-lg" />
+                </div>
+                <div class="form-outline mb-4">
+                    <input type="email"
+                           placeholder="Email"
+                           name="username"
+                           value="{{ request.form.email }}"
+                           id="email"
+                           class="form-control form-control-lg" />
+                </div>
+                <div class="form-outline mb-4">
+                    <input type="text"
+                           placeholder="Subject"
+                           name="subject"
+                           value="{{ request.form.subject }}"
+                           id="subject"
+                           class="form-control form-control-lg" />
+                </div>
+                <div class="form-outline mb-4">
+                    <input type="test"
+                           id="message"
+                           placeholder="Message"
+                           name="message"
+                           value="{{ request.form.message }}"
+                           class="form-control form-control-lg"
+                           style="height:200px" />
+                </div>
+                {{ recaptcha }}
+                <div class="d-flex justify-content-center">
+                    <button type="button"
+                            class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Login</button>
+                </div>
+                <p class="text-center text-muted mt-5 mb-0">
+                    Do not have account? <a href="{{ url_for("create") }}" class="fw-bold text-body"><u>Submit</u></a>
+                </p>
+            </form>
+        </div>
+    </p>
+    <script></script>
 {% endblock %}

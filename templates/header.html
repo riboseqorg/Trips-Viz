@@ -3,7 +3,7 @@
     <!-- Navbar content -->
     <div class="container-fluid">
       <a class="navbar-brand" href="#">
-        <h1 class="logo" style="font-family: 'Georgia'">
+        <h1 class="logo" style="font-family: &quot;Georgia&quot;">
           <span style="color: #77abff">T</span>rips-<span style="color: #77abff"
             >V</span
           >iz
@@ -21,12 +21,9 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a
-              class="nav-link active"
-              aria-current="page"
-              href="{{ url_for('homepage') }}"
+            <a id="home" class="nav-link active" aria-current="page" href="/"
               >Home</a
             >
           </li>
@@ -40,6 +37,7 @@
           </li>
           <li class="nav-item">
             <a
+              id="uploadspage"
               class="nav-link"
               aria-current="page"
               href="{{ url_for('uploadspage') }}"
@@ -48,6 +46,7 @@
           </li>
           <li class="nav-item">
             <a
+              id="downloadspage"
               class="nav-link"
               aria-current="page"
               href="{{ url_for('downloadspage') }}"
@@ -56,6 +55,7 @@
           </li>
           <li class="nav-item">
             <a
+              id="settingspage"
               class="nav-link"
               aria-current="page"
               href="{{ url_for('settingspage') }}"
@@ -63,10 +63,14 @@
             >
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('helppage') }}">Help</a>
+            <a id="helppage" class="nav-link" href="{{ url_for('helppage') }}"
+              >Help</a
+            >
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('contactus') }}">Contact Us</a>
+            <a id="contactus" class="nav-link" href="{{ url_for('contactus') }}"
+              >Contact Us</a
+            >
           </li>
           {% if current_user.is_authenticated %}
           <li class="nav-item">

@@ -1,39 +1,46 @@
 <footer>
-    <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"
-            data-cfasync="false"></script>
-    <script type="text/javascript">
-      var gtagId = "UA-115765268-1";
-      //window['ga-disable-' + gtagId] = true;
+  <script
+    src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"
+    data-cfasync="false"
+  ></script>
+  <script type="text/javascript">
+    var gtagId = "UA-115765268-1";
+    //window['ga-disable-' + gtagId] = true;
 
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
 
-      window.addEventListener("load", function () {
-        window.cookieconsent.initialise({
-          type: "opt-out",
-          theme: "classic",
-          palette: {
-            popup: {
-              background: "#eaf7f7",
-              text: "#5c7291",
-            },
-            button: {
-              background: "#56cbdb",
-              text: "#ffffff",
-            },
+    window.addEventListener("load", function () {
+      window.cookieconsent.initialise({
+        type: "opt-out",
+        theme: "classic",
+        palette: {
+          popup: {
+            background: "#eaf7f7",
+            text: "#5c7291",
           },
-          theme: "classic",
-          position: "top",
-
-          content: {
-            message:
-              "This website uses cookies to generate website usage statistics via google analytics and persistent cookies to save user preferences and facilitate data uploads.",
+          button: {
+            background: "#56cbdb",
+            text: "#ffffff",
           },
-        });
+        },
+        theme: "classic",
+        position: "top",
+
+        content: {
+          message:
+            "This website uses cookies to generate website usage statistics via google analytics and persistent cookies to save user preferences and facilitate data uploads.",
+        },
       });
-    </script>
-    {% block footer_static %}{% endblock %}
+    });
+  </script>
+  <script>
+    $(document).ready(function () {
+      $("#{{request.endpoint}}").addClass("active");
+    });
+  </script>
+  {% block footer_static %}{% endblock %}
 </footer>

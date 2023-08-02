@@ -101,9 +101,7 @@ pointer-events: none;
                     padding:10px;
                     font-weight:bold;
                     font-size=200%"
-             id="message">
-            {{ message }}
-        </div>
+             id="message">{{ message }}</div>
     {% endif %}
     <div id="about">
         <img align="center" width="15%" src="/static/trips.svg">
@@ -117,7 +115,15 @@ pointer-events: none;
         and is licensed under the <a href='https://trips.ucc.ie/license.txt'>MIT License</a>.
     </div>
 </div>
-{% set plots = {"Single transcript plot":"interactive_plot", "Single transcript comparison plot":"comparison", "Meta-Information":"metainfo_plot", "Differential plot":"differential", "Transcriptome info":"transinfo_plot", "Translated ORF detection":"orf_translation", "PausePred":"pause_detection"} %}
+{% set plots = {
+    "Single transcript plot": "interactive_plot",
+    "Single transcript comparison plot": "comparison",
+    "Meta-Information": "metainfo_plot",
+    "Differential plot": "differential",
+    "Transcriptome info": "transinfo_plot",
+    "Translated ORF detection": "orf_translation",
+    "PausePred": "pause_detection"
+} %}
 <div id="organims">
     <b>Choose Organism</b>
     <div id="orglist">
@@ -154,72 +160,70 @@ pointer-events: none;
                         <ul class="dropdown-menu">
                             {% for transcript in transcripts %}
                                 <li>
-                                    <a class="dropdown-item" href="#">{{ transcript }}</a
-                                        >
-                                        <ul class="dropdown-menu dropdown-submenu">
-                                            {% for plot, page in plots.items() %}
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                       href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                                    <a class="dropdown-item" href="#">{{ transcript }}</a>
+                                    <ul class="dropdown-menu dropdown-submenu">
+                                        {% for plot, page in plots.items() %}
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
-                <!--TODO:ToRemove -->
-            {% else %}
-                <div class="card mb-3" style="max-width: 360px;">
-                    <div class="dropdown">
-                        <a class="btn btn-secondary dropdown-toggle"
-                           href="#"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            <div class="row g-0">
-                                <div class="col-md-4">
-                                    <img src="/static/images/species/ecoli.jpeg"
-                                         class="img-fluid rounded-start"
-                                         alt="E. coli"
-                                         width="64"
-                                         height="64">
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ organism }}</h5>
-                                    </div>
+            </div>
+            <!--TODO:ToRemove -->
+        {% else %}
+            <div class="card mb-3" style="max-width: 360px;">
+                <div class="dropdown">
+                    <a class="btn btn-secondary dropdown-toggle"
+                       href="#"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="/static/images/species/ecoli.jpeg"
+                                     class="img-fluid rounded-start"
+                                     alt="E. coli"
+                                     width="64"
+                                     height="64">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ organism }}</h5>
                                 </div>
                             </div>
-                        </a>
-                        <ul class="dropdown-menu">
-                            {% for transcript in transcripts %}
-                                <li>
-                                    <a class="dropdown-item" href="#">{{ transcript }}</a
-                                        >
-                                        <ul class="dropdown-menu dropdown-submenu">
-                                            {% for plot, page in plots.items() %}
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                       href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </li>
-                                {% endfor %}
-                            </ul>
                         </div>
-                    </div>
-                {% endif %}
-                {% if loop.last %}
-                    <!--div class="row"-->
-                    <!--TODO:Remove forward div-->
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for transcript in transcripts %}
+                            <li>
+                                <a class="dropdown-item" href="#">{{ transcript }}</a>
+                                <ul class="dropdown-menu dropdown-submenu">
+                                    {% for plot, page in plots.items() %}
+                                        <li>
+                                            <a class="dropdown-item"
+                                               href="/{{ organism }}/{{ transcript }}/{{ page }}/">{{ plot }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
-            {% endif %}
-        {% endfor %}
-    </div>
+            </div>
+        {% endif %}
+        {% if loop.last %}
+            <!--div class="row"-->
+            <!--TODO:Remove forward div-->
+        </div>
+    {% endif %}
+{% endfor %}
+</div>
 </div>
 <p>
     Trips-Viz is supported by Science Foundation Ireland and is a <a href="https://riboseq.org/">RiboSeq.org</a> and Elixir Resource.

@@ -3,203 +3,273 @@
     <div id="accordion">
         <h3 align="left">General settings</h3>
         <div>
-            <b> Background colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the background colour for almost all plots on Trips-viz. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="back_col" name="back_col" value={{ user_settings[ 'background_col' ] }}>
-            </input>
-            <br>
-            <b>Title Size
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the size of the plot titles</span>
-                </div>
-                : </b> <input type="number" min="5" max="50" id="title_size" name="title_size" value={{ user_settings[ 'title_size' ]  }}>
-            </input>
-            <br>
-            <b>Subheading Size
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the size of the subheadings, where transcript id and length are displayed</span>
-                </div>
-                : </b> <input type="number" min="5" max="30" id="subheading_size" name="subheading_size" value={{ user_settings[ 'subheading_size' ]  }}>
-            </input>
-            <br>
-            <b>Axis Label Size
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the size of the axis labels</span>
-                </div>
-                : </b> <input type="number" min="5" max="50" id="axis_label_size" name="axis_label_size" value={{ user_settings[ 'axis_label_size' ]  }}>
-            </input>
-            <br>
-            <b>Tick Marker Size
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the size of the numbers on the x and y axis</span>
-                </div>
-                : </b> <input type="number" min="5" max="50" id="marker_size" name="marker_size" value={{ user_settings[ 'marker_size' ]  }}>
-            </input>
-            <br>
-            <b>Legend Size
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the size of the labels on plots with interactive legends</span>
-                </div>
-                : </b> <input type="number" min="5" max="50" id="legend_size" name="legend_size" value={{ user_settings[ 'legend_size' ]  }}>
-            </input>
-            <br>
-            <b>CDS Markers Width
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the width of the CDS markers on the single transcript and comparison plots</span>
-                </div>
-                : </b> <input type="number" min="1" max="15" id="cds_marker_width" name="cds_marker_width" value={{ user_settings[ 'cds_marker_width' ]  }}>
-            </input>
-            <br>
-            <b>CDS Markers Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the colour of the CDS markers on the single transcript and comparison plots</span>
-                </div>
-                : </b> <input type="color" id="cds_marker_colour" name="cds_marker_colour" value={{ user_settings[ 'cds_marker_colour' ]  }}>
-            </input>
-            <br>
+            <table>
+                <tr>
+                    <td>
+                        <b> Background colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="back_col" name="back_col" value={{ user_settings[ 'background_col' ] }}>
+                            <span class="tooltiptext">This sets the background colour for almost all plots on Trips-viz.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Title Size</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="5" max="50" id="title_size" name="title_size" value={{ user_settings[ 'title_size' ] }}>
+                            <span class="tooltiptext">This controls the size of the plot titles</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Subheading Size</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="5" max="30" id="subheading_size" name="subheading_size" value={{ user_settings[ 'subheading_size' ] }}>
+                            <span class="tooltiptext">This controls the size of the subheadings, where transcript id and length are displayed</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Axis Label Size</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="5" max="50" id="axis_label_size" name="axis_label_size" value={{ user_settings[ 'axis_label_size' ] }}>
+                            <span class="tooltiptext">This controls the size of the axis labels</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Tick Marker Size</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="5" max="50" id="marker_size" name="marker_size" value={{ user_settings[ 'marker_size' ] }}>
+                            <span class="tooltiptext">This controls the size of the numbers on the x and y axis</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Legend Size</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="5" max="50" id="legend_size" name="legend_size" value={{ user_settings[ 'legend_size' ] }}>
+                            <span class="tooltiptext">This controls the size of the labels on plots with interactive legends</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>CDS Markers Width</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="1" max="15" id="cds_marker_width" name="cds_marker_width" value={{ user_settings[ 'cds_marker_width' ] }}>
+                            <span class="tooltiptext">This controls the width of the CDS markers on the single transcript and comparison plots</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>CDS Markers Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="cds_marker_colour" name="cds_marker_colour" value={{ user_settings[ 'cds_marker_colour' ] }}>
+                            <span class="tooltiptext">This controls the colour of the CDS markers on the single transcript and comparison plots</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <h3>Single gene/transcript plot</h3>
         <div>
-            <b>UAG Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="uag_col" name="uag_col" value={{ user_settings[ 'uag_col' ]  }}>
-            </input>
-            <br>
-            <b>UAA Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">
-                        (This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6)
-                    </span>
-                </div>
-                : </b> <input type="color" id="uaa_col" name="uaa_col" value={{ user_settings[ 'uaa_col' ]  }}>
-            </input>
-            <br>
-            <b>UGA Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="uga_col" name="uga_col" value={{ user_settings[ 'uga_col' ]  }}>
-            </input>
-            <br>
-            <b>Riboseq line width
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This controls the width of the red, green and blue ribo-seq lines.</span>
-                </div>
-                : </b> <input type="number" min="1" max="15" id="ribo_linewidth" name="ribo_linewidth" value={{ user_settings[ 'ribo_linewidth' ]  }}>
-            </input>
-            <br>
+            <table>
+                <tr>
+                    <td>
+                        <b>UAG Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="uag_col" name="uag_col" value={{ user_settings[ 'uag_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>UAA Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="uaa_col" name="uaa_col" value={{ user_settings[ 'uaa_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UAA stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>UGA Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="uga_col" name="uga_col" value={{ user_settings[ 'uga_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Riboseq line width</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="number" min="1" max="15" id="ribo_linewidth" name="ribo_linewidth" value={{ user_settings[ 'ribo_linewidth' ] }}>
+                            <span class="tooltiptext">This controls the width of the red, green and blue ribo-seq lines.</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <h3>Single gene/transcript comparison plot</h3>
         <div>
-            <b>UAG Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="comp_uag_col" name="comp_uag_col" value={{ user_settings[ 'comp_uag_col' ]  }}>
-            </input>
-            <br>
-            <b>UAA Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the UAA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="comp_uaa_col" name="comp_uaa_col" value={{ user_settings[ 'comp_uaa_col' ]  }}>
-            </input>
-            <br>
-            <b>UGA Colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="comp_uga_col" name="comp_uga_col" value={{ user_settings[ 'comp_uga_col' ]  }}>
-            </input>
-            <br>
+            <table>
+                <tr>
+                    <td>
+                        <b>UAG Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="comp_uag_col" name="comp_uag_col" value={{ user_settings[ 'comp_uag_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UAG stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>UAA Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="comp_uaa_col" name="comp_uaa_col" value={{ user_settings[ 'comp_uaa_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UAA stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>UGA Colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="comp_uga_col" name="comp_uga_col" value={{ user_settings[ 'comp_uga_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the UGA stop codons in the open reading frame architecture.</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <h3>Metainformation settings</h3>
         <div>
-            <b>Readlength distribution bar colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the bars in the read length distribution plot. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="rl_bar_col" name="rl_bar_col" value={{ user_settings[ 'readlength_col' ]  }}>
-            </input>
-            <br>
-            <b>Metagene fiveprime bar colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the fiveprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ user_settings[ 'metagene_fiveprime_col' ]  }}>
-            </input>
-            <br>
-            <b>Metagene threeprime bar colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the threeprime ends. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="mg_threeprime_col" name="mg_threeprime_col" value={{ user_settings[ 'metagene_threeprime_col' ]  }}>
-            </input>
-            <br>
-            <b>Nucleotide composition A colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">
-                        This sets the colour of the line for the A nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
-                    </span>
-                </div>
-                : </b> <input type="color" id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ user_settings[ 'nuc_comp_a_col' ]  }}>
-            </input>
-            <br>
-            <b>Nucleotide composition T colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">
-                        This sets the colour of the line for the T nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6
-                    </span>
-                </div>
-                : </b> <input type="color" id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ user_settings[ 'nuc_comp_t_col' ]  }}>
-            </input>
-            <br>
-            <b>Nucleotide composition G colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the line for the G nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ user_settings[ 'nuc_comp_g_col' ]  }}>
-            </input>
-            <br>
-            <b>Nucleotide composition C colour
-                <div class="tooltip">
-                    (?)
-                    <span class="tooltiptext">This sets the colour of the line for the C nucleotide in the nucleotide composition plots. Can be set to colour names such as white, black, grey or hex values such as #d6d6d6</span>
-                </div>
-                : </b> <input type="color" id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ user_settings[ 'nuc_comp_c_col' ]  }}>
-            </input>
-            <br>
+            <table>
+                <tr>
+                    <td>
+                        <b>Readlength distribution bar colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="rl_bar_col" name="rl_bar_col" value={{ user_settings[ 'readlength_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the bars in the read length distribution plot.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Metagene fiveprime bar colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="mg_fiveprime_col" name="mg_fiveprime_col" value={{ user_settings[ 'metagene_fiveprime_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the fiveprime ends.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Metagene threeprime bar colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="mg_threeprime_col" name="mg_threeprime_col" value={{ user_settings[ 'metagene_threeprime_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the bars in the metagene profiles for the threeprime ends.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Nucleotide composition A colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="nuc_comp_a_col" name="nuc_comp_a_col" value={{ user_settings[ 'nuc_comp_a_col' ] }}>
+                            <span class="tooltiptext">
+                                This sets the colour of the line for the A nucleotide in the nucleotide composition plots.
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Nucleotide composition T colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="nuc_comp_t_col" name="nuc_comp_t_col" value={{ user_settings[ 'nuc_comp_t_col' ] }}>
+                            <span class="tooltiptext">
+                                This sets the colour of the line for the T nucleotide in the nucleotide composition plots.
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Nucleotide composition G colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="nuc_comp_g_col" name="nuc_comp_g_col" value={{ user_settings[ 'nuc_comp_g_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the line for the G nucleotide in the nucleotide composition plots.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Nucleotide composition C colour</b>
+                    </td>
+                    <td>
+                        <div class="tooltip">
+                            <input type="color" id="nuc_comp_c_col" name="nuc_comp_c_col" value={{ user_settings[ 'nuc_comp_c_col' ] }}>
+                            <span class="tooltiptext">This sets the colour of the line for the C nucleotide in the nucleotide composition plots.</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <!-- If user is logged in show a change password tab in the accordion, if not still create the tab (to prevent errors when accessing those fields in the template), but hide it -->
         {% if current_user.is_authenticated %}
-            <h3>
-                Change password
-            </h3>
+            <h3>Change password</h3>
             <div align="center">
                 <input type="password"
                        placeholder="Enter new password"
@@ -254,8 +324,7 @@
         <b>Update settings</b>
     </button>
 </div>
-<div id="container">
-</div>
+<div id="container"></div>
 <script type="text/javascript"
         src="{{ url_for('static', filename='js/common.js') }}"></script>
 <script type="text/javascript">
@@ -274,12 +343,8 @@ $(document).keypress(function(e){
 // If local mode is true change the url called by query
 var local = "{{ local|safe }}";
 
-if (local == "True") {
-		var url = "/settingsquery"
-		}
-else {
-		var url = "/settingsquery"
-}
+var url = "/settingsquery"
+var url = "/settingsquery"
 
 console.log("URL ", url);
 
