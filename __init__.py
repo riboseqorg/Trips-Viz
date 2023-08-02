@@ -919,6 +919,33 @@ def after_request_func(response):
 # This is the home page it show a list of organisms as defined by trips_dict
 # TODO: Move pages in order
 @app.route('/')
+def homepage2() -> str:
+    """Home page."""
+    sanitize_get_request(request.cookies.get("cookieconsent_status"))
+
+    # For All
+    organisms = get_table('organisms')
+
+    # user related details
+    user, logged_in = fetch_user()
+    private_organisms_id = []
+    if logged_in:  # Only if loggned in
+        # TODO: Replace login and register part with username
+        flash(f"You are logged in as {user}")
+        user_id = get_user_id(user)  # TODO: Find a way to pass only str
+        organism_access = get_table('organism_access')
+        private_organisms_id = organism_access.loc[
+            organism_access.user_id == user_id, 'organism_id'].values.tolist()
+    organisms = organisms.loc[
+        ~organisms.private |
+        (organisms.organism_id.isin(private_organisms_id)),
+        ["organism_name", "transcriptome_list"]].drop_duplicates()
+
+    # Create species list
+
+    return render_template('landing2.html', organisms=organisms, message="")
+
+
 def homepage(message=""):
     organism_access_list = []
     organism_list = {}
@@ -928,7 +955,7 @@ def homepage(message=""):
 
     user_id = -1
     if user:
-        if logged_in == True:
+        if logged_in:
             flash("You are logged in as {}".format(user))
         user_id = get_user_id(user)
         organism_access_list = get_table('organism_access')

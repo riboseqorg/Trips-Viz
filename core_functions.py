@@ -5,7 +5,7 @@ import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
 from Bio.Seq import Seq
-from sqlqueries import sqlquery, table2dict, get_table
+from sqlqueries import sqlquery, table2dict, get_table, update_table
 import uuid
 import config
 import logging
@@ -29,59 +29,45 @@ class User(UserMixin):
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
 
-def fetch_user() -> Tuple[str, bool]:
+def fetch_user() -> Tuple[str | None, bool]:
     '''Fetches active user from cookies if present and returns username and login status.'''
     consent = request.cookies.get("cookieconsent_status")
     # If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":
         return (None, False)
-    logging.debug("fetch_user Connecting to trips.sqlite")
-    connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
-    connection.text_factory = str
-    cursor = connection.cursor()
     session.permanent = True
+    print(session.keys())
     if "uid" not in session:
         session["uid"] = uuid.uuid4()
-    session_id = session["uid"]
+    session_id = str(session["uid"])
     # Check if this session uid is already in the users table
-    cursor.execute(
-        "Select username from users where username = '{}';".format(session_id))
-    result = cursor.fetchone()
-    if result == None:
+    users = get_table("users")
+    if session_id not in users.username:
         # Add session uid to user table
-        cursor.execute(
-            "INSERT INTO users VALUES (NULL,'{}',NULL,'-1','',0,1);".format(
-                session_id))
-        cursor.execute(
-            "SELECT user_id FROM users WHERE username = '{}'".format(
-                session_id))
-        user_id = cursor.fetchone()[0]
-        # marker_size, axis_label_size, subheading_size, title_size, user_id, background_col, readlength_col, metagene_fiveprime_col, metagene_threeprime_col, nuc_comp_a_col ,
-        # nuc_comp_t_col , nuc_comp_g_col , nuc_comp_c_col , uga_col , uag_col , uaa_col , comp_uga_col , comp_uag_col , comp_uaa_col , cds_marker_width ,
-        # cds_marker_colour VARCHAR, legend_size , ribo_linewidth
-        cursor.execute(
-            "INSERT INTO user_settings VALUES ('{0}','{1}','{2}','{3}',{4},'{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}',{19},'{20}',{21},{22});"
-            .format(config.MARKER_SIZE, config.AXIS_LABEL_SIZE,
-                    config.SUBHEADING_SIZE, config.TITLE_SIZE, user_id,
-                    config.BACKGROUND_COL, config.READLENGTH_COL,
-                    config.METAGENE_FIVEPRIME_COL,
-                    config.METAGENE_THREEPRIME_COL, config.A_COL, config.T_COL,
-                    config.G_COL, config.C_COL, config.UGA_COL, config.UAG_COL,
-                    config.UAA_COL, config.UGA_COL, config.UAG_COL,
-                    config.UAA_COL, config.CDS_MARKER_SIZE,
-                    config.CDS_MARKER_COLOUR, config.LEGEND_SIZE,
-                    config.RIBO_LINEWIDTH))
-        connection.commit()
+        update_table(
+            "users", {
+                'user_id': None,
+                'username': session_id,
+                'password': None,
+                'study_access': '-1',
+                'organism_access': '',
+                'advanced': 0,
+                'temp_user': 1
+            }, 'insert')
+        user_id = max(users.user_id) + 1
+        defaul_user_settings = config.DEFAULT_USER_SETTINGS.copy()
+        for stop in ['uaa', 'uag', 'uga']:
+            defaul_user_settings[f'comp_{stop}_col'] = defaul_user_settings[
+                f'{stop}_col']
+        defaul_user_settings['user_id'] = user_id
+        update_table("user_settings", defaul_user_settings, 'insert')
 
-    # If user is logged in current_user.name will return a username, otherwise set the user to the session uid
     try:
         user = current_user.name
         logged_in = True
     except Exception:
         user = session_id
         logged_in = False
-    logging.debug("fetch_user Closing trips.sqlite connection")
-    connection.close()
     return (user, logged_in)
 
 
@@ -856,7 +842,7 @@ def fetch_rld(sqlite_db: Dict[str, Dict[str, Dict[str, Dict[int, int]]]],
 
 def fetch_filename_file_id(file_id: int) -> str:
     '''
-	Return the filename from the database given a file id.
-	'''
+        Return the filename from the database given a file id.
+        '''
     files = get_table("files")
     return files.loc[files["file_id"] == file_id, 'file_name'].values[0]

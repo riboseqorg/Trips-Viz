@@ -1,7 +1,5 @@
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 from flask import Blueprint, render_template, request
-import sqlite3
-from Bio import SeqIO
 from sqlitedict import SqliteDict
 
 import os
@@ -9,8 +7,6 @@ import time
 import fixed_values
 from fixed_values import my_decoder
 import re
-import operator
-from math import log
 import config
 from core_functions import (
     fetch_studies,
@@ -21,8 +17,6 @@ from core_functions import (
     build_profile,
     fetch_user,
 )
-import metainfo_plots
-import collections
 from flask_login import current_user
 import subprocess
 import json
@@ -125,7 +119,6 @@ def metainfo_plotpage(organism: str, transcriptome: str):
         print(local)
     except Exception:
         local = False
-    organism = str(organism)
     user, _ = fetch_user()
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -133,81 +126,54 @@ def metainfo_plotpage(organism: str, transcriptome: str):
 
     organisms = get_table("organisms")
 
-    result = organisms.loc[organism.organism_name == organism, [
-        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
-    ]]
     studyinfo_dict = fetch_study_info(organism)
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
-
-    default_tran = result[3]
 
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = {
-        "user_short": str(request.args.get("short")),
-        "user_plot_type": str(request.args.get("plot")),
-        "nuc_comp_direction": str(request.args.get("nc_dir")),
-        "nuc_comp_type": str(request.args.get("nc_type")),
-        "nuc_comp_min_readlen": str(request.args.get("nc_minreadlen")),
-        "nuc_comp_max_readlen": str(request.args.get("nc_maxreadlen")),
-        "trip_periodicity_min_readlen": str(request.args.get("tp_minreadlen")),
-        "trip_periodicity_max_readlen": str(request.args.get("tp_maxreadlen")),
-        "heatmap_dir": str(request.args.get("hm_dir")),
-        "heatmap_log_scale": str(request.args.get("hm_log")),
-        "heatmap_reverse": str(request.args.get("hm_rev")),
-        "heatmap_position": str(request.args.get("hm_pos")),
-        "heatmap_minreadlen": str(request.args.get("hm_minreadlen")),
-        "heatmap_maxreadlen": str(request.args.get("hm_maxreadlen")),
-        "heatmap_start": str(request.args.get("hm_start")),
-        "heatmap_stop": str(request.args.get("hm_stop")),
-        "heatmap_colour": str(request.args.get("hm_col")),
-        "metagene_pos": str(request.args.get("mg_pos")),
-        "metagene_minreadlen": str(request.args.get("mg_minreadlen")),
-        "metagene_maxreadlen": str(request.args.get("mg_maxreadlen")),
-        "replicate_minreads": str(request.args.get("rp_minreads")),
-        "mrna_dist_readlen_per": str(request.args.get("mdr_per")),
-        "transcriptome": str(transcriptome),
-        "maxscaleval": str(request.args.get("maxscaleval")),
-        "mrna_dist_readlen_smooth": str(request.args.get("mdr_smooth")),
-        "te_minreads": str(request.args.get("te_minreads")),
-        "include_first": str(request.args.get("include_first")),
-        "include_last": str(request.args.get("include_last")),
-        "exclude_first": str(request.args.get("exclude_first")),
-        "exclude_last": str(request.args.get("exclude_last")),
-        "custom_seq_list": str(request.args.get("custom_seq_list")),
-        "exclude_first_val": str(request.args.get("exclude_first_val")),
-        "exclude_last_val": str(request.args.get("exclude_last_val")),
-        "include_first_val": str(request.args.get("include_first_val")),
-        "include_last_val": str(request.args.get("include_last_val")),
-        "metagene_tranlist": str(request.args.get("metagene_tranlist")),
-        "te_tranlist": str(request.args.get("te_tranlist")),
+    html_args = json.loads(request.get_json())
+    html_args['transcriptome'] = transcriptome
+    html_args = { # TODO: make templates uniform
+        "user_short": request.args.get("short"),
+        "user_plot_type": request.args.get("plot"),
+        "nuc_comp_direction": request.args.get("nc_dir"),
+        "nuc_comp_type": request.args.get("nc_type"),
+        "nuc_comp_min_readlen": request.args.get("nc_minreadlen"),
+        "nuc_comp_max_readlen": request.args.get("nc_maxreadlen"),
+        "trip_periodicity_min_readlen": request.args.get("tp_minreadlen"),
+        "trip_periodicity_max_readlen": request.args.get("tp_maxreadlen"),
+        "heatmap_dir": request.args.get("hm_dir"),
+        "heatmap_log_scale": request.args.get("hm_log"),
+        "heatmap_reverse": request.args.get("hm_rev"),
+        "heatmap_position": request.args.get("hm_pos"),
+        "heatmap_minreadlen": request.args.get("hm_minreadlen"),
+        "heatmap_maxreadlen": request.args.get("hm_maxreadlen"),
+        "heatmap_start": request.args.get("hm_start"),
+        "heatmap_stop": request.args.get("hm_stop"),
+        "heatmap_colour": request.args.get("hm_col"),
+        "metagene_pos": request.args.get("mg_pos"),
+        "metagene_minreadlen": request.args.get("mg_minreadlen"),
+        "metagene_maxreadlen": request.args.get("mg_maxreadlen"),
+        "replicate_minreads": request.args.get("rp_minreads"),
+        "mrna_dist_readlen_per": request.args.get("mdr_per"),
+        "transcriptome": transcriptome,
+        "mrna_dist_readlen_smooth": request.args.get("mdr_smooth"),
     }
     for arg in ["files", "ribo_studies", "rna_studies"]:
         arg_value = request.args.get(arg)
         if arg_value:
-            html_args[f"user_{arg}"] = arg_value.split(",")
+            html_args[arg] = arg_value.split(",")
         else:
-            html_args[f"user_{arg}"] = []
+            html_args[arg] = []
     # print"html args", html_args
-    
 
     return render_template(
         "metainfo_index.html",
-        gwips_clade=gwips_clade,
-        gwips_org=gwips_org,
-        gwips_db=gwips_db,
         transcriptome=transcriptome,
         organism=organism,
-        default_tran=default_tran,
-        current_username=user,
+        user=user,
         local=local,
         studies_dict=accepted_studies,
         accepted_files=accepted_files,
         html_args=html_args,
-        user_files=user_files,
-        user_ribo_studies=user_ribo_studies,
-        user_rna_studies=user_rna_studies,
         studyinfo_dict=studyinfo_dict,
         seq_types=seq_types,
     )
