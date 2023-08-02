@@ -6,9 +6,29 @@ input[type="checkbox"] {
   height: 16px;
   border: 1px solid black;
 }
-
+input[type="number"] {
+  width: 50px;
+}
+input[type="color"] {
+  width: 50px;
+  padding: 0;
+  border-width: 0;
+}
 input[type="checkbox"]:checked {
   background-color: #2ac3de;
+}
+
+input[type="text"]::placeholder {
+  /* Firefox, Chrome, Opera */
+  text-align: top left;
+}
+
+#accordion h3 {
+  /*Change values accoridngly*/
+  text-align: left;
+  color: black;
+  background-color: red;
+  border-color: black;
 }
 
 /*tooltip*/
