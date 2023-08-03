@@ -74,3 +74,14 @@ input[type="text"]::placeholder {
   text-decoration: underline;
   font-weight: bold;
 }
+
+/* species slider*/
+.slider-container {
+  height: 500px;
+  max-width: 100%;
+  background-color: #f1f1f1;
+  padding: 40px 0;
+}
+.slider-content {
+  margin: 0 40px;
+}

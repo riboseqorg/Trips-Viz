@@ -1,0 +1,265 @@
+{% extends "layout.html" %}
+{% block header_static %}
+    <!--swiper js-->
+    <link href="https://cdn.jsdelivr.net/npm/swiper@10.1.0/swiper-bundle.min.css"
+          rel="stylesheet">
+{% endblock %}
+{% block content %}
+    {% if message %}
+        <div style="background-color:#85beff;
+                    color:white;
+                    padding:10px;
+                    font-weight:bold;
+                    font-size=200%"
+             id="message">{{ message }}</div>
+    {% endif %}
+    <div id="about">
+        <div class="page-section">
+            <img align="center" width="5%" alt="Trips-viz" src="/static/trips.svg">
+        </img>
+        is a transcriptome browser designed to visualize Ribosome profiling and RNA-seq data at the level of a single gene/transcript isoform as opposed to at <a target="_blank" href="http://gwips.ucc.ie">the genome level</a>.
+        Trips-viz also provides you the ability to vizualize data from a gene under different conditions, get meta-information at an individual dataset level such as read length distribution or triplet periodicity, and provides the ability
+        to find differentially expressed or translated genes. For more information on any of these plots and general information on Trips-viz you can view the <a href="/help">help pages</a>, or see this brief
+        <a href='https://trips.ucc.ie/help/?parent_acc=parent_walkthrough'>walkthrough</a> of some of the main features. To see the latest updates on Trips-Viz or to get information on the number of
+        organisms and studies currently provided in Trips-Viz, you can view the <a href="/stats">statistics and updates page</a>. To get started click on an organism below.Trips-Viz is free and open to all users with no login requirement
+        and is licensed under the <a href='https://trips.ucc.ie/license.txt'>MIT License</a>.
+    </div>
+</div>
+{% set plots = {
+    "Single transcript plot": "interactive_plot",
+    "Single transcript comparison plot": "comparison",
+    "Meta-Information": "metainfo_plot",
+    "Differential plot": "differential",
+    "Transcriptome info": "transinfo_plot",
+    "Translated ORF detection": "orf_translation",
+    "PausePred": "pause_detection"
+} %}
+{% for organism in organisms %}
+    {% if loop.index == 1 %}
+        <div class="row d-flex justify-content-center">
+        {% elif loop.index % 5  == 0 %}
+            <!--TODO:Fix this-->
+        </div>
+        <div class="row d-flex justify-content-center">{% elif loop.last %}</div>
+    {% endif %}
+{% endfor %}
+<!--NOTE: Slider-->
+<div class="slide-container swiper">
+    <div class="slide-content">
+        <div class="card-wrapper swiper-wrapper">
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-pagination"></div>
+</div>
+<!--Slider End-->
+<div class="row d-flex justify-content-center">
+    <div class="col-lg-2 col-md-6">
+        <button class="species card" type="button" style="width: 175px;height: 175px">
+            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                 class="card-img-bottom"
+                 height="175px"
+                 width="175px">
+            <div class="card-body card-img-overlay text-white">
+                <p class="card-text">
+                    <small>geeksforgeeks</small>
+                </p>
+            </div>
+        </button>
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <button class="species card" type="button" style="width: 175px;height: 175px">
+            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                 class="card-img-bottom"
+                 height="175px"
+                 width="175px">
+            <div class="card-body card-img-overlay text-white">
+                <p class="card-text">
+                    <small>geeksforgeeks</small>
+                </p>
+            </div>
+        </button>
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <button class="species card" type="button" style="width: 175px;height: 175px">
+            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                 class="card-img-bottom"
+                 height="175px"
+                 width="175px">
+            <div class="card-body card-img-overlay text-white">
+                <p class="card-text">
+                    <small>geeksforgeeks</small>
+                </p>
+            </div>
+        </button>
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <button class="species card" type="button" style="width: 175px;height: 175px">
+            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                 class="card-img-bottom"
+                 height="175px"
+                 width="175px">
+            <div class="card-body card-img-overlay text-black">
+                <p class="card-text">
+                    <small>geeksforgeeks</small>
+                </p>
+            </div>
+        </button>
+    </div>
+    <div class="col-lg-2 col-md-6">
+        <button class="species card" type="button" style="width: 175px;height: 175px">
+            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                 class="card-img-bottom"
+                 height="175px"
+                 width="175px">
+            <div class="card-body card-img-overlay text-white">
+                <p class="card-text">
+                    <small>geeksforgeeks</small>
+                </p>
+            </div>
+        </button>
+    </div>
+</div>
+<p>
+    Trips-Viz is supported by Science Foundation Ireland and is a <a href="https://riboseq.org/">RiboSeq.org</a> and Elixir Resource.
+    <img src="/static/SFI_logo.jpg" alt="SFI logo" height=100>
+    <img src="/static/elixir-logo.png" height=100>
+</p>
+</body>
+</html>
+{% endblock %}
+{% block footer_static %}
+    <!--Swiper js-->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10.1.0/swiper-bundle.min.js"></script>
+    <script>
+			var swiper = new Swiper(".slide-content", {
+				slidesPerView: 3,
+				spaceBetween: 30,
+		slidePerGroup:3,
+		loop:true,
+		pagination: {
+			el: ".swiper-pagination",
+			clickable: true,
+		},
+		navigation: {
+			nextEl: ".swiper-button-next",
+			prevEl: ".swiper-button-prev",
+		},
+				
+			});
+		
+    </script>
+{% endblock %}
