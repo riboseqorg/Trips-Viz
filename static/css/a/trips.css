@@ -77,9 +77,8 @@ input[type="text"]::placeholder {
 
 /* species slider*/
 .slider-container {
-  height: 500px;
   max-width: 100%;
-  background-color: #f1f1f1;
+  background-color: red;
   padding: 40px 0;
 }
 .slider-content {
