@@ -44,9 +44,23 @@
     {% endif %}
 {% endfor %}
 <!--NOTE: Slider-->
-<div class="slide-container swiper">
-    <div class="slide-content">
+<div class="slider-container swiper">
+    <div class="slider-content">
         <div class="card-wrapper swiper-wrapper">
+            <button class="species card swiper-slide"
+                    type="button"
+                    style="width: 175px;
+                           height: 175px">
+                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+                     class="card-img-bottom"
+                     height="175px"
+                     width="175px">
+                <div class="card-body card-img-overlay text-white">
+                    <p class="card-text">
+                        <small>geeksforgeeks</small>
+                    </p>
+                </div>
+            </button>
             <button class="species card swiper-slide"
                     type="button"
                     style="width: 175px;
@@ -245,10 +259,10 @@
     <!--Swiper js-->
     <script src="https://cdn.jsdelivr.net/npm/swiper@10.1.0/swiper-bundle.min.js"></script>
     <script>
-			var swiper = new Swiper(".slide-content", {
+			var swiper = new Swiper(".slider-content", {
 				slidesPerView: 3,
 				spaceBetween: 30,
-		slidePerGroup:3,
+		slidePerGroup:5,
 		loop:true,
 		pagination: {
 			el: ".swiper-pagination",
