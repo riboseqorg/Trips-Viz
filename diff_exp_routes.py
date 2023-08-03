@@ -696,10 +696,9 @@ def diffquery():
             master_file_dict["riboseq2"]["file_ids"],
             master_file_dict["rnaseq1"]["file_ids"],
             master_file_dict["rnaseq2"]["file_ids"], background_col,
-            short_code, mapped_reads_norm, tar_file, no_groups,
+            short_code, mapped_reads_norm, tar_file,
             str(title_size) + "pt",
             str(axis_label_size) + "pt",
-            str(subheading_size) + "pt",
             str(marker_size) + "pt", ambiguous, gene_list, label, minzscore)
     if anota2seq:
         if label != "TE" or no_groups <= 2:
@@ -940,11 +939,10 @@ def diffquery():
             master_file_dict["riboseq2"]["file_ids"],
             master_file_dict["rnaseq1"]["file_ids"],
             master_file_dict["rnaseq2"]["file_ids"], background_col,
-            short_code, mapped_reads_norm, tar_file, no_groups,
+            short_code, mapped_reads_norm, tar_file,
             str(title_size) + "pt",
             str(axis_label_size) + "pt",
-            str(subheading_size) + "pt",
-            str(marker_size) + "pt", ambiguous, gene_list, label, minzscore,
+            str(marker_size) + "pt", ambiguous, gene_list, label,
             sig_translated, sig_rna, sig_buffered)
 
     del_list = []
@@ -1268,10 +1266,9 @@ def diffquery():
             master_file_dict["riboseq2"]["file_ids"],
             master_file_dict["rnaseq1"]["file_ids"],
             master_file_dict["rnaseq2"]["file_ids"], background_col,
-            short_code, mapped_reads_norm, filename, no_groups,
+            short_code, mapped_reads_norm, filename,
             str(title_size) + "pt",
             str(axis_label_size) + "pt",
-            str(subheading_size) + "pt",
             str(marker_size) + "pt", ambiguous, gene_list, label)
 
 

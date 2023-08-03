@@ -2128,9 +2128,6 @@ def metainfoquery():
     # codon_count_dict,
     # short_code,
     # background_col,
-    # title_size,
-    # axis_label_size,
-    # subheading_size,
     # marker_size,
     # )
 
@@ -2308,13 +2305,6 @@ def metainfoquery():
 # return metainfo_plots.replicate_comp(
 # labels,
 # transcript_dict,
-# min_log_val,
-# short_code,
-# background_col,
-# str(title_size) + "pt",
-# str(axis_label_size) + "pt",
-# str(subheading_size) + "pt",
-# str(marker_size) + "pt",
 # corr_type,
 # )
 
@@ -3291,7 +3281,6 @@ def metainfoquery():
 # readlengths,
 # fixed_master_count_list,
 # heatmap_metagene_type,
-# title,
 # reverse_scale,
 # color_palette,
 # short_code,
@@ -3299,7 +3288,6 @@ def metainfoquery():
 # maxscaleval,
 # str(title_size) + "pt",
 # str(axis_label_size) + "pt",
-# str(subheading_size) + "pt",
 # str(marker_size) + "pt",
 # )
 

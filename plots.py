@@ -17,6 +17,14 @@ class VegaPlot:
             y=alt.Y(f'{color_col}:N', axis=alt.Axis(orient='right')),
             color=self.color).add_params(alt.selection)
 
+    def lineplot(self, x_col: str, y_col: str) -> Chart:
+        return self.chart.mark_line().encode(
+            x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
+            y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
+            color=self.color,
+        ).add_selection().interactive(bind_y=False).properties(width=800,
+                                                               height=300)
+
     def vline(self, x_col: str, last=False) -> Chart:
         vline = self.chart.encode(
             x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
@@ -35,6 +43,9 @@ class VegaPlot:
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
             color=self.color,
         )
+        # TODO: Add bar plot
+        # TODO: Add text plot
+        # TODO: Add fill between plot
 
     def vact_plot_json(self, plots: List[Chart]) -> str:
         chart = alt.vconcat(

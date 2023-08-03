@@ -1,16 +1,5 @@
 from typing import Dict, List, Tuple
 import pickle
-from bokeh.models import (
-    ColumnDataSource,
-    HoverTool,
-)
-import bokeh.models as bmo
-from bokeh.resources import CDN
-from bokeh.embed import file_html
-from bokeh.plotting import figure, output_file
-import matplotlib.cm as cm
-import matplotlib
-from typing import Dict
 import pandas as pd
 
 iupac_dict = {
@@ -158,8 +147,6 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     amino_acids = []
     aa_dict = codon_aa_full.copy()
 
-    codon_list = codon_list.copy()
-
     curr_count = 0
     for codon in codon_list:
         curr_count += 1
@@ -196,7 +183,7 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     colormap = cm.get_cmap(
         "gist_rainbow")  # choose any matplotlib colormap here
     start_val = 0.75
-    for i in range(0, 21):
+    for _ in range(0, 21):
         start_val -= 0.0293
         rgb = colormap(start_val)[:3]
         hexval = matplotlib.colors.rgb2hex(rgb)
@@ -237,10 +224,6 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
               },
               size=16,
               line_color="black")
-    p.xaxis.ticker = [
-        1, 2.5, 6.5, 12.5, 16.5, 18.5, 20, 22.5, 25.5, 27.5, 31.5, 36, 39.5,
-        42.5, 44.5, 47.5, 51.5, 54.5, 56.5, 59.5, 63
-    ]
     p.xaxis.major_label_overrides = {
         1: "Met",
         2.5: "Phe",
@@ -264,7 +247,7 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
         59.5: "Gly",
         63: "Stop"
     }
-    # p.vbar(x=[1], width=1,bottom=0,color="gray",top=[1])
+    p.xaxis.ticker = p.xaxis.major_label_overrides.keys()
 
     hover = p.select(dict(type=HoverTool))
     hover.tooltips = [("Count", "@y"), ("Codon", "@labels"),

@@ -103,7 +103,7 @@ comparisonquery_blueprint = Blueprint("comparequery",
 
 
 @comparisonquery_blueprint.route('/comparequery', methods=['POST'])
-def comparequery() -> Tuple:
+def comparequery() -> str | Tuple:
     #global user_short_passed
     user_short_passed = False
     data = json.loads(request.data)
@@ -119,8 +119,7 @@ def comparequery() -> Tuple:
         transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
             config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
         if not os.path.isfile(transhelve):
-            return "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome)
+            return f"Cannot find annotation file {organism}.{transcriptome}.sqlite"
     else:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
@@ -156,14 +155,11 @@ def comparequery() -> Tuple:
                     else:
                         cdslen = cds_stop - cds_start
                         threeutrlen = tranlen - cds_stop
-                    return_str += (":{},{},{},{},{},{}".format(
-                        transcript[0], tranlen, cds_start, cdslen, threeutrlen,
-                        principal))
+                    return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
 
                 return return_str
         else:
-            return_str = "ERROR! Could not find any transcript corresponding to {}".format(
-                tran)
+            return_str = f"ERROR! Could not find any transcript corresponding to {tran}"
             return return_str
     transhelve.close()
     minread = int(data['minread'])
@@ -267,7 +263,7 @@ def comparequery() -> Tuple:
         short_code = html_args["user_short"]
         user_short_passed = True
 
-    user_settings = config.USER_SETTINGS.copy()
+    user_settings = config.DEFAULT_USER_SETTINGS.copy()
     if current_user.is_authenticated:
         user_id = get_user_id(current_user.name)
         user_settings = get_table("user_settings")
@@ -278,5 +274,4 @@ def comparequery() -> Tuple:
             normalize, short_code, hili_start, hili_stop, user_settings,
             transcriptome)
 
-    return "ERROR! Could not find any transcript corresponding to {}".format(
-        tran)
+    return "ERROR! Could not find any transcript corresponding to {tran}"

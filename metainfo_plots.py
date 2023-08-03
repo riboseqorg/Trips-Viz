@@ -1276,9 +1276,7 @@ def explore_offsets(
 
 def replicate_comp(labels: List[str], transcript_dict: Dict[str, Dict[str,
                                                                       int]],
-                   min_log_val: int, short_code: str, background_col: str,
-                   title_size: str, axis_label_size: str, subheading_size: str,
-                   marker_size: str, corr_type: str) -> str:
+                   corr_type: str) -> str:
     list_dict = {}
     corr_dict = {}
     for lbl in labels:
@@ -1371,11 +1369,10 @@ def most_freq_unmapped(file_paths_dict: Dict[str, Dict[str, str]],
 
 def heatplot(min_readlen: int, max_readlen: int, min_pos: int, max_pos: int,
              positions: List[int], readlengths: List[int],
-             count_list: List[int], heatmap_metagene_type: str, title: str,
+             count_list: List[int], heatmap_metagene_type: str,
              reverse_scale: bool, color_palette: str, short_code: str,
              background_col: str, maxscaleval: int, title_size: int,
-             axis_label_size: int, subheading_size: int,
-             marker_size: int) -> str:
+             axis_label_size: int, marker_size: int) -> str:
     xlabs = []
     ylabs = []
     for i in range(min_readlen, max_readlen + 1):
@@ -1465,8 +1462,7 @@ def heatplot(min_readlen: int, max_readlen: int, min_pos: int, max_pos: int,
 
 
 def rust_dwell(codon_count_dict: Dict[str, int], short_code: str,
-               background_col: str, title_size: int, axis_label_size: int,
-               subheading_size: int, marker_size: int) -> str:
+               background_col: str, marker_size: int) -> str:
     aa_color_dict = {
         "gly": "white",
         "arg": "blue",
@@ -1824,7 +1820,6 @@ def mrna_dist(
         per = int(round((five_leaders[i] / totals[i]) * 100, 0))
         tooltip1 = plugins.LineLabelTooltip(
             bar, label="5' leaders: {:,}  ({}%)".format(five_leaders[i], per))
-        #tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
         plugins.connect(fig, tooltip1)
 
     for i, bar in enumerate(p2.get_children()):
@@ -1832,7 +1827,6 @@ def mrna_dist(
         tooltip1 = plugins.LineLabelTooltip(
             bar,
             label="Start codons: {:,}  ({}%)".format(start_codons[i], per))
-        #tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
         plugins.connect(fig, tooltip1)
 
     for i, bar in enumerate(p3.get_children()):
@@ -1840,14 +1834,12 @@ def mrna_dist(
         tooltip1 = plugins.LineLabelTooltip(bar,
                                             label="Cds: {:,}  ({}%)".format(
                                                 cds[i], per))
-        #tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
         plugins.connect(fig, tooltip1)
 
     for i, bar in enumerate(p4.get_children()):
         per = int(round((stop_codons[i] / totals[i]) * 100, 0))
         tooltip1 = plugins.LineLabelTooltip(
             bar, label="Stop codons: {:,}  ({}%)".format(stop_codons[i], per))
-        #tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
         plugins.connect(fig, tooltip1)
 
     for i, bar in enumerate(p5.get_children()):
@@ -1855,7 +1847,6 @@ def mrna_dist(
         tooltip1 = plugins.LineLabelTooltip(
             bar,
             label="3' trailers: {:,}  ({}%)".format(three_trailers[i], per))
-        #tooltip1 = PointHTMLTooltip(p1[i], p1labels[i],voffset=10, hoffset=10, css=point_tooltip_css)
         plugins.connect(fig, tooltip1)
 
     plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),

@@ -267,7 +267,7 @@ def generate_plot(
     else:
         ambig = "F"
 
-    url = "http://trips.ucc.ie/{}/{}/comparison/?files={}{}&transcript=@labels&normalize={}&cov=T&ambig={}&minread=25&maxread=150".format(
+    url = "/{}/{}/comparison/?files={}{}&transcript=@labels&normalize={}&cov=T&ambig={}&minread=25&maxread=150".format(
         organism, transcriptome, file_string, label_string,
         str(normalized)[0], ambig)
     '''
@@ -283,13 +283,10 @@ def generate_plot(
 
     taptool = p.select(type=TapTool)
     taptool.callback = OpenURL(url=url)
-    #text_input = TextInput(value="B2M",title="Gene",callback=hili_gene)
 
     #TODO FIX HARDCODED TMP FILE LINK
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         short_code, filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     logging.debug("Returning plot")
     return graph
@@ -298,10 +295,9 @@ def generate_plot(
 def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                 transcriptome: str, riboseq1: str, riboseq2: str, rnaseq1: str,
                 rnaseq2: str, background_col: str, short_code: str,
-                normalized: bool, filename: str, no_groups: int,
-                title_size: int, axis_label_size: int, subheading_size: int,
-                marker_size: int, ambiguous: bool, gene_list: str,
-                label: str) -> str:
+                normalized: bool, filename: str, title_size: int,
+                axis_label_size: int, marker_size: int, ambiguous: bool,
+                gene_list: str, label: str) -> str:
     #Convert gene_list from string to list
     if gene_list:
         gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
@@ -523,8 +519,6 @@ def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
     taptool.callback = OpenURL(url=url)
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
         short_code, filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     return graph
 
@@ -532,10 +526,9 @@ def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
 def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                 transcriptome: str, riboseq1: str, riboseq2: str, rnaseq1: str,
                 rnaseq2: str, background_col: str, short_code: str,
-                normalized: bool, filename: str, no_groups: bool,
-                title_size: int, axis_label_size: int, subheading_size: int,
-                marker_size: int, ambiguous: bool, gene_list: str, label: str,
-                minzscore: float) -> str:
+                normalized: bool, filename: str, title_size: int,
+                axis_label_size: int, marker_size: int, ambiguous: bool,
+                gene_list: str, label: str, minzscore: float) -> str:
     #Convert gene_list from string to list
     if gene_list != "":
         gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
@@ -989,10 +982,6 @@ def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                           ("Ribo Cond 2 count (log2)", "@x"),
                           ("Genes", "@genes"), ("Transcript", "@trans"),
                           ("Basemean", "@basemeans"), ("lfcSE", "@lfcses")]
-        #corr = spearmanr(x_values, y_values)
-        #pearson_corr = pearsonr(x_values, y_values)
-        #mytext = Label(x=0.1,y=max(y_values),text="Pearson correlation: {}".format(round(pearson_corr[0],2)),background_fill_color="white",text_font_size="13pt")
-        #p.add_layout(mytext)
     else:
         p.line([0, 16], [0, 16], color="#cccccc", line_width=1)
         hover.tooltips = [("Rna-seq Cond 1 count (log2)", "@y"),
@@ -1003,43 +992,19 @@ def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                           ("Ribo Cond 2 count (log2)", "@x"),
                           ("Genes", "@genes"), ("Transcript", "@trans"),
                           ("Basemean", "@basemeans"), ("lfcSE", "@lfcses")]
-        #corr = spearmanr(x_values, y_values)
-        #pearson_corr = pearsonr(x_values, y_values)
-        #mytext = Label(x=0.1,y=max(y_values),text="Pearson correlation: {}".format(round(pearson_corr[0],2)),background_fill_color="white",text_font_size="13pt")
-        #p.add_layout(mytext)
 
     file_string = ""
     label_string = "&labels=RIBO-Seq Cond 1,%23007a02_RIBO-Seq Cond 2,%23960000_mRNA-Seq Cond 1,%2374ed76_mRNA-seq Cond 2,%23ff6d6d"
-
-    if riboseq1:
-        if riboseq1[0] != "":
-            for file_id in riboseq1:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23007a02_")
-    if riboseq2:
-        if riboseq2[0] != "":
-            for file_id in riboseq2:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23960000_")
-    if rnaseq1:
-        if rnaseq1[0] != "":
-            for file_id in rnaseq1:
-                file_string += ("{},".format(file_id))
-            file_string += ("%2374ed76_")
-    if rnaseq2:
-        if rnaseq2[0] != "":
-            for file_id in rnaseq2:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23ff6d6d_")
+    for rseq, tag in zip(
+        (riboseq1, riboseq2, rnaseq1, rnaseq2),
+        ("%23007a02_", "%23960000_", "%2374ed76_", "%23ff6d6d")):
+        if rseq and rseq[0]:
+            file_string += ",".join([str(file_id) for file_id in rseq])
+            file_string += tag
 
     # remove the trailing _ in file_string if it's been populated
-    if file_string:
-        file_string = file_string[:len(file_string) - 1]
 
-    if ambiguous == True:
-        ambig = "T"
-    else:
-        ambig = "F"
+    ambig = "T" if ambiguous else "F"
 
     url = "http://trips.ucc.ie/{}/{}/comparison/?files={}{}&transcript=@trans&normalize={}&cov=T&ambig={}&minread=25&maxread=150".format(
         organism, transcriptome, file_string, label_string,
@@ -1049,8 +1014,6 @@ def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
 
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download DESeq2 output files</b></button></a> </div>".format(
         short_code, filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     print("returning graph", graph)
     return graph
@@ -1068,15 +1031,12 @@ def anota2seq_plot(
     short_code: str,
     normalized: bool,
     filename: str,
-    no_groups: bool,
     title_size: int,
     axis_label_size: int,
-    subheading_size: int,
     marker_size: int,
     ambiguous: bool,
     gene_list: str,
     label: str,
-    minzscore: float,
     sig_translated: bool,
     sig_rna: bool,
     sig_buffering: bool,
@@ -1438,10 +1398,6 @@ def anota2seq_plot(
                           ("Ribo Cond 2 count (log2)", "@x"),
                           ("Genes", "@genes"), ("Transcript", "@trans"),
                           ("Basemean", "@basemeans"), ("lfcSE", "@lfcses")]
-        #corr = spearmanr(x_values, y_values)
-        #pearson_corr = pearsonr(x_values, y_values)
-        #mytext = Label(x=0.1,y=max(y_values),text="Pearson correlation: {}".format(round(pearson_corr[0],2)),background_fill_color="white",text_font_size="13pt")
-        #p.add_layout(mytext)
 
     file_string = ""
     label_string = "&labels=RIBO-Seq Cond 1,%23007a02_RIBO-Seq Cond 2,%23960000_mRNA-Seq Cond 1,%2374ed76_mRNA-seq Cond 2,%23ff6d6d"
@@ -1471,12 +1427,9 @@ def anota2seq_plot(
     if file_string:
         file_string = file_string[:len(file_string) - 1]
 
-    if ambiguous == True:
-        ambig = "T"
-    else:
-        ambig = "F"
+    ambig = "T" if ambiguous else "F"
 
-    url = "http://trips.ucc.ie/{}/{}/comparison/?files={}{}&transcript=@trans&normalize={}&cov=T&ambig={}&minread=25&maxread=150".format(
+    url = "/{}/{}/comparison/?files={}{}&transcript=@trans&normalize={}&cov=T&ambig={}&minread=25&maxread=150".format(
         organism, transcriptome, file_string, label_string,
         str(normalized)[0], ambig)
     taptool = p.select(type=TapTool)
@@ -1484,7 +1437,5 @@ def anota2seq_plot(
 
     graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download DESeq2 output files</b></button></a> </div>".format(
         short_code, filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-    #layout = column(text_input, p)
     graph += file_html(p, CDN)
     return graph

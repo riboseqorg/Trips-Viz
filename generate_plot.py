@@ -45,7 +45,6 @@ table, th, td
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
-
 # trips_shelves/rnaseq/escherichia_coli/Li14/SRR1067774.sqlite : reads, each gene each position, mismaches
 # trips_annotation: gtf file annotation, also contain sequnce                    spec
 
@@ -271,32 +270,23 @@ def generate_plot():
                                                pcr,
                                                get_mismatches=mismatches)
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
-    all_subcodon_reads, ribo_seqvar_dict = get_reads(ambig,
-                                                     min_read,
-                                                     max_read,
-                                                     tran,
-                                                     file_paths_dict,
-                                                     tranlen,
-                                                     ribocoverage,
-                                                     organism,
-                                                     True,
-                                                     noisered,
-                                                     primetype,
-                                                     "riboseq",
-                                                     readscore,
-                                                     secondary_readscore,
-                                                     pcr,
-                                                     get_mismatches=mismatches)
-    seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
-    try:
-        rnamax = max(all_rna_reads.values())
-    except Exception:
-        rnamax = 0
-    try:
-        subcodonmax = max(all_subcodon_reads.values())
-    except Exception:
-        subcodonmax = 0
- get_user_defined_seqs   y_max = max(1, rnamax, subcodonmax) * 1.1
+    all_subcodon_reads, _ = get_reads(ambig,
+                                      min_read,
+                                      max_read,
+                                      tran,
+                                      file_paths_dict,
+                                      tranlen,
+                                      ribocoverage,
+                                      organism,
+                                      True,
+                                      noisered,
+                                      primetype,
+                                      "riboseq",
+                                      readscore,
+                                      secondary_readscore,
+                                      pcr,
+                                      get_mismatches=mismatches)
+    y_max = max(1, rnamax, subcodonmax) * 1.1
 
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
@@ -321,10 +311,10 @@ def generate_plot():
                 frame_breakdown = False
         else:
             frame_breakdown = False
-        alt_sequence_reads, empty_seqvar_dict = get_reads(
-            ambig, min_read, max_read, tran, file_paths_dict, tranlen, True,
-            organism, frame_breakdown, noisered, primetype, seq_type,
-            readscore)
+        alt_sequence_reads, _ = get_reads(ambig, min_read, max_read, tran,
+                                          file_paths_dict, tranlen, True,
+                                          organism, frame_breakdown, noisered,
+                                          primetype, seq_type, readscore)
         alt_seq_dict[seq_type] = alt_sequence_reads
         if frame_breakdown == False:
             alt_seq_plot = ax_main.plot(alt_sequence_reads.keys(),
@@ -422,12 +412,6 @@ def generate_plot():
                  fontsize=18,
                  color="black",
                  ha="center")
-    # ax_main.annotate('axes fraction',xy=(3, 1), xycoords='data',xytext=(0.8, 0.95), textcoords='axes fraction',arrowprops=dict(facecolor='black', shrink=0.05),horizontalalignment='right', verticalalignment='top')
-    # trans = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    # ax_main.annotate('CDS RELATIVE START',(100,100),transform=trans)
-    # tform = blended_transform_factory(ax_main.transData, ax_main.transAxes)
-    # r=10
-    # ax_main.text(cds_start, 0.9, "CDS START OR WHATEVER", fontsize='xx-large', color='r', transform=tform)
     cds_markers += ax_main.plot((cds_stop + 1, cds_stop + 1),
                                 (0, y_max * 0.97),
                                 color=cds_marker_colour,
@@ -515,46 +499,6 @@ def generate_plot():
     s3.yaxis.visible = False
 
     # altair plots
-    selection = alt.selection_multi(fields=["frame"])
-    color = alt.condition(selection, alt.Color("frame:N", legend=None),
-                          alt.value("lightgray"))
-    alt.renderers.set_embed_options(actions={
-        "export": True,
-        "source": False,
-        "compiled": False,
-        "editor": False
-    })
-    line = alt.Chart(frame_counts).mark_line().encode(
-        x=alt.X('Horsepower:Q',
-                axis=alt.Axis(labels=False, tickSize=0, title="", grid=False)),
-        y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
-        color=color,
-        # tooltip='Name:N'
-    ).interactive(bind_y=False).properties(width=800, height=300)
-
-    if lite == "n":
-        bar = alt.Chart(frame_counts).mark_bar().encode(
-            x=alt.X('Horsepower:Q',
-                    axis=alt.Axis(labels=False,
-                                  tickSize=0,
-                                  title="",
-                                  grid=False)),
-            y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
-            color=color,
-            # tooltip='Name:N'
-        ).interactive(bind_y=False).properties(width=800, height=300)
-
-    else:
-        line = alt.Chart(frame_counts).mark_line().encode(
-            x=alt.X('Horsepower:Q',
-                    axis=alt.Axis(labels=False,
-                                  tickSize=0,
-                                  title="",
-                                  grid=False)),
-            y=alt.Y('Miles_per_Gallon:Q', axis=alt.Axis(grid=False)),
-            color=color,
-            # tooltip='Name:N'
-        ).interactive(bind_y=False).properties(width=800, height=300)
 
     if mismatches == True:
         a_mismatches = ax_main.plot(seq_var_dict["A"].keys(),
@@ -822,8 +766,6 @@ def generate_plot():
                     con_score = "?"
             all_start_points[frame].append(start - 1)
             stop = tup[1]
-            other_ribo = 0.0
-            otherother_ribo = 0.0
             for i in range(start + 2, stop, 3):
                 for subframe in [0, 1, 2]:
                     if i in frame_counts[subframe]:
@@ -913,18 +855,8 @@ def generate_plot():
                                 hoffset=10,
                                 css=point_tooltip_css)
 
-    # This works but hides axis labels for all axes
-    # ax_f1.axes.xaxis.set_ticklabels([])
-    # ax_f1.axes.yaxis.set_ticklabels([])
-    # ax_f2.axes.yaxis.set_ticklabels([])
-    # ax_f3.axes.yaxis.set_ticklabels([])
-    # ax_cds.axes.yaxis.set_ticklabels([])
-    # ax_nucseq.axes.yaxis.set_ticklabels([])
-    # ax_f1.get_xaxis().set_visible(False)
-    # ax_f1.get_yaxis().set_visible(False)
     for key, spine in ax_f1.spines.items():
         spine.set_visible(False)
-    # ax_f1.tick_params(which="both", bottom=False, color="lightgray")
 
     returnstr = "Position,Sequence,Frame 1,Frame 2,Frame 3,RNA-Seq"
     for seq_type in alt_seq_dict:
