@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 import altair as alt
 from pandas.core.frame import DataFrame
 from altair.vegalite.v5.api import Chart
@@ -6,7 +6,8 @@ from altair.vegalite.v5.api import Chart
 
 class VegaPlot:
 
-    def __init__(self, table: DataFrame, color_col: str) -> None:
+    def __init__(self, table: DataFrame, color_col: str,
+                 params: Dict[str, Any]) -> None:
         self.table = table
         self.chart = alt.Chart(self.table)
 
@@ -16,6 +17,7 @@ class VegaPlot:
         self.legend = self.chart.mark_point().encode(
             y=alt.Y(f'{color_col}:N', axis=alt.Axis(orient='right')),
             color=self.color).add_params(alt.selection)
+        self.param = params
 
     def lineplot(self, x_col: str, y_col: str) -> Chart:
         return self.chart.mark_line().encode(

@@ -1,14 +1,4 @@
 from typing import List, Tuple, Union, Dict
-import matplotlib
-
-from matplotlib import pyplot as plt
-from matplotlib.font_manager import FontProperties
-from matplotlib.text import TextPath
-from matplotlib.patches import PathPatch
-import mpld3
-from mpld3 import plugins
-from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
-                         DownloadPNG)
 import collections
 import pandas as pd
 import numpy as np
@@ -20,7 +10,6 @@ from bokeh.models import (
     HoverTool,
 )
 
-matplotlib.use('agg')
 #ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
 try:
     import RNA

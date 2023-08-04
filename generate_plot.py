@@ -1,5 +1,3 @@
-from new_plugins import (InteractiveLegendPlugin, PointHTMLTooltip, TopToolbar,
-                         DownloadProfile, DownloadPNG, DownloadSVG)
 import pickle
 import config
 import os
@@ -8,11 +6,7 @@ from fetch_shelve_reads2 import get_reads
 import pandas as pd
 from sqlitedict import SqliteDict
 import collections
-from mpld3 import plugins
-import mpld3
 from bokeh.plotting import figure, output_file
-import matplotlib.pyplot as plt
-import matplotlib
 
 import altair as alt
 import fixed_values

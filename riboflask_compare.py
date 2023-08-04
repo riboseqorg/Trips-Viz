@@ -1,16 +1,7 @@
-import matplotlib
-
-from matplotlib import pyplot as plt
-import mpld3
-from mpld3 import plugins
-from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
-                         DownloadPNG)
 from fetch_shelve_reads2 import get_reads
 import sqlite3
 import os
 import config
-
-matplotlib.use('agg')
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 

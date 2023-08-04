@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-import matplotlib
 
 from matplotlib import pyplot as plt
 import os
@@ -10,8 +9,6 @@ import mpld3
 from mpld3 import plugins
 import pandas as pd
 import numpy as np
-from new_plugins import (InteractiveLegendPlugin, TopToolbar, DownloadProfile,
-                         DownloadPNG)
 from scipy.stats.stats import spearmanr, pearsonr
 import matplotlib.cm as cm
 from bokeh.plotting import figure, output_file
@@ -24,7 +21,6 @@ from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
 
-matplotlib.use('agg')
 redhex = "#FF5F5B"
 greenhex = "#90E090"
 bluehex = "#9ACAFF"
