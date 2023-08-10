@@ -1,5 +1,5 @@
 import string
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 import pandas as pd
 import sqlite3
 from flask import session, request
@@ -128,7 +128,31 @@ def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
     return files
 
 
-# Gets a list of all studies associated with an organism
+def type_detector(dct: Dict[str, Any]) -> None:
+    '''
+    Convert string in dict collected from web page form to right types. 
+    Takes only values that can be string, boolean, int and float.
+    >>> x = {'is_private': 'true', 'tpm_max': '123.4', 'rpm_max': '12345', 
+    ... 'organism': 'human'}
+    >>> type_detector(x) 
+    >>> x
+    {'is_private': True, 'tpm_max': 123.4, 'rpm_max': 12345, 'organism': 'human'}
+    '''
+    for key, value in dct.items():
+        if value in ['true', 'false']:
+            dct[key] = True if value == 'true' else False
+        else:
+            try:
+                dct[key] = int(value)
+            except ValueError:
+                try:
+                    dct[key] = float(value)
+                except ValueError:
+                    pass
+
+    # Gets a list of all studies associated with an organism
+
+
 def fetch_study_info() -> Dict[str, List[str]]:
     '''Fetches studies from database for organism.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
