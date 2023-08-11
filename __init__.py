@@ -1,15 +1,16 @@
-from typing import Union
+from typing import Union, Any
 import pandas as pd
 import os
 import time
 from datetime import date
 import sys
 import sqlite3
-from sqlqueries import sqlquery, get_user_id, get_table
+from sqlqueries import sqlquery, get_user_id, get_table, update_table
 import riboflask_datasets
 import logging
-from flask import (Flask, Response, get_flashed_messages, render_template,
-                   request, send_from_directory, flash, redirect, url_for)
+from flask import (Flask, get_flashed_messages, render_template, request,
+                   send_from_directory, flash, redirect, url_for)
+import werkzeug.wrappers.response.Response as Response
 from flask_xcaptcha import XCaptcha
 
 from flask_login import (LoginManager, login_required, login_user, logout_user,
@@ -107,16 +108,14 @@ app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
 
-def sanitize_get_request(request: str) -> str:
+def sanitize_get_request(request: Any | None) -> Any | None:
     '''
     take a get request and remove any XSS attempts
     '''
     if isinstance(request, str):
-        cleaned_request = re.sub("<.*>", "", request)
+        request = re.sub("<.*>", "", request)
 
-        return cleaned_request
-    else:
-        return request
+    return request
 
 
 # change cookie name and path, this avoids cookies clashing with other flask apps on the same server
@@ -147,8 +146,8 @@ def statisticspage() -> str:
         Rename the organism name to the short name
         '''
         if '_' in organism:
-            organism = organism.split('_')
-            organism = f"{organism[0][0]}.{organism[1]}"
+            orgt = organism.split('_')
+            organism = f"{orgt[0][0]}.{orgt[1]}"
         return organism.capitalize()
 
     organisms = get_table('organisms')
@@ -202,7 +201,7 @@ def statisticspage() -> str:
 
 # Contact page
 @app.route('/contactus/', methods=["GET", "POST"])
-def contactus() -> str:
+def contactus() -> str | Response:
     if request.method == "POST":
         if xcaptcha.verify():
             fromaddr = "ribopipe@gmail.com"
@@ -210,11 +209,11 @@ def contactus() -> str:
             msg = MIMEMultipart()
             msg['From'] = fromaddr
             msg['To'] = toaddr
-            msg['Subject'] = str(request.form['subject'])
+            msg['Subject'] = request.form['subject']
             msg.attach(
                 MIMEText("Name: {}\nEmail: {}\nMessage: {}".format(
-                    str(request.form['name']), str(request.form['email']),
-                    str(request.form['message']))))
+                    request.form['name'], request.form['email'],
+                    request.form['message'])))
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
             server.login(fromaddr, config.EMAIL_PASS)
@@ -231,15 +230,15 @@ def contactus() -> str:
 
 # This is the page where users create a new login.
 @app.route("/create", methods=["GET", "POST"])
-def create() -> str:
+def create() -> str | Response:
     # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
     error = None
     if request.method == 'POST':
-        username = str(request.form['username'])
-        password = str(request.form['password'])
-        password2 = str(request.form['password2'])
+        username = request.form['username']
+        password = request.form['password']
+        password2 = request.form['password2']
         if xcaptcha.verify() or local:
             username_dict = {}
             logging.debug("Connecting to trips.sqlite")
@@ -653,16 +652,17 @@ def login() -> Union[str, Response]:
         return redirect("/")
     error = None
     if request.method == 'POST':
-        username = str(request.form['username']).strip()
-        password = str(request.form['password']).strip()
-        if xcaptcha.verify() or local == True or username == "developer":
+        username = request.form['username'].strip(
+        )  # TODO: relace this with jquery.Trim on user side
+        password = request.form['password'].strip()
+        if xcaptcha.verify() or local or username == "developer":
             logging.debug("login Connecting to trips.sqlite")
             username_dict = table_to_dict(get_table('users'),
                                           ['username', 'password'])
             logging.debug("Closing trips.sqlite connection")
             if username in username_dict:
                 if check_password_hash(username_dict[username],
-                                       password) == True or local == True:
+                                       password) or local:
                     login_user(User(username))
                     nxt = sanitize_get_request(request.args.get('next'))
                     if nxt:
@@ -698,33 +698,19 @@ def load_user(userid):
     return User(userid)
 
 
-@app.route("/reset", methods=["GET", "POST"])
-def reset():
-    return None
-
-
 # Called when user presses the save button on the orf_translation page.
 @app.route('/anno_query', methods=['POST'])
-def anno_query():
+def anno_query() -> str:
     data = json.loads(request.data)
     user = fetch_user()[0]
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
-    cursor.execute(
-        "INSERT INTO users_saved_cases VALUES('{}','{}',{},{},{},{},'{}','START_CODON','CDS_OVERLAP','START_SCORE','STOP_SCORE','ENTROPY','TE','COVERAGE','CDS_RATIO','{}','FILE_LIST',{},'{}','{}','{}');"
-        .format(data["gene"].strip(), data["transcript"].strip(),
-                data["start"].strip(), data["stop"].strip(),
-                data["length"].strip(), data["score"].strip(),
-                data["type"].strip(), data["trips_link"].strip(), user_id,
-                data["label"].strip(), data["organism"].strip(),
-                data["transcriptome"].strip()))
-    connection.commit()
-    connection.close()
+    data["user_id"] = get_user_id(user)
+    for key in [
+            'START_CODON', 'CDS_OVERLAP', 'START_SCORE', 'STOP_SCORE',
+            'ENTROPY', 'TE', 'COVERAGE', 'CDS_RATIO', 'FILE_LIST'
+    ]:
+        data[key.lower()] = key
+    update_table('users_saved_cases', 'insert', data)
+
     return ""
 
 
@@ -743,17 +729,16 @@ def saved():
     advanced = False
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
-    if user == None:
+    if not user:
         flash(
             "To use the Saved ORFs page you either need to be logged in or allow cookies."
         )
         return redirect(url_for('homepage'))
 
     user_id = -1
-    if user:
-        if logged_in == True:
-            flash("You are logged in as {}".format(user))
-        user_id = get_user_id(username)
+    if user and logged_in:
+        flash("You are logged in as {}".format(user))
+        user_id = get_user_id(user)
     organism_access = get_table('organism_access')
     organism_access_list = organism_access.loc[organism_access.user_id ==
                                                user_id, 'organism_id'].values
@@ -790,8 +775,8 @@ def savedquery():
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
     user_saved_cases = get_table('users_saved_cases')
-    if organism != 'Select an Organism':
-        if label == "":
+    if organism != 'Select an Organism':  # TODO: Fix this as organism shouldn't be like this
+        if not label:
             user_saved_cases = user_saved_cases[
                 user_saved_cases.user_id == user_id
                 & user_saved_cases.organism == organism]
@@ -802,7 +787,7 @@ def savedquery():
                 & user_saved_cases.organism == organism
                 & user_saved_cases.label.isin(label_list)]
     else:
-        if label == "":
+        if not label:
             user_saved_cases = user_saved_cases[user_saved_cases.user_id ==
                                                 user_id]
         else:
@@ -826,18 +811,10 @@ def del_query():
     try:
         user = current_user.name
     except Exception:
-        user = None
         return "Error user not signed in"
     user_id = get_user_id(user)
-    update_table(
-        'users_saved_cases', {
-            'user_id': user_id,
-            'tran': data["transcript"],
-            'start': data["start"],
-            'stop': data["stop"],
-            'trips_link': data["trips_link"],
-            'label': data["label"]
-        })
+    data["user_id"] = user_id
+    update_table('users_saved_cases', 'delete', {}, data)
     return ""
 
 
@@ -912,7 +889,7 @@ def short(short_code):
 
 @app.after_request
 def after_request_func(response):
-    consent = request.cookies.get("cookieconsent_status")
+    request.cookies.get("cookieconsent_status")
     return response
 
 
@@ -948,7 +925,6 @@ def homepage2() -> str:
 
 def homepage(message=""):
     organism_access_list = []
-    organism_list = {}
     logging.debug("homepage Connecting to trips.sqlite")
     sanitize_get_request(request.cookies.get("cookieconsent_status"))
     user, logged_in = fetch_user()
@@ -982,16 +958,6 @@ def homepage(message=""):
                            message=message)
 
 
-# show a list of plot types
-@app.route('/<organism>/<transcriptome>/')
-def plogpage(organism, transcriptome):
-    try:  # TODO: Integrate login details in main page and remove this function
-        user = current_user.name
-    except Exception:
-        user = None
-    return render_template('plot_types.html', current_username=user)
-
-
 # Updates the settings for a specific user
 @app.route('/settingsquery', methods=['POST'])
 # @login_required
@@ -1003,19 +969,19 @@ def settingsquery():
     cursor = connection.cursor()
 
     user, logged_in = fetch_user()
-    if logged_in == True:
+    if logged_in:
         new_password = data['new_password']
         new_password2 = data['new_password2']
         curr_password = data['curr_password']
-        if new_password != "" or new_password2 != "":
+        if new_password and new_password2:
             if new_password != new_password2:
                 return "ERROR: New passwords do not match"
             generate_password_hash(curr_password)
             users = get_table('users')
-            old_hasged_password = users.loc[users.username == user,
-                                            'password'].values[0]
+            old_password_hash = users.loc[users.username == user,
+                                          'password'].values[0]
 
-            if check_password_hash(old_password_hash, curr_password) == True:
+            if check_password_hash(old_password_hash, curr_password):
                 new_password_hash = generate_password_hash(new_password)
                 cursor.execute(
                     "UPDATE users SET password = '{}' WHERE username = '{}'".
@@ -1025,110 +991,11 @@ def settingsquery():
                 return "ERROR: Current password is not correct"
     # get user_id
     user_id = get_user_id(user)
+    update_table('users', 'update', {'user_id': user_id},
+                 {'advanced': 1 if 'advanced' in data else 0})
+    update_table('user_settings', 'update', {'user_id': user_id},
+                 data)  # TODO: might need some pruning
 
-    if "advanced" in data:
-        cursor.execute(
-            "UPDATE users SET advanced = 1 WHERE user_id = '{}';".format(
-                user_id))
-        connection.commit()
-    else:
-        cursor.execute(
-            "UPDATE users SET advanced = 0 WHERE user_id = '{}';".format(
-                user_id))
-        connection.commit()
-    # TODO: Check the input before updating the settings
-
-    # get a list of organism id's this user can access
-    cursor.execute(
-        "UPDATE user_settings SET background_col = '{}' WHERE user_id = '{}';".
-        format(data["background_colour"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET title_size = '{}' WHERE user_id = '{}';".
-        format(data["title_size"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET subheading_size = '{}' WHERE user_id = '{}';"
-        .format(data["subheading_size"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET axis_label_size = '{}' WHERE user_id = '{}';"
-        .format(data["axis_label_size"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET marker_size = '{}' WHERE user_id = '{}';".
-        format(data["marker_size"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET legend_size = '{}' WHERE user_id = '{}';".
-        format(data["legend_size"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET ribo_linewidth = '{}' WHERE user_id = '{}';".
-        format(data["ribo_linewidth"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET cds_marker_width = '{}' WHERE user_id = '{}';"
-        .format(data["cds_marker_width"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET cds_marker_colour = '{}' WHERE user_id = '{}';"
-        .format(data["cds_marker_colour"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET readlength_col = '{}' WHERE user_id = '{}';".
-        format(data["readlength_colour"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET metagene_fiveprime_col = '{}' WHERE user_id = '{}';"
-        .format(data["metagene_fiveprime_colour"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET metagene_threeprime_col = '{}' WHERE user_id = '{}';"
-        .format(data["metagene_threeprime_colour"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET nuc_comp_a_col = '{}' WHERE user_id = '{}';".
-        format(data["nuc_comp_a_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET nuc_comp_t_col = '{}' WHERE user_id = '{}';".
-        format(data["nuc_comp_t_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET nuc_comp_g_col = '{}' WHERE user_id = '{}';".
-        format(data["nuc_comp_g_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET nuc_comp_c_col = '{}' WHERE user_id = '{}';".
-        format(data["nuc_comp_c_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET uag_col = '{}' WHERE user_id = '{}';".format(
-            data["uag_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET uga_col = '{}' WHERE user_id = '{}';".format(
-            data["uga_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET uaa_col = '{}' WHERE user_id = '{}';".format(
-            data["uaa_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET comp_uag_col = '{}' WHERE user_id = '{}';".
-        format(data["comp_uag_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET comp_uga_col = '{}' WHERE user_id = '{}';".
-        format(data["comp_uga_col"].strip(), user_id))
-    connection.commit()
-    cursor.execute(
-        "UPDATE user_settings SET comp_uaa_col = '{}' WHERE user_id = '{}';".
-        format(data["comp_uaa_col"].strip(), user_id))
-    connection.commit()
-    connection.close()
-    flash("Settings have been updated")
     return "Settings have been updated"
 
 
@@ -1240,12 +1107,11 @@ def deletestudyquery():
                     keep_time = 60 * 60 * 24 * 14
                     deletion_time = curr_time + keep_time
                     # TODO: Use cron for deletion
-                    update_table(
-                        'deletions', {
-                            'file_id': row['file_id'],
-                            'full_path': row['full_path'],
-                            'deletion_time': deletion_time
-                        })
+                    update_table('deletions', 'insert', {}, {
+                        'file_id': row['file_id'],
+                        'full_path': row['full_path'],
+                        'deletion_time': deletion_time
+                    })
 
             # Now remove the study and the files associated with it from the db
             study_owner = studies[studies.study_id == study_id].iloc[0].owner
@@ -1274,10 +1140,10 @@ def deletestudyquery():
                         study_access.user_id == all_users[username]
                         & study_access.study_id == study_id]
                     if study_access.empty:
-                        update_table('study_access', {
+                        update_table('study_access', 'insert', {}, {
                             'study_id': study_id,
                             'user_id': all_users[username]
-                        }, 'insert')
+                        })
 
         # Modify study names if they have changed
         # TODO: Till here
@@ -1355,8 +1221,29 @@ def deletetranscriptomequery():
     data = json.loads(request.data)
 
     user = fetch_user()[0]
-
+    organisms = get_table("organisms")
+    organism_ids = [
+        val[0].split("_")[-1] for _, val in data.items()
+        if not val[0].endswith("_undefined")
+    ]
     user_id = get_user_id(user)
+    organisms = organisms.loc[
+        organisms.organism_id.isin(organism_ids) &
+        (organisms.owner == user_id),
+        ['organism_name', 'transcriptome_list']].drop_duplicates()
+    keep_time = 60 * 60 * 24 * 14  # 14 days
+    curr_time = time.time()
+    deletion_time = curr_time + keep_time
+    organisms['sqlite_path'] = organisms.apply(
+        lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, user_id, x['organism_name'], x[
+                'transcriptome_list']),
+        axis=1)
+    organisms = organisms[organisms['sqlite_path'].apply(os.path.isfile)]
+    organisms.apply(lambda x: update_table("org_deletions", 'insert', {},
+                                           {'file_id': x['file_id']}),
+                    axis=1)
+
     for organism_id in data:
         organism_id = data[organism_id][0].split("_")[-1]
         if organism_id == "undefined":
@@ -1375,12 +1262,11 @@ def deletetranscriptomequery():
             # The time to keep the file in seconds, currently set to 14 days
             keep_time = 60 * 60 * 24 * 14
             deletion_time = curr_time + keep_time
-            update_table(
-                "org_deletions", {
-                    "organism_id": organism_id,
-                    "deletion_time": deletion_time,
-                    "sqlite_path": sqlite_path
-                }, "insert")
+            update_table("org_deletions", 'insert', {}, {
+                "organism_id": organism_id,
+                "deletion_time": deletion_time,
+                "sqlite_path": sqlite_path
+            })
         # sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
         # if os.path.isdir(sqlite_dir):
         # os.rename(sqlite_dir,sqlite_dir+"_REMOVE")

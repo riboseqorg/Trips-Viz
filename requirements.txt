@@ -103,3 +103,4 @@ yacman==0.8.4
 zipp==3.9.0
 zipstream-new==1.1.8
 types-Flask
+pydeseq2

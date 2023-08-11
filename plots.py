@@ -5,6 +5,7 @@ from altair.vegalite.v5.api import Chart
 
 
 class VegaPlot:
+    """Plotting class for VegaLite."""
 
     def __init__(self, table: DataFrame, color_col: str,
                  params: Dict[str, Any]) -> None:
@@ -20,6 +21,7 @@ class VegaPlot:
         self.param = params
 
     def lineplot(self, x_col: str, y_col: str) -> Chart:
+        """Line plot."""
         return self.chart.mark_line().encode(
             x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
@@ -28,6 +30,7 @@ class VegaPlot:
                                                                height=300)
 
     def vline(self, x_col: str, last=False) -> Chart:
+        """Vertical line."""
         vline = self.chart.encode(
             x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
             color=self.color,
@@ -40,6 +43,7 @@ class VegaPlot:
         return vline.mark_rule().interactive().properties(width=800, height=10)
 
     def scatter(self, x_col: str, y_col: str) -> Chart:
+        """Scatter plot."""
         return self.chart.mark_point().encode(
             x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
@@ -50,6 +54,7 @@ class VegaPlot:
         # TODO: Add fill between plot
 
     def vact_plot_json(self, plots: List[Chart]) -> str:
+        """Generates VegaLite JSON string."""
         chart = alt.vconcat(
             *plots, spacing=0.1).resolve_scale(x='shared') | self.legend
         return chart.to_json()

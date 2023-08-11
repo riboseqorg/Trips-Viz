@@ -6,7 +6,8 @@ from tripsSplice import get_gene_info
 from tripsSplice import get_transcript_length
 
 
-def get_counts_meanFLD(transcripts: str, read_file: str) -> Tuple[Dict, float]:
+def get_counts_meanFLD(transcripts: List[str],
+                       read_file: str) -> Tuple[Dict, float]:
     length_freq = {}
     transcript_counts = {}
     for transcript in transcripts:
@@ -14,7 +15,7 @@ def get_counts_meanFLD(transcripts: str, read_file: str) -> Tuple[Dict, float]:
             transcript_counts[transcript] = 0
         #print "transcript, read_file", transcript, read_file
         reads = get_reads_per_transcript_location(transcript, read_file)
-        if reads == None:
+        if not reads:
             continue
         for length in reads:
             for position in reads[length]:
@@ -24,15 +25,15 @@ def get_counts_meanFLD(transcripts: str, read_file: str) -> Tuple[Dict, float]:
                 else:
                     length_freq[length] += reads[length][position]
                 transcript_counts[transcript] += reads[length][position]
-    sum = 0
+    total_count = 0
     count = 0
-    for length in length_freq:
-        sum += length * length_freq[length]
-        count += length_freq[length]
-    if count == 0 or sum == 0:
+    for length, freq in length_freq.items():
+        total_count += length * freq
+        count += freq
+    if not count:
         mean_fld = 1
     else:
-        mean_fld = round(float(sum) / float(count), 0)
+        mean_fld = round(total_count * 1. / count, 0)
     return transcript_counts, mean_fld
 
 
@@ -44,18 +45,19 @@ def transcript_reads_per_kilobase(transcript_counts: Dict[str, int],
         effective_length = cds_lengths[transcript] - meanFLD + 1
         effective_length_per_kilobase = effective_length / 1000
 
-        if transcript not in RPK:
-            try:
-                RPK[transcript] = transcript_counts[
-                    transcript] / effective_length_per_kilobase
-            except ZeroDivisionError:
-                RPK[transcript] = 0
+        try:
+            RPK[transcript] = transcript_counts[
+                transcript] / effective_length_per_kilobase
+        except ZeroDivisionError:
+            RPK[transcript] = 0
     return RPK
 
 
 def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
         type: str) -> Dict[str, float]:
     # Calculate transcripts per million for a given read type
+    transcripts = []
+    lengths = {}
     if type == "ribo":  # NOTE: type must not be used as variable
         transcripts = get_protein_coding_transcript_ids(
             gene, sqlite_path_organism)
@@ -65,8 +67,8 @@ def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
             for transcript in transcripts
         }
         lengths = {
-            transcript: start_stops[transcript][1] - start_stops[transcript][0]
-            for transcript in start_stops
+            transcript: start_stop[1] - start_stop[0]
+            for transcript, start_stop in start_stops.items()
         }
 
     elif type == "rna":

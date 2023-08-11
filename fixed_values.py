@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple
+import typing
 import pickle
 import pandas as pd
 
-iupac_dict = {
+iupac_dict: Dict[str, str] = {
     "A": "A",
     "U": "U",
     "G": "G",
@@ -19,9 +20,9 @@ iupac_dict = {
     "V": "ACG",
     "N": "AUGC"
 }
-ambig_nucs = "RYKMSWBDHVN"
+ambig_nucs: str = "RYKMSWBDHVN"
 
-aa_short_codon_list = {
+aa_short_codon_list: Dict[str, List[str]] = {
     "gly": ["GGT", "GGC", "GGA", "GGG"],
     "arg": ["AGA", "AGG", "CGT", "CGC", "CGA", "CGG"],
     "ser": ["AGT", "AGC", "TCT", "TCC", "TCA", "TCG"],
@@ -44,7 +45,7 @@ aa_short_codon_list = {
     "phe": ["TTT", "TTC"]
 }
 
-codon_list = [
+codon_list: List[str] = [
     "ATG", "TTT", "TTC", "CTT", "CTC", "CTA", "CTG", "TTA", "TTG", "AGT",
     "AGC", "TCT", "TCC", "TCA", "TCG", "TAT", "TAC", "TGT", "TGC", "TGG",
     "CCT", "CCC", "CCA", "CCG", "CAT", "CAC", "CAA", "CAG", "AGA", "AGG",
@@ -54,7 +55,7 @@ codon_list = [
     "GGG", "TAG", "TAA", "TGA"
 ]
 
-codon_aa_full = {
+codon_aa_full: Dict[str, str] = {
     "TTT": "Phenylalanine",
     "TTC": "Phenylalanine",
     "TTA": "Leucine",
@@ -124,6 +125,14 @@ codon_aa_full = {
 
 def merge_dicts(dict1: Dict[str, Dict[int, int]],
                 dict2: Dict[str, Dict[int, int]]) -> Dict[str, Dict[int, int]]:
+    """
+    Merge two dicts based on keys.
+    >>> dict1 = {'a': {1: 1}, 'b': {2: 2}}
+    >>> dict2 = {'a': {1: 3}}
+    >>> merge_dicts(dict1, dict2)
+    {'a': {1: 3, 2: 2}}
+
+    """
     for nuc in dict2:
         if nuc not in dict1:
             dict1[nuc] = dict2[nuc]
@@ -136,18 +145,14 @@ def merge_dicts(dict1: Dict[str, Dict[int, int]],
     return dict1
 
 
-# ----
+def codon_usage(codon_dict: Dict[str, int], short_code: str, title_size: int,
+                axis_label_size: int, marker_size: int, filename: str) -> None:
+    allxvals: List[int] = []
+    allyvals: List[int] = []
+    alllabels: List[str] = []
+    amino_acids: List[str] = []
 
-
-def codon_usage(codon_dict, short_code, title_size, axis_label_size,
-                marker_size, filename):
-    allxvals = []
-    allyvals = []
-    alllabels = []
-    amino_acids = []
-    aa_dict = codon_aa_full.copy()
-
-    curr_count = 0
+    curr_count: int = 0
     for codon in codon_list:
         curr_count += 1
         allxvals.append(curr_count)
@@ -156,7 +161,7 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
         else:
             allyvals.append(0)
         alllabels.append(codon)
-        amino_acids.append(aa_dict[codon])
+        amino_acids.append(codon_aa_full[codon])
     full_title = "Codon usage ({})".format(short_code)
     x_lab = ''
     y_lab = 'Count'
@@ -179,7 +184,7 @@ def codon_usage(codon_dict, short_code, title_size, axis_label_size,
     # p.background_fill_color = background_color
     p.xgrid.grid_line_color = "white"
     p.ygrid.grid_line_color = "white"
-    color_palette_list = []
+    color_palette_list: List[str] = []
     colormap = cm.get_cmap(
         "gist_rainbow")  # choose any matplotlib colormap here
     start_val = 0.75

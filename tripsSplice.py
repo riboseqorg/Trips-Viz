@@ -1,4 +1,5 @@
 from typing import Dict, Tuple, List, Union
+from pandas.core.frame import DataFrame
 import sqlite3
 from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
@@ -9,12 +10,15 @@ class TripsSplice:
     def __init__(self, sqlite_path_organism: str) -> None:
         self.transcript_table = sqlquery(sqlite_path_organism, 'transcripts')
 
-    def get_gene_info(self, gene_id: str) -> pd.DataFrame:
+    def string_to_integer_list(self, lst: List[str]) -> List[int]:
+        return [int(i) if i else 0 for i in lst]
+
+    def get_gene_info(self, gene_id: str) -> DataFrame:
         return self.transcript_table.loc[
             self.transcript_table.gene == gene_id,
             ['transcript', 'exon_junctions', 'sequence']]
 
-    def get_transcript_length(self, gene: str) -> pd.DataFrame:
+    def get_transcript_length(self, gene: str) -> DataFrame:
         return self.transcript_table.loc[self.transcript_table.gene == gene,
                                          ["transcript", "length"]]
 
@@ -23,7 +27,7 @@ class TripsSplice:
                                          & self.transcript_table.principle,
                                          "transcript"].values[0]
 
-    def get_transcript_info(self, transcript_id: str) -> pd.DataFrame:
+    def get_transcript_info(self, transcript_id: str) -> DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id,
                                      ['exon_junctions', 'sequence']].iloc[0]
@@ -46,15 +50,14 @@ class TripsSplice:
             exon_junctions, len(transcript_info['sequence']))
         return exon_coordinates
 
-    def get_protein_coding_transcript_ids(self, gene: str) -> pd.DataFrame:
+    def get_protein_coding_transcript_ids(self, gene: str) -> DataFrame:
         return self.transcript_table[self.transcript_table.gene == gene]
 
-    def get_start_stop_codon_positions(self,
-                                       transcript_id: str) -> pd.DataFrame:
+    def get_start_stop_codon_positions(self, transcript_id: str) -> DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id]
 
-    def get_orf_exon_coordinates(self, transcript_id: str) -> pd.DataFrame:
+    def get_orf_exon_coordinates(self, transcript_id: str) -> DataFrame:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id]
 

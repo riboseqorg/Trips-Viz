@@ -11,10 +11,6 @@ from tripsSplice import genomic_orf_coordinate_ranges
 def get_unique_regions(
         genomic_exon_coordinates: Dict[str,
                                        List[int]]) -> Dict[str, List[int]]:
-    # return a dictionary with ensembl ids as keys and a list of tuples of the coordinates of the regions unique to each
-    # exon of that transcript. This is achieved by comparing each exon which each other exon and pairing off the shared regions
-    # one exact match between exon and coordinate is okay (matching with itself) greater than this is due to the exon
-    # occuring in more than one transcript
 
     unique_regions = {}
     exon_coordinates = []
@@ -60,29 +56,20 @@ def get_unique_regions(
 
 def count_readranges_supporting_exons_per_transcript(
         regions: Dict[str, List[int]],
-        genomic_read_ranges: List[int]) -> Dict[str, List[int]]:
+        genomic_read_ranges: List[List[int]]) -> Dict[str, List[int]]:
     # Count the number of reads that overlap with each exon
     exons_counts = {}
     for read in genomic_read_ranges:
         for transcript in regions:
-            if transcript not in exons_counts:
-                exons_counts[transcript] = [
-                    0 for i in range(len(regions[transcript]))
-                ]
+            exons_counts[transcript] = [0] * len(regions[transcript])
 
-            exon_num = 0
-            for exon in regions[transcript]:
+            for exon_num, exon in enumerate(regions[transcript]):
 
-                if exon[0] == exon[1]:
-                    exon_num += 1
-                    continue
+                exon_range = range(exon[0], exon[1] + 1)
 
-                if (read[0] in range(exon[0],
-                                     exon[1] + 1)) or (read[1] in range(
-                                         exon[0], exon[1] + 1)):
+                if (read[0] in exon_range) or (read[1] in exon_range):
                     exons_counts[transcript][exon_num] += genomic_read_ranges[
                         read]
-                exon_num += 1
     return exons_counts
 
 
@@ -143,7 +130,7 @@ def average_coverage_per_transcript(
     for transcript in region_coverage:
         sum = 0
         count = 0
-        if (region_coverage[transcript] == None) and all(
+        if (not region_coverage[transcript]) and all(
                 region_coverage[transcript]):
             print("transcript {transcript} had no unique regions".format(
                 transcript=transcript))
