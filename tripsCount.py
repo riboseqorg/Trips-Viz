@@ -1,6 +1,6 @@
 from typing import Dict, List
-from tripsSplice import get_reads_per_genomic_location_fiveprime
-from tripsSplice import get_reads_per_genomic_location_asite
+from tripsSplice import get_reads_per_genomic_location
+
 from tripsSplice import get_read_ranges_genomic_location
 from tripsSplice import genomic_exon_coordinate_ranges
 
@@ -184,24 +184,26 @@ def ribo_seq_read_counting(gene: str,
             orf_regions, genomic_read_ranges)
 
     if count_type == "fiveprime":
-        genomic_read_positions = get_reads_per_genomic_location_fiveprime(
+        genomic_read_positions = get_reads_per_genomic_location(
             gene,
             sqlite_path_reads,
             sqlite_path_organism,
             supported,
             exons,
-            filter=exclude)
+            filte_r=exclude,
+            site="5prime")
         counts = count_read_supporting_regions_per_transcript(
             orf_regions, genomic_read_positions)
 
     if count_type == "asite":
-        genomic_read_positions = get_reads_per_genomic_location_asite(
+        genomic_read_positions = get_reads_per_genomic_location(
             gene,
             sqlite_path_reads,
             sqlite_path_organism,
             supported,
             exons,
-            filter=exclude)
+            filte_r=exclude,
+            site="asite")
         counts = count_read_supporting_regions_per_transcript(
             orf_regions, genomic_read_positions)
 
