@@ -1,7 +1,6 @@
 from typing import Dict, List
 from tripsSplice import get_reads_per_genomic_location
 
-from tripsSplice import get_read_ranges_genomic_location
 from tripsSplice import genomic_exon_coordinate_ranges
 
 from tripsSplice import get_protein_coding_transcript_ids
@@ -173,13 +172,14 @@ def ribo_seq_read_counting(gene: str,
         return "ERROR"
 
     if count_type == "range":
-        genomic_read_ranges = get_read_ranges_genomic_location(
+        genomic_read_ranges = get_reads_per_genomic_location(
             gene,
             sqlite_path_reads,
             sqlite_path_organism,
             supported,
             exons,
-            filter=exclude)
+            filte_r=exclude,
+            site="range")
         counts = count_readranges_supporting_exons_per_transcript(
             orf_regions, genomic_read_ranges)
 

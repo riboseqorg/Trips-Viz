@@ -355,7 +355,7 @@ def get_reads_per_genomic_location(
     supported_transcripts: List[str],
     genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
     filte_r: bool = True,
-    site: Literal['asite', '5prime'] = 'asite'
+    site: Literal['asite', '5prime', 'range'] = 'asite'
 ) -> Dict[int, Dict[str, List[Tuple[int, int]]]]:
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
@@ -395,77 +395,21 @@ def get_reads_per_genomic_location(
 
                             genomic_site = genomic_ranges[range_counter][
                                 0] + difference_between_read_position_and_exon_site
+                            if site == "range":
+                                genomic_site = (genomic_site,
+                                                genomic_site + length)
 
-                            if (length, genomic_site) not in counted_reads:
-                                if genomic_site not in genomic_read_dictionary:
-                                    genomic_read_dictionary[
-                                        genomic_site] = transcript_read_dictionary[
-                                            length][location]
-                                else:
-                                    genomic_read_dictionary[
-                                        genomic_site] += transcript_read_dictionary[
-                                            length][location]
-                                counted_reads.append((length, genomic_site))
-                        range_counter += 1
-    return genomic_read_dictionary
-
-
-def get_read_ranges_genomic_location(
-    gene: str,
-    sqlite_path_reads: str,
-    sqlite_path_organism: str,
-    supported_transcripts: List[str],
-    genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
-    filter: bool = False
-) -> Union[Dict[str, Dict[str, List[Tuple[int, int]]]], None]:
-    # get the number of reads supporting each genomic position to be used in the display of support of the
-    # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
-    # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
-    trips_splice = TripsSplice(sqlite_path_organism)
-
-    gene_info = trips_splice.get_gene_info(gene)
-    genomic_read_dictionary = {}
-
-    for read_file in sqlite_path_reads:
-        infile = SqliteDict(read_file)
-
-        for transcript in gene_info:
-            if filter and transcript[0] not in supported_transcripts:
-                continue
-            if transcript[0] not in infile:
-                # print("No unambiguous reads support this gene")
-                return None
-            transcript_read_dictionary = infile[transcript[0]]["unambig"]
-            genomic_ranges = genomic_exon_coordinates[transcript[0]]
-
-            exon_junctions = list(map(int, transcript[1].split(",")))
-            sequence = transcript[2]
-            exons = exons_of_transcript(transcript[0], sqlite_path_organism)
-            transcript_ranges = get_exon_coordinate_ranges(
-                sequence, exons, exon_junctions)
-
-            for length in transcript_read_dictionary:
-                for position in transcript_read_dictionary[length]:
-                    range_counter = 0
-                    for exon in transcript_ranges:
-                        if position in range(exon[0], exon[1]):
-                            difference_between_read_position_and_exon_start = (
-                                position - exon[0])
-                            genomic_start_pos = genomic_ranges[range_counter][
-                                0] + difference_between_read_position_and_exon_start
-                            genomic_read_range = (genomic_start_pos,
-                                                  genomic_start_pos + length)
-
-                            if genomic_read_range not in genomic_read_dictionary:
+                            if genomic_site not in genomic_read_dictionary:
                                 genomic_read_dictionary[
-                                    genomic_read_range] = transcript_read_dictionary[
-                                        length][position]
+                                    genomic_site] = transcript_read_dictionary[
+                                        length][location]
                             else:
                                 genomic_read_dictionary[
-                                    genomic_read_range] += transcript_read_dictionary[
-                                        length][position]
+                                    genomic_site] += transcript_read_dictionary[
+                                        length][location]
+                            if (length, genomic_site) not in counted_reads:
+                                counted_reads.append((length, genomic_site))
                         range_counter += 1
-
     return genomic_read_dictionary
 
 
