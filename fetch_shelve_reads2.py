@@ -175,42 +175,29 @@ def get_reads(
                 except Exception:
                     pass
     # Next check coverage, if that's true then calculate coverage for each rl and return dict
-        if coverage and not subcodon:
-            for filename in master_file_dict:
-                for readlen in master_file_dict[filename]:
-                    if readlen >= min_read and readlen <= max_read:
-                        for pos in master_file_dict[filename][readlen]:
-                            count = master_file_dict[filename][readlen][pos]
-                            if pos != 0 and pos - 1 not in master_dict:
-                                master_dict[pos - 1] = 0
-                            i = 0
-                            for i in range(pos, pos + (readlen + 1)):
-                                if i in master_dict:
-                                    master_dict[i] += count
-                                else:
-                                    master_dict[i] = count
-                            # use this so line graph does not have 'ramps'
-                            if i + 1 not in master_dict:
-                                master_dict[i + 1] = 0
-            if not get_mismatches:
-                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
-            return master_dict, mismatch_dict
-
-        # Next check if subcodon is true, if not just give an offset of 15 to everything
         if not subcodon:
             for filename in master_file_dict:
                 for readlen in master_file_dict[filename]:
                     if readlen >= min_read and readlen <= max_read:
                         for pos in master_file_dict[filename][readlen]:
-                            # use this so line graph does not have 'ramps'
                             count = master_file_dict[filename][readlen][pos]
-                            offset_pos = pos + 15
-                            master_dict[offset_pos] += count
-                            if offset_pos + 1 not in master_dict:
-                                master_dict[offset_pos + 1] = 0
-            if not get_mismatches:
-                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
-            return master_dict, mismatch_dict
+                            if coverage:
+                                if pos != 0 and pos - 1 not in master_dict:
+                                    master_dict[pos - 1] = 0
+                                i = 0
+                                for i in range(pos, pos + (readlen + 1)):
+                                    if i in master_dict:
+                                        master_dict[i] += count
+                                    else:
+                                        master_dict[i] = count
+                                # use this so line graph does not have 'ramps'
+                                if i + 1 not in master_dict:
+                                    master_dict[i + 1] = 0
+                            else:
+                                offset_pos = pos + 15
+                                if offset_pos + 1 not in master_dict:
+                                    master_dict[offset_pos + 1] = 0
+                                master_dict[offset_pos] += count
 
         # Fetching subcodon reads
         if subcodon:
@@ -227,38 +214,27 @@ def get_reads(
                                         readlen][pos]
                                     if primetype == "threeprime":
                                         pos += readlen
-                                    offset_pos = pos + offset
-                                    try:
-                                        master_dict[offset_pos] += count
-                                    except Exception as e:
-                                        print(
-                                            "Error tried adding to position {} but tranlen is only {}"
-                                            .format(e, tranlen))
-                                        pass
-            elif coverage:
-                for filename in master_file_dict:
-                    if filename not in offset_dict:
-                        continue
-                    for readlen in master_file_dict[filename]:
-                        if readlen >= min_read and readlen <= max_read:
-                            if readlen in offset_dict[filename]:
-                                offset = offset_dict[filename][readlen] + 1
-                                for pos in master_file_dict[filename][readlen]:
-                                    count = master_file_dict[filename][
-                                        readlen][pos]
-                                    if primetype == "threeprime":
-                                        pos += readlen
-                                    for i in range(0, readlen, 3):
-                                        new_offset_pos = (i + pos) + (offset %
-                                                                      3)
+
+                                    if coverage:
+                                        for i in range(0, readlen, 3):
+                                            new_offset_pos = (i + pos) + (
+                                                offset % 3)
+                                            try:
+                                                master_dict[
+                                                    new_offset_pos] += count
+                                            except Exception:
+                                                pass
+                                    else:
+                                        offset_pos = pos + offset
                                         try:
-                                            master_dict[
-                                                new_offset_pos] += count
-                                        except Exception:
-                                            pass
-            if not get_mismatches:
-                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
-            return master_dict, mismatch_dict
+                                            master_dict[offset_pos] += count
+                                        except Exception as e:
+                                            print(
+                                                "Error tried adding to position {} but tranlen is only {}"
+                                                .format(e, tranlen))
+        if not get_mismatches:
+            mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
+        return master_dict, mismatch_dict
 
 
 # Create dictionary of counts at each position, averged by readlength
