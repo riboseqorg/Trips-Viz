@@ -1,9 +1,10 @@
-from typing import  Dict, Tuple, Union
+from typing import Dict, Tuple, Union
 import os
 import collections
 from bokeh.palettes import all_palettes
 from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
+import pandas as pd
 
 
 # Create dictionary of read counts at each position in a transcript
@@ -27,17 +28,9 @@ def get_reads(
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]]]:
-    mismatch_dict = collections.OrderedDict()
-    mismatch_dict["A"] = {}
-    mismatch_dict["T"] = {}
-    mismatch_dict["G"] = {}
-    mismatch_dict["C"] = {}
-    if get_mismatches:
-        for i in range(0, tranlen + 1):
-            mismatch_dict["A"][i] = 0
-            mismatch_dict["T"][i] = 0
-            mismatch_dict["G"][i] = 0
-            mismatch_dict["C"][i] = 0
+    mismatch_dict = pd.DataFrame(0,
+                                 index=range(0, tranlen + 1),
+                                 columns=["A", "T", "G", "C"])
 
     master_dict = collections.OrderedDict()
     for i in range(0, tranlen + 1):
@@ -86,12 +79,18 @@ def get_reads(
                         for pos in sqlite_db_seqvar:
                             # convert to one based
                             fixed_pos = pos + 1
+                            # if fixed_pos < (tranlen + 1):
                             for char in sqlite_db_seqvar[pos]:
-                                # if char != "N":
-                                if fixed_pos not in mismatch_dict[char]:
-                                    mismatch_dict[char][fixed_pos] = 0
-                                count = sqlite_db_seqvar[pos][char]
-                                mismatch_dict[char][fixed_pos] += count
+                                mismatch_dict.loc[
+                                    fixed_pos,
+                                    char] += sqlite_db_seqvar[pos][char]
+
+                            # for char in sqlite_db_seqvar[pos]:
+                            # # if char != "N":
+                            # if fixed_pos not in mismatch_dict[char]:
+                            # mismatch_dict[char][fixed_pos] = 0
+                            # count = sqlite_db_seqvar[pos][char]
+                            # mismatch_dict[char][fixed_pos] += count
                     except Exception:
                         pass
 
@@ -145,11 +144,13 @@ def get_reads(
                         # convert to one based
                         fixed_pos = pos + 1
                         for char in sqlite_db_seqvar[pos]:
-                            if char != "N":
-                                if fixed_pos not in mismatch_dict[char]:
-                                    mismatch_dict[char][fixed_pos] = 0
-                                count = sqlite_db_seqvar[pos][char]
-                                mismatch_dict[char][fixed_pos] += count
+                            mismatch_dict.loc[
+                                fixed_pos, char] += sqlite_db_seqvar[pos][char]
+                            # if char != "N":
+                            # if fixed_pos not in mismatch_dict[char]:
+                            # mismatch_dict[char][fixed_pos] = 0
+                            # count = sqlite_db_seqvar[pos][char]
+                            # mismatch_dict[char][fixed_pos] += count
                 except Exception:
                     pass
 
@@ -191,6 +192,8 @@ def get_reads(
                             # use this so line graph does not have 'ramps'
                             if i + 1 not in master_dict:
                                 master_dict[i + 1] = 0
+            if not get_mismatches:
+                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
             return master_dict, mismatch_dict
 
         # Next check if subcodon is true, if not just give an offset of 15 to everything
@@ -205,6 +208,8 @@ def get_reads(
                             master_dict[offset_pos] += count
                             if offset_pos + 1 not in master_dict:
                                 master_dict[offset_pos + 1] = 0
+            if not get_mismatches:
+                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
             return master_dict, mismatch_dict
 
         # Fetching subcodon reads
@@ -251,6 +256,8 @@ def get_reads(
                                                 new_offset_pos] += count
                                         except Exception:
                                             pass
+            if not get_mismatches:
+                mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
             return master_dict, mismatch_dict
 
 
@@ -377,16 +384,9 @@ def get_seq_var(
     #organism,
     tran: str,
 ) -> Union[str, Dict[str, Dict[str, int]]]:
-    mismatch_dict = collections.OrderedDict()
-    mismatch_dict["A"] = {}
-    mismatch_dict["T"] = {}
-    mismatch_dict["G"] = {}
-    mismatch_dict["C"] = {}
-    for i in range(0, tranlen + 1):
-        mismatch_dict["A"][i] = 0
-        mismatch_dict["T"][i] = 0
-        mismatch_dict["G"][i] = 0
-        mismatch_dict["C"][i] = 0
+    mismatch_dict = pd.DataFrame(0,
+                                 index=range(1, tranlen + 1),
+                                 columns=["A", "T", "G", "C"])
     for filetype in ["riboseq", "rnaseq"]:
         if filetype in user_files:
             for file_id in user_files[filetype]:
@@ -404,10 +404,9 @@ def get_seq_var(
                             fixed_pos = pos + 1
                             for char in sqlite_db_seqvar[pos]:
                                 if char != "N":
-                                    if fixed_pos not in mismatch_dict[char]:
-                                        mismatch_dict[char][fixed_pos] = 0
-                                    count = sqlite_db_seqvar[pos][char]
-                                    mismatch_dict[char][fixed_pos] += count
+                                    mismatch_dict.loc[
+                                        fixed_pos,
+                                        char] += sqlite_db_seqvar[pos][char]
 
                     sqlite_db.close()
 
