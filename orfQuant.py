@@ -9,7 +9,7 @@ from tripsSplice import (
     genomic_junction_positions,
     genomic_junction_scores,
     get_protein_coding_transcript_ids,
-    get_reads_per_genomic_location_asite,
+    get_reads_per_genomic_location,
     get_start_stop_codon_positions,
 )
 
@@ -397,8 +397,13 @@ def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
         infile.close()
 
     for file in read_files:
-        genomic_read_positions = get_reads_per_genomic_location_asite(
-            gene, [file], sqlite_path_organism, coding, exons, filter=True)
+        genomic_read_positions = get_reads_per_genomic_location(
+            gene, [file],
+            sqlite_path_organism,
+            coding,
+            exons,
+            filte_r=True,
+            site="asite")
 
         counts = count_read_supporting_regions_per_transcript(
             exons, genomic_read_positions)

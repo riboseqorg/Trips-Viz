@@ -1,7 +1,6 @@
 from typing import Dict, Tuple, List, Union
 from typing_extensions import Literal
 from pandas.core.frame import DataFrame
-import sqlite3
 from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
 
@@ -37,7 +36,7 @@ class TripsSplice:
                                transcript_length: int) -> List[List[int]]:
         # Return the list of integers from a list of strings. If the list is empty then return 0
         if not lst:
-            return [0, transcript_length]
+            return [[0, transcript_length]]
         lst = [-1] + [int(i) for i in lst] + [transcript_length]
         return [[lst[i] + 1, lst[i + 1]] for i in range(len(lst) - 1)]
 
@@ -80,8 +79,7 @@ def get_exon_coordinates_for_orf(transcript_id: str,
     # last junction -> end
     tripsplice = TripsSplice(sqlite_path_organism)
     transcript_info = tripsplice.get_transcript_info(transcript_id)
-    exon_junctions = string_to_integer_list(
-        str(transcript_info[0][0]).split(","))
+    exon_junctions = list(map(int, transcript_info[0][0].split(",")))
     transcript_end = len(transcript_info[0][1])
     exon_coordinates = []
     for junction in exon_junctions:
@@ -123,55 +121,73 @@ def get_orf_exon_structure(
     # determine the stucture of each ORF. Returns coordinates in the form:
     # Initiation site to junction, junction to junction, junction to translation stop
     start, stop = start_stop
+    # TODO: Sort exon coordinates and select last
+    exon_coordinates_df = DataFrame(exon_coordinates,
+                                    columns=["start", "stop"])
+    exon_coordinates_df = exon_coordinates_df[
+        exon_coordinates_df.stop > start
+        & exon_coordinates_df.start < stop]
+    exon_coordinates_df.loc[exon_coordinates_df.start <= start,
+                            "start"] = start
+    exon_coordinates_df.loc[exon_coordinates_df.stop >= stop, "stop"] = stop
+    return exon_coordinates_df.values
 
-    started = False
-    structure = []
-    for exon in exon_coordinates:
-        if start in range(exon[0], exon[1]):
-            started = True
-            structure.append((start, exon[1]))
+    # started = False
+    # structure = []
+    # for exon in exon_coordinates:
+    # if start in range(exon[0], exon[1]):
+    # started = True
+    # structure.append((start, exon[1]))
 
-        elif started and (stop in range(exon[0], exon[1])):
-            structure.append((exon[0], stop))
-        elif started:
-            structure.append(exon)
-    return structure
+    # elif started and (stop in range(exon[0], exon[1])):
+    # structure.append((exon[0], stop))
+    # elif started:  # NOTE:What if another exon is after the stop codon? It will insert wrong exon
+    # structure.append(exon)
+    # return structure
 
 
 def get_coding_regions_for_genes_transcripts(
         gene: str, sqlite_path_organism: str) -> List[Tuple[int, int]]:
     # Returns the coding region coordinates annotated on each transcript for a given gene
     gene_id = gene.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT * FROM coding_regions WHERE transcript IN (SELECT transcript FROM transcripts WHERE gene = (:gene));',
-        {'gene': gene_id})
-    coding_regions = c.fetchall()
+    transcripts = get_table("transcripts", sqlite_path_organism)
+    transcripts = transcripts.loc[transcripts.gene == gene_id,
+                                  "transcript"].values
+    coding_regions = get_table("coding_regions", sqlite_path_organism)
+    coding_regions = coding_regions[coding_regions.transcript.isin(
+        transcripts)]
     return coding_regions
+
+    # conn = sqlite3.connect(sqlite_path_organism)
+    # c = conn.cursor()
+    # c.execute(
+    # 'SELECT * FROM coding_regions WHERE transcript IN (SELECT transcript FROM transcripts WHERE gene = (:gene));',
+    # {'gene': gene_id})
+    # coding_regions = c.fetchall()
+    # return coding_regions
 
 
 def get_max_min_exon_genomic_positions(
-        exon_info: List[Tuple[int, int, int]]) -> Tuple[int, int]:
+        exon_info: List[Tuple[str, int, int]]) -> Tuple[int, int]:
     # Of all exons starts return the lowest position and highest position of all stops
     starts = []
     stops = []
-    for i, _ in enumerate(exon_info):
-        starts.append(exon_info[i][1])
-        stops.append(exon_info[i][2])
+    # TODO: exon_info can be replace with matrix for faster processing
+    for exon in exon_info:
+        starts.append(exon[1])
+        stops.append(exon[2])
     return min(starts), max(stops)
 
 
 def exons_of_transcript(transcript_id: str,
                         sqlite_path_organism: str) -> List[str]:
     # For a given transcript return the exon sequences in a list in 5' to 3' direction
+    # WARNING: This function doesn't make sense
     exon_lst = []
     tripsplice = TripsSplice(sqlite_path_organism)
     trans_info = tripsplice.get_transcript_info(transcript_id)
-    exon_junctions = trans_info[0][0].split(",")
+    exon_junct_int = list(map(int, trans_info[0][0].split(",")))
     sequence = trans_info[0][1]
-
-    exon_junct_int = string_to_integer_list(exon_junctions)
 
     while len(exon_junct_int) != 0:
         exon, sequence = get_3prime_exon(exon_junct_int, sequence)
@@ -189,44 +205,38 @@ def get_exon_coordinate_ranges(sequence: str, exons: List[str],
     junctions.append(end)
 
     ranges = []
-    for i in range(len(exons)):
-        ranges.append((sequence.find(exons[i]), junctions[i] - 1))
+    for i, exon in enumerate(exons):
+        ranges.append((sequence.find(exon), junctions[i] - 1))
     return ranges
 
 
 def get_exon_info(gene: str,
                   sqlite_path_organism: str,
                   supported_transcripts: List[str],
-                  filter: bool = True) -> List[Tuple[str, int, int]]:
+                  filte_r: bool = True) -> List[Tuple[str, int, int]]:
     # Return the exon starts,stops and transcript for a given gene
     gene = gene.upper()
-    conn = sqlite3.connect(sqlite_path_organism)
-    c = conn.cursor()
-    c.execute(
-        'SELECT transcript, exon_start, exon_stop FROM exons WHERE transcript IN '
-        '(SELECT transcript FROM transcripts WHERE gene = (:gene));',
-        {'gene': gene})
-    exon_info = c.fetchall()
-    if filter:
-        supported_exon_info = []
-        for exon in exon_info:
-            if exon[0] in supported_transcripts:
-                supported_exon_info.append(exon)
-        return supported_exon_info
-    return exon_info
+    exons = get_table("exons", sqlite_path_organism)
+    transcripts = get_table("transcripts", sqlite_path_organism)
+    exons = exons.loc[exons.transcript.isin(transcripts.loc[
+        transcripts.gene == gene, "transcript"].values),
+                      ["transcript", "exon_start", "exon_stop"]]
+    if filte_r:
+        return exons[exons.transcript.isin(supported_transcripts)].values
+    return exons.values
 
 
 def genomic_exon_coordinate_ranges(
         gene: str,
         sqlite_path_organism: str,
         supported_transcripts: List[str],
-        filter: bool = True) -> Dict[str, Tuple[int, int]]:
+        filte_r: bool = True) -> Dict[str, List[Tuple[int, int]]]:
     # create a dictionary with transcript_ids as keys and exon coordinates in tuple (start, stop) as values
     # subtract the minumum start codon position of any exon for the gene
     exon_info = get_exon_info(gene,
                               sqlite_path_organism,
                               supported_transcripts,
-                              filter=filter)
+                              filte_r=filte_r)
     minimum, _ = get_max_min_exon_genomic_positions(exon_info)
     genomic_coordinates_per_transcript = {}
 
@@ -245,7 +255,7 @@ def genomic_orf_coordinate_ranges(
     # gene,
     sqlite_path_organism: str,
     supported_transcripts: List[str],
-    genomic_coordinates: Dict[str, Tuple[int, int]],
+    genomic_coordinates: Dict[str, List[Tuple[int, int]]],
     # filter=True
 ) -> Dict[str, List[Tuple[int, int]]]:
     # Translate the orf structure to genomic coordinates using genomic coordinates from the exons table of sqlite file
@@ -350,12 +360,14 @@ def get_reads_per_transcript_location(
 
 def get_reads_per_genomic_location(
     gene: str,
-    sqlite_path_reads: str,
+    sqlite_path_reads: List[str],
     sqlite_path_organism: str,
     supported_transcripts: List[str],
     genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
     filte_r: bool = True,
-    site: Literal['asite', '5prime', 'range'] = 'asite'
+    site: Literal[
+        'asite', 'fiveprime',
+        'range'] = 'asite'  # NOTE: fiveprime is not required, but keep for reference
 ) -> Dict[int, Dict[str, List[Tuple[int, int]]]]:
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
@@ -420,7 +432,7 @@ def get_exonjunction_pileup_for_transcript(
     # returns a dictionary with junctions as keys and counts as values d
     trips_splice = TripsSplice(sqlite_path_organism)
     transcript_info = trips_splice.get_transcript_info(transcript_id)
-    exon_junctions = string_to_integer_list(transcript_info[0][0].split(","))
+    exon_junctions = list(map(int, transcript_info[0][0].split(",")))
     counts = {}
     for read_file in sqlite_path_reads:
         reads = get_reads_per_transcript_location(transcript_id, read_file)

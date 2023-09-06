@@ -1,15 +1,16 @@
-from typing import Dict, List
+from typing import Dict, List, Literal, Tuple
 from tripsSplice import get_reads_per_genomic_location
 
 from tripsSplice import genomic_exon_coordinate_ranges
 
 from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import genomic_orf_coordinate_ranges
+import pandas as pd
 
 
 def get_unique_regions(
-        genomic_exon_coordinates: Dict[str,
-                                       List[int]]) -> Dict[str, List[int]]:
+    genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]]
+) -> Dict[str, List[Tuple[int, int]]]:
 
     unique_regions = {}
     exon_coordinates = []
@@ -53,49 +54,27 @@ def get_unique_regions(
     return unique_regions
 
 
-def count_readranges_supporting_exons_per_transcript(
-        regions: Dict[str, List[int]],
-        genomic_read_ranges: List[List[int]]) -> Dict[str, List[int]]:
-    # Count the number of reads that overlap with each exon
-    exons_counts = {}
-    for read in genomic_read_ranges:
-        for transcript in regions:
-            exons_counts[transcript] = [0] * len(regions[transcript])
-
-            for exon_num, exon in enumerate(regions[transcript]):
-
-                exon_range = range(exon[0], exon[1] + 1)
-
-                if (read[0] in exon_range) or (read[1] in exon_range):
-                    exons_counts[transcript][exon_num] += genomic_read_ranges[
-                        read]
-    return exons_counts
-
-
 def count_read_supporting_regions_per_transcript(
-        regions: Dict[str, List[int]],
+        regions: Dict[str, List[Tuple[int, int]]],
         genomic_read_positions: List[int]) -> Dict[str, List[int]]:
     exons_counts = {}
     for read in genomic_read_positions:
         for transcript in regions:
             if transcript not in exons_counts:
-                exons_counts[transcript] = [
-                    0 for i in range(len(regions[transcript]))
-                ]
+                exons_counts[transcript] = [0] * len(regions[transcript])
 
             exon_num = 0
             for exon in regions[transcript]:
+                exon_num += 1
                 if exon[0] == exon[1]:
-                    exon_num += 1
                     continue
                 if (read in range(exon[0], exon[1] + 1)):
                     exons_counts[transcript][exon_num] += 1
-                exon_num += 1
     return exons_counts
 
 
 def get_coverage_per_region(
-        regions: Dict[str, List[int]],
+        regions: Dict[str, List[Tuple[int, int]]],
         counts: Dict[str, List[int]]) -> Dict[str, List[float]]:
 
     region_lengths = {}
@@ -112,7 +91,7 @@ def get_coverage_per_region(
         if transcript not in region_coverage:
             region_coverage[transcript] = []
 
-        for region, i in enumerate(counts[transcript]):
+        for region, _ in enumerate(counts[transcript]):
             if region_lengths[transcript][region] == 0:
                 region_coverage[transcript].append(None)
             else:
@@ -124,64 +103,58 @@ def get_coverage_per_region(
 
 
 def average_coverage_per_transcript(
-        region_coverage: Dict[str, List[float]]) -> Dict[str, float]:
+        region_coverage: Dict[str, List[float]]) -> Dict[str, float | None]:
+
+    # TODO: Check what values are being passed here
     average_coverage = {}
     for transcript in region_coverage:
-        sum = 0
+        total = 0
         count = 0
         if (not region_coverage[transcript]) and all(
                 region_coverage[transcript]):
-            print("transcript {transcript} had no unique regions".format(
-                transcript=transcript))
+            # print(f"transcript {transcript} had no unique regions")
             if transcript not in average_coverage:
                 average_coverage[transcript] = None
         else:
             for region in region_coverage[transcript]:
-                if region != None:
+                if region:
                     count += 1
-                    sum += region
+                    total += region
 
         if transcript not in average_coverage:
-            average_coverage[transcript] = sum / count
+            average_coverage[transcript] = total / count
 
     return average_coverage
 
 
-def ribo_seq_read_counting(gene: str,
-                           sqlite_path_organism: str,
-                           sqlite_path_reads: List[str],
-                           count_type: str = "range",
-                           unique: bool = True) -> Dict[str, List[int]]:
+def ribo_seq_read_counting(
+        gene: str,
+        sqlite_path_organism: str,
+        sqlite_path_reads: List[str],
+        count_type: Literal["range", "fiveprime", "asite"] = "range",
+        unique: bool = True) -> Dict[str, float | None] | str:
     supported = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
     exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism,
                                            supported)
 
-    exclude = True
-    orf_regions = genomic_orf_coordinate_ranges(gene, sqlite_path_organism,
+    orf_regions = genomic_orf_coordinate_ranges(sqlite_path_organism,
                                                 supported, exons)
     if unique:
         orf_regions = get_unique_regions(orf_regions)
 
-    try:
-        ["range", "fiveprime", "asite"].index(count_type)
-    except ValueError:
-        print(
-            "The count type must be one of 'range', 'fiveprime' or 'asite'. "
-            "count_type refers to the part of the read that is used in the feature counting process"
-        )
+    if count_type not in ["range", "fiveprime", "asite"]:
         return "ERROR"
 
-    
     genomic_read_positions = get_reads_per_genomic_location(
-            gene,
-            sqlite_path_reads,
-            sqlite_path_organism,
-            supported,
-            exons,
-            filte_r=exclude,
-            site=count_type)
+        gene,
+        sqlite_path_reads,
+        sqlite_path_organism,
+        supported,
+        exons,
+        filte_r=True,
+        site=count_type)
     counts = count_read_supporting_regions_per_transcript(
-            orf_regions, genomic_read_positions)
+        orf_regions, list(genomic_read_positions.keys()))
 
     region_coverage = get_coverage_per_region(orf_regions, counts)
     coverage = average_coverage_per_transcript(region_coverage)
@@ -200,6 +173,6 @@ if __name__ == "__main__":
                                       sqlite_path_reads,
                                       count_type="asite",
                                       unique=True)
-    print rankings
+    print(rankings)
     # transcripts = rna_seq_read_counting(gene, sqlite_path_organism, sqlite_path_reads, exclude=False, count_type="range")
     # print "To explain all reads in the selected files must include: ", transcripts

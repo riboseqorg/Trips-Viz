@@ -54,11 +54,14 @@ def transcript_reads_per_kilobase(transcript_counts: Dict[str, int],
 
 
 def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
-        type: str) -> Dict[str, float]:
-    # Calculate transcripts per million for a given read type
+        seq_type: str) -> Dict[str, float]:
+    """
+    Calculate transcript per million for a given read type
+
+    """
     transcripts = []
     lengths = {}
-    if type == "ribo":  # NOTE: type must not be used as variable
+    if seq_type == "ribo":
         transcripts = get_protein_coding_transcript_ids(
             gene, sqlite_path_organism)
         start_stops = {
@@ -71,12 +74,12 @@ def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
             for transcript, start_stop in start_stops.items()
         }
 
-    elif type == "rna":
+    else: #if seq_type == "rna":
         transcripts = [
             transcript[0]
             for transcript in get_gene_info(gene, sqlite_path_organism)
         ]
-        lengths = get_transcript_length(gene, sqlite_path_organism)
+        lengths = get_transcript_length(gene, sqlite_path_organism) # TODO: Look for this function
 
     all_TPMs = {transcript: [] for transcript in transcripts}
 
@@ -84,7 +87,7 @@ def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
         counts, meanFLD = get_counts_meanFLD(transcripts, read_file)
 
         RPK = transcript_reads_per_kilobase(counts, lengths, meanFLD)
-        per_million_scaling_factor = sum(RPK.values()) / 1000000
+        per_million_scaling_factor = sum(RPK.values()) / 1000000.
         TPM = {}
         for transcript in transcripts:
             try:
