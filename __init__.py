@@ -6,11 +6,11 @@ from datetime import date
 import sys
 import sqlite3
 from sqlqueries import sqlquery, get_user_id, get_table, update_table
-import riboflask_datasets
+# import riboflask_datasets
 import logging
 from flask import (Flask, get_flashed_messages, render_template, request,
                    send_from_directory, flash, redirect, url_for)
-import werkzeug.wrappers.response.Response as Response
+from flask import Response
 from flask_xcaptcha import XCaptcha
 
 from flask_login import (LoginManager, login_required, login_user, logout_user,
@@ -917,6 +917,10 @@ def homepage2() -> str:
         ~organisms.private |
         (organisms.organism_id.isin(private_organisms_id)),
         ["organism_name", "transcriptome_list"]].drop_duplicates()
+    organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
+        list).reset_index()
+
+    print("Anmol", organisms)
 
     # Create species list
 
@@ -1406,12 +1410,13 @@ def dataset_breakdown(organism, transcriptome):
         study_colors.append('#BABABA')
     orfquery_cursor.close()
     orfquery_connection.close()
-    return riboflask_datasets.generate_plot(xlist, ylist, filenames,
-                                            file_descs, studies, raw_reads,
-                                            controls, cell_lines,
-                                            control_colors, study_colors,
-                                            cell_line_colors, transcript,
-                                            start, stop)
+    return
+    # return riboflask_datasets.generate_plot(xlist, ylist, filenames,
+    # file_descs, studies, raw_reads,
+    # controls, cell_lines,
+    # control_colors, study_colors,
+    # cell_line_colors, transcript,
+    # start, stop)
 
 
 if __name__ == '__main__':

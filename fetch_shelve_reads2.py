@@ -5,6 +5,7 @@ from bokeh.palettes import all_palettes
 from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
 import pandas as pd
+from pandas.core.frame import DataFrame
 
 
 # Create dictionary of read counts at each position in a transcript
@@ -27,7 +28,7 @@ def get_reads(
     get_mismatches: bool = False,
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
-        str, Dict[str, Dict[int, int]]]]]:
+        str, Dict[str, Dict[int, int]]]],Tuple[str, DataFrame ]]:
     mismatch_dict = pd.DataFrame(0,
                                  index=range(0, tranlen + 1),
                                  columns=["A", "T", "G", "C"])
@@ -68,7 +69,6 @@ def get_reads(
                 if accepted_offsets != {}:
                     offset_dict[filename] = {}
                     for length in accepted_offsets:
-                        # if length not in accepted_secondary_offsets:
                         offset_dict[filename][length] = accepted_offsets[
                             length]
 
@@ -79,18 +79,11 @@ def get_reads(
                         for pos in sqlite_db_seqvar:
                             # convert to one based
                             fixed_pos = pos + 1
-                            # if fixed_pos < (tranlen + 1):
                             for char in sqlite_db_seqvar[pos]:
                                 mismatch_dict.loc[
                                     fixed_pos,
                                     char] += sqlite_db_seqvar[pos][char]
 
-                            # for char in sqlite_db_seqvar[pos]:
-                            # # if char != "N":
-                            # if fixed_pos not in mismatch_dict[char]:
-                            # mismatch_dict[char][fixed_pos] = 0
-                            # count = sqlite_db_seqvar[pos][char]
-                            # mismatch_dict[char][fixed_pos] += count
                     except Exception:
                         pass
 
@@ -229,9 +222,9 @@ def get_reads(
                                         try:
                                             master_dict[offset_pos] += count
                                         except Exception as e:
-                                            print(
-                                                "Error tried adding to position {} but tranlen is only {}"
-                                                .format(e, tranlen))
+                                            print("Error tried adding to "
+                                                  f"position {e} but tranlen "
+                                                  f"is only {tranlen}")
         if not get_mismatches:
             mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
         return master_dict, mismatch_dict
@@ -246,8 +239,8 @@ def get_readlength_breakdown(
     user_files: Dict[str, Dict[str, str]],
     # offset_dict,
     tranlen: int,
-    coverage: int,  # organism,
     # subcodon, noisered, primetype, preprocess,
+    coverage: int,  # organism,
     filetype: str,
     colorbar_minread: int,
     colorbar_maxread: int,

@@ -81,8 +81,8 @@ def generate_plot(
         hili_stop: bool) -> str:
 
     if lite == "n" and ribocoverage:
-        return_str = "Error: Cannot display Ribo-Seq Coverage when 'Line Graph' is turned off"
-        return return_str
+        return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
+                " is turned off")
     labels = [
         "Frame 1 profiles", "Frame 2 profiles", "Frame 3 profiles", "RNA",
         "Exon Junctions"

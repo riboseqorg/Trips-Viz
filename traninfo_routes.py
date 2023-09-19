@@ -33,8 +33,8 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
         print(local)
     except Exception:
         local = False
+    print(organism, transcriptome)
 
-    organism = str(organism)
     user = fetch_user()[0]
     accepted_studies = fetch_studies(user, organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -196,18 +196,18 @@ def traninfoquery() -> str:
             # gc_location,exclude_first_val,exclude_last_val,include_first_val,include_last_val,gc_tranlist
             # keep track of transcript that have been written to file to avoid duplicates
         if gc_location == "five":
-            transcrips.seq = transcripts.seq.apply(lambda x: x[:cds_start])
+            transcripts.seq = transcripts.seq.apply(lambda x: x[:cds_start])
         elif gc_location == "start":
-            transcrips.seq = transcripts.seq.apply(lambda x: x[
+            transcripts.seq = transcripts.seq.apply(lambda x: x[
                 cds_start - include_first_val:cds_start + include_last_val])
         elif gc_location == "cds":
-            transcrips.seq = transcripts.seq.apply(
+            transcripts.seq = transcripts.seq.apply(
                 lambda x: x[cds_start:cds_end])
         elif gc_location == "stop":
-            transcrips.seq = transcripts.seq.apply(
+            transcripts.seq = transcripts.seq.apply(
                 lambda x: x[:cds_stop + include_last_val])
         else:  # gc_location == "three":
-            transcrips.seq = transcripts.seq.apply(lambda x: x[cds_stop:])
+            transcripts.seq = transcripts.seq.apply(lambda x: x[cds_stop:])
 
         subseq = ""  # TODO: This need to be corrected here
         if sum([

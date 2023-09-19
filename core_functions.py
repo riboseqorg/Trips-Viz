@@ -1,6 +1,7 @@
 import string
 from typing import Dict, List, Tuple, Any
 import pandas as pd
+from pandas.core.frame import DataFrame
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
@@ -72,7 +73,7 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(organism: str, transcriptome: str) -> pd.DataFrame:
+def fetch_studies(organism: str, transcriptome: str) -> DataFrame:
     '''Fetches studies from database using organism and transcriptome information.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     study_access_list = []
@@ -89,19 +90,17 @@ def fetch_studies(organism: str, transcriptome: str) -> pd.DataFrame:
 
     # Getting organism id
     result = sqlquery(dbpath, "organisms")  # users is name of table
-    organism_id = result.loc[(
-        result.organism_name == organism and result.transcriptome ==
-        transcriptome), "organism_id"].values[
-            0]  # NOTE: Expecting it has to be true as it is encoded in form
-    organism_id = int(organism_id)  # TODO: Check if it is int from start
+    organism_id = result.loc[(result.organism_name == organism)
+                             & (result.transcriptome_list == transcriptome),
+                             "organism_id"].values[0]
 
     # Getting studies
     studies = sqlquery(dbpath, "studies")  # users is name of table
     studies = studies.loc[studies.organism_id == organism_id,
                           ["study_id", "study_name", "private"]]
-    studies = studies.loc[
-        studies.private == 0 or studies.study_id.isin(study_access_list),
-        ["study_id", "study_name"]]
+    studies = studies.loc[studies.private == 0
+                          | studies.study_id.isin(study_access_list),
+                          ["study_id", "study_name"]]
     return studies  # Accepted studies
 
 
@@ -114,17 +113,24 @@ def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
         files.study_id.isin(accepted_studies['study_id']),
         ["file_id", "study_id", "file_name", "file_description", "file_type"
          ]].sort_values("file_description")  # Files Details
+    print(files)
     files = files.merge(accepted_studies, on='study_id')
+    print(files)
     files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', ''))
+    print(files)
     files['study'] = files.apply(lambda x: (x['study_id'], x['study_name']),
                                  axis=1)  # Paired info (ID, Name)
+    print(files)
     files['file'] = files.apply(lambda x: (x['file_id'], x['file_name']),
                                 axis=1)  # Paired info (ID, Name)
+    print(files)
     files = files.drop(['study_id', 'study_name', 'file_id', 'file_name'],
                        axis=1)
+    print(files)
 
     files = table2dict(files, ['file_type', 'study', 'file'])
+    print(files)
     return files
 
 

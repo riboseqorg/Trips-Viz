@@ -161,18 +161,18 @@ def ribo_seq_read_counting(
     return coverage
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    gene = "phpt1"
-    sqlite_path_organism = "/home/jackt/Tools/Trips-Viz/Trips-Viz-master/trips_annotations/homo_sapiens/homo_sapiens.Gencode_v25.sqlite"
-    sqlite_path_reads = [
-        "/home/jackt/Tools/Trips-Viz/Trips-Viz-master/trips_shelves/rnaseq/homo_sapiens/Park16/SRR3306574.sqlite"
-    ]
-    rankings = ribo_seq_read_counting(gene,
-                                      sqlite_path_organism,
-                                      sqlite_path_reads,
-                                      count_type="asite",
-                                      unique=True)
-    print(rankings)
-    # transcripts = rna_seq_read_counting(gene, sqlite_path_organism, sqlite_path_reads, exclude=False, count_type="range")
-    # print "To explain all reads in the selected files must include: ", transcripts
+# gene = "phpt1"
+# sqlite_path_organism = "/home/jackt/Tools/Trips-Viz/Trips-Viz-master/trips_annotations/homo_sapiens/homo_sapiens.Gencode_v25.sqlite"
+# sqlite_path_reads = [
+# "/home/jackt/Tools/Trips-Viz/Trips-Viz-master/trips_shelves/rnaseq/homo_sapiens/Park16/SRR3306574.sqlite"
+# ]
+# rankings = ribo_seq_read_counting(gene,
+# sqlite_path_organism,
+# sqlite_path_reads,
+# count_type="asite",
+# unique=True)
+# print(rankings)
+# transcripts = rna_seq_read_counting(gene, sqlite_path_organism, sqlite_path_reads, exclude=False, count_type="range")
+# print "To explain all reads in the selected files must include: ", transcripts

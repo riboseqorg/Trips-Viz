@@ -34,25 +34,16 @@ def generate_compare_plot(
     line_collections = []
     all_stops = ["TAG", "TAA", "TGA"]
     returnstr = "Position,"
-    y_max = 50
-    if normalize:
-        y_max = 0
-
-    connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(  # TODO: Convert into model
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
+    y_max = 0 if normalize else 50
+    organisms = get_table("organisms")
+    owner = organisms.loc[organisms.organism_name == organism
+                          & organisms.transcriptome_list == transcriptome,
+                          "owner"].values[0]
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
+        sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                      config.ANNOTATION_DIR,
+                                                      organism, transcriptome)
+        if not os.path.isfile(sqlfile):
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
             return {
@@ -62,44 +53,41 @@ def generate_compare_plot(
                 'result': return_str
             }
     else:
-        transhelve = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
-    traninfo = {
-        "transcript": result[0],
-        "gene": result[1],
-        "length": result[2],
-        "cds_start": result[3],
-        "cds_stop": result[4],
-        "seq": result[5],
-        "strand": result[6],
-        "stop_list": result[7].split(","),
-        "start_list": result[8].split(","),
-        "exon_junctions": result[9].split(","),
-        "tran_type": result[10],
-        "principal": result[11]
-    }
+        sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, organism, transcriptome)
+    traninfo = get_table("transcripts", sqlfile)
+    traninfo = traninfo[traninfo.transcript == tran].iloc[0]
+
+    # traninfo = {
+    # "transcript": result[0],
+    # "gene": result[1],
+    # "length": result[2],
+    # "cds_start": result[3],
+    # "cds_stop": result[4],
+    # "seq": result[5],
+    # "strand": result[6],
+    # "stop_list": result[7].split(","),
+    # "start_list": result[8].split(","),
+    # "exon_junctions": result[9].split(","),
+    # "tran_type": result[10],
+    # "principal": result[11]
+    # }
     traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
     traninfo["start_list"] = [int(x) for x in traninfo["start_list"]]
-    if str(traninfo["exon_junctions"][0]) != "":
+    if traninfo["exon_junctions"]:  # NOTE: Expecting list here
         traninfo["exon_junctions"] = [
             int(x) for x in traninfo["exon_junctions"]
         ]
     else:
         traninfo["exon_junctions"] = []
-    transhelve.close()
+
     gene = traninfo["gene"]
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
 
-    if cds_start == 'NULL' or not cds_start:
-        cds_start = 0
     if cds_stop == 'NULL' or not cds_stop:
+        cds_start = 0
         cds_stop = 0
 
     all_starts = traninfo["start_list"]
@@ -108,32 +96,16 @@ def generate_compare_plot(
     for i in range(0, len(seq)):
         if seq[i:i + 3] in all_stops:
             all_stops[seq[i:i + 3]].append(i + 1)
-    start_stop_dict = {
-        1: {
-            "starts": [0],
-            "stops": {
-                "TGA": [0],
-                "TAG": [0],
-                "TAA": [0]
-            }
-        },
-        2: {
-            "starts": [0],
-            "stops": {
-                "TGA": [0],
-                "TAG": [0],
-                "TAA": [0]
-            }
-        },
-        3: {
-            "starts": [0],
+    start_stop_dict = {}
+    for frame in [1, 2, 3]:
+        start_stop_dict[frame] = {
+            "starts": [0],  # Why do we need zero?
             "stops": {
                 "TGA": [0],
                 "TAG": [0],
                 "TAA": [0]
             }
         }
-    }
     for start in all_starts:
         rem = ((start - 1) % 3) + 1
         start_stop_dict[rem]["starts"].append(start - 1)
@@ -144,10 +116,7 @@ def generate_compare_plot(
 
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
-    if not normalize:
-        label = 'Read count'
-    else:
-        label = 'Normalized read count'
+    label = 'Read count' if not normalize else 'Normalized read count'
     ax_main.set_ylabel(label, fontsize=axis_label_size, labelpad=30)
     label = 'Position (nucleotides)'
     ax_main.set_xlabel(label, fontsize=axis_label_size, labelpad=10)
@@ -157,11 +126,11 @@ def generate_compare_plot(
         all_mapped_reads = []
         for color in master_filepath_dict:
             all_mapped_reads.append(
-                master_filepath_dict[color]["mapped_reads"])
-        min_reads = float(min(all_mapped_reads))
+                master_filepath_dict[color]["mapped_reads"]
+            )  # NOTE: if 'mapped reads would be fixed it would faster'
         for color in master_filepath_dict:
-            factor = min_reads / float(
-                master_filepath_dict[color]["mapped_reads"])
+            factor = min(all_mapped_reads
+                         ) * 1. / master_filepath_dict[color]["mapped_reads"]
             master_filepath_dict[color]["factor"] = factor
 
     # So items can be plotted alphabetically

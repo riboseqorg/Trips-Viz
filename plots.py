@@ -20,6 +20,9 @@ class VegaPlot:
             color=self.color).add_params(alt.selection)
         self.param = params
 
+        # Predefides
+        self.size = 12
+
     def lineplot(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""
         return self.chart.mark_line().encode(
@@ -47,8 +50,8 @@ class VegaPlot:
         return self.chart.mark_point().encode(
             x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
-            color=self.color,
-        )
+            color=self.color,  # color based on differt type
+            size=self.size)
         # TODO: Add bar plot
         # TODO: Add text plot
         # TODO: Add fill between plot

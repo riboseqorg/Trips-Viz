@@ -32,34 +32,19 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     except Exception:
         local = False
 
-    organism = str(organism)
-
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
 
     accepted_studies = fetch_studies(organism, transcriptome)
-    print(accepted_studies)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     print(accepted_studies)
     print(accepted_files)
     print(seq_types)
+    gwips = get_table("organisms")
+    gwips_info = gwips.loc[gwips.organism_name == organism & gwips.transcriptome_list == transcriptome, [
+        "gwips_clade", "gwips_organism", "gwips_database","default_transcript"
+    ]].iloc[0]
 
-    cursor.execute(
-        "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    result = (cursor.fetchone())
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
-    gwips_info = {
-        "organism": gwips_org,
-        "clade": gwips_clade,
-        "database": gwips_db
-    }
-    default_tran = result[3]
+    default_tran = gwips_info['default_transcript']
     studyinfo_dict = fetch_study_info(organism)
     user_transcript = request.args.get('tran')
     user_readscore = request.args.get('rs')
@@ -76,36 +61,33 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     user_short = request.args.get('short')
     user_crd = request.args.get('crd')
 
-    if user_files != None:
+    if user_files:
         user_files = user_files.split(",")
         user_files = [str(x) for x in user_files]
     else:
         user_files = []
 
     user_ribo_studies = request.args.get('ribo_studies')
-    if user_ribo_studies != None:
+    if user_ribo_studies:
         user_ribo_studies = user_ribo_studies.split(",")
         user_ribo_studies = [str(x) for x in user_ribo_studies]
     else:
         user_ribo_studies = []
     user_proteomics_studies = request.args.get('proteomics_studies')
-    if user_proteomics_studies != None:
+    if user_proteomics_studies:
         user_proteomics_studies = user_proteomics_studies.split(",")
         user_proteomics_studies = [str(x) for x in user_proteomics_studies]
     else:
         user_proteomics_studies = []
 
     user_rna_studies = request.args.get('rna_studies')
-    if user_rna_studies != None:
+    if user_rna_studies:
         user_rna_studies = user_rna_studies.split(",")
         user_rna_studies = [str(x) for x in user_rna_studies]
     else:
         user_rna_studies = []
 
-    if user_generate_shorturl == "F":
-        user_generate_shorturl = False
-    else:
-        user_generate_shorturl = True
+    user_generate_shorturl = False if user_generate_shorturl == "F" else True
 
     user_hili_starts = []
     user_hili_stops = []
@@ -123,14 +105,10 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
         user_minread = None
         user_maxread = None
     advanced = 'True'
-    connection.close()
     consent = request.cookies.get("cookieconsent_status")
     rendered_template = render_template(
         'index.html',
         gwips_info=gwips_info,
-        gwips_clade=gwips_clade,
-        gwips_org=gwips_org,
-        gwips_db=gwips_db,
         organism=organism,
         transcriptome=transcriptome,
         default_tran=default_tran,

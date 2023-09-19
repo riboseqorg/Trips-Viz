@@ -53,15 +53,17 @@ def generate_plot(
     axis_label_size: int,  #subheading_size,
     marker_size: int,
     ambiguous: bool,
-    gene_list: str,
+    gene_list_str: str,
 ) -> str:
     #Convert gene_list from string to list
     logging.debug("generate plot called")
     #logging.debug("sorted_min_exp_list: {}".format(sorted_min_exp_list))
     logging.debug("bin_list: {}".format(bin_list))
-    if gene_list:
-        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
-        gene_list = [gene.strip() for gene in gene_list.split(" ")]
+    gene_list: List[str] = []
+    if gene_list_str:
+        gene_list_str = gene_list_str.upper().replace(",",
+                                                      " ").replace("\t", " ")
+        gene_list = [gene.strip() for gene in gene_list_str.split(" ")]
     posallxvals = []
     posallyvals = []
     posalllabels = []
@@ -112,7 +114,7 @@ def generate_plot(
         if bin_list[bin_count][1] == 0.0:
             continue
 
-        if gene_list == "":
+        if not gene_list:
             if sorted_min_exp_list[i][2] <= bin_list[bin_count][
                     2] and sorted_min_exp_list[i][2] >= bin_list[bin_count][3]:
                 nonde_xvals.append(sorted_min_exp_list[i][1])
@@ -297,11 +299,13 @@ def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                 rnaseq2: str, background_col: str, short_code: str,
                 normalized: bool, filename: str, title_size: int,
                 axis_label_size: int, marker_size: int, ambiguous: bool,
-                gene_list: str, label: str) -> str:
+                gene_list_str: str, label: str) -> str:
     #Convert gene_list from string to list
-    if gene_list:
-        gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
-        gene_list = [gene.strip() for gene in gene_list.split(" ")]
+    gene_list: List[str] = []
+    if gene_list_str:
+        gene_list_str = gene_list_str.upper().replace(",",
+                                                      " ").replace("\t", " ")
+        gene_list = [gene.strip() for gene in gene_list_str.split(" ")]
     x_values = []
     y_values = []
     genes = []
@@ -1403,25 +1407,13 @@ def anota2seq_plot(
     label_string = "&labels=RIBO-Seq Cond 1,%23007a02_RIBO-Seq Cond 2,%23960000_mRNA-Seq Cond 1,%2374ed76_mRNA-seq Cond 2,%23ff6d6d"
 
     if riboseq1:
-        if riboseq1[0] != "":
-            for file_id in riboseq1:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23007a02_")
+        file_string += f"{','.join(map(str,riboseq1))},%23007a02_"
     if riboseq2:
-        if riboseq2[0] != "":
-            for file_id in riboseq2:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23960000_")
+        file_string += f"{','.join(map(str,riboseq2))},%23960000_"
     if rnaseq1:
-        if rnaseq1[0] != "":
-            for file_id in rnaseq1:
-                file_string += ("{},".format(file_id))
-            file_string += ("%2374ed76_")
+        file_string += f"{','.join(map(str,rnaseq1))},%2374ed76_"
     if rnaseq2:
-        if rnaseq2[0] != "":
-            for file_id in rnaseq2:
-                file_string += ("{},".format(file_id))
-            file_string += ("%23ff6d6d_")
+        file_string += f"{','.join(map(str,rnaseq2))},%23ff6d6d_"
 
     # remove the trailing _ in file_string if it's been populated
     if file_string:
