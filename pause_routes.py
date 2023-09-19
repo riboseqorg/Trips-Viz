@@ -23,12 +23,6 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
                                  )
 def pause_detection_page(organism: str, transcriptome: str) -> str:
     #ip = request.environ['REMOTE_ADDR']
-    global local
-    try:
-        logging.debug(local)
-    except Exception:
-        local = False
-
     organism = str(organism)
     user, logged_in = fetch_user()
     accepted_studies = fetch_studies(user, organism, transcriptome)
@@ -74,7 +68,6 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
                            accepted_files=accepted_files,
                            user=user,
                            default_tran="",
-                           local=local,
                            advanced=advanced,
                            seq_types=seq_types,
                            studyinfo_dict=studyinfo_dict,

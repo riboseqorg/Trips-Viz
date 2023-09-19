@@ -27,13 +27,7 @@ def calc_gc(seq):
 @traninfo_plotpage_blueprint.route('/<organism>/<transcriptome>/traninfo_plot/'
                                    )
 def traninfo_plotpage(organism: str, transcriptome: str) -> str:
-    # global user_short_passed
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
-    print(organism, transcriptome)
+        print(organism, transcriptome)
 
     user = fetch_user()[0]
     accepted_studies = fetch_studies(user, organism, transcriptome)
@@ -80,7 +74,6 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
                            organism=organism,
                            default_tran=default_tran,
                            current_username=user,
-                           local=local,
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
                            html_args=html_args,

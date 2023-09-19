@@ -21,11 +21,6 @@ comparison_plotpage_blueprint = Blueprint("comparisonpage",
 @comparison_plotpage_blueprint.route('/<organism>/<transcriptome>/comparison/')
 def comparisonpage(organism: str, transcriptome: str) -> str:
     #global user_short_passed
-    global local  # TODO: Fix global issue
-    try:
-        print(local)
-    except Exception:
-        local = False
 
     organisms = get_tables("organisms")
     organisms = organisms.loc[organisms.organism_name == organism, [
@@ -89,7 +84,6 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
                            organism=organism,
                            transcriptome=transcriptome,
                            default_tran=organisms["default_transcript"],
-                           local=local,
                            html_args=html_args,
                            file_id_to_name_dict=file_id_to_name_dict,
                            studyinfo_dict=studyinfo_dict,

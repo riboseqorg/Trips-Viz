@@ -411,7 +411,6 @@ $(document).keypress(function(e){
 	});
 
 var master_file_dict = {};
-var local = "{{ local|safe }}";
 var html_args = {{ html_args|safe }};
 var defaulttran = "{{ default_tran|safe }}";
 var transcriptome = "{{  transcriptome|safe }}";
@@ -542,12 +541,7 @@ for (var filetype in accepted_files) {
 						}
 						};
 
-if (local == "True") {
-		var url = "/diffquery"
-		}
-else {
-		var url = "/diffquery"
-		}
+var url = "/diffquery"
 
 function removeAll_riboseq1(){
 		master_file_dict["riboseq1"] = {"file_ids":[],"file_names":[], "file_descriptions":[]};

@@ -23,13 +23,7 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
     '/<organism>/<transcriptome>/interactive_plot_genomic/')
 def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     #global user_short_passed
-    user_short_passed = True
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
-
+    
     organism = str(organism)
 
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -135,7 +129,6 @@ def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
                             user_readscore=user_readscore,
                             user_hili_starts=user_hili_starts,
                             user_hili_stops=user_hili_stops,
-                            local=local,
                             studies_dict=accepted_studies,
                             accepted_files=accepted_files,
                             user_files=user_files,
@@ -170,7 +163,6 @@ def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
                            user_readscore=user_readscore,
                            user_hili_starts=user_hili_starts,
                            user_hili_stops=user_hili_stops,
-                           local=local,
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
                            user_files=user_files,

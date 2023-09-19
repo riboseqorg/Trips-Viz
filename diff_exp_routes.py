@@ -26,12 +26,7 @@ diff_plotpage_blueprint = Blueprint("diffpage",
 
 @diff_plotpage_blueprint.route('/<organism>/<transcriptome>/differential/')
 def diffpage(organism: str, transcriptome: str) -> str:
-    # global user_short_passed
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
+    
     organisms = get_table("organism")
     organisms = organisms.loc[organisms.organism_name == organism, [
         "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
@@ -75,7 +70,6 @@ def diffpage(organism: str, transcriptome: str) -> str:
                            accepted_files=accepted_files,
                            organism=organism,
                            default_tran=default_tran,
-                           local=local,
                            transcriptome=transcriptome,
                            html_args=html_args,
                            studyinfo_dict=studyinfo_dict,

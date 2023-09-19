@@ -114,11 +114,7 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
                                    )
 def metainfo_plotpage(organism: str, transcriptome: str):
     # global user_short_passed
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
+    
     user, _ = fetch_user()
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -170,7 +166,6 @@ def metainfo_plotpage(organism: str, transcriptome: str):
         transcriptome=transcriptome,
         organism=organism,
         user=user,
-        local=local,
         studies_dict=accepted_studies,
         accepted_files=accepted_files,
         html_args=html_args,

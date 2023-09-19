@@ -239,7 +239,7 @@ def create() -> str | Response:
         username = request.form['username']
         password = request.form['password']
         password2 = request.form['password2']
-        if xcaptcha.verify() or local:
+        if xcaptcha.verify():
             username_dict = {}
             logging.debug("Connecting to trips.sqlite")
 
@@ -290,11 +290,6 @@ def create() -> str | Response:
 @app.route('/settings/')
 # @login_required
 def settingspage() -> Response:
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
 
     user = fetch_user()[0]
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
@@ -312,18 +307,13 @@ def settingspage() -> Response:
         orient='records')[0]
 
     return render_template('settings.html',
-                           local=local,
                            user_settings=user_settings)
 
 
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
 @app.route('/downloads/')
 def downloadspage() -> str:
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
+    
     organism_dict = {
         "Scripts": [
             "bam_to_sqlite.py", "tsv_to_sqlite.py",
@@ -353,7 +343,6 @@ def downloadspage() -> str:
                 organism_dict[org].append(filename)
 
     return render_template('downloads.html',
-                           local=local,
                            user=user,
                            organism_dict=organism_dict)
 
@@ -374,11 +363,7 @@ def download_file() -> Response:
 @app.route('/uploads/')
 # @login_required
 def uploadspage() -> str:
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
+    
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if not user:
@@ -460,7 +445,6 @@ def uploadspage() -> str:
     seq_dict = table_to_dict(seq_dict[seq_dict.user_id == user_id],
                              ['seq_name', 'frame_breakdown'])
     return render_template('uploads.html',
-                           local=local,
                            user=user,
                            organism_dict=organism_dict,
                            study_dict=study_dict,
@@ -646,7 +630,6 @@ def handle_bad_request(e: Exception) -> str:
 # This is the page where users login.
 @app.route("/user/login", methods=["GET", "POST"])
 def login() -> Union[str, Response]:
-    global local
     # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
@@ -655,14 +638,14 @@ def login() -> Union[str, Response]:
         username = request.form['username'].strip(
         )  # TODO: relace this with jquery.Trim on user side
         password = request.form['password'].strip()
-        if xcaptcha.verify() or local or username == "developer":
+        if xcaptcha.verify() or username == "developer":
             logging.debug("login Connecting to trips.sqlite")
             username_dict = table_to_dict(get_table('users'),
                                           ['username', 'password'])
             logging.debug("Closing trips.sqlite connection")
             if username in username_dict:
                 if check_password_hash(username_dict[username],
-                                       password) or local:
+                                       password):
                     login_user(User(username))
                     nxt = sanitize_get_request(request.args.get('next'))
                     if nxt:
@@ -717,11 +700,7 @@ def anno_query() -> str:
 # This page shows the saved ORFs specific to the signed in user
 @app.route('/saved/')
 def saved():
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
+    
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str
@@ -748,7 +727,6 @@ def saved():
         | organism_list.organism_id.isin(organism_access_list),
         'organism_id'].values
     return render_template('user_saved_cases.html',
-                           local=local,
                            advanced=advanced,
                            organism_list=organism_list)
 
@@ -1337,11 +1315,6 @@ def seqrulesquery():
 @app.route('/<organism>/<transcriptome>/dataset_breakdown/')
 def dataset_breakdown(organism, transcriptome):
     # ip = request.environ['REMOTE_ADDR']
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
 
     organism = str(organism)
     print(organism, transcriptome)

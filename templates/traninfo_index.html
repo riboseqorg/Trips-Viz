@@ -95,13 +95,7 @@ $(document).keypress(function(e){
 
 
 var defaulttran = "{{ default_tran|safe }}";
-var local = "{{ local|safe }}";
-if (local == "True") {
-		var url = "/traninfoquery"
-		}
-else {
-		var url = "/traninfoquery"
-		}
+var url = "/traninfoquery"
 
 rownum = 1
 rowcount = -1

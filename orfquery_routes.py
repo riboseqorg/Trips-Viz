@@ -34,12 +34,6 @@ translated_orf_blueprint = Blueprint("orf_translationpage",
 @translated_orf_blueprint.route('/<organism>/<transcriptome>/orf_translation/')
 def orf_translationpage(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
-    global local
-    try:
-        logging.debug(local)
-    except Exception:
-        local = False
-
     organism = str(organism)
     user = fetch_user()[0]
     accepted_studies = fetch_studies(organism, transcriptome)
@@ -102,7 +96,6 @@ def orf_translationpage(organism: str, transcriptome: str) -> str:
                            user=user,
                            organism=organism,
                            default_tran="",
-                           local=local,
                            transcriptome=transcriptome,
                            advanced=advanced,
                            seq_types=seq_types,

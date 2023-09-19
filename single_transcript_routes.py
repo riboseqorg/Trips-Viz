@@ -25,14 +25,7 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
 @single_transcript_plotpage_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot/')
 def interactiveplotpage(organism: str, transcriptome: str) -> str:
-    #global user_short_passed
-    global local
-    try:
-        print(local)
-    except Exception:
-        local = False
-
-
+    
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
@@ -116,7 +109,6 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
         user_readscore=user_readscore,
         user_hili_starts=user_hili_starts,
         user_hili_stops=user_hili_stops,
-        local=local,
         studies_dict=accepted_studies,
         accepted_files=accepted_files,
         user_files=user_files,
