@@ -1,16 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
-
-
-
-
-<head>
-<link rel= "stylesheet" href= "{{ url_for('static', filename='css/diff_translation.css') }}">
-<script src="https://cdn.pydata.org/bokeh/release/bokeh-2.3.2.min.js"></script>
-<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-2.3.2.min.js"></script>
-</head>
-
-<style type="text/css">
+    <head>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/diff_translation.css') }}">
+        <script src="https://cdn.pydata.org/bokeh/release/bokeh-2.3.2.min.js"></script>
+        <script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-2.3.2.min.js"></script>
+    </head>
+    <style type="text/css">
 .list {
     border: 1px solid grey;
     border-radius: 12px;
@@ -64,162 +60,346 @@ ul:empty:after {
 }
 
 
-</style>
-
-<div id="general_settings">
-		<p><font size="5" text-align="center"><b><u>General Settings</u></b></br></font></p>
-		<table align="center">
-		<tr><td><b>Plot type: </b><input type="radio" class="plot_radio ribo_rna" id="ribo_rna" value="ribo_rna" name="plottype" unchecked> Correlation </input>
-		<input type="radio" class = "plot_radio Z-score" id="z_score" value="z_score" name="plottype" checked>Z-score</input>
-		<input type="radio" class="plot_radio deseq2" id="deseq2" value="deseq2" name="plottype" unchecked> DESeq2 </input>
-		<input type="radio" class="plot_radio anota2seq" id="anota2seq" value="anota2seq" name="plottype" unchecked> Anota2seq </input>
-		</td>
-		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_plot_type">&#9432; </a></td></tr>
-
-		<tr><td><b>Gene type: </b><input type="radio" class = "gene_radio all" id="all" value="all" name="genetype" unchecked>All</input>
-			<input type="radio" class="gene_radio coding" id="coding" value="coding" name="genetype" checked> Coding</input>
-			<input type="radio" class="gene_radio noncoding" id="noncoding" value="noncoding" name="genetype" unchecked> Non-coding </input></td>
-			<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_gene_type">&#9432; </a></td></tr>
-
-
-		<tr><td><b>Minimum no. of reads: </b><input type="text" id="minread" name="minread" value="0" ></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432; </a></td></tr>
-		<tr><td><b>Min z-score (+/-)/ Max padj (%): </b><input type="text" id="minzscore" name="minzscore" value="4" ></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;  </a></td></tr>
-		<tr><td><b>Region: </b>
-		<input class="all" type="radio" value="all" name="region" checked>All</input>
-		<input class="cds" type="radio" value="cds" name="region" checked>CDS</input>
-		<input class="fiveprime" type="radio" value="fiveprime" name="region" unchecked>5'</input>
-		<input class="threeprime" type="radio" value="threeprime" name="region" unchecked>3'</input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;  </a></td></tr>
-		<tr><td><b>Normalise by mapped reads: </b><input type='checkbox' value='mapped_reads_norm' name='mapped_reads_norm' checked></input></td><td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;  </a></td></tr>
-		<tr><td><b>Allow ambiguously mapped reads: </b><input id="ambiguous" class="ambig_check" type="checkbox" name="ambiguous" value="ambiguous" unchecked></input> <td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;  </a></td> </tr></td>
-		{% if current_user.name == "master" %}
-			<tr><td> <input type='checkbox' value='store_de_results' name='store_de_results' unchecked> Store results</input> </td></tr>
-			<tr><td> <input type="text" id="cond_desc" name="cond_desc" value=""></input></td></tr>
-		{% endif %}
-		<tr><td><b>Highlight gene List: </b> <input type="text" id="gene_list" name="gene_list" value=""></input></td>
-		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432; </a></td></tr>
-		<tr><td><b>Transcript List: </b> <input type="text" id="transcript_list" name="transcript_list" value=""></input>
-		<td><a class="whatsthis"  target="_blank" href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432; </a></td></td></tr>
-		<tr class= "hidden_element"><td><b>Minimum coverage: </b> <input type="text" id="min_cov" name="min_cov" value="0"></input></td></tr>
-		</table>
+    </style>
+    <div id="general_settings">
+        <p>
+            <font size="5" text-align="center"><b><u>General Settings</u></b>
+            </br>
+        </font>
+    </p>
+    <table align="center">
+        <tr>
+            <td>
+                <b>Plot type: </b>
+                <input type="radio"
+                       class="plot_radio ribo_rna"
+                       id="ribo_rna"
+                       value="ribo_rna"
+                       name="plottype"
+                       unchecked>
+                Correlation
+            </input>
+            <input type="radio"
+                   class="plot_radio Z-score"
+                   id="z_score"
+                   value="z_score"
+                   name="plottype"
+                   checked>
+            Z-score
+        </input>
+        <input type="radio"
+               class="plot_radio deseq2"
+               id="deseq2"
+               value="deseq2"
+               name="plottype"
+               unchecked>
+        DESeq2
+    </input>
+    <input type="radio"
+           class="plot_radio anota2seq"
+           id="anota2seq"
+           value="anota2seq"
+           name="plottype"
+           unchecked>
+    Anota2seq
+</input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_plot_type">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Gene type: </b>
+        <input type="radio"
+               class="gene_radio all"
+               id="all"
+               value="all"
+               name="genetype"
+               unchecked>
+        All
+    </input>
+    <input type="radio"
+           class="gene_radio coding"
+           id="coding"
+           value="coding"
+           name="genetype"
+           checked>
+    Coding
+</input>
+<input type="radio"
+       class="gene_radio noncoding"
+       id="noncoding"
+       value="noncoding"
+       name="genetype"
+       unchecked>
+Non-coding
+</input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_gene_type">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Minimum no. of reads: </b>
+        <input type="text" id="minread" name="minread" value="0">
+    </input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Min z-score (+/-)/ Max padj (%): </b>
+        <input type="text" id="minzscore" name="minzscore" value="4">
+    </input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Region: </b>
+        <input class="all" type="radio" value="all" name="region" checked>
+        All
+    </input>
+    <input class="cds" type="radio" value="cds" name="region" checked>
+    CDS
+</input>
+<input class="fiveprime"
+       type="radio"
+       value="fiveprime"
+       name="region"
+       unchecked>
+5'
+</input>
+<input class="threeprime"
+       type="radio"
+       value="threeprime"
+       name="region"
+       unchecked>
+3'
+</input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Normalise by mapped reads: </b>
+        <input type='checkbox'
+               value='mapped_reads_norm'
+               name='mapped_reads_norm'
+               checked>
+    </input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Allow ambiguously mapped reads: </b>
+        <input id="ambiguous"
+               class="ambig_check"
+               type="checkbox"
+               name="ambiguous"
+               value="ambiguous"
+               unchecked>
+    </input>
+    <td>
+        <a class="whatsthis"
+           target="_blank"
+           href="https://trips.ucc.ie/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;</a>
+    </td>
+</tr>
+</td>
+{% if current_user.name == "master" %}
+    <tr>
+        <td>
+            <input type='checkbox'
+                   value='store_de_results'
+                   name='store_de_results'
+                   unchecked>
+            Store results
+        </input>
+    </td>
+</tr>
+<tr>
+    <td>
+        <input type="text" id="cond_desc" name="cond_desc" value="">
+    </input>
+</td>
+</tr>
+{% endif %}
+<tr>
+    <td>
+        <b>Highlight gene List: </b>
+        <input type="text" id="gene_list" name="gene_list" value="">
+    </input>
+</td>
+<td>
+    <a class="whatsthis"
+       target="_blank"
+       href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432;</a>
+</td>
+</tr>
+<tr>
+    <td>
+        <b>Transcript List: </b>
+        <input type="text" id="transcript_list" name="transcript_list" value="">
+    </input>
+    <td>
+        <a class="whatsthis"
+           target="_blank"
+           href="https://trips.ucc.ie/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432;</a>
+    </td>
+</td>
+</tr>
+<tr class= "hidden_element">
+    <td>
+        <b>Minimum coverage: </b>
+        <input type="text" id="min_cov" name="min_cov" value="0">
+    </input>
+</td>
+</tr>
+</table>
 </div>
-
-
-
-
-
 <div id="seq_types">
-<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
+    <p>
+        <font size="5" align="center"><b><u>Seq types</u></b></font>
+    </p>
 </br>
 </div>
-
-
-
 <div id="studies">
-<p><font size="5" align="center"><b><u>Studies</u></b></font></p>
+    <p>
+        <font size="5" align="center"><b><u>Studies</u></b></font>
+    </p>
 </br>
-<button  class="study_button" type="button" onclick='view_study_info()'><b>View study info</b></button>
-		<table align="center">
-		<tr><td><button id="btnAdd" value="Add to Cond 1" onclick="addribo1()">Add to Ribo-Seq files 1</button></td>
-		<td><button id="btnAdd" value="Add To Cond 2" onclick="addribo2()">Add to Ribo-Seq files 2</button></td></tr>
-		<tr><td><button id="btnAdd" value="Add to Cond 1" onclick="addrna1()">Add to RNA-Seq files 1</button></td>
-		<td><button id="btnAdd" value="Add To Cond 2" onclick="addrna2()">Add to RNA-Seq files 2</button></td></tr>
-		</table>
-		</br></br>
-		<table align="center" name="studytable" id="studytable" class="studytable">
-		<tr id="tablerow1">
-		</tr>
-		<tr id="tablerow2">
-		</tr>
-		<tr id="tablerow3">
-		</tr>
-		<tr id="tablerow4">
-		</tr>
-		<tr id="tablerow5">
-		</tr>
-		<tr id="tablerow6">
-		</tr>
-		<tr id="tablerow7">
-		</tr>
-		<tr id="tablerow8">
-		</tr>
-		<tr id="tablerow9">
-		</tr>
-		<tr id="tablerow10">
-		</tr>
-		<tr id="tablerow11">
-		</tr>
-		<tr id="tablerow12">
-		</tr>
-		<tr id="tablerow13">
-		</tr>
-		<tr id="tablerow14">
-		</tr>
-		<tr id="tablerow15">
-		</tr>
-		<tr id="tablerow16">
-		</tr>
-		<tr id="tablerow17">
-		</tr>
-		<tr id="tablerow18">
-		</tr>
-		<tr id="tablerow19">
-		</tr>
-		</table>
-		</br></br>
+<button class="study_button" type="button" onclick='view_study_info()'>
+    <b>View study info</b>
+</button>
+<table align="center">
+    <tr>
+        <td>
+            <button id="btnAdd" value="Add to Cond 1" onclick="addribo1()">Add to Ribo-Seq files 1</button>
+        </td>
+        <td>
+            <button id="btnAdd" value="Add To Cond 2" onclick="addribo2()">Add to Ribo-Seq files 2</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <button id="btnAdd" value="Add to Cond 1" onclick="addrna1()">Add to RNA-Seq files 1</button>
+        </td>
+        <td>
+            <button id="btnAdd" value="Add To Cond 2" onclick="addrna2()">Add to RNA-Seq files 2</button>
+        </td>
+    </tr>
+</table>
+</br>
+</br>
+<table align="center" name="studytable" id="studytable" class="studytable">
+    <tr id="tablerow1"></tr>
+    <tr id="tablerow2"></tr>
+    <tr id="tablerow3"></tr>
+    <tr id="tablerow4"></tr>
+    <tr id="tablerow5"></tr>
+    <tr id="tablerow6"></tr>
+    <tr id="tablerow7"></tr>
+    <tr id="tablerow8"></tr>
+    <tr id="tablerow9"></tr>
+    <tr id="tablerow10"></tr>
+    <tr id="tablerow11"></tr>
+    <tr id="tablerow12"></tr>
+    <tr id="tablerow13"></tr>
+    <tr id="tablerow14"></tr>
+    <tr id="tablerow15"></tr>
+    <tr id="tablerow16"></tr>
+    <tr id="tablerow17"></tr>
+    <tr id="tablerow18"></tr>
+    <tr id="tablerow19"></tr>
+</table>
+</br>
+</br>
 </div>
-
-
-
 <div id="filebox">
-		</br>
-		<p><font size="5" align="center"><b><u>Files</u></b></br></font></p>
-		
+</br>
+<p>
+    <font size="5" align="center"><b><u>Files</u></b>
+    </br>
+</font>
+</p>
 </div>
-
-
 <div id="riboseq_file_list_1" class="center">
-		<p><font size="5" ><b><u>Ribo-Seq files Condition 1</u></b></br></font></p>
-		<ul class="draggable_filelist" id="ribo_file_list_1"></ul>
-		</ul>
+    <p>
+        <font size="5"><b><u>Ribo-Seq files Condition 1</u></b>
+        </br>
+    </font>
+</p>
+<ul class="draggable_filelist" id="ribo_file_list_1">
+</ul>
+</ul>
 </div>
-
 <div id="riboseq_file_list_2">
-		<p><font size="5" text-align="center"><b><u>Ribo-Seq files Condition 2</u></b></br></font></p>
-		<ul class="draggable_filelist" id="ribo_file_list_2"></ul>
-		</ul>
+    <p>
+        <font size="5" text-align="center"><b><u>Ribo-Seq files Condition 2</u></b>
+        </br>
+    </font>
+</p>
+<ul class="draggable_filelist" id="ribo_file_list_2">
+</ul>
+</ul>
 </div>
-
 <div id="rnaseq_file_list_1">
-		<p><font size="5" text-align="center"><b><u>RNA-Seq files Condition 1</u></b></br></font></p>
-		<ul class="draggable_filelist" id="rna_file_list_1"></ul>
-		</ul>
+    <p>
+        <font size="5" text-align="center"><b><u>RNA-Seq files Condition 1</u></b>
+        </br>
+    </font>
+</p>
+<ul class="draggable_filelist" id="rna_file_list_1">
+</ul>
+</ul>
 </div>
-
 <div id="rnaseq_file_list_2">
-		<p><font size="5" text-align="center"><b><u>RNA-Seq files Condition 2</u></b></br></font></p>
-		<ul class="draggable_filelist" id="rna_file_list_2"></ul>
-		</ul>
+    <p>
+        <font size="5" text-align="center"><b><u>RNA-Seq files Condition 2</u></b>
+        </br>
+    </font>
+</p>
+<ul class="draggable_filelist" id="rna_file_list_2">
+</ul>
+</ul>
 </div>
-
-
-
-<div id="view_plot" class="wrapper"><button class="button" type="button"  id="diffquery"><b>View Plot</b></button></div>
-
-<div id="loading-div-background">
-	<div id="loading-div" class="ui-corner-all" >
-		<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
-		<h3 id="loading_header" style="color:gray;font-weight:normal;">Loading....</h3>
-	</div>
+<div id="view_plot" class="wrapper">
+    <button class="button" type="button"  id="diffquery">
+        <b>View Plot</b>
+    </button>
 </div>
-
+{% include "loading.html" %}
 <div id="container"></div>
-
 <div id = "study_dialog" title = "Study info">
-<table></table>
+    <table>
+    </table>
 </div>
-
-<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script type="text/javascript"
+        src="{{ url_for('static', filename='js/common.js') }}"></script>
 <script type="text/javascript">
 
 
@@ -259,7 +439,7 @@ for (var i in seq_types) {
 		display_name = seq_types[i]
 	}
 
-	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label' >"+display_name+"</label>";
+	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label'>"+display_name+"</label>";
 	var seq_types_div = document.getElementById('seq_types');
 	seq_types_div.innerHTML += radio_seq_types;
 }
@@ -274,7 +454,7 @@ for (var key in studies_dict)  {
 				rowcount = 0
 				rownum += 1
 				};
-		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label' >"+studies_dict[key]["study_name"]+"</label>";
+		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label'>"+studies_dict[key]["study_name"]+"</label>";
 		addRow(rownum, radio_study)
 		for (i in seq_types) {
 			var seq_type = seq_types[i]
@@ -283,7 +463,7 @@ for (var key in studies_dict)  {
 			//console.log("Seq type is "+seq_type)
 			new_show_div.className = 'show';
 			new_show_div.id = seq_type+"study"+key;
-// 			tablehtml = "<table  class='file_table' id="+key+seq_type+" align='center'></table>";
+// 			tablehtml = "<table class='file_table' id="+key+seq_type+" align='center'></table>";
 			tablehtml = "<li id="+key+seq_type+" class='items'></li>";
 			new_show_div.innerHTML = tablehtml;
 			files_div.appendChild(new_show_div);
@@ -376,9 +556,9 @@ function removeAll_riboseq1(){
 		<ul id='ribo_file_list_1'></ul>\
 		<ul class='checkbox-grid' data-role='listview' data-inset='true' id='ulist'  title='nodes list' data-inset='true'>                        \
 		</ul>\
-		<br/>\
+		<br />\
 		<div><button class='button centerbutton' type='button' value='Clear List' onclick='removeAll_riboseq1()'>Clear list</button></div>\
-		<br/>";
+		<br />";
 		}
 
 function removeAll_riboseq2(){
@@ -388,9 +568,9 @@ function removeAll_riboseq2(){
 		<ul id='ribo_file_list_2'></ul>\
 		<ul class='checkbox-grid' data-role='listview' data-inset='true' id='ulist'  title='nodes list' data-inset='true'>                        \
 		</ul>\
-		<br/>\
+		<br />\
 		<div><button class='button centerbutton' type='button' value='Clear List' onclick='removeAll_riboseq2()'>Clear list</button></div>\
-		<br/>";
+		<br />";
 		}
 
 function removeAll_rnaseq1(){
@@ -400,9 +580,9 @@ function removeAll_rnaseq1(){
 		<ul id='rna_file_list_1'></ul>\
 		<ul class='checkbox-grid' data-role='listview' data-inset='true' id='ulist'  title='nodes list' data-inset='true'>                        \
 		</ul>\
-		<br/>\
+		<br />\
 		<div><button class='button centerbutton' type='button' value='Clear List' onclick='removeAll_rnaseq1()'>Clear list</button></div>\
-		<br/>";
+		<br />";
 		}
 
 function removeAll_rnaseq2(){
@@ -412,9 +592,9 @@ function removeAll_rnaseq2(){
 		<ul id='rna_file_list_2'></ul>\
 		<ul class='checkbox-grid' data-role='listview' data-inset='true' id='ulist'  title='nodes list' data-inset='true'>                        \
 		</ul>\
-		<br/>\
+		<br />\
 		<div><button class='button centerbutton' type='button' value='Clear List' onclick='removeAll_rnaseq2()'>Clear list</button></div>\
-		<br/>";
+		<br />";
 		}
 
 
@@ -782,5 +962,4 @@ for (var i = 0; i < list_of_lists.length; i++) {
 
 
 </script>
-
 {% endblock %}

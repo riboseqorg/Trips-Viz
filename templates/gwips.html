@@ -1,13 +1,13 @@
-<script>
-  var gwips_clade = '{{  gwips_clade|safe  }}';
-  var gwips_org = '{{  gwips_org|safe  }}';
-  var gwips_db = '{{  gwips_db|safe  }}';
-  var gwips_info = {{  gwips_info|safe  }};
-</script>
 <div id="gwips">
-  <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
-    <button class="button centerbutton" type="submit">
-      <b>View on GWIPS-Viz</b>
-    </button>
-  </a>
+    <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
+        <button class="button centerbutton" type="submit">
+            <b>View on GWIPS-Viz</b>
+        </button>
+    </a>
 </div>
+<script>
+  $(document).on('change',function(){
+                  var userInput = $('#tran').val();
+  $('#gwips_link').href = "https://gwips.ucc.ie/cgi-bin/hgTracks?clade="+{{ gwips_info['gwips_clade']}}+"&org="+{{gwips_info['gwips_organism']}}+"&orgname="+{{ gwips_organism}}+"&db="+{{gwips_info['gwips_database']}}+"&position=" + userInput + "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835";
+  });
+</script>

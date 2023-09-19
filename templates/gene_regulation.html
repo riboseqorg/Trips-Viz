@@ -1,10 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-
-
-<style>
-
-
+    <style>
 div #choose_region_of_interest {
 		display: inline-block;
 		float: left;
@@ -53,139 +49,90 @@ width:50%;
 
 
 
-</style>
-
-
-
-
-
-
-
-
-
-
-
-
-<div  style="text-align:center">
-<table id="filters" style="text-align:center">
-
-
-</table>
-
-
-
+    </style>
+    <div style="text-align:center">
+        <table id="filters" style="text-align:center">
+        </table>
+    </div>
+    <div id="seq_types" style="display:none;">
+        <p>
+            <font size="5" align="center"><b><u>Seq types</u></b></font>
+        </p>
+        <table align="center">
+            <!--<input type="button"
+       onClick="uncheck_all_riboseq"
+       value="Riboseq: Uncheck All Studies    "
+       class="button" />-->
+            <tr id="1"></tr>
+        </table>
+    </br>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div id="seq_types" style="display:none;">
-<p><font size="5" align="center"><b><u>Seq types</u></b></font></p>
-
-<table align="center">
-<!--<input type="button" onClick=uncheck_all_riboseq() value="Riboseq: Uncheck All Studies    " class="button" />-->
-<tr id="1">
-
-
-</tr>
-</table>
-
-
-</br>
-</div>
-
-
 <div id = "dialog-3" title = "Dataset breakdown">
-<div id="gene_reg_container2"></div>
+    <div id="gene_reg_container2"></div>
 </div>
-
-
-
-
-
-
-
-
 <div id="buttons"></div>
-
-
 <div id="wrapper" style="text-align:center">
-<h4>Gene Set Enrichment Analysis</h4>
-
-
-
-Enter list of genes (comma seperated):   <input id="tran_list" name="tran_list" value="" > <button class="btn" type="button"  id="query"><b>Upload gene list</b></button><br>
-<b>OR</b><br>
-Upload a csv file of genes and z-scores:<form id="upload-file" action = "/gene_regulation_query" method = "POST" enctype = "multipart/form-data">
-<input name = "file" type = "file" multiple/>
-<td align="center">
-<input value="Upload file" type = "submit"/>
-
-<b>OR</b><br>
-
-Choose premade csv file:
-<select id="selected_file" name="selected_file">
-</select>
-</form>
-<br>
-
-</div>
-
-<div id="loading-div-background">
-<div id="loading-div" class="ui-corner-all" >
-<img style="height:64px;margin:10px;"      src="{{ url_for('static', filename = 'css/images/282.GIF') }}" width="110" height="85" alt="Loading..."/>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/sofia.css') }}">
-<h3 style="color:gray;font-weight:normal;">Loading....</h3>
-</div>
-</div>
-
-
-<div id="gene_reg_container">
-
-<!--<h2 align="center"> Results Table </h2>-->
-<table  id="myTable" class="prediction_table hover">
-<thead><tr><th>Description</th><th>PMID</th><th>Mann-Whitney TE</th><th>#Up_#Down_#NoData</th><th>Mann-Whitney Ribo</th><th>#Up_#Down_#NoData</th><th>Mann-Whitney RNA</th><th>#Up_#Down_#NoData</th></thead><tbody></tr>
-</tbody>
-</table>
-</div>
-
-
-<div id="secondary_table"
-
- style="text-align:center">
-<h4>Co-regulated clusters</h4>
-
-
-<table  id="myTable2" class="prediction_table hover">
-<thead><tr><th>Level</th><th>Gene list</th></thead><tbody></tr>
-</tbody>
-</table>
-</div>
-
-
-
-
-<div align="center" id="image">
-</div>
-
-
-
-
-
-
-<script type="text/javascript"   src="{{ url_for('static', filename='js/common.js') }}"></script>
-<script type="text/javascript">
-
-
+    <h4>Gene Set Enrichment Analysis</h4>
+    Enter list of genes (comma seperated):
+    <input id="tran_list" name="tran_list" value="">
+    <button class="btn" type="button"  id="query">
+        <b>Upload gene list</b>
+    </button>
+    <br>
+    <b>OR</b>
+    <br>
+    Upload a csv file of genes and z-scores:
+    <form id="upload-file"
+          action="/gene_regulation_query"
+          method="POST"
+          enctype="multipart/form-data">
+        <input name = "file" type = "file" multiple />
+        <td align="center">
+            <input value="Upload file" type = "submit" />
+            <b>OR</b>
+            <br>
+            Choose premade csv file:
+            <select id="selected_file" name="selected_file"></select>
+        </form>
+        <br>
+    </div>
+    {% include "loading.html" %}
+    <div id="gene_reg_container">
+        <!--<h2 align="center"> Results Table </h2>-->
+        <table id="myTable" class="prediction_table hover">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>PMID</th>
+                    <th>Mann-Whitney TE</th>
+                    <th>#Up_#Down_#NoData</th>
+                    <th>Mann-Whitney Ribo</th>
+                    <th>#Up_#Down_#NoData</th>
+                    <th>Mann-Whitney RNA</th>
+                    <th>#Up_#Down_#NoData</th>
+                </thead>
+                <tbody>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="secondary_table"  style="text-align:center">
+        <h4>Co-regulated clusters</h4>
+        <table id="myTable2" class="prediction_table hover">
+            <thead>
+                <tr>
+                    <th>Level</th>
+                    <th>Gene list</th>
+                </thead>
+                <tbody>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div align="center" id="image"></div>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script type="text/javascript">
 var organism = "{{ organism|safe }}";
 
 
@@ -448,5 +395,5 @@ $("#query").click(function() {
 	///};
 ///
 
-</script>
+    </script>
 {% endblock %}

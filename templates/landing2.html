@@ -47,206 +47,73 @@
 <div class="slider-container swiper">
     <div class="slider-content">
         <div class="card-wrapper swiper-wrapper">
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
+            {% for _, row in organisms.iterrows() %}
+                <button class="species card swiper-slide"
+                        type="button"
+                        style="width: 175px;
+                               height: 175px">
+                    <img src="/static/images/species/{{ row.organism_name }}.png"
+                         class="card-img-bottom"
+                         height="175px"
+                         width="175px">
+                    <div class="card-body card-img-overlay text-white">
+                        <p class="card-text">
+                            <small>{{ row.organism_name }}</small>
+                            {% for assembly in row.transcriptome_list %}{{ assembly }}{% endfor %}
+                        </p>
+                    </div>
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-pagination"></div -->
+</div>
+<!--Slider End-->
+<div class="row d-flex justify-content-center">
+    {% for _, row in organisms.iterrows() %}
+        <div class="col-lg-2 col-md-6">
+            <button class="species card" type="button" style="width: 175px;height: 175px">
+                <img src="/static/images/species/{{ row.organism_name }}.png"
                      class="card-img-bottom"
                      height="175px"
                      width="175px">
                 <div class="card-body card-img-overlay text-white">
                     <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
-                    </p>
-                </div>
-            </button>
-            <button class="species card swiper-slide"
-                    type="button"
-                    style="width: 175px;
-                           height: 175px">
-                <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>geeksforgeeks</small>
+                        <small>{{ row.organism_name }}</small>
+                        {% for assembly in row.transcriptome_list %}
+                            <div class="dropdown">
+                                <button class="btn btn-primary dropdown-toggle"
+                                        type="button"
+                                        id="dropdownMenuButton"
+                                        data-mdb-toggle="dropdown"
+                                        aria-expanded="false">{{ assembly }}</button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    {{ plots }}
+                                    {% for key, value in plots.items() %}
+                                        <li>
+                                            <a class="dropdown-item" href="#">{{ key }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <a>{{ assembly }}</a>
+                        {% endfor %}
                     </p>
                 </div>
             </button>
         </div>
-    </div>
-    <div class="swiper-button-next"></div>
-    <div class="swiper-button-prev"></div>
-    <div class="swiper-pagination"></div>
+    {% endfor %}
 </div>
-<!--Slider End-->
-<div class="row d-flex justify-content-center">
-    <div class="col-lg-2 col-md-6">
-        <button class="species card" type="button" style="width: 175px;height: 175px">
-            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                 class="card-img-bottom"
-                 height="175px"
-                 width="175px">
-            <div class="card-body card-img-overlay text-white">
-                <p class="card-text">
-                    <small>geeksforgeeks</small>
-                </p>
-            </div>
-        </button>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <button class="species card" type="button" style="width: 175px;height: 175px">
-            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                 class="card-img-bottom"
-                 height="175px"
-                 width="175px">
-            <div class="card-body card-img-overlay text-white">
-                <p class="card-text">
-                    <small>geeksforgeeks</small>
-                </p>
-            </div>
-        </button>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <button class="species card" type="button" style="width: 175px;height: 175px">
-            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                 class="card-img-bottom"
-                 height="175px"
-                 width="175px">
-            <div class="card-body card-img-overlay text-white">
-                <p class="card-text">
-                    <small>geeksforgeeks</small>
-                </p>
-            </div>
-        </button>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <button class="species card" type="button" style="width: 175px;height: 175px">
-            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                 class="card-img-bottom"
-                 height="175px"
-                 width="175px">
-            <div class="card-body card-img-overlay text-black">
-                <p class="card-text">
-                    <small>geeksforgeeks</small>
-                </p>
-            </div>
-        </button>
-    </div>
-    <div class="col-lg-2 col-md-6">
-        <button class="species card" type="button" style="width: 175px;height: 175px">
-            <img src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210322182256/angularjs-tutorial.png"
-                 class="card-img-bottom"
-                 height="175px"
-                 width="175px">
-            <div class="card-body card-img-overlay text-white">
-                <p class="card-text">
-                    <small>geeksforgeeks</small>
-                </p>
-            </div>
-        </button>
-    </div>
-</div>
+{% for _, row in organisms.iterrows() %}
+    {% for assembly in row.transcriptome_list %}
+        {% for key, value in plots.items() %}
+            <a class="dropdown-item"
+               href="/{{ row.organism_name }}/{{ assembly }}/{{ value }}/">{{ row.organism_name }} {{ assembly }} {{ key }}</a>
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
 <p>
     Trips-Viz is supported by Science Foundation Ireland and is a <a href="https://riboseq.org/">RiboSeq.org</a> and Elixir Resource.
     <img src="/static/SFI_logo.jpg" alt="SFI logo" height=100>
