@@ -35,36 +35,17 @@ def diffpage(organism: str, transcriptome: str) -> str:
     default_tran = organisms[3]
     studyinfo_dict = fetch_study_info(organism)
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = { # Send it to cokies side if possible
-        "user_short": str(request.args.get('short')),
-        "minreads": str(request.args.get('minread')),
-        "minzscore": str(request.args.get('minzscore')),
-        "region": str(request.args.get('region')),
-        "ambig": str(request.args.get('ambig')),
-        "plottype": str(request.args.get('plottype')),
-        "gene_list": str(request.args.get('gene_list')),
-        "transcript_list": str(request.args.get('transcript_list')),
-        "transcriptome": str(transcriptome),
-        "min_cov": str(request.args.get('min_cov')),
+    html_args = {**{ # Send it to cokies side if possible
         "riboseq_files_1": [],
         "riboseq_files_2": [],
         "rnaseq_files_1": [],
         "rnaseq_files_2": [],
-    }
-    for seq in ["riboseq", "rnaseq"]:
-        for typ in ["files", "labels"]:
-            for idx in ['1', '2']:
-                var = f"{seq}_{typ}_{idx}"
-                user_files = request.args.get(var)
-                if user_files:
-                    html_args[var] = user_files.split(",")
-                else:
-                    html_args[var] = []
+    },**request.args.to_dict()}
+    
 
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
-    connection.close()
     return render_template('index_diff_draggable.html',
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,

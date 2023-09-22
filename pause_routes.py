@@ -584,7 +584,7 @@ pausequery_blueprint = Blueprint("pausequery",
 @pausequery_blueprint.route('/pausequery', methods=['POST'])
 def pausequery():
 
-    data = json.loads(request.data)
+    data = request.args.to_dict()
     print("pausequery called", data)
     user, logged_in = fetch_user()
     return find_pauses(data, user, logged_in)

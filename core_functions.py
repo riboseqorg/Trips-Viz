@@ -840,35 +840,6 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
     return profile
 
 
-# Creates a dictionary of readlength counts
-def fetch_rld(sqlite_db: Dict[str, Dict[str, Dict[str, Dict[int, int]]]],
-              ambig_type: str):
-    rld = {}
-    for transcript in sqlite_db:
-        try:  # TODO: Simplify this code using pandas
-            transcript_dict = sqlite_db[transcript]["unambig"]
-            for rl in transcript_dict:
-                for pos in transcript_dict[rl]:
-                    count = transcript_dict[rl][pos]
-                    if rl not in rld:
-                        rld[rl] = 0
-                    rld[rl] += count
-                if ambig_type == "ambig":
-                    transcript_dict = sqlite_db[transcript]["ambig"]
-                    for rl in transcript_dict:
-                        for pos in transcript_dict[rl]:
-                            count = transcript_dict[rl][pos]
-                            if rl not in rld:
-                                rld[rl] = 0
-                            rld[rl] += count
-        except Exception:
-            continue
-    if ambig_type == "unambig":
-        sqlite_db["unambig_read_lengths"] = rld
-    elif ambig_type == "ambig":
-        sqlite_db["read_lengths"] = rld
-    return rld
-
 
 def fetch_filename_file_id(file_id: int) -> str:
     '''

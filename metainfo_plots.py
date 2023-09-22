@@ -39,52 +39,6 @@ line_tooltip_css = """
 """
 
 
-def mismatches(
-    master_dict: Dict[str, int],
-    title: str,
-    short_code: str,
-    background_col: str,
-    title_size: int,
-    # axis_label_size, subheading_size,
-    marker_size: int,
-) -> str:
-    fig, ax = plt.subplots(figsize=(13, 8))
-    #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
-    ax.set_xlabel('Position', fontsize="26")
-    ax.set_ylabel('Count', fontsize="26", labelpad=50)
-    if master_dict.values():
-        ax.set_ylim(0, max(master_dict.values()) * 1.25)
-    else:
-        ax.set_ylim(0, 1)
-    width = 0.90
-    #plot it
-    ax = plt.subplot(111)
-    title_str = "{} ({})".format(title, short_code)
-    ax.set_title(title_str, y=1.05, fontsize=title_size)
-    ax.bar(master_dict.keys(),
-           master_dict.values(),
-           width,
-           color="green",
-           linewidth=0,
-           align="center")
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=18)
-    ax.set_ylabel('Count', labelpad=100, fontsize="26")
-    ax.set_xlabel('Readlength', fontsize="26")
-    ax.tick_params('both', labelsize=marker_size)
-    #ax.xaxis.set_major_locator(plt.MaxNLocator(3))
-    #ax.yaxis.set_major_locator(plt.MaxNLocator(3))
-    #plt.rc('axes', linewidth=40,edgecolor="green")
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    plugins.connect(fig, TopToolbar(yoffset=750, xoffset=600),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
-    return graph
-
 
 def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
     maxval = max(master_dict.values())

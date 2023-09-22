@@ -27,7 +27,7 @@ def calc_gc(seq):
 @traninfo_plotpage_blueprint.route('/<organism>/<transcriptome>/traninfo_plot/'
                                    )
 def traninfo_plotpage(organism: str, transcriptome: str) -> str:
-        print(organism, transcriptome)
+    print(organism, transcriptome)
 
     user = fetch_user()[0]
     accepted_studies = fetch_studies(user, organism, transcriptome)

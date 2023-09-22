@@ -1535,6 +1535,6 @@ orfquery_blueprint = Blueprint("orfquery",
 
 @orfquery_blueprint.route('/orfquery', methods=['POST'])
 def orfquery():
-    data = json.loads(request.data)
+    data = request.args.to_dict()
     user, logged_in = fetch_user()
     return find_orfs(data, user, logged_in)

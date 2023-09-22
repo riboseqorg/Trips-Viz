@@ -9,7 +9,7 @@ import riboflask
 from flask_login import current_user
 import logging
 import json
-from sqlqueries import sqlquery
+from sqlqueries import sqlquery, get_table
 try:
     from orfQuant import incl_OPM_run_orfQuant
     from tripsTPM import TPM
@@ -25,62 +25,40 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
 @single_transcript_plotpage_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot/')
 def interactiveplotpage(organism: str, transcriptome: str) -> str:
-    
+
     accepted_studies = fetch_studies(organism, transcriptome)
-    _, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
-    print(accepted_studies)
-    print(accepted_files)
-    print(seq_types)
+    # _, accepted_studies, accepted_files, seq_types = fetch_files(
+    # accepted_studies)
+    # print(accepted_studies)
+    # print(accepted_files)
+    # print(seq_types)
     gwips = get_table("organisms")
-    gwips_info = gwips.loc[gwips.organism_name == organism & gwips.transcriptome_list == transcriptome, [
-        "gwips_clade", "gwips_organism", "gwips_database","default_transcript"
-    ]].iloc[0]
+    print(gwips)
+    print(request.args.get('tran'), request.args.to_dict(), "anmol")
+    gwips_info = gwips.loc[(gwips.organism_name == organism)
+                           & (gwips.transcriptome_list == transcriptome), [
+                               "gwips_clade", "gwips_organism",
+                               "gwips_database", "default_transcript"
+                           ]].iloc[0]
 
-    default_tran = gwips_info['default_transcript']
+    default_transcript = gwips_info['default_transcript']
     studyinfo_dict = fetch_study_info(organism)
-    user_transcript = request.args.get('tran')
-    user_readscore = request.args.get('rs')
-    user_hili = request.args.get('hili')
-    user_generate_shorturl = request.args.get('genshort')
-    user_files = request.args.get('files')
-    user_minread = request.args.get('minread')
-    user_maxread = request.args.get('maxread')
-    user_dir = request.args.get('dir')
-    user_line_graph = request.args.get('lg')
-    user_ambig = request.args.get('ambig')
-    user_cov = request.args.get('cov')
-    user_nuc = request.args.get('nuc')
-    user_short = request.args.get('short')
-    user_crd = request.args.get('crd')
+    template_dict = request.args.to_dict()
 
-    if user_files:
-        user_files = user_files.split(",")
-        user_files = [str(x) for x in user_files]
-    else:
-        user_files = []
+    user_files = template_dict['user_files'].split(
+        ",") if 'user_files' in template_dict else []
 
-    user_ribo_studies = request.args.get('ribo_studies')
-    if user_ribo_studies:
-        user_ribo_studies = user_ribo_studies.split(",")
-        user_ribo_studies = [str(x) for x in user_ribo_studies]
-    else:
-        user_ribo_studies = []
-    user_proteomics_studies = request.args.get('proteomics_studies')
-    if user_proteomics_studies:
-        user_proteomics_studies = user_proteomics_studies.split(",")
-        user_proteomics_studies = [str(x) for x in user_proteomics_studies]
-    else:
-        user_proteomics_studies = []
+    user_ribo_studies = template_dict['user_ribo_studies'].split(
+        ",") if 'user_ribo_studies' in template_dict else []
 
-    user_rna_studies = request.args.get('rna_studies')
-    if user_rna_studies:
-        user_rna_studies = user_rna_studies.split(",")
-        user_rna_studies = [str(x) for x in user_rna_studies]
-    else:
-        user_rna_studies = []
+    user_proteomics_studies = template_dict['user_proteomics_studies'].split(
+        ",") if 'user_proteomics_studies' in template_dict else []
 
-    user_generate_shorturl = False if user_generate_shorturl == "F" else True
+    user_rna_studies = template_dict['user_rna_studies'].split(
+        ",") if 'user_rna_studies' in template_dict else []
+
+    user_generate_shorturl = False if template_dict[
+        'user_generate_shorturl'] == "F" else True
 
     user_hili_starts = []
     user_hili_stops = []
@@ -101,32 +79,9 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     consent = request.cookies.get("cookieconsent_status")
     rendered_template = render_template(
         'index.html',
-        gwips_info=gwips_info,
-        organism=organism,
-        transcriptome=transcriptome,
-        default_tran=default_tran,
-        user_transcript=user_transcript,
-        user_readscore=user_readscore,
-        user_hili_starts=user_hili_starts,
-        user_hili_stops=user_hili_stops,
-        studies_dict=accepted_studies,
-        accepted_files=accepted_files,
-        user_files=user_files,
-        user_ribo_studies=user_ribo_studies,
-        user_proteomics_studies=user_proteomics_studies,
-        user_rna_studies=user_rna_studies,
-        user_minread=user_minread,
-        user_maxread=user_maxread,
-        user_dir=user_dir,
-        user_line_graph=user_line_graph,
-        user_ambig=user_ambig,
-        user_cov=user_cov,
-        user_nuc=user_nuc,
-        user_short=user_short,
-        user_crd=user_crd,
-        studyinfo_dict=studyinfo_dict,
-        advanced=advanced,
-        seq_types=seq_types)
+        template_dict=template_dict
+        
+        )
     if consent == "deny":
         rendered_template = make_response(rendered_template)
         for cookie_name in request.cookies:
@@ -152,11 +107,8 @@ def query() -> str:
     tran_dict = {}
     gene_dict = {}
     ribo_user_files = {}
-    print("raw data", request.data)
-    data = json.loads(request.data)
-    print("PROCESSED DATA", data)
-    print(data.keys())
-
+    template_dict = request.args.to_dict()
+    
     tran = data['transcript'].upper().strip()
     readscore = data['readscore']
     secondary_readscore = data['secondary_readscore']

@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union, Any, Hashable, Unknown
+from typing import Dict, List, Tuple, Union, Any, Hashable  #, Unknown
 from typing_extensions import Literal
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
@@ -36,7 +36,7 @@ def get_table(table: str) -> pd.DataFrame:
                     table)
 
 
-def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[Hashable, Unknown]:
+def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[Hashable, Any]:
     '''
     Convert a table to a dictionary of lists. 
     >>> data = {'key1': [1, 2, 3], 'key2': [4, 5, 6], 'key3': [7, 8, 9], 

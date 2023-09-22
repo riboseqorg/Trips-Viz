@@ -63,12 +63,8 @@ def count_read_supporting_regions_per_transcript(
             if transcript not in exons_counts:
                 exons_counts[transcript] = [0] * len(regions[transcript])
 
-            exon_num = 0
-            for exon in regions[transcript]:
-                exon_num += 1
-                if exon[0] == exon[1]:
-                    continue
-                if (read in range(exon[0], exon[1] + 1)):
+            for exon_num, exon in enumerate(regions[transcript], 1):
+                if (exon[0] != exon[1]) and (exon[0] <= read <= exon[1]):
                     exons_counts[transcript][exon_num] += 1
     return exons_counts
 

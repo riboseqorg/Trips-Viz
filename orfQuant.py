@@ -36,23 +36,6 @@ def classify_regions_shared_unique(
     return classified
 
 
-def get_orf_coordinate_junctions(
-    orf_coordinates: Dict[str, Dict[int, List[int]]]
-) -> Dict[str, List[List[int]]]:
-    # Get the coordinates of junctions within ORFs. Returns a dictionary with transcripts as keys and a list of jucntions
-    # as values. Essentially reformats orf_coordinates to be junction oriented.
-    junctions = {}
-    for transcript in orf_coordinates:
-        if transcript not in junctions:
-            junctions[transcript] = []
-        for i in range(len(orf_coordinates[transcript]) - 1):
-            junctions[transcript].append(
-                (orf_coordinates[transcript][i][1],
-                 orf_coordinates[transcript][i + 1][0] - 1))
-
-    return junctions
-
-
 def region_coverage(
         regions: Dict[str, List[str]],
         counts: Dict[str, List[int]]) -> Dict[str, Dict[str, float]]:
@@ -305,17 +288,6 @@ def ORFs_per_million(aORF: Dict[str, float],
             orfs_per_million[transcript] = aORF_lORF[transcript] * (10**6 /
                                                                     full_set)
     return orfs_per_million
-
-
-def pct_gene_signal_per_orf(aORF: Dict[str, float]) -> Dict[str, float]:
-    # Value related to OPM above but as a proportional of expression from the locus. between 0 & 1
-    total_aORF = sum(aORF.values())
-
-    pct_ORF = {}
-    for transcript in aORF:
-        pct_ORF[transcript] = aORF[transcript] / total_aORF
-
-    return pct_ORF
 
 
 def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
