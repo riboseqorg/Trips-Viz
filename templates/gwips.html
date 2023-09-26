@@ -1,13 +1,13 @@
 <div id="gwips">
-    <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
-        <button class="button centerbutton" type="submit">
-            <b>View on GWIPS-Viz</b>
-        </button>
-    </a>
+  <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
+    <button class="button centerbutton" type="submit">
+      <b>View on GWIPS-Viz</b>
+    </button>
+  </a>
 </div>
 <script>
   $(document).on('change',function(){
                   var userInput = $('#tran').val();
-  $('#gwips_link').href = "https://gwips.ucc.ie/cgi-bin/hgTracks?clade="+{{ gwips_info['gwips_clade']}}+"&org="+{{gwips_info['gwips_organism']}}+"&orgname="+{{ gwips_organism}}+"&db="+{{gwips_info['gwips_database']}}+"&position=" + userInput + "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835";
+  $('#gwips_link').href = "https://gwips.ucc.ie/cgi-bin/hgTracks?clade="+{{ template_dict['gwips_info']['gwips_clade']}}+"&org="+{{template_dict['gwips_info']['gwips_organism']}}+"&orgname="+{{template_dict['gwips_info']['gwips_organism']}}+"&db="+{{template_dict['gwips_info']['gwips_database']}}+"&position=" + userInput + "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835";
   });
 </script>
