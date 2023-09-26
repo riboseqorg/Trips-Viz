@@ -1,10 +1,7 @@
 {% extends "layout.html" %}
 {% block static_head %}
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/common.css') }}">
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/triplet_periodicity.css') }}">
-    <script></script>
+    <link rel="stylesheet" href='static/css/common.css'>
+    <link rel="stylesheet" href='static/css/triplet_periodicity.css'>
 {% endblock %}
 {% block content %}
     <div id="page_heading">
@@ -23,10 +20,10 @@
    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
                         </div>
                         <div class="col-2">
-                            <input id="tran"
+                            <input id="user_transcript"
                                    name="transcript"
                                    type="text"
-                                   value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_tran|safe }} {% endif %}"/>
+                                   value="{% if user_transcript %} {{ user_transcript|safe }} {% else %}{{ default_transcript |safe }} {% endif %}" />
                         </div>
                     </div>
                     <div class="row">
@@ -36,12 +33,12 @@
    href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
                         </div>
                         <div class="col-2">
-                            <input id="readscore"
+                            <input id="user_readscore"
                                    type="number"
                                    min="0"
                                    max="100"
                                    name="readscore"
-                                   value="{% if user_readscore %} {{ user_readscore|safe }} {% else %} 0 {% endif %}"/>
+                                   value="{% if user_readscore %} {{ user_readscore|safe }} {% else %} 0 {% endif %}" />
                         </div>
                     </div>
                     <div class="row">
@@ -51,12 +48,12 @@
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
                         </div>
                         <div class="col-2">
-                            <input id="minread"
+                            <input id="user_minread"
                                    type="number"
                                    min="1"
                                    max="100"
                                    name="minread"
-                                   value="{% if user_minread %} {{ user_minread|safe }} {% else %} 5 {% endif %}"/>
+                                   value="{% if user_minread %} {{ user_minread|safe }} {% else %} 5 {% endif %}" />
                         </div>
                     </div>
                     <div class="row">
@@ -66,11 +63,11 @@
     href="https://trips.ucc.ie/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
                         </div>
                         <div class="col-2">
-                            <input id="maxread"
+                            <input id="user_maxread"
                                    type="number"
                                    min="1"
                                    name="maxread"
-                                   value="{% if user_maxread %} {{ user_maxread|safe }} {% else %} 150 {% endif %}"/>
+                                   value="{% if user_maxread %} {{ user_maxread|safe }} {% else %} 150 {% endif %}" />
                         </div>
                     </div>
                     <div class="row">
@@ -111,12 +108,8 @@
                         </div>
                         <div class="col-2">
                             <select id="offsite">
-                                <option value="fiveprime">
-                                    5'
-                                </option>
-                                <option value="threeprime">
-                                    3'
-                                </option>
+                                <option value="fiveprime">5'</option>
+                                <option value="threeprime">3'</option>
                             </select>
                         </div>
                     </div>
@@ -129,7 +122,7 @@
                                    type="checkbox"
                                    name="namelite"
                                    value="lite1"
-                                   {% if user_line_graph == "T" %} checked {% else %} {% endif %}/>
+                                   {% if user_line_graph == "T" %} checked {% else %} {% endif %} />
                         </div>
                         <div class="col-4">
                             <label for='line_graph' class='padded_label'>Line Graph</label>
@@ -145,7 +138,7 @@
                                    type="checkbox"
                                    name="ambiguous"
                                    value="ambiguous"
-                                   {% if user_ambig=="T" %} checked {% else %}  {% endif %}/>
+                                   {% if user_ambig=="T" %} checked {% else %}  {% endif %} />
                         </div>
                         <div class="col-4">
                             <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
@@ -160,7 +153,7 @@
                                    id="pcr_check"
                                    type="checkbox"
                                    name="pcr"
-                                   value="pcr"/>
+                                   value="pcr" />
                         </div>
                         <div class="col-4">
                             <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
@@ -177,7 +170,7 @@
                                    name="coverage"
                                    value="coverage"
                                    id="coverageid"
-                                   {% if user_cov=="T" %} checked {% else %} {% endif %}/>
+                                   {% if user_cov=="T" %} checked {% else %} {% endif %} />
                         </div>
                         <div class="col-4">
                             <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
@@ -193,7 +186,7 @@
                                    type="checkbox"
                                    name="mismatchseq"
                                    value="mismatchseq"
-                                   id="mismatchseqid"/>
+                                   id="mismatchseqid" />
                         </div>
                         <div class="col-4">
                             <label for='mismatch_check' class='padded_label'>Display mismatches</label>
@@ -231,7 +224,7 @@
                 </div>
             </div>
             <div class="row">
-                {% for seq_type in seq_types %}
+                {% for seq_type in template_dict["seq_types"] %}
                     <div class="col-sm-6">
                         <input type="radio"
                                class="seq_type_radio all_checks"
@@ -273,80 +266,84 @@
             <div class="{{ study_type }}">
                 <div class="row">
                     <div class="col">
-                        {% for index, study_detail in studies_dict.items() %}
+                        {% for _, row in template_dict["accepted_studies"].iterrows() %}
                             <td>
                                 <input type="radio"
                                        checked=""
                                        class="study_radio"
-                                       id="study{{ index }}"
+                                       id="study{{ row.study_id }}"
                                        name="content_type"
-                                       value="study{{ index }}"
+                                       value="study{{ row.study_id }}"
                                        {% if loop.first %} checked {% else %} {% endif %}>
-                                <label for="study{{ index }}"
-                                       id="label{{ index }}"
+                                <label for="study{{ row.study_id }}"
+                                       id="label{{ row.study_id }}"
                                        class="radio_label"
                                        style="border-color: rgb(119, 171, 255);
-                                              opacity: 1">
-                                    {{ study_detail['study_name'] }}
-                                </label>
+                                              opacity: 1">{{ row.study_name }}</label>
                             </td>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-        anmol
-        {{  studies_dict|safe  }}
-        kiran
-        {{  studyinfo_dict|safe  }}
-        idiot
-        {{ accepted_files|safe }} <!--Simplyfy this-->
         <div id="files">
             <p>
-                <b><u>Files</u></b>
+                <b><u>Files[ 0 Selected ]</u></b>
             </p>
         </br>
-        {% for seq, projects in accepted_files.items() %}
-            {{(seq == 'rnaseq') and ('riboseq' in accepted_files)}}
+        {% for seq_type in template_dict["seq_types"] %}
+            <div class="{{ seq_type }}">
+                {% for _, row in template_dict["accepted_studies"].iterrows() %}
+                    <div class="{{ row.study_name }}">
+                        {% for file in files %}
+                            {% if file.study_id == row.study_id %}
+                            {% else %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        {% for row1 in studies_and_files %}
+            <!--TODO: Fix the selection--> <!--TODO: Make a selection for rnaseq and riboseqonly -->
             <div class="show"
-                 id="{{ seq }}study0"
-                 {% if (seq == 'rnaseq') and ('riboseq' in accepted_files) %} style="display: none;" {% endif %}>
+                 id="{{ row1.seqtype }}study0"
+                 {% if (row1.seqtype == 'rnaseq') and ('riboseq' in accepted_files) %}style="display: none;"{% endif %}>
                 <div class="row">
-                    <div class="col" id="0{{ seq }}">
-                        {% for project_id, file_metas in projects.items() %}
-                            {% for file_id, value in file_metas.items() %}
+                    <div class="col" id="0{{ row1.seqtype }}">
+                        {% for row2 in studies_and_files %}
+                            {% if row2.seqtype == row1.seqtype %}
                                 <div class="col-6">
-                                    <input id="{{ value['file_name'] }}{{ file_id }}_check"
+                                    <input id="{{ row2.file_name }}{{ row2.file_id }}_check"
                                            type="checkbox"
-                                           class="file_check file_{{ file_id }} all_checks {{ seq }}_file {{ seq }}_study0"
+                                           class="file_check file_{{ row2.file_id }} all_checks {{ row2.seqtype }}_file {{ row2.seqtype }}_study0"
                                            name="9"
                                            value="inputfile">
-                                    <label for="{{ value['file_name'] }}{{ file_id }}_check"
+                                    <label for="{{ row2.file_name }}{{ row2.file_id }}_check"
                                            class="padded_label">
-                                        <b>{{ value['file_name'] }}</b>:{{ value['file_description'] }}
+                                        <b>{{ row2.file_name }}</b>:{{ row2.file_description }}
                                     </label>
                                 </div>
-                            {% endfor %}
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </div>
-            </div>
-        {% endfor %}
-    </form>
-</div>
-<div id="buttons"></div>
-{% include 'gwips.html' %}
-<div id="view_plot" class="wrapper">
-    <button class="button"
-            type="button"
-            onclick="changebuttonlink(gwips_info)"
-            id="query">
-        <b>View Plot</b>
-    </button>
-</div>
-	{% include 'loading.html' %}
-{% block footer_static %}
-    <script> // Toggles project and samples visibility
+            {% endfor %}
+        </form>
+    </div>
+    <div id="buttons"></div>
+    {% include 'gwips.html' %}
+    <div id="view_plot" class="wrapper">
+        <button class="button"
+                type="button"
+                onclick="changebuttonlink(gwips_info)"
+                id="query">
+            <b>View Plot</b>
+        </button>
+    </div>
+    {% include 'loading.html' %}
+    {% block footer_static %}
+        <script> // Toggles project and samples visibility
         $('input[name="seq_type"]').on("click", function() {
             let seq_type = $('input[name = "seq_type"]:checked').val();
             $(document).ready(function() { // Toggles project and samples visibility
@@ -372,9 +369,8 @@
                 this.checked = true;
             });
         }       
-    </script>
-    <script>// Project specific sample visibility toggle</script>
-    <script> // select/deselect all using buttons
-    </script>
-{% endblock %}
+        </script>
+        <script>// Project specific sample visibility toggle</script>
+        <script>// select/deselect all using buttons</script>
+    {% endblock %}
 {% endblock %}
