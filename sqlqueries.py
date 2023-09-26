@@ -15,6 +15,7 @@ from sqlalchemy import insert, delete, update
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
     engine = create_engine('sqlite:///' + sqlfilepath).connect()
     table = pd.read_sql_table(table_name=tablename, con=engine)
+    print(table.columns)
     return table
 
 
@@ -22,7 +23,7 @@ def sqldict2table(sqldict: Dict, tablename: str) -> pd.DataFrame:
     return pd.DataFrame(sqldict)
 
 
-def get_user_id(username: str | None) -> int:
+def get_user_id(username: str) -> int:
     '''Return the user_id for a given username'''
     users = sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),
                      'users')
@@ -40,16 +41,19 @@ def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[Hashable, Any]:
     '''
     Convert a table to a dictionary of lists. 
     >>> data = {'key1': [1, 2, 3], 'key2': [4, 5, 6], 'key3': [7, 8, 9], 
-    ... 'key4': [10, 11, 12]}
+    ... 'key4': [10, 11, 12], 'key5': [13, 14, 15]}
     >>> table = pd.DataFrame(data)
     >>> table2dict(table, ['key1', 'key2', 'key3'])
-    >>> {1:{4:{7:[10]}}, 2:{5:{8:[11]}}, 3:{6:{9:[12]}}}
+    >>> {1:{4:{7:[10,13]}}, 2:{5:{8:[11,14]}}, 3:{6:{9:[12,15]}}}
 
     '''
-    return {
-        n: grp.loc[n].to_dict('index')
-        for n, grp in table.set_index(keys).groupby(level=keys[0])
-    }
+    if not keys:
+        return table.values.tolist()[0]
+    key = keys[0]
+    result = {}
+    for k, group in table.groupby(key):
+        result[k] = table2dict(group.drop(columns=[key]), keys[1:])
+    return result
 
 
 def update_table(table: str,
