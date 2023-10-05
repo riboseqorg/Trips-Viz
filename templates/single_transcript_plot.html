@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
-{% block static_head %}
-    <link rel="stylesheet" href='static/css/common.css'>
-    <link rel="stylesheet" href='static/css/triplet_periodicity.css'>
+{% block header_static %}
+    <link rel="stylesheet" href='/static/css/triplet_periodicity.css'>
+    <script src='/static/js/aks/interaction.js'></script>
 {% endblock %}
 {% block content %}
     <form>
@@ -19,43 +19,11 @@
     <div id="buttons"></div>
     {% include 'gwips.html' %}
     <div id="view_plot" class="wrapper">
-        <button class="button"
-                type="button"
-                onclick="changebuttonlink(gwips_info)"
-                id="query">
+        <button class="button" type="button" onclick="linkAndPlot('form')" id="query">
             <b>View Plot</b>
         </button>
     </div>
     {% include 'loading.html' %}
-    {% block footer_static %}
-        <script> // Toggles project and samples visibility
-        $('input[name="seq_type"]').on("click", function() {
-            let seq_type = $('input[name = "seq_type"]:checked').val();
-            $(document).ready(function() { // Toggles project and samples visibility
-                $('.seqtype').children().each(function(child) { // Project visibility
-                    if (child.hasClass( seq_type)) {
-                        child.style.display = "block";
-                    } else {
-                        child.style.display = "none";
-                    }
-                });
-                
-
-            });
-        });
- // Toggle all files
-        function uncheck_all_multi() { // deselect all
-            $("#files :input").each(function() {
-                this.checked = false;
-            });
-        }
-        function check_all_multi() { // select all
-            $("#files :input").each(function() {
-                this.checked = true;
-            });
-        }       
-        </script>
-        <script>// Project specific sample visibility toggle</script>
-        <script>// select/deselect all using buttons</script>
-    {% endblock %}
+    {% include 'plot.html' %}
+    {% block footer_static %}{% endblock %}
 {% endblock %}
