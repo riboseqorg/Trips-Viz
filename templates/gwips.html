@@ -1,13 +1,20 @@
-<div id="gwips">
-  <a href="http://gwips.ucc.ie" id="gwips_link" target="_blank">
-    <button class="button centerbutton" type="submit">
-      <b>View on GWIPS-Viz</b>
-    </button>
+<div id="gwips" class="button centerbutton">
+  <a
+    href="https://gwips.ucc.ie/cgi-bin/hgTracks?db={{ template_dict['gwips_info']['gwips_clade']}}&org={{template_dict['gwips_info']['gwips_organism']}}&clade={{template_dict['gwips_info']['gwips_database']}}&position={{template_dict['user_transcript']}}&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835"
+    id="gwips_link"
+    target="_blank"
+  >
+    <b>View on GWIPS-Viz</b>
   </a>
 </div>
 <script>
-  $(document).on('change',function(){
-                  var userInput = $('#tran').val();
-  $('#gwips_link').href = "https://gwips.ucc.ie/cgi-bin/hgTracks?clade="+{{ template_dict['gwips_info']['gwips_clade']}}+"&org="+{{template_dict['gwips_info']['gwips_organism']}}+"&orgname="+{{template_dict['gwips_info']['gwips_organism']}}+"&db="+{{template_dict['gwips_info']['gwips_database']}}+"&position=" + userInput + "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835";
+  $(document).on("change", function () {
+    var userInput = $("#user_transcript").val();
+    $("a#gwips_link").attr(
+      "href",
+      "https://gwips.ucc.ie/cgi-bin/hgTracks?clade={{ template_dict['gwips_info']['gwips_clade']}}&org={{template_dict['gwips_info']['gwips_organism']}}&orgname={{template_dict['gwips_info']['gwips_organism']}}&db={{template_dict['gwips_info']['gwips_database']}}&position=" +
+        userInput +
+        "&Submit=submit&hgsid=39696_i99V6EU3BDqA1tdBqCHlfiiNDpJN&pix=1835",
+    );
   });
 </script>
