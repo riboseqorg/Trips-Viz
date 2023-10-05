@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block static_head %}
+    <link rel="stylesheet" href='static/css/common.css'>
+    <link rel="stylesheet" href='static/css/triplet_periodicity.css'>
+{% endblock %}
+{% block content %}
+    <form>
+        {% include "single_transcript_plot__general_settings.html" %}
+        {% include "single_transcript_plot__files.html" %}
+        {# NOTE: Second part of the options #}
+    </form>
+    <div id="onscreen">
+        <div id = "dialog-2" title = "Choose a transcript..."></div>
+        <div id = "study_dialog" title = "Study info">
+            <table>
+            </table>
+        </div>
+    </div>
+    <div id="buttons"></div>
+    {% include 'gwips.html' %}
+    <div id="view_plot" class="wrapper">
+        <button class="button"
+                type="button"
+                onclick="changebuttonlink(gwips_info)"
+                id="query">
+            <b>View Plot</b>
+        </button>
+    </div>
+    {% include 'loading.html' %}
+    {% block footer_static %}
+        <script> // Toggles project and samples visibility
+        $('input[name="seq_type"]').on("click", function() {
+            let seq_type = $('input[name = "seq_type"]:checked').val();
+            $(document).ready(function() { // Toggles project and samples visibility
+                $('.seqtype').children().each(function(child) { // Project visibility
+                    if (child.hasClass( seq_type)) {
+                        child.style.display = "block";
+                    } else {
+                        child.style.display = "none";
+                    }
+                });
+                
+
+            });
+        });
+ // Toggle all files
+        function uncheck_all_multi() { // deselect all
+            $("#files :input").each(function() {
+                this.checked = false;
+            });
+        }
+        function check_all_multi() { // select all
+            $("#files :input").each(function() {
+                this.checked = true;
+            });
+        }       
+        </script>
+        <script>// Project specific sample visibility toggle</script>
+        <script>// select/deselect all using buttons</script>
+    {% endblock %}
+{% endblock %}

@@ -1,0 +1,108 @@
+<div id="page_heading">
+    <p>
+        <font size="5"><b><u>File Selection</u></b></font>
+    </p>
+</div>
+<div class="page-section">
+    <div id="seq_types">
+        <div class="row">
+            <div class="col">Seq Types</div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
+                    <b>Uncheck All Files With Selected Seq-type</b>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="button all_checks" type="button" onclick='check_all_multi()'>
+                    <b>Check All Files with Selected Seq-type</b>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            {% for seq_type in template_dict["studies_and_files"] %}
+                <div class="col-sm-6">
+                    <input type="radio"
+                           class="seq_type_radio all_checks"
+                           id="{{ seq_type }}"
+                           name="seq_type"
+                           value="{{ seq_type }}"
+                           {% if loop.first %} checked {% else %} {% endif %}>
+                    <label for="{{ seq_type }}" id="label{{ seq_type }}" class="radio_label">{{ seq_type }}</label>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="studies_box">
+        <!--TODO: Change it to class-->
+        <div class="row">
+            <div class="col">Studies</div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <button class="study_button" type="button" onclick='view_study_info()'>
+                    <b>View study info</b>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <button class="button all_checks" type="button" onclick="uncheck_all_multi()">
+                    <b>Uncheck All files in Files box</b>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="button all_checks" type="button" onclick="check_all_multi()">
+                    <b>Check All files in Files box</b>
+                </button>
+            </div>
+        </div>
+        {% for study_type, studies in template_dict["studies_and_files"].items() %}
+            <div class="{{ study_type }}">
+                <div class="row">
+                    {% for study in template_dict["accepted_studies"] %}
+                        <div class="col">
+                            <input type="radio"
+                                   class="study_radio"
+                                   id="study{{ study }}"
+                                   name="content_type"
+                                   value="study{{ study }}"
+                                   {% if loop.first %} checked {% else %} {% endif %}>
+                            <label for="study{{ study }}"
+                                   id="label{{ study }}"
+                                   class="radio_label"
+                                   style="border-color: rgb(119, 171, 255);
+                                          opacity: 1">{{ study }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="files">
+        <p>
+            <b><u>Files[ 0 Selected ]</u></b>
+        </p>
+        {% for study_type, studies in template_dict["studies_and_files"].items() %}
+            <div class="{{ study_type }}">
+                {% for study, files in studies.items() %}
+                    <div class="{{ study }}">
+                        {% for file,desc in files.items() %}
+                            <div class="file">
+                                <input type="checkbox"
+                                       class="{{ seq_type }} {{ study }}"
+                                       id="{{ file[0] }}"
+                                       name="{{ seq_type }}_{{ file[0] }}"
+                                       value="{{ file[1] }}"
+                                       {% if loop.first %} checked {% else %} {% endif %}>
+                                <label for="{{ file }}" id="label{{ file[0] }}" class="radio_label">{{ file[1] }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </br>
+</div>
+</div>

@@ -1,0 +1,200 @@
+<div class="page-section">
+    <div class="row">
+        <div class="col">{{ template_dict['organism'] }}</div>
+        <div class="col">{{ template_dict['transcriptome'] }}</div>
+    </div>
+</div>
+<div id="page_heading">
+    <p>
+        <font size="5"><b><u>General Settings</u></b></font>
+    </p>
+</div>
+<div class="page-section">
+    <div class="row">
+        <div class="col-6">
+            <div class="row">
+                <div class="col-4">
+                    <b>Gene/Transcript:</b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="user_transcript"
+                           name="transcript"
+                           type="text"
+                           value="{{ template_dict['user_transcript'] }}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Min triplet periodicity score:</b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="user_readscore"
+                           type="number"
+                           min="0"
+                           max="100"
+                           name="readscore"
+                           value="{% if  template_dict['user_readscore'] %}{{ template_dict['user_readscore'] }}{% else %}0{% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Min Read: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="user_minread"
+                           type="number"
+                           min="1"
+                           max="100"
+                           name="minread"
+                           value="{% if template_dict['user_minread'] %}{{ template_dict['user_minread'] }}{% else %}5{% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Max Read: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="user_maxread"
+                           type="number"
+                           min="1"
+                           name="maxread"
+                           value="{% if template_dict['user_maxread'] %}{{ template_dict['user_maxread'] }}{% else %}150{% endif %}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight sequences list: </b></tran> <a class="whatsthis"
+    target="_blank"
+    href="/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input id="seqhili" name="seqhili" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight start: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input type="text" id="hili_start" name="hili_start" value="0" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight stop: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <input type="text" id="hili_stop" name="hili_stop" value="0" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Offset Direction: </b> <a class="whatsthis"
+    target="_blank"
+    href="/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432;</a>
+                </div>
+                <div class="col-2">
+                    <select id="offsite">
+                        <option value="fiveprime">5'</option>
+                        <option value="threeprime">3'</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="row">
+                <div class="col-2">
+                    <input class="line_graph"
+                           id="line_graph"
+                           type="checkbox"
+                           name="namelite"
+                           value="lite1"
+                           {% if user_line_graph == "T" %} checked {% else %} {% endif %} />
+                </div>
+                <div class="col-4">
+                    <label for='line_graph' class='padded_label'>Line Graph</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_line">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="ambig_check"
+                           id="ambig_check"
+                           type="checkbox"
+                           name="ambiguous"
+                           value="ambiguous"
+                           {% if user_ambig=="T" %} checked {% else %}  {% endif %} />
+                </div>
+                <div class="col-4">
+                    <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="pcr_check"
+                           id="pcr_check"
+                           type="checkbox"
+                           name="pcr"
+                           value="pcr" />
+                </div>
+                <div class="col-4">
+                    <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_pcr">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="cov_check"
+                           id="cov_check"
+                           type="checkbox"
+                           name="coverage"
+                           value="coverage"
+                           id="coverageid"
+                           {% if user_cov=="T" %} checked {% else %} {% endif %} />
+                </div>
+                <div class="col-4">
+                    <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <input class="mismatch_check"
+                           id="mismatch_check"
+                           type="checkbox"
+                           name="mismatchseq"
+                           value="mismatchseq"
+                           id="mismatchseqid" />
+                </div>
+                <div class="col-4">
+                    <label for='mismatch_check' class='padded_label'>Display mismatches</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
