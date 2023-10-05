@@ -32,6 +32,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     # print(accepted_studies)
     # print(accepted_files)
     # print(seq_types)
+    template_dict = request.args.to_dict()
     gwips = get_table("organisms")
     print(gwips)
     print(request.args.get('tran'), request.args.to_dict(), "anmol")
@@ -41,24 +42,10 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
                                "gwips_database", "default_transcript"
                            ]].iloc[0]
 
-    default_transcript = gwips_info['default_transcript']
+    template_dict['transcript'] = gwips_info['default_transcript']
+    template_dict['gwips'] = gwips_info
     studyinfo_dict = fetch_study_info(organism)
     template_dict = request.args.to_dict()
-
-    user_files = template_dict['user_files'].split(
-        ",") if 'user_files' in template_dict else []
-
-    user_ribo_studies = template_dict['user_ribo_studies'].split(
-        ",") if 'user_ribo_studies' in template_dict else []
-
-    user_proteomics_studies = template_dict['user_proteomics_studies'].split(
-        ",") if 'user_proteomics_studies' in template_dict else []
-
-    user_rna_studies = template_dict['user_rna_studies'].split(
-        ",") if 'user_rna_studies' in template_dict else []
-
-    user_generate_shorturl = False if template_dict[
-        'user_generate_shorturl'] == "F" else True
 
     user_hili_starts = []
     user_hili_stops = []
@@ -77,11 +64,8 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
         user_maxread = None
     advanced = 'True'
     consent = request.cookies.get("cookieconsent_status")
-    rendered_template = render_template(
-        'index.html',
-        template_dict=template_dict
-        
-        )
+    rendered_template = render_template('index.html',
+                                        template_dict=template_dict)
     if consent == "deny":
         rendered_template = make_response(rendered_template)
         for cookie_name in request.cookies:
@@ -103,26 +87,9 @@ def query() -> str:
         user = current_user.name
     except Exception:
         user = None
-    #print "user", user
-    tran_dict = {}
-    gene_dict = {}
-    ribo_user_files = {}
-    template_dict = request.args.to_dict()
-    
-    tran = data['transcript'].upper().strip()
-    readscore = data['readscore']
-    secondary_readscore = data['secondary_readscore']
-    minread = int(data['minread'])
-    maxread = int(data['maxread'])
-    minfiles = int(data['minfiles'])
-    organism = data['organism']
-    seqhili = data['seqhili'].split(",")
-    hili_start = int(data['hili_start'])
-    hili_stop = int(data['hili_stop'])
-    transcriptome = data['transcriptome']
-    advanced = data["advanced"]
-    logging.debug("FILE LIST")
-    logging.debug(str(data["file_list"]))
+    data = request.get_json()
+    # logging.debug("FILE LIST")
+    # logging.debug(str(data["file_list"]))
     #logging.warn(len(data["file_list"]))
     #logging.debug("Length of alt file list is"+ len(data["alt_file_list"]))
     # Send file_list (a list of integers intentionally encoded as strings due to javascript), to be converted to a dictionary with riboseq/rnaseq lists of file paths.
@@ -134,9 +101,6 @@ def query() -> str:
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
 
-    primetype = data["primetype"]
-    user_hili_starts = data["user_hili_starts"]
-    user_hili_stops = data["user_hili_stops"]
     user_short = data["user_short"]
 
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -182,12 +146,12 @@ def query() -> str:
     result = cursor.fetchone()
     inputtran = True
 
-    if result != None:
+    if result:
         newtran = result[0]
     else:
         inputtran = False
 
-    if inputtran == False:
+    if not inputtran:
         cursor.execute(
             "SELECT * from transcripts WHERE gene = '{}'".format(tran))
         result = cursor.fetchall()
@@ -305,51 +269,18 @@ def query() -> str:
             return return_str
     transhelve.close()
 
-    if 'varlite' in data:
-        lite = "y"
-    else:
-        lite = "n"
-    if 'preprocess' in data:
-        preprocess = True
-    else:
-        preprocess = False
-    if 'uga_diff' in data:
-        uga_diff = True
-    else:
-        uga_diff = False
-    if 'color_readlen_dist' in data:
-        color_readlen_dist = True
-    else:
-        color_readlen_dist = False
-    if 'ribocoverage' in data:
-        ribocoverage = True
-    else:
-        ribocoverage = False
-    if "nucseq" in data:
-        nucseq = True
-    else:
-        nucseq = False
-    if "mismatches" in data:
-        mismatches = True
-    else:
-        mismatches = False
-    if "ambiguous" in data:
-        ambiguous = "ambig"
-    else:
-        ambiguous = "unambig"
-    if "pcr" in data:
-        pcr = True
-    else:
-        pcr = False
-    if "noisered" in data:
-        noisered = True
-    else:
-        noisered = False
+    lite = "y" if 'varlite' in data else "n"
+    preprocess = True if 'preprocess' in data else False
+    uga_diff = True if 'uga_diff' in data else False
+    color_readlen_dist = True if 'color_readlen_dist' in data else False
+    ribo_coverage = True if 'ribo_coverage' in data else False
+    nucseq = True if 'nucseq' in data else False
+    mismatches = True if 'mismatches' in data else False
+    ambiguous = True if 'ambiguous' in data else False
+    pcr = True if 'pcr' in data else False
+    noisered = True if 'noisered' in data else False
+    mismatch = True if 'mismatch' in data else False
 
-    if "mismatch" in data:
-        mismatch = True
-    else:
-        mismatch = False
     user_short_passed = False
     if data["user_short"] == "None" or user_short_passed == True:
         short_code = generate_short_code(data, organism, data["transcriptome"],
@@ -362,18 +293,6 @@ def query() -> str:
                                                 config.DATABASE_NAME))
     connection.text_factory = str
     cursor = connection.cursor()
-    background_col = config.BACKGROUND_COL
-    uga_col = config.UGA_COL
-    uag_col = config.UAG_COL
-    uaa_col = config.UAA_COL
-    title_size = config.TITLE_SIZE
-    subheading_size = config.SUBHEADING_SIZE
-    axis_label_size = config.AXIS_LABEL_SIZE
-    marker_size = config.MARKER_SIZE
-    cds_marker_size = config.CDS_MARKER_SIZE
-    cds_marker_colour = config.CDS_MARKER_COLOUR
-    legend_size = config.LEGEND_SIZE
-    ribo_linewidth = config.RIBO_LINEWIDTH
     #Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {
         "proteomics": {
