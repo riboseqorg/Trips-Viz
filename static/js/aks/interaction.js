@@ -64,3 +64,28 @@ function deselectCheckboxes(triggerSelector, targetSelector) {
                 $(targetSelector).prop('checked', false);
         });
 }
+
+
+function formToJSON(form) {
+        const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
+        const json = {};
+        $.each(array, function() {
+                json[this.name] = this.value || "";
+        });
+        return JSON.stringify(json);
+        //return json;
+}
+
+function linkAndPlot(form) {
+        $.ajax({
+                type: "POST",
+                url: "/query",
+                data: formToJSON(form),
+                dataType: "json",
+                contentType: "application/json",
+                success: function(data) {
+                        alert(data);
+                        $('#plot').html(data); // Change this function
+                }
+        });
+}
