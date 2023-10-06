@@ -26,13 +26,13 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
     '/<organism>/<transcriptome>/single_transcript_plot/')
 def interactiveplotpage(organism: str, transcriptome: str) -> str:
 
+    template_dict = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
-    # _, accepted_studies, accepted_files, seq_types = fetch_files(
+    template_dict['studies_and_files'] = fetch_files(accepted_studies)
     # accepted_studies)
     # print(accepted_studies)
     # print(accepted_files)
     # print(seq_types)
-    template_dict = request.args.to_dict()
     gwips = get_table("organisms")
     studyinfo_dict = fetch_study_info(organism_id)
     gwips_info = gwips.loc[(gwips.organism_id == organism_id)
@@ -40,10 +40,11 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
                                "gwips_clade", "gwips_organism",
                                "gwips_database", "default_transcript"
                            ]].iloc[0]
+
     print(gwips_info)
 
     template_dict['transcript'] = gwips_info['default_transcript']
-    template_dict['gwips'] = gwips_info
+    template_dict['gwips_info'] = gwips_info
 
     user_hili_starts = []
     user_hili_stops = []

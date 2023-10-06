@@ -19,10 +19,10 @@
    href="/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
                 </div>
                 <div class="col-2">
-                    <input id="user_transcript"
+                    <input id="transcript"
                            name="transcript"
                            type="text"
-                           value="{{ template_dict['user_transcript'] }}" />
+                           value="{{ template_dict['transcript'] }}" />
                 </div>
             </div>
             <div class="row">
@@ -32,12 +32,12 @@
    href="/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
                 </div>
                 <div class="col-2">
-                    <input id="user_readscore"
+                    <input id="readscore"
                            type="number"
                            min="0"
                            max="100"
                            name="readscore"
-                           value="{% if  template_dict['user_readscore'] %}{{ template_dict['user_readscore'] }}{% else %}0{% endif %}" />
+                           value="{% if  template_dict['readscore'] %}{{ template_dict['readscore'] }}{% else %}0{% endif %}" />
                 </div>
             </div>
             <div class="row">
@@ -47,12 +47,12 @@
     href="/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
                 </div>
                 <div class="col-2">
-                    <input id="user_minread"
+                    <input id="minread"
                            type="number"
                            min="1"
                            max="100"
                            name="minread"
-                           value="{% if template_dict['user_minread'] %}{{ template_dict['user_minread'] }}{% else %}5{% endif %}" />
+                           value="{% if template_dict['minread'] %}{{ template_dict['minread'] }}{% else %}5{% endif %}" />
                 </div>
             </div>
             <div class="row">
@@ -62,11 +62,11 @@
     href="/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
                 </div>
                 <div class="col-2">
-                    <input id="user_maxread"
+                    <input id="maxread"
                            type="number"
                            min="1"
                            name="maxread"
-                           value="{% if template_dict['user_maxread'] %}{{ template_dict['user_maxread'] }}{% else %}150{% endif %}" />
+                           value="{% if template_dict['maxread'] %}{{ template_dict['maxread'] }}{% else %}150{% endif %}" />
                 </div>
             </div>
             <div class="row">
@@ -121,7 +121,7 @@
                            type="checkbox"
                            name="namelite"
                            value="lite1"
-                           {% if user_line_graph == "T" %} checked {% else %} {% endif %} />
+                           {% if line_graph == "T" %} checked {% else %} {% endif %} />
                 </div>
                 <div class="col-4">
                     <label for='line_graph' class='padded_label'>Line Graph</label>
@@ -137,7 +137,7 @@
                            type="checkbox"
                            name="ambiguous"
                            value="ambiguous"
-                           {% if user_ambig=="T" %} checked {% else %}  {% endif %} />
+                           {% if ambig=="T" %} checked {% else %}  {% endif %} />
                 </div>
                 <div class="col-4">
                     <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
@@ -169,7 +169,7 @@
                            name="coverage"
                            value="coverage"
                            id="coverageid"
-                           {% if user_cov=="T" %} checked {% else %} {% endif %} />
+                           {% if cov=="T" %} checked {% else %} {% endif %} />
                 </div>
                 <div class="col-4">
                     <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
