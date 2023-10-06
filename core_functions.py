@@ -182,16 +182,20 @@ def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
 def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
-    file_path_dict = {"riboseq": {}, "rnaseq": {}, "proteomics": {}}
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    studies = sqlquery(dbpath, "studies")  # users is name of table
+    studies = studies.loc[studies.study_id.isin(data['study_ids']),
+                          ['study_id', 'study_name']]
     files = sqlquery(dbpath, "files")
     files = files[files["file_id"].isin(data['file_ids'])]
+    files = files.merge(studies, on='study_id')
     files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', '.sqlite'))
+    print(files)
     files['path'] = files.apply(
         lambda x: "{}/{}/{}/{}/{}/{}.sqlite".format(
             config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[
-                'organism'], data['study'], x['file_name'])
+                'organism'], x['study_name'], x['file_name'])
         if x['owner'] else "{}/{}/{}.sqlite".format(config.UPLOADS_DIR, data[
             'study'], x['file_name']),
         axis=1)
