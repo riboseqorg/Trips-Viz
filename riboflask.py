@@ -96,33 +96,23 @@ def generate_plot(
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     stop_codons = ["TAG", "TAA", "TGA"]
     frame_orfs = {1: [], 2: [], 3: []}
-    connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
+    owner = get_table("organisms")
+    owner = owner.loc[(owner.organism_name == organism) &
+                      (owner.transcriptome_list == transcriptome),
+                      "owner"].values[0]
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
+        sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                      config.ANNOTATION_DIR,
+                                                      organism, transcriptome)
+        if not os.path.isfile(sqlpath):
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
             return return_str
     else:
-        transhelve = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                trips_uploads_location, owner, organism, transcriptome))
-    connection.close()
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
+        sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            trips_uploads_location, owner, organism, transcriptome)
+    transcripts = get_table("transcripts")
+    transcripts = transcripts[transcripts.transcript == tran].iloc[0]
     traninfo = {
         "transcript": result[0],
         "gene": result[1],

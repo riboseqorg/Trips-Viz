@@ -239,20 +239,15 @@ def query() -> str:
                         cdslen = cds_stop - cds_start
                         threeutrlen = tranlen - cds_stop
                     if user == "test":
-                        if transcript[0] in orfQuant_res:
-                            OPM_coverage = orfQuant_res[transcript[0]]
-                        else:
-                            OPM_coverage = "NULL"
+                        OPM_coverage = (orfQuant_res[transcript[0]]
+                                        if transcript[0] in orfQuant_res else
+                                        "NULL")
 
-                        if transcript[0] in TPM_RNA:
-                            RNA_coverage = TPM_RNA[transcript[0]]
-                        else:
-                            RNA_coverage = "NULL"
+                        RNA_coverage = (TPM_RNA[transcript[0]] if transcript[0]
+                                        in TPM_RNA else "NULL")
 
-                        if transcript[0] in TPM_Ribo:
-                            ribo_coverage = TPM_Ribo[transcript[0]]
-                        else:
-                            ribo_coverage = "NULL"
+                        ribo_coverage = (TPM_Ribo[transcript[0]] if
+                                         transcript[0] in TPM_Ribo else "NULL")
 
                         return_str += (":{},{},{},{},{},{},{},{},{}".format(
                             transcript[0], version, tranlen, cds_start, cdslen,
@@ -269,7 +264,6 @@ def query() -> str:
                 tran)
             logging.debug(return_str)
             return return_str
-    transhelve.close()
 
     lite = "y" if 'varlite' in data else "n"
     preprocess = True if 'preprocess' in data else False
@@ -291,10 +285,6 @@ def query() -> str:
         short_code = data["user_short"]
         user_short_passed = True
 
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     # Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {
         "proteomics": {
@@ -310,6 +300,7 @@ def query() -> str:
 
     # get user_id
     if current_user.is_authenticated:
+
         user_name = current_user.name
         cursor.execute(
             "SELECT user_id from users WHERE username = '{}';".format(
@@ -342,8 +333,7 @@ def query() -> str:
             seq_name = row[1]
             frame_breakdown = row[2]
             seq_rules[seq_name] = {"frame_breakdown": frame_breakdown}
-        connection.close()
-    if tran != "":
+    if tran:
         return riboflask.generate_plot(
             tran, ambiguous, minread, maxread, lite, ribocoverage, organism,
             readscore, noisered, primetype, minfiles, nucseq, user_hili_starts,
@@ -356,4 +346,4 @@ def query() -> str:
 
     else:
         return "ERROR! Could not find any transcript or gene corresponding to {}".format(
-            tran)
+            data["transcript"])
