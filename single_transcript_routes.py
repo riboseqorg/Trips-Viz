@@ -16,17 +16,17 @@ try:
 except Exception:
     pass
 
-#This is the single transcript plot page, user chooses gene, files and other settings
+# This is the single transcript plot page, user chooses gene, files and other settings
 single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
                                                  __name__,
                                                  template_folder="templates")
 
 
 @single_transcript_plotpage_blueprint.route(
-    '/<organism>/<transcriptome>/interactive_plot/')
+    '/<organism>/<transcriptome>/single_transcript_plot/')
 def interactiveplotpage(organism: str, transcriptome: str) -> str:
 
-    accepted_studies = fetch_studies(organism, transcriptome)
+    organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     # _, accepted_studies, accepted_files, seq_types = fetch_files(
     # accepted_studies)
     # print(accepted_studies)
@@ -34,18 +34,16 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     # print(seq_types)
     template_dict = request.args.to_dict()
     gwips = get_table("organisms")
-    print(gwips)
-    print(request.args.get('tran'), request.args.to_dict(), "anmol")
-    gwips_info = gwips.loc[(gwips.organism_name == organism)
+    studyinfo_dict = fetch_study_info(organism_id)
+    gwips_info = gwips.loc[(gwips.organism_id == organism_id)
                            & (gwips.transcriptome_list == transcriptome), [
                                "gwips_clade", "gwips_organism",
                                "gwips_database", "default_transcript"
                            ]].iloc[0]
+    print(gwips_info)
 
     template_dict['transcript'] = gwips_info['default_transcript']
     template_dict['gwips'] = gwips_info
-    studyinfo_dict = fetch_study_info(organism)
-    template_dict = request.args.to_dict()
 
     user_hili_starts = []
     user_hili_stops = []
@@ -64,7 +62,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
         user_maxread = None
     advanced = 'True'
     consent = request.cookies.get("cookieconsent_status")
-    rendered_template = render_template('index.html',
+    rendered_template = render_template('single_transcript_plot.html',
                                         template_dict=template_dict)
     if consent == "deny":
         rendered_template = make_response(rendered_template)
@@ -82,7 +80,7 @@ single_transcript_query_blueprint = Blueprint("query",
 
 @single_transcript_query_blueprint.route('/query', methods=['POST'])
 def query() -> str:
-    #global user_short_passed
+    # global user_short_passed
     try:
         user = current_user.name
     except Exception:
@@ -90,8 +88,8 @@ def query() -> str:
     data = request.get_json()
     # logging.debug("FILE LIST")
     # logging.debug(str(data["file_list"]))
-    #logging.warn(len(data["file_list"]))
-    #logging.debug("Length of alt file list is"+ len(data["alt_file_list"]))
+    # logging.warn(len(data["file_list"]))
+    # logging.debug("Length of alt file list is"+ len(data["alt_file_list"]))
     # Send file_list (a list of integers intentionally encoded as strings due to javascript), to be converted to a dictionary with riboseq/rnaseq lists of file paths.
 
     total_files = len(data["file_list"])
@@ -293,7 +291,7 @@ def query() -> str:
                                                 config.DATABASE_NAME))
     connection.text_factory = str
     cursor = connection.cursor()
-    #Put any publicly available seq types (apart from riboseq and rnaseq) here
+    # Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {
         "proteomics": {
             "frame_breakdown": 1
@@ -306,7 +304,7 @@ def query() -> str:
         }
     }
 
-    #get user_id
+    # get user_id
     if current_user.is_authenticated:
         user_name = current_user.name
         cursor.execute(
@@ -315,7 +313,7 @@ def query() -> str:
         result = (cursor.fetchone())
         user_id = result[0]
         print("current user id is", user_id)
-        #get a list of organism id's this user can access
+        # get a list of organism id's this user can access
         cursor.execute(
             "SELECT background_col,uga_col,uag_col,uaa_col,title_size,subheading_size,axis_label_size,marker_size,cds_marker_width,cds_marker_colour,legend_size,ribo_linewidth from user_settings WHERE user_id = '{}';"
             .format(user_id))
@@ -332,7 +330,7 @@ def query() -> str:
         cds_marker_colour = result[9]
         legend_size = result[10]
         ribo_linewidth = result[11]
-        #get rules for all custom seq types
+        # get rules for all custom seq types
         cursor.execute(
             "SELECT * from seq_rules WHERE user_id = {};".format(user_id))
         result = (cursor.fetchall())

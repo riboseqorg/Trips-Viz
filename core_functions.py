@@ -73,7 +73,7 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(organism: str, transcriptome: str) -> DataFrame:
+def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
     '''Fetches studies from database using organism and transcriptome information.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     study_access_list = []
@@ -101,7 +101,7 @@ def fetch_studies(organism: str, transcriptome: str) -> DataFrame:
     studies = studies.loc[studies.private == 0
                           | studies.study_id.isin(study_access_list),
                           ["study_id", "study_name"]]
-    return studies  # Accepted studies
+    return organism_id, studies  # Accepted studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
@@ -159,14 +159,22 @@ def type_detector(dct: Dict[str, Any]) -> None:
     # Gets a list of all studies associated with an organism
 
 
-def fetch_study_info() -> Dict[str, List[str]]:
+def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
     '''Fetches studies from database for organism.'''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(dbpath, "studies")[[
-        "study_id", "paper_authors", "srp_nos,paper_year", "paper_pmid",
-        "paper_link", "gse_nos", "adapters", "paper_title", "description",
-        "study_name"
-        # , "organism_id" # TODO: Consider this for selecting
+    studies = sqlquery(dbpath, "studies")
+    studies = studies.loc[studies.organism_id == organism_id, [
+        "study_id",
+        "paper_authors",
+        "srp_nos",
+        "paper_year",
+        "paper_pmid",
+        "paper_link",
+        "gse_nos",
+        "adapters",
+        "paper_title",
+        "description",
+        "study_name",
     ]]
     # "paper_link": row[5].strip('"'),  # generate link using pubmed id
     return table2dict(studies, ["study_id"])
@@ -838,7 +846,6 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
                 except Exception:
                     profile[x] = count
     return profile
-
 
 
 def fetch_filename_file_id(file_id: int) -> str:
