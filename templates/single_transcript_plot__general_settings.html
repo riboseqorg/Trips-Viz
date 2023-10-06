@@ -10,7 +10,7 @@
     </p>
 </div>
 <div class='hidden'>
-    {% for var in ['organism'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+    {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
 </div>
 {{ template_dict }}
 <div class="page-section">
