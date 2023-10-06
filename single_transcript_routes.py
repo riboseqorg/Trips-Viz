@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, make_response
+from flask import Blueprint, render_template, request, make_response, Response
 from flask import current_app as app
+from typing import Text
 import sqlite3
 import os
 import config
@@ -24,7 +25,7 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
 
 @single_transcript_plotpage_blueprint.route(
     '/<organism>/<transcriptome>/single_transcript_plot/')
-def interactiveplotpage(organism: str, transcriptome: str) -> str:
+def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
 
     template_dict = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
@@ -34,17 +35,15 @@ def interactiveplotpage(organism: str, transcriptome: str) -> str:
     # print(accepted_files)
     # print(seq_types)
     gwips = get_table("organisms")
-    studyinfo_dict = fetch_study_info(organism_id)
     gwips_info = gwips.loc[(gwips.organism_id == organism_id)
                            & (gwips.transcriptome_list == transcriptome), [
                                "gwips_clade", "gwips_organism",
                                "gwips_database", "default_transcript"
                            ]].iloc[0]
 
-    print(gwips_info)
-
     template_dict['transcript'] = gwips_info['default_transcript']
     template_dict['gwips_info'] = gwips_info
+    template_dict['studyinfo_dict'] = fetch_study_info(organism_id)
 
     user_hili_starts = []
     user_hili_stops = []
