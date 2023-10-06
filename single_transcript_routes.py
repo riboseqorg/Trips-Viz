@@ -142,12 +142,14 @@ def query() -> str:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
     transcripts = sqlquery(sql_path, "transcripts")
+    print(transcripts)
     transcripts = transcripts[transcripts.transcript ==
-                              data["transcript"]].iloc[0]
+                              data["transcript"].upper()]
     inputtran = True
 
-    if result:
-        newtran = result[0]
+    if not transcripts.empty:
+
+        newtran = transcripts.transcript[0]
     else:
         inputtran = False
 
