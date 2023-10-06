@@ -31,6 +31,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     template_dict['studies_and_files'] = fetch_files(accepted_studies)
     gwips = get_table("organisms")
+    print(accepted_studies)
     gwips_info = gwips.loc[(gwips.organism_id == organism_id)
                            & (gwips.transcriptome_list == transcriptome), [
                                "gwips_clade", "gwips_organism",
@@ -87,12 +88,15 @@ def query() -> str:
     print(data, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     file_list = []
     file_ids = []
+    study_ids = []
     for key, value in data.items():
         if key.startswith('file') and value:
             file_list.append(value)
             file_ids.append(int(key.split('_')[-1]))
+            study_ids.append(int(key.split('_')[2]))
     data["file_list"] = file_list
     data["file_ids"] = file_ids
+    data["study_ids"] = study_ids
     print(file_ids)
 
     # TODO: set the file count limit on js side
@@ -104,28 +108,25 @@ def query() -> str:
 
     file_paths_dict = fetch_file_paths(data)
 
-    user_short = data["user_short"]
+    # user_short = data["user_short"]
 
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
     owner = get_table('organisms')
-    owner = owner.loc[owner.organism_name == data["organism"],
+    print(data['transcript'])
+    owner = owner.loc[(owner.organism_name == data["organism"]) &
+                      (owner.transcriptome_list == data["transcriptome"]),
                       "owner"].values[0]
+    print(owner)
 
     user, logged_in = fetch_user()
 
     if owner == 1:
         sql_path = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                        config.ANNOTATION_DIR,
-                                                       organism, transcriptome)
+                                                       data["organism"],
+                                                       data["transcriptome"])
         if not os.path.isfile(sql_path):
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome)
+                data["organism"], data["transcriptome"])
             if app.debug == True:
                 return return_str, "NO_CELERY", {'Location': None}
             else:
@@ -139,7 +140,7 @@ def query() -> str:
                 }
     else:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, organism, transcriptome)
+            config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
     transcripts = sqlquery(sql_path, "transcripts")
     transcripts = transcripts[transcripts.transcript ==
                               data["transcript"]].iloc[0]
