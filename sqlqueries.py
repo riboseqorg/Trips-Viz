@@ -15,7 +15,6 @@ from sqlalchemy import insert, delete, update
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
     engine = create_engine('sqlite:///' + sqlfilepath).connect()
     table = pd.read_sql_table(table_name=tablename, con=engine)
-    print(table.columns)
     return table
 
 

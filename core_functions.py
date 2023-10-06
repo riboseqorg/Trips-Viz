@@ -136,11 +136,11 @@ def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
 
 def type_detector(dct: Dict[str, Any]) -> None:
     '''
-    Convert string in dict collected from web page form to right types. 
+    Convert string in dict collected from web page form to right types.
     Takes only values that can be string, boolean, int and float.
-    >>> x = {'is_private': 'true', 'tpm_max': '123.4', 'rpm_max': '12345', 
+    >>> x = {'is_private': 'true', 'tpm_max': '123.4', 'rpm_max': '12345',
     ... 'organism': 'human'}
-    >>> type_detector(x) 
+    >>> type_detector(x)
     >>> x
     {'is_private': True, 'tpm_max': 123.4, 'rpm_max': 12345, 'organism': 'human'}
     '''
@@ -181,55 +181,22 @@ def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
-def fetch_file_paths(file_list: List[str], organism: str) -> Dict[str, str]:
+def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
     file_path_dict = {"riboseq": {}, "rnaseq": {}, "proteomics": {}}
-    # Convert to a tuple so it works with mysql
-    try:
-        # Remove empty strings from file list
-        file_list[:] = [x for x in file_list if x]
-        # Convert each string to an int
-        int_file_list = [int(x) for x in file_list]
-    except Exception:
-        return {}
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(dbpath, "studies")[["study_id", "study_name"]]
     files = sqlquery(dbpath, "files")
-    files = files[files["file_id"].isin(int_file_list)]
-    # ----
-    connection_ffp = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                    config.DATABASE_NAME))
-    connection_ffp.text_factory = str
-    cursor = connection_ffp.cursor()
-
-    study_dict = {}
-    cursor.execute("SELECT study_id,study_name from studies;")
-    result = cursor.fetchall()
-    for row in result:
-        study_dict[row[0]] = row[1]
-    if int_file_list:
-        cursor.execute(
-            "SELECT file_type,file_name,study_id,file_id,owner from files WHERE file_id in {};"
-            .format(str(int_file_list).replace("[", "(").replace("]", ")")))
-        result = cursor.fetchall()
-        for row in result:
-            study_name = study_dict[row[2]]
-            if row[0] not in file_path_dict:
-                file_path_dict[row[0]] = {}
-            # All files uploaded on our side are owned by user id 1, all others are user uploaded
-            # Replace .shelf with .sqlite to deal with legacy files
-            if row[4] == 1:
-                file_path_dict[row[0]][row[3]] = (
-                    "{}/{}/{}/{}/{}/{}.sqlite".format(
-                        config.SCRIPT_LOC, config.SQLITES_DIR, row[0],
-                        organism, study_name,
-                        row[1].replace(".shelf", "").replace(".sqlite", "")))
-            else:
-                file_path_dict[row[0]][row[3]] = ("{}/{}/{}.sqlite".format(
-                    config.UPLOADS_DIR, study_name,
-                    row[1].replace(".shelf", "").replace(".sqlite", "")))
+    files = files[files["file_id"].isin(data['file_ids'])]
+    files['file_name'] = files['file_name'].apply(
+        lambda x: x.replace('.self', '.sqlite'))
+    files['path'] = files.apply(
+        lambda x: "{}/{}/{}/{}/{}/{}.sqlite".format(
+            config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[
+                'organism'], data['study'], x['file_name'])
+        if x['owner'] else "{}/{}/{}.sqlite".format(config.UPLOADS_DIR, data[
+            'study'], x['file_name']),
+        axis=1)
     logging.debug("fetch_file_paths closing connection")
-    connection_ffp.close()
-    return file_path_dict
+    return files
 
 
 # Builds a url and inserts it into sqlite database

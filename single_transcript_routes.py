@@ -30,10 +30,6 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     template_dict = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     template_dict['studies_and_files'] = fetch_files(accepted_studies)
-    # accepted_studies)
-    # print(accepted_studies)
-    # print(accepted_files)
-    # print(seq_types)
     gwips = get_table("organisms")
     gwips_info = gwips.loc[(gwips.organism_id == organism_id)
                            & (gwips.transcriptome_list == transcriptome), [
@@ -44,6 +40,8 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     template_dict['transcript'] = gwips_info['default_transcript']
     template_dict['gwips_info'] = gwips_info
     template_dict['studyinfo_dict'] = fetch_study_info(organism_id)
+    template_dict['organism'] = organism
+    template_dict['transcriptome'] = transcriptome
 
     user_hili_starts = []
     user_hili_stops = []
@@ -86,18 +84,25 @@ def query() -> str:
     except Exception:
         user = None
     data = request.get_json()
-    # logging.debug("FILE LIST")
-    # logging.debug(str(data["file_list"]))
-    # logging.warn(len(data["file_list"]))
-    # logging.debug("Length of alt file list is"+ len(data["alt_file_list"]))
-    # Send file_list (a list of integers intentionally encoded as strings due to javascript), to be converted to a dictionary with riboseq/rnaseq lists of file paths.
+    print(data, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    file_list = []
+    file_ids = []
+    for key, value in data.items():
+        if key.startswith('file') and value:
+            file_list.append(value)
+            file_ids.append(int(key.split('_')[-1]))
+    data["file_list"] = file_list
+    data["file_ids"] = file_ids
+    print(file_ids)
+
+    # TODO: set the file count limit on js side
 
     total_files = len(data["file_list"])
     if total_files > 1500:
         return "A maximum of 1500 files can be selected on this page, currently there are {} selected".format(
             total_files)
 
-    file_paths_dict = fetch_file_paths(data["file_list"], organism)
+    file_paths_dict = fetch_file_paths(data)
 
     user_short = data["user_short"]
 
@@ -108,19 +113,17 @@ def query() -> str:
     cursor.execute(
         "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
         .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
+    owner = get_table('organisms')
+    owner = owner.loc[owner.organism_name == data["organism"],
+                      "owner"].values[0]
 
     user, logged_in = fetch_user()
 
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)
-            transhelve = sqlite3.connect(sqlite_path_organism)
-        else:
+        sql_path = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                       config.ANNOTATION_DIR,
+                                                       organism, transcriptome)
+        if not os.path.isfile(sql_path):
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
             if app.debug == True:
@@ -135,13 +138,11 @@ def query() -> str:
                     'Location': ""
                 }
     else:
-        sqlite_path_organism = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+        sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
-        transhelve = sqlite3.connect(sqlite_path_organism)
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
+    transcripts = sqlquery(sql_path, "transcripts")
+    transcripts = transcripts[transcripts.transcript ==
+                              data["transcript"]].iloc[0]
     inputtran = True
 
     if result:
