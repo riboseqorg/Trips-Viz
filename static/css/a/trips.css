@@ -40,6 +40,11 @@ input[type="text"]::placeholder {
   opacity: 1;
 }
 
+/*to make case in upper in form*/
+.upper {
+  text-transform: uppercase;
+}
+
 /* Tooltip text */
 .tooltip .tooltiptext {
   visibility: hidden;
