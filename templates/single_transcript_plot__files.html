@@ -82,7 +82,7 @@
     </div>
     <div id="files">
         <p>
-            <b><u>Files[ 0 Selected ]</u></b>
+            <b><u>Files[ <span id="filecount">0</span>  Selected ]</u></b>
         </p>
         {% for study_type, studies in template_dict["studies_and_files"].items() %}
             <div class="{{ study_type }}">
@@ -106,3 +106,19 @@
     </br>
 </div>
 </div>
+{% block footer_static %}
+    <script>
+		$(document).ready(function(){
+
+				var $checkboxes = $('#files input[type="checkbox"]');
+				var countCheckedCheckboxes = $checkboxes.filter(':checked').length;
+				$('#filecount').text(countCheckedCheckboxes);
+				
+				$checkboxes.change(function(){
+						var countCheckedCheckboxes = $checkboxes.filter(':checked').length;
+						$('#filecount').text(countCheckedCheckboxes);
+				});
+
+		});
+    </script>
+{% endblock %}
