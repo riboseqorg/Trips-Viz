@@ -148,12 +148,14 @@ def query() -> str:
     inputtran = True
 
     if not transcripts.empty:
+        print(transcripts)
 
-        newtran = transcripts.transcript[0]
+        newtran = transcripts.transcript.values[0]
     else:
         inputtran = False
 
     if not inputtran:
+
         cursor.execute(
             "SELECT * from transcripts WHERE gene = '{}'".format(tran))
         result = cursor.fetchall()
@@ -176,8 +178,8 @@ def query() -> str:
                         max_TPM_Ribo = max(pre_TPM_Ribo.values())
                         TPM_Ribo = {
                             transcript:
-                            round((pre_TPM_Ribo[transcript] / max_TPM_Ribo) *
-                                  100, 2)
+                            round((pre_TPM_Ribo[transcript] * 100. /
+                                   max_TPM_Ribo), 2)
                             for transcript in pre_TPM_Ribo
                         }
 
@@ -192,11 +194,11 @@ def query() -> str:
 
                     else:
                         orfQuant_res = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
                         TPM_Ribo = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
 
@@ -215,7 +217,7 @@ def query() -> str:
 
                     else:
                         TPM_RNA = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
 
@@ -232,22 +234,22 @@ def query() -> str:
                     else:
                         principal = ""
                     version = tran_result[4]
-                    if cds_start == "NULL" or cds_start == None:
-                        cdslen = "NULL"
-                        threeutrlen = "NULL"
+                    if not cds_start:
+                        cdslen = None
+                        threeutrlen = None
                     else:
                         cdslen = cds_stop - cds_start
                         threeutrlen = tranlen - cds_stop
                     if user == "test":
                         OPM_coverage = (orfQuant_res[transcript[0]]
                                         if transcript[0] in orfQuant_res else
-                                        "NULL")
+                                        None)
 
-                        RNA_coverage = (TPM_RNA[transcript[0]] if transcript[0]
-                                        in TPM_RNA else "NULL")
+                        RNA_coverage = (TPM_RNA[transcript[0]]
+                                        if transcript[0] in TPM_RNA else None)
 
                         ribo_coverage = (TPM_Ribo[transcript[0]] if
-                                         transcript[0] in TPM_Ribo else "NULL")
+                                         transcript[0] in TPM_Ribo else None)
 
                         return_str += (":{},{},{},{},{},{},{},{},{}".format(
                             transcript[0], version, tranlen, cds_start, cdslen,
@@ -277,13 +279,13 @@ def query() -> str:
     noisered = True if 'noisered' in data else False
     mismatch = True if 'mismatch' in data else False
 
-    user_short_passed = False
-    if data["user_short"] == "None" or user_short_passed == True:
-        short_code = generate_short_code(data, organism, data["transcriptome"],
-                                         "interactive_plot")
-    else:
-        short_code = data["user_short"]
-        user_short_passed = True
+    # user_short_passed = False
+    # if data["user_short"] == "None" or user_short_passed == True:
+    # short_code = generate_short_code(data, organism, data["transcriptome"],
+    # "interactive_plot")
+    # else:
+    # short_code = data["user_short"]
+    # user_short_passed = True
 
     # Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {

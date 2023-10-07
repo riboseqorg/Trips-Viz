@@ -109,7 +109,7 @@ def tran_to_genome(
                                                                        int]]]]]
 ) -> Union[str, Tuple[str, int]]:
     if tran not in transcriptome_info_dict:
-        return ("Null", 0)  # This test can be done before coming here
+        return None, 0  # This test can be done before coming here
     traninfo = transcriptome_info_dict[tran]
     chrom = traninfo["chrom"]
     strand = traninfo["strand"]
@@ -482,7 +482,7 @@ def create_test_set(
                         start_codon = seq[:3]
                     except Exception:
                         seq = ""
-                        start_codon = "NULL"
+                        start_codon = None
 
                     outfile.write(
                         "{},{},{},{},{},{},{},{},{},{},{},{}\n".format(

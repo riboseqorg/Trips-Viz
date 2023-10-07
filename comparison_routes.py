@@ -143,9 +143,9 @@ def comparequery() -> str | Tuple:
                         principal = "principal"
                     else:
                         principal = ""
-                    if cds_start == "NULL" or not cds_start:
-                        cdslen = "NULL"
-                        threeutrlen = "NULL"
+                    if not cds_start:
+                        cdslen = None
+                        threeutrlen = None
                     else:
                         cdslen = cds_stop - cds_start
                         threeutrlen = tranlen - cds_stop

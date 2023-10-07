@@ -80,7 +80,7 @@ def tran_to_genome(tran: str, pos: int, transcriptome_info_dict: Dict) -> str:
     if tran in transcriptome_info_dict:
         traninfo = transcriptome_info_dict[tran]
     else:
-        return ("Null", 0)  # Fix same as another file
+        return None, 0  # Fix same as another file
     chrom = traninfo["chrom"]
     strand = traninfo["strand"]
     exons = traninfo["exons"]
@@ -407,7 +407,7 @@ def find_pauses(data, user, logged_in):
     custom_tran_list = data["custom_tran_list"]
 
     #feature_list.append("Inframe Count Value")
-    if html_args["user_short"] == "None":
+    if not html_args["user_short"]:
         short_code = generate_short_code(data, organism, data["transcriptome"],
                                          "pause_pred")
     else:

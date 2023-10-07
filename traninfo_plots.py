@@ -130,9 +130,9 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
-    if cds_start == "NULL" or not cds_start:
+    if not cds_start:
         cds_start = 0
-    if cds_stop == "NULL" or not cds_stop:
+    if not cds_stop:
         cds_stop = 0
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}

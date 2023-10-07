@@ -306,14 +306,13 @@ def settingspage() -> Response:
     user_settings = user_settings[user_settings['user_id'] == user_id].to_dict(
         orient='records')[0]
 
-    return render_template('settings.html',
-                           user_settings=user_settings)
+    return render_template('settings.html', user_settings=user_settings)
 
 
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
 @app.route('/downloads/')
 def downloadspage() -> str:
-    
+
     organism_dict = {
         "Scripts": [
             "bam_to_sqlite.py", "tsv_to_sqlite.py",
@@ -363,7 +362,7 @@ def download_file() -> Response:
 @app.route('/uploads/')
 # @login_required
 def uploadspage() -> str:
-    
+
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
     if not user:
@@ -517,7 +516,7 @@ def upload_file() -> Response:
     try:
         file_description = sqlite_db["description"]
     except Exception:
-        file_description = "NULL"
+        file_description = None
     sqlite_db.close()
     # get file id
     max_file_id = get_table('files').file_id.max()
@@ -644,8 +643,7 @@ def login() -> Union[str, Response]:
                                           ['username', 'password'])
             logging.debug("Closing trips.sqlite connection")
             if username in username_dict:
-                if check_password_hash(username_dict[username],
-                                       password):
+                if check_password_hash(username_dict[username], password):
                     login_user(User(username))
                     nxt = sanitize_get_request(request.args.get('next'))
                     if nxt:
@@ -700,7 +698,7 @@ def anno_query() -> str:
 # This page shows the saved ORFs specific to the signed in user
 @app.route('/saved/')
 def saved():
-    
+
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str

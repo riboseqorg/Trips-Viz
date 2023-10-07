@@ -192,9 +192,9 @@ def generate_plot():
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
-    if cds_start == "NULL" or cds_start == None:
+    if cds_start == None:
         cds_start = 0
-    if cds_stop == "NULL" or cds_stop == None:
+    if cds_stop == None:
         cds_stop = 0
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
@@ -785,7 +785,7 @@ def generate_plot():
             try:
                 in_out_ratio = orf_ribo / outframe_ribo
             except Exception:
-                in_out_ratio = "Null"
+                in_out_ratio = None
 
             datadict = {
                 'inframe ribo': [orf_ribo],

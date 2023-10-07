@@ -23,7 +23,7 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
     '/<organism>/<transcriptome>/interactive_plot_genomic/')
 def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     #global user_short_passed
-    
+
     organism = str(organism)
 
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
@@ -321,11 +321,11 @@ def query_genomic() -> str:
 
                     else:
                         orfQuant_res = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
                         TPM_Ribo = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
 
@@ -344,7 +344,7 @@ def query_genomic() -> str:
 
                     else:
                         TPM_RNA = {
-                            transcript[0]: "Null"
+                            transcript[0]: None
                             for transcript in result
                         }
 
@@ -361,9 +361,9 @@ def query_genomic() -> str:
                     else:
                         principal = ""
                     version = tran_result[4]
-                    if cds_start == "NULL" or cds_start == None:
-                        cdslen = "NULL"
-                        threeutrlen = "NULL"
+                    if not cds_start:
+                        cdslen = None
+                        threeutrlen = None
                     else:
                         cdslen = cds_stop - cds_start
                         threeutrlen = tranlen - cds_stop
@@ -371,17 +371,17 @@ def query_genomic() -> str:
                         if transcript[0] in orfQuant_res:
                             OPM_coverage = orfQuant_res[transcript[0]]
                         else:
-                            OPM_coverage = "NULL"
+                            OPM_coverage = None
 
                         if transcript[0] in TPM_RNA:
                             RNA_coverage = TPM_RNA[transcript[0]]
                         else:
-                            RNA_coverage = "NULL"
+                            RNA_coverage = None
 
                         if transcript[0] in TPM_Ribo:
                             ribo_coverage = TPM_Ribo[transcript[0]]
                         else:
-                            ribo_coverage = "NULL"
+                            ribo_coverage = None
 
                         return_str += (":{},{},{},{},{},{},{},{},{}".format(
                             transcript[0], version, tranlen, cds_start, cdslen,

@@ -114,7 +114,7 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
                                    )
 def metainfo_plotpage(organism: str, transcriptome: str):
     # global user_short_passed
-    
+
     user, _ = fetch_user()
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -259,7 +259,7 @@ def create_custom_metagene(
         if exclude_last:
             max_pos = max_pos - exclude_last_val
 
-        if cds_start != "NULL" and cds_start:
+        if cds_start:
             seq_positions = []
             for subseq in subseq_list:
                 pattern = re.compile(r"{}".format(subseq))
@@ -2597,7 +2597,7 @@ def metainfoquery():
 # cds_start = traninfo_dict[tran]["cds_start"]
 # cds_stop = traninfo_dict[tran]["cds_stop"]
 
-# if cds_start == "NULL" or cds_stop == "NULL":
+# if not cds_start or not cds_stop:
 # continue
 # if cds_start <= 1 or cds_stop <= 1:
 # continue
@@ -3074,7 +3074,7 @@ def metainfoquery():
 # ambiguous.append(0)
 
 # if "cutadapt_removed" in sqlite_db:
-# if sqlite_db["cutadapt_removed"] != "NULL":
+# if sqlite_db["cutadapt_removed"] :
 # cutadapt_removed.append(sqlite_db["cutadapt_removed"])
 # else:
 # cutadapt_removed.append(0)

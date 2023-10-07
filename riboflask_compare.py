@@ -86,7 +86,7 @@ def generate_compare_plot(
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
 
-    if cds_stop == 'NULL' or not cds_stop:
+    if not cds_stop:
         cds_start = 0
         cds_stop = 0
 
@@ -99,7 +99,7 @@ def generate_compare_plot(
     start_stop_dict = {}
     for frame in [1, 2, 3]:
         start_stop_dict[frame] = {
-            "starts": [0],  # Why do we need zero?
+            "starts": [0] , # Why do we need zero?
             "stops": {
                 "TGA": [0],
                 "TAG": [0],
@@ -116,7 +116,7 @@ def generate_compare_plot(
 
     fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
-    label = 'Read count' if not normalize else 'Normalized read count'
+    label = 'Read count' if not normalize else  'Normalized read count'
     ax_main.set_ylabel(label, fontsize=axis_label_size, labelpad=30)
     label = 'Position (nucleotides)'
     ax_main.set_xlabel(label, fontsize=axis_label_size, labelpad=10)
@@ -126,11 +126,9 @@ def generate_compare_plot(
         all_mapped_reads = []
         for color in master_filepath_dict:
             all_mapped_reads.append(
-                master_filepath_dict[color]["mapped_reads"]
-            )  # NOTE: if 'mapped reads would be fixed it would faster'
+                    master_filepath_dict[color]["mapped_reads"]) # NOTE: if 'mapped reads would be fixed it would faster'
         for color in master_filepath_dict:
-            factor = min(all_mapped_reads
-                         ) * 1. / master_filepath_dict[color]["mapped_reads"]
+            factor =min(all_mapped_reads) *1. / master_filepath_dict[color]["mapped_reads"])
             master_filepath_dict[color]["factor"] = factor
 
     # So items can be plotted alphabetically
