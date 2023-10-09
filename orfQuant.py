@@ -353,22 +353,15 @@ def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
     for file in sqlite_path_reads:
         infile = SqliteDict(file)
         for transcript in coding:
-            if transcript in infile:
-                if "OPM" in infile[transcript]:
-                    if transcript in transcript_OPMs:
-                        transcript_OPMs[transcript].append(
-                            infile[transcript]["OPM"])
-                    else:
-                        transcript_OPMs[transcript] = [
-                            infile[transcript]["OPM"]
-                        ]
-
-                else:
-                    if file not in read_files:
-                        read_files.append(file)
+            try: 
+                if transcript not in transcript_OPMs:
+                    transcript_OPMs[transcript] = []
+                transcript_OPMs[transcript].append(infile[transcript]["OPM"])
+            except KeyError:
+                read_files.append(file)
         infile.close()
 
-    for file in read_files:
+    for file in set(read_files):
         genomic_read_positions = get_reads_per_genomic_location(
             gene, [file],
             sqlite_path_organism,
