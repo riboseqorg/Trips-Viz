@@ -39,7 +39,6 @@ line_tooltip_css = """
 """
 
 
-
 def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
     maxval = max(master_dict.values())
     string_maxval = str(maxval)
@@ -96,7 +95,7 @@ def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -146,7 +145,7 @@ def mismatch_pos(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -236,7 +235,7 @@ def nuc_comp(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     #return graph
@@ -335,7 +334,7 @@ def mrna_dist_readlen(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -375,7 +374,7 @@ def dinuc_bias(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -536,7 +535,7 @@ def metagene_plot(
     plt.grid(color="white", linewidth=2, linestyle="solid")
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -659,7 +658,7 @@ def trip_periodicity_plot(read_dict: Dict[str, Dict[int, float]], title: str,
                     DownloadProfile(returnstr=returnstr))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -939,7 +938,7 @@ def mapped_reads_plot(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -1048,15 +1047,15 @@ def single_tran_de(single_tran_de_transcript: str,
     #if file_string:
     #	file_string = file_string[:len(file_string)-1]
 
-    url = "http://trips.ucc.ie/{}/{}/interactive_plot/?files=@file_id&tran={}&ambig=F&minread=25&maxread=150".format(
+    url = "/{}/{}/interactive_plot/?files=@file_id&tran={}&ambig=F&minread=25&maxread=150".format(
         organism, transcriptome, single_tran_de_transcript)
 
     taptool = p.select(type=TapTool)
     taptool.callback = OpenURL(url=url)
 
     #TODO FIX HARDCODED TMP FILE LINK
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
+    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
+    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
 
     graph = file_html(p, CDN)
     return graph
@@ -1128,15 +1127,15 @@ def tran_corr(tran_corr_transcript1: str, tran_corr_transcript2: str,
     #if file_string:
     #	file_string = file_string[:len(file_string)-1]
 
-    url = "http://trips.ucc.ie/{}/{}/interactive_plot/?files=@file_id&tran={}&ambig=F&minread=25&maxread=150".format(
+    url = "/{}/{}/interactive_plot/?files=@file_id&tran={}&ambig=F&minread=25&maxread=150".format(
         organism, transcriptome, tran_corr_transcript1)
 
     taptool = p.select(type=TapTool)
     taptool.callback = OpenURL(url=url)
 
     #TODO FIX HARDCODED TMP FILE LINK
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
+    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
+    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
 
     graph = file_html(p, CDN)
     return graph
@@ -1218,7 +1217,7 @@ def explore_offsets(
                     DownloadPNG(returnstr=title_str))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
@@ -1283,7 +1282,7 @@ def most_freq_unmapped(file_paths_dict: Dict[str, Dict[str, str]],
         for file_id in file_paths_dict[filetype]:
             filepath = file_paths_dict[filetype][file_id]
             if os.path.isfile(filepath):
-                sqlite_db = SqliteDict(f"{filepath}",
+                sqlite_db = SqliteDict(filepath,
                                        autocommit=False,
                                        decode=my_decoder)
             else:
@@ -1405,7 +1404,7 @@ def heatplot(min_readlen: int, max_readlen: int, min_pos: int, max_pos: int,
     output_file("scatter10k.html", title="Heatmap ({})".format(short_code))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += file_html(p, CDN)
     return graph
@@ -1503,7 +1502,7 @@ def rust_dwell(codon_count_dict: Dict[str, int], short_code: str,
         title="RUST: Relative codon dwell times ({})".format(short_code))
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
         marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += file_html(p, CDN)
     return graph
@@ -1802,7 +1801,7 @@ def mrna_dist(
     plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
                     DownloadProfile(returnstr=returnstr),
                     DownloadPNG(returnstr=title_str))
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
+    graph = "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
         short_code)
     graph += mpld3.fig_to_html(fig)
     return graph

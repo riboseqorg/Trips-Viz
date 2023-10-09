@@ -341,7 +341,7 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
         count = round(tup[7], 2)
         region = tup[8]
 
-        comparison_url = "https://trips.ucc.ie/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
+        comparison_url = "/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
             organism, transcriptome, file_string, label_string, transcript,
             position - 15, position + 15)
         ebc_link = '<a href="{}" target="_blank_" >View</a>'.format(

@@ -3,6 +3,7 @@ from typing_extensions import Literal
 from pandas.core.frame import DataFrame
 from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
+import pandas as pd
 
 
 class TripsSplice:
@@ -356,16 +357,28 @@ def get_reads_per_genomic_location(
     trips_splice = TripsSplice(sqlite_path_organism)
 
     gene_info = trips_splice.get_gene_info(gene)
+    gene_info['exon_junctions'] = gene_info['exon_junctions'].apply(
+        lambda x: list(map(int, x.split(","))))
     genomic_read_dictionary = {}
     counted_reads = []
     for read_file in sqlite_path_reads:
         infile = SqliteDict(read_file)
-        for transcript in gene_info:
+        t_gene_info = gene_info[gene_info.transcript.isin(infile.keys())]
+        if filte_r:
+            t_gene_info = pd.concat([
+                t_gene_info,
+                gene_info[gene_info.transcript.isin(supported_transcripts)]
+            ])
+            # ------
+
+        for transcript in gene_info:  # gene_info is a data frame ['transcript', 'exon_junctions', 'sequence']
             if ((filte_r and transcript[0] not in supported_transcripts)
                     or (transcript[0] not in infile)):
                 continue
             transcript_read_dictionary = infile[transcript[0]]["unambig"]
-            genomic_ranges = sorted(genomic_exon_coordinates[transcript[0]])
+            genomic_ranges = genomic_exon_coordinates.loc[
+                genomic_exon_coordinayes.gene == transcript[0],
+                ['exon_start', 'exon_end']].sort_values('exon_start')
 
             exon_junctions = list(map(int, transcript[1].split(",")))
             sequence = transcript[2]
