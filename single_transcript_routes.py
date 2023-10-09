@@ -1,4 +1,11 @@
-from flask import Blueprint, render_template, request, make_response, Response
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    make_response,
+    Response,
+    jsonify,
+)
 from flask import current_app as app
 from typing import Text
 import sqlite3
@@ -11,11 +18,8 @@ from flask_login import current_user
 import logging
 import json
 from sqlqueries import sqlquery, get_table
-try:
-    from orfQuant import incl_OPM_run_orfQuant
-    from tripsTPM import TPM
-except Exception:
-    pass
+from orfQuant import incl_OPM_run_orfQuant
+from tripsTPM import TPM
 
 # This is the single transcript plot page, user chooses gene, files and other settings
 single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
@@ -53,12 +57,6 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     except Exception:
         pass
 
-    try:
-        user_minread = int(user_minread)
-        user_maxread = int(user_maxread)
-    except Exception:
-        user_minread = None
-        user_maxread = None
     advanced = 'True'
     consent = request.cookies.get("cookieconsent_status")
     rendered_template = render_template('single_transcript_plot.html',
@@ -99,13 +97,6 @@ def query() -> str:
     data["study_ids"] = study_ids
     print(file_ids)
 
-    # TODO: set the file count limit on js side
-
-    total_files = len(data["file_list"])
-    if total_files > 1500:
-        return "A maximum of 1500 files can be selected on this page, currently there are {} selected".format(
-            total_files)
-
     file_paths_dict = fetch_file_paths(data)
 
     # user_short = data["user_short"]
@@ -127,7 +118,7 @@ def query() -> str:
         if not os.path.isfile(sql_path):
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
                 data["organism"], data["transcriptome"])
-            if app.debug == True:
+            if app.debug:
                 return return_str, "NO_CELERY", {'Location': None}
             else:
                 return jsonify({
@@ -142,130 +133,110 @@ def query() -> str:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
     transcripts = sqlquery(sql_path, "transcripts")
-    print(transcripts)
-    transcripts = transcripts[transcripts.transcript ==
-                              data["transcript"].upper()]
-    inputtran = True
+    transcripts = transcripts[(
+        transcripts.transcript == data["transcript"].upper()) |
+                              (transcripts.gene == data["transcript"].upper())]
 
     if not transcripts.empty:
-        print(transcripts)
 
-        newtran = transcripts.transcript.values[0]
-    else:
-        inputtran = False
+        return_str = "TRANSCRIPTS"
+        if user == "test":
+            return_str = "QUANT_TRANSCRIPTS"
+            if 'riboseq' in file_paths_dict["file_type"]:
+                pre_orfQuant_res = incl_OPM_run_orfQuant(
+                    transcripts.transcript[0], sql_path,
+                    file_paths_dict.loc[file_paths_dict["file_type"] ==
+                                        "riboseq", "path"].values)
+                pre_TPM_Ribo = TPM(
+                    transcripts.transcript[0], sql_path,
+                    file_paths_dict.loc[file_paths_dict["file_type"] ==
+                                        "riboseq", "path"].values, "ribo")
 
-    if not inputtran:
+                max_TPM_Ribo = max(pre_TPM_Ribo.values())
+                TPM_Ribo = {
+                    transcript:
+                    round((pre_TPM_Ribo[transcript] * 100. / max_TPM_Ribo), 2)
+                    for transcript in pre_TPM_Ribo
+                }
 
-        cursor.execute(
-            "SELECT * from transcripts WHERE gene = '{}'".format(tran))
-        result = cursor.fetchall()
+                max_orf = max(pre_orfQuant_res.values())
+                orfQuant_res = {
+                    transcript:
+                    round((pre_orfQuant_res[transcript] / max_orf) * 100, 2)
+                    for transcript in pre_orfQuant_res
+                }
 
-        if result != []:
-            if len(result) == 1:
-                tran = str(result[0][0])
             else:
-                return_str = "TRANSCRIPTS"
-                if user == "test":
-                    return_str = "QUANT_TRANSCRIPTS"
-                    if len(file_paths_dict["riboseq"].values()) > 0:
-                        pre_orfQuant_res = incl_OPM_run_orfQuant(
-                            tran, sqlite_path_organism,
-                            file_paths_dict["riboseq"].values())
-                        pre_TPM_Ribo = TPM(tran, sqlite_path_organism,
-                                           file_paths_dict["riboseq"].values(),
-                                           "ribo")
+                orfQuant_res = {
+                    transcript: None
+                    for transcript in transcripts.transcript
+                }
+                TPM_Ribo = {
+                    transcript: None
+                    for transcript in transcripts.transcript
+                }
 
-                        max_TPM_Ribo = max(pre_TPM_Ribo.values())
-                        TPM_Ribo = {
-                            transcript:
-                            round((pre_TPM_Ribo[transcript] * 100. /
-                                   max_TPM_Ribo), 2)
-                            for transcript in pre_TPM_Ribo
-                        }
+            if 'rnaseq' in file_paths_dict["file_type"]:
+                pre_TPM_RNA = TPM(
+                    transcripts.transcript[0], sql_path,
+                    file_paths_dict.loc[file_paths_dict["file_type"] ==
+                                        "rnaseq", "path"].values, "rna")
+                max_TPM_RNA = max(pre_TPM_RNA.values())
+                TPM_RNA = {
+                    transcript:
+                    round((pre_TPM_RNA[transcript] / max_TPM_RNA) * 100, 2)
+                    for transcript in pre_TPM_RNA
+                }
 
-                        max_orf = max(pre_orfQuant_res.values())
-                        orfQuant_res = {
-                            transcript:
-                            round(
-                                (pre_orfQuant_res[transcript] / max_orf) * 100,
-                                2)
-                            for transcript in pre_orfQuant_res
-                        }
+            else:
+                TPM_RNA = {
+                    transcript: None
+                    for transcript in transcripts.transcript
+                }
 
-                    else:
-                        orfQuant_res = {
-                            transcript[0]: None
-                            for transcript in result
-                        }
-                        TPM_Ribo = {
-                            transcript[0]: None
-                            for transcript in result
-                        }
+        for transcript in result:
+            cursor.execute(
+                "SELECT length,cds_start,cds_stop,principal,version from transcripts WHERE transcript = '{}'"
+                .format(transcript[0]))
+            tran_result = cursor.fetchone()
+            tranlen = tran_result[0]
+            cds_start = tran_result[1]
+            cds_stop = tran_result[2]
+            if str(tran_result[3]) == "1":
+                principal = "principal"
+            else:
+                principal = ""
+            version = tran_result[4]
+            if not cds_start:
+                cdslen = None
+                threeutrlen = None
+            else:
+                cdslen = cds_stop - cds_start
+                threeutrlen = tranlen - cds_stop
+            if user == "test":
+                OPM_coverage = (orfQuant_res[transcript[0]]
+                                if transcript[0] in orfQuant_res else None)
 
-                    if len(file_paths_dict["rnaseq"].values()) > 0:
-                        pre_TPM_RNA = TPM(tran, sqlite_path_organism,
-                                          file_paths_dict["rnaseq"].values(),
-                                          "rna")
-                        max_TPM_RNA = max(pre_TPM_RNA.values())
-                        TPM_RNA = {
-                            transcript:
-                            round(
-                                (pre_TPM_RNA[transcript] / max_TPM_RNA) * 100,
-                                2)
-                            for transcript in pre_TPM_RNA
-                        }
+                RNA_coverage = (TPM_RNA[transcript[0]]
+                                if transcript[0] in TPM_RNA else None)
 
-                    else:
-                        TPM_RNA = {
-                            transcript[0]: None
-                            for transcript in result
-                        }
+                ribo_coverage = (TPM_Ribo[transcript[0]]
+                                 if transcript[0] in TPM_Ribo else None)
 
-                for transcript in result:
-                    cursor.execute(
-                        "SELECT length,cds_start,cds_stop,principal,version from transcripts WHERE transcript = '{}'"
-                        .format(transcript[0]))
-                    tran_result = cursor.fetchone()
-                    tranlen = tran_result[0]
-                    cds_start = tran_result[1]
-                    cds_stop = tran_result[2]
-                    if str(tran_result[3]) == "1":
-                        principal = "principal"
-                    else:
-                        principal = ""
-                    version = tran_result[4]
-                    if not cds_start:
-                        cdslen = None
-                        threeutrlen = None
-                    else:
-                        cdslen = cds_stop - cds_start
-                        threeutrlen = tranlen - cds_stop
-                    if user == "test":
-                        OPM_coverage = (orfQuant_res[transcript[0]]
-                                        if transcript[0] in orfQuant_res else
-                                        None)
+                return_str += (":{},{},{},{},{},{},{},{},{}".format(
+                    transcript[0], version, tranlen, cds_start, cdslen,
+                    threeutrlen, OPM_coverage, ribo_coverage, RNA_coverage))
+            else:
+                return_str += (":{},{},{},{},{},{},{}".format(
+                    transcript[0], version, tranlen, cds_start, cdslen,
+                    threeutrlen, principal))
+        return return_str
 
-                        RNA_coverage = (TPM_RNA[transcript[0]]
-                                        if transcript[0] in TPM_RNA else None)
-
-                        ribo_coverage = (TPM_Ribo[transcript[0]] if
-                                         transcript[0] in TPM_Ribo else None)
-
-                        return_str += (":{},{},{},{},{},{},{},{},{}".format(
-                            transcript[0], version, tranlen, cds_start, cdslen,
-                            threeutrlen, OPM_coverage, ribo_coverage,
-                            RNA_coverage))
-                    else:
-                        return_str += (":{},{},{},{},{},{},{}".format(
-                            transcript[0], version, tranlen, cds_start, cdslen,
-                            threeutrlen, principal))
-                return return_str
-
-        else:
-            return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
-                tran)
-            logging.debug(return_str)
-            return return_str
+    else:
+        return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
+            data['transcript'])
+        logging.debug(return_str)
+        return return_str
 
     lite = "y" if 'varlite' in data else "n"
     preprocess = True if 'preprocess' in data else False
