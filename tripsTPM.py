@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple, Union
+import numpy as np
 from tripsSplice import get_reads_per_transcript_location
 from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import get_start_stop_codon_positions
@@ -7,33 +8,38 @@ from tripsSplice import get_transcript_length
 
 
 def get_counts_meanFLD(transcripts: List[str],
-                       read_file: str) -> Tuple[Dict, float]:
+                       read_file: str) -> Tuple[Dict[str, int], int]:
+    ''' 
+    Get counts and mean FLD for a list of transcripts. 
+    >>> get_counts_meanFLD(["transcript1", "transcript2", "transcript3"],"read_file")
+    ({'transcript1': 1, 'transcript2': 1, 'transcript3': 1}, if length not in length_fre
+
+    read_file is the name of the sqlite file which contains information in dictionary. 
+
+    read_file dictionary is as follows:
+    {'transcript1': {'read_file1': 1, 'read_file2': 1, 'read_file3': 1}}, 
+    
+    '''
+
     length_freq = {}
     transcript_counts = {}
-    for transcript in transcripts:
-        if transcript not in transcript_counts:
-            transcript_counts[transcript] = 0
+    for transcript in set(transcripts):
+        transcript_counts[transcript] = 0
         #print "transcript, read_file", transcript, read_file
         reads = get_reads_per_transcript_location(transcript, read_file)
         if not reads:
             continue
-        for length in reads:
-            for position in reads[length]:
-                if length not in length_freq:
-                    length_freq[length] = reads[length][position]
-
-                else:
-                    length_freq[length] += reads[length][position]
+        for length, positions in reads.items():
+            if length not in length_freq:
+                length_freq[length] = 0
+            for position in positions:
+                length_freq[length] += reads[length][position]
                 transcript_counts[transcript] += reads[length][position]
-    total_count = 0
-    count = 0
-    for length, freq in length_freq.items():
-        total_count += length * freq
-        count += freq
-    if not count:
-        mean_fld = 1
-    else:
-        mean_fld = round(total_count * 1. / count, 0)
+    lengths = np.array(list(length_freq.keys()))
+    freqs = np.array(list(length_freq.values()))
+    total_count = np.sum(lengths * freqs)
+    count = np.sum(freqs)
+    mean_fld = 1 if not count else round(total_count * 1. / count)
     return transcript_counts, mean_fld
 
 
@@ -74,12 +80,13 @@ def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
             for transcript, start_stop in start_stops.items()
         }
 
-    else: #if seq_type == "rna":
+    else:  #if seq_type == "rna":
         transcripts = [
             transcript[0]
             for transcript in get_gene_info(gene, sqlite_path_organism)
         ]
-        lengths = get_transcript_length(gene, sqlite_path_organism) # TODO: Look for this function
+        lengths = get_transcript_length(
+            gene, sqlite_path_organism)  # TODO: Look for this function
 
     all_TPMs = {transcript: [] for transcript in transcripts}
 

@@ -1,6 +1,7 @@
 from typing import Dict, Tuple, List, Union
 from typing_extensions import Literal
 from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 from sqlqueries import sqlquery
 from sqlitedict import SqliteDict
 import pandas as pd
@@ -28,7 +29,7 @@ class TripsSplice:
                                          & self.transcript_table.principle,
                                          "transcript"].values[0]
 
-    def get_transcript_info(self, transcript_id: str) -> DataFrame:
+    def get_transcript_info(self, transcript_id: str) -> Series:
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id,
                                      ['exon_junctions', 'sequence']].iloc[0]
@@ -99,73 +100,46 @@ def get_exon_coordinates_for_orf(transcript_id: str,
 def get_protein_coding_transcript_ids(gene: str,
                                       sqlite_path_organism: str) -> List[str]:
     """gets the transcript IDs for protein coding genes for the given gene"""
-    gene_id = gene.upper()
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
-    protein_coding_transcripts = transcripts.loc[transcripts.gene == gene_id
-                                                 & transcripts.tran_type == 1,
-                                                 "transcript"].values
-
-    return protein_coding_transcripts
+    return transcripts.loc[transcripts.gene == gene
+                           & transcripts.tran_type == 1, "transcript"].values
 
 
 def get_start_stop_codon_positions(
         transcript_id: str, sqlite_path_organism: str) -> Tuple[int, int]:
     # Get start and stop codon positions from annotation sqlite
-    transcripts = get_table("transcripts", sqlite_path_organism)
+    transcripts = sqlquery(sqlite_path_organism, "transcripts")
     return transcripts.loc[transcripts.transcript == transcript_id,
                            ['cds_start', 'cds_stop']].values[0]
 
 
-def get_orf_exon_structure(
-        start_stop: Tuple[int, int],
-        exon_coordinates: List[List[int]]) -> List[List[int]]:
+def get_orf_exon_structure(start_stop: Tuple[int, int],
+                           exon_coordinates: List[List[int]]) -> DataFrame:
     # determine the stucture of each ORF. Returns coordinates in the form:
     # Initiation site to junction, junction to junction, junction to translation stop
-    start, stop = start_stop
     # TODO: Sort exon coordinates and select last
-    exon_coordinates_df = DataFrame(exon_coordinates,
-                                    columns=["start", "stop"])
-    exon_coordinates_df = exon_coordinates_df[
-        exon_coordinates_df.stop > start
-        & exon_coordinates_df.start < stop]
-    exon_coordinates_df.loc[exon_coordinates_df.start <= start,
-                            "start"] = start
-    exon_coordinates_df.loc[exon_coordinates_df.stop >= stop, "stop"] = stop
-    return exon_coordinates_df.values
-
-    # started = False
-    # structure = []
-    # for exon in exon_coordinates:
-    # if start in range(exon[0], exon[1]):
-    # started = True
-    # structure.append((start, exon[1]))
-
-    # elif started and (stop in range(exon[0], exon[1])):
-    # structure.append((exon[0], stop))
-    # elif started:  # NOTE:What if another exon is after the stop codon? It will insert wrong exon
-    # structure.append(exon)
-    # return structure
+    exon_coordinates_df = pd.DataFrame(exon_coordinates,
+                                       columns=["start", "stop"])
+    exon_coordinates_df = exon_coordinates_df.loc[
+        (exon_coordinates_df.stop > start_stop[0])
+        & (exon_coordinates_df.start < start_stop[1])]
+    exon_coordinates_df.loc[exon_coordinates_df.start <= start_stop[0],
+                            "start"] = start_stop[0]
+    exon_coordinates_df.loc[exon_coordinates_df.stop >= start_stop[1],
+                            "stop"] = start_stop[1]
+    return exon_coordinates_df.drop_duplicates()
 
 
 def get_coding_regions_for_genes_transcripts(
         gene: str, sqlite_path_organism: str) -> List[Tuple[int, int]]:
     # Returns the coding region coordinates annotated on each transcript for a given gene
-    gene_id = gene.upper()
-    transcripts = get_table("transcripts", sqlite_path_organism)
-    transcripts = transcripts.loc[transcripts.gene == gene_id,
+    transcripts = sqlquery(sqlite_path_organism, "transcripts")
+    transcripts = transcripts.loc[transcripts.gene == gene,
                                   "transcript"].values
-    coding_regions = get_table("coding_regions", sqlite_path_organism)
-    coding_regions = coding_regions[coding_regions.transcript.isin(
+    coding_regions = sqlquery(sqlite_path_organism, "coding_regions")
+    coding_regions = coding_regions.loc[coding_regions.transcript.isin(
         transcripts)]
     return coding_regions
-
-    # conn = sqlite3.connect(sqlite_path_organism)
-    # c = conn.cursor()
-    # c.execute(
-    # 'SELECT * FROM coding_regions WHERE transcript IN (SELECT transcript FROM transcripts WHERE gene = (:gene));',
-    # {'gene': gene_id})
-    # coding_regions = c.fetchall()
-    # return coding_regions
 
 
 def exons_of_transcript(transcript_id: str,
@@ -175,10 +149,10 @@ def exons_of_transcript(transcript_id: str,
     exon_lst = []
     tripsplice = TripsSplice(sqlite_path_organism)
     trans_info = tripsplice.get_transcript_info(transcript_id)
-    exon_junct_int = list(map(int, trans_info[0][0].split(",")))
-    sequence = trans_info[0][1]
+    exon_junct_int = list(map(int, trans_info['exon_junctions'].split(",")))
+    sequence = trans_info['sequence']
 
-    while len(exon_junct_int) != 0:
+    while exon_junct_int:
         exon, sequence = get_3prime_exon(exon_junct_int, sequence)
         exon_lst.append(exon)
 
@@ -336,7 +310,10 @@ def get_reads_per_transcript_location(
         transcript_id: str,
         sqlite_path_reads: str) -> Union[None, Dict[int, List[int]]]:
     infile = SqliteDict(sqlite_path_reads)
-    return infile[transcript_id]["unambig"] if transcript_id in infile else None
+    try:
+        return infile[transcript_id]["unambig"]
+    except KeyError:
+        return None
     # print("No unambiguous reads support this gene " + transcript_id)
 
 
