@@ -99,7 +99,7 @@ def get_protein_coding_transcript_ids(gene: str,
                                       sqlite_path_organism: str) -> List[str]:
     """gets the transcript IDs for protein coding genes for the given gene"""
     gene_id = gene.upper()
-    transcripts = get_table("transcripts", sqlite_path_organism)
+    transcripts = sqlquery(sqlite_path_organism, "transcripts")
     protein_coding_transcripts = transcripts.loc[transcripts.gene == gene_id
                                                  & transcripts.tran_type == 1,
                                                  "transcript"].values
@@ -167,18 +167,6 @@ def get_coding_regions_for_genes_transcripts(
     # return coding_regions
 
 
-def get_max_min_exon_genomic_positions(
-        exon_info: List[Tuple[str, int, int]]) -> Tuple[int, int]:
-    # Of all exons starts return the lowest position and highest position of all stops
-    starts = []
-    stops = []
-    # TODO: exon_info can be replace with matrix for faster processing
-    for exon in exon_info:
-        starts.append(exon[1])
-        stops.append(exon[2])
-    return min(starts), max(stops)
-
-
 def exons_of_transcript(transcript_id: str,
                         sqlite_path_organism: str) -> List[str]:
     # For a given transcript return the exon sequences in a list in 5' to 3' direction
@@ -213,42 +201,35 @@ def get_exon_coordinate_ranges(sequence: str, exons: List[str],
 def get_exon_info(gene: str,
                   sqlite_path_organism: str,
                   supported_transcripts: List[str],
-                  filte_r: bool = True) -> List[Tuple[str, int, int]]:
+                  filte_r: bool = True) -> DataFrame:
     # Return the exon starts,stops and transcript for a given gene
     gene = gene.upper()
-    exons = get_table("exons", sqlite_path_organism)
-    transcripts = get_table("transcripts", sqlite_path_organism)
+    exons = sqlquery(sqlite_path_organism, "exons")
+    transcripts = sqlquery(sqlite_path_organism, "transcripts")
     exons = exons.loc[exons.transcript.isin(transcripts.loc[
         transcripts.gene == gene, "transcript"].values),
                       ["transcript", "exon_start", "exon_stop"]]
     if filte_r:
-        return exons[exons.transcript.isin(supported_transcripts)].values
-    return exons.values
+        return exons[exons.transcript.isin(supported_transcripts)]
+    return exons
 
 
-def genomic_exon_coordinate_ranges(
-        gene: str,
-        sqlite_path_organism: str,
-        supported_transcripts: List[str],
-        filte_r: bool = True) -> Dict[str, List[Tuple[int, int]]]:
+def genomic_exon_coordinate_ranges(gene: str,
+                                   sqlite_path_organism: str,
+                                   supported_transcripts: List[str],
+                                   filte_r: bool = True) -> DataFrame:
     # create a dictionary with transcript_ids as keys and exon coordinates in tuple (start, stop) as values
     # subtract the minumum start codon position of any exon for the gene
     exon_info = get_exon_info(gene,
                               sqlite_path_organism,
                               supported_transcripts,
                               filte_r=filte_r)
-    minimum, _ = get_max_min_exon_genomic_positions(exon_info)
-    genomic_coordinates_per_transcript = {}
-
-    for exon in exon_info:
-        if exon[0] not in genomic_coordinates_per_transcript:
-            genomic_coordinates_per_transcript[exon[0]] = [(exon[1] - minimum,
-                                                            exon[2] - minimum)]
-        else:
-            genomic_coordinates_per_transcript[exon[0]].append(
-                (exon[1] - minimum, exon[2] - minimum))
-
-    return genomic_coordinates_per_transcript
+    minimum = min(exon_info.exon_start)
+    exon_info["exon_start"] = list(
+        map(lambda x: x - minimum, exon_info.exon_start))
+    exon_info["exon_stop"] = list(
+        map(lambda x: x - minimum, exon_info.exon_stop))
+    return exon_info
 
 
 def genomic_orf_coordinate_ranges(
@@ -363,7 +344,7 @@ def get_reads_per_genomic_location(
     sqlite_path_reads: List[str],
     sqlite_path_organism: str,
     supported_transcripts: List[str],
-    genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]],
+    genomic_exon_coordinates: DataFrame,
     filte_r: bool = True,
     site: Literal[
         'asite', 'fiveprime',
