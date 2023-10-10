@@ -638,31 +638,22 @@ def login() -> Union[str, Response]:
         )  # TODO: relace this with jquery.Trim on user side
         password = request.form['password'].strip()
         if xcaptcha.verify() or username == "developer":
-            logging.debug("login Connecting to trips.sqlite")
-            username_dict = table_to_dict(get_table('users'),
-                                          ['username', 'password'])
-            logging.debug("Closing trips.sqlite connection")
-            if username in username_dict:
-                if check_password_hash(username_dict[username], password):
+            users = get_table('users')
+            try:
+                if check_password_hash(
+                        users.loc[users.username == username,
+                                  "password"].values[0], password):
                     login_user(User(username))
                     nxt = sanitize_get_request(request.args.get('next'))
-                    if nxt:
-                        if "<function login" in nxt:
-                            nxt = "/"
-                    else:
+                    if not nxt or ("<function login" in nxt):
                         nxt = "/"
                     return redirect(nxt)
-                else:
-                    error = 'Either username or password incorrect. Please try again.'
-                    return render_template('login.html', error=error)
-            else:
                 error = 'Either username or password incorrect. Please try again.'
-                return render_template('login.html', error=error)
+            except Exception as _:
+                error = 'Either username or password incorrect. Please try again.'
         else:
             error = 'Invalid Captcha. Please try again.'
-            return render_template('login.html', error=error)
-    else:
-        return render_template('login.html', error=error)
+    return render_template('login.html', error=error)
 
 
 # Allows users to logout
@@ -670,7 +661,7 @@ def login() -> Union[str, Response]:
 @login_required
 def logout() -> Response:
     logout_user()
-    return redirect(url_for('homepage'))
+    return redirect(url_for('/'))
 
 
 # callback to reload the user object
@@ -1028,7 +1019,7 @@ def deletequery():
                     opendict["unmapped_reads"] = int(data[key]["unmapped"])
                     opendict.close()
     flash("File list updated")
-    return redirect("https://trips.ucc.ie/uploads")
+    return redirect("/uploads")
 
 
 # Allows users to delete studies,modify access, modify the organism/transcriptome assembly or study name
@@ -1166,7 +1157,7 @@ def deletestudyquery():
     connection.commit()
     connection.close()
     flash("Update successful")
-    return redirect("https://trips.ucc.ie/uploads")
+    return redirect("/uploads")
 
 
 # Allows users to delete transcriptomes
@@ -1249,7 +1240,7 @@ def deletetranscriptomequery():
         update_table("studies", {"study_id": study_ids})
         update_table("files", {"study_id": study_ids})
     flash("Update successful")
-    return redirect("https://trips.ucc.ie/uploads")
+    return redirect("/uploads")
 
 
 # Updates the "sequence rules", for custom sequence types
@@ -1281,7 +1272,7 @@ def seqrulesquery():
     connection.commit()
     connection.close()
     flash("Update successful")
-    return redirect("https://trips.ucc.ie/uploads")
+    return redirect("/uploads")
 
 
 # breaks down the counts from each file for a specific ORF
