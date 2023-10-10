@@ -14,31 +14,6 @@ from fixed_values import get_user_defined_seqs
 
 matplotlib.use('agg')
 
-# CSS for popup tables that appear when hovering over aug codons
-point_tooltip_css = """
-table
-{
-  border-collapse: collapse;
-}
-th
-{
-  color: #000000;
-  background-color: #d2d4d8;
-}
-td
-{
-  background-color: #ffffff;
-}
-table, th, td
-{
-  font-family:Arial, Helvetica, sans-serif;
-  border: 0px solid black;
-  text-align: left;
-}
-"""
-
-color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
-
 
 def generate_plot(
         tran: str,
@@ -162,9 +137,9 @@ def generate_plot(
     tranlen = traninfo["length"]
     cds_start = traninfo["cds_start"]
     cds_stop = traninfo["cds_stop"]
-    if  not cds_start:
+    if not cds_start:
         cds_start = 0
-    if  not cds_stop:
+    if not cds_stop:
         cds_stop = 0
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}

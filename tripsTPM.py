@@ -3,8 +3,6 @@ import numpy as np
 from tripsSplice import get_reads_per_transcript_location
 from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import get_start_stop_codon_positions
-from tripsSplice import get_gene_info
-from tripsSplice import get_transcript_length
 
 
 def get_counts_meanFLD(transcripts: List[str],

@@ -28,7 +28,7 @@ def get_reads(
     get_mismatches: bool = False,
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
-        str, Dict[str, Dict[int, int]]]],Tuple[str, DataFrame ]]:
+        str, Dict[str, Dict[int, int]]]], Tuple[str, DataFrame]]:
     mismatch_dict = pd.DataFrame(0,
                                  index=range(0, tranlen + 1),
                                  columns=["A", "T", "G", "C"])
@@ -44,29 +44,28 @@ def get_reads(
         if filetype in user_files:
             for file_id in user_files[filetype]:
                 filename = user_files[filetype][file_id]
-                if os.path.isfile(filename):
+                try:
                     sqlite_db = SqliteDict(filename, autocommit=False)
-                else:
+                except FileNotFoundError:
                     return "Could not open file:", filename.split("/")[-1]
                 accepted_offsets = {}
-                if "offsets" in sqlite_db:
+                try:
                     all_offsets = sqlite_db["offsets"][primetype]["offsets"]
                     scores = sqlite_db["offsets"][primetype]["read_scores"]
-                else:
+                except KeyError:
                     all_offsets = {}
                     scores = {}
-                if scores == {}:
                     for i in range(min_read, max_read):
                         scores[i] = 1
                         all_offsets[i] = 15
                 for rl in scores:
-                    if float(scores[rl]) >= float(readscore):
+                    if scores[rl] >= readscore:
                         if rl in all_offsets:
                             accepted_offsets[rl] = all_offsets[rl]
                         else:
                             accepted_offsets[rl] = 15
 
-                if accepted_offsets != {}:
+                if accepted_offsets:
                     offset_dict[filename] = {}
                     for length in accepted_offsets:
                         offset_dict[filename][length] = accepted_offsets[
@@ -139,11 +138,6 @@ def get_reads(
                         for char in sqlite_db_seqvar[pos]:
                             mismatch_dict.loc[
                                 fixed_pos, char] += sqlite_db_seqvar[pos][char]
-                            # if char != "N":
-                            # if fixed_pos not in mismatch_dict[char]:
-                            # mismatch_dict[char][fixed_pos] = 0
-                            # count = sqlite_db_seqvar[pos][char]
-                            # mismatch_dict[char][fixed_pos] += count
                 except Exception:
                     pass
 
@@ -157,7 +151,7 @@ def get_reads(
                         ambig_tran_dict = {}
                     # TODO: Change merge_dicts to take a list of dicts instead of two
                     trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
-                    if pcr:
+                    if pcr:  # TODO: Convert this value as ambig and unambig
                         if "unambig_pcr" in alltrandict:
                             trandict = merge_dicts(trandict,
                                                    alltrandict["unambig_pcr"])
@@ -215,13 +209,13 @@ def get_reads(
                                             try:
                                                 master_dict[
                                                     new_offset_pos] += count
-                                            except Exception:
+                                            except KeyError:
                                                 pass
                                     else:
                                         offset_pos = pos + offset
                                         try:
                                             master_dict[offset_pos] += count
-                                        except Exception as e:
+                                        except KeyError:
                                             print("Error tried adding to "
                                                   f"position {e} but tranlen "
                                                   f"is only {tranlen}")
@@ -258,36 +252,19 @@ def get_readlength_breakdown(
     colored_master_dict = {}
     master_file_dict = {}
     # first make a master dict consisting of all the read dicts from each filename
-    if read_type == "unambig":
-        if filetype in user_files:
-            for file_id in user_files[filetype]:
-                filename = user_files[filetype][file_id]
-                if os.path.isfile(filename):
-                    openshelf = SqliteDict(filename)
-                else:
-                    continue
-                if tran in openshelf:
-                    alltrandict = dict(openshelf[tran])
-                    unambig_tran_dict = alltrandict["unambig"]
-                    openshelf.close()
-                    trandict = unambig_tran_dict
-                    master_file_dict[filename] = trandict
-    else:
-        if filetype in user_files:
-            for file_id in user_files[filetype]:
-                filename = user_files[filetype][file_id]
-                if os.path.isfile(filename):
-                    openshelf = SqliteDict(filename)
-                else:
-                    continue
-                if tran in openshelf:
-                    alltrandict = dict(openshelf[tran])
-                    openshelf.close()
-                    unambig_tran_dict = alltrandict["unambig"]
-                    ambig_tran_dict = alltrandict["ambig"]
-                    # TODO: Change merge_dicts to take a list of dicts instead of two
-                    trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
-                    master_file_dict[filename] = trandict
+    if filetype in user_files:
+        for file_id in user_files[filetype]:
+            filename = user_files[filetype][file_id]
+            try:
+                openshelf = SqliteDict(filename)
+                alltrandict = dict(openshelf[tran])
+                trandict = alltrandict["unambig"]
+                if read_type == "ambig":
+                    trandict = merge_dicts(trandict, alltrandict["ambig"])
+                master_file_dict[filename] = trandict
+                openshelf.close()
+            except KeyError:
+                pass
 
     for filename in master_file_dict:
         for readlen in master_file_dict[filename]:

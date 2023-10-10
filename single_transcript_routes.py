@@ -194,25 +194,15 @@ def query() -> str:
                     for transcript in transcripts.transcript
                 }
 
-        for transcript in result:
-            cursor.execute(
-                "SELECT length,cds_start,cds_stop,principal,version from transcripts WHERE transcript = '{}'"
-                .format(transcript[0]))
-            tran_result = cursor.fetchone()
-            tranlen = tran_result[0]
-            cds_start = tran_result[1]
-            cds_stop = tran_result[2]
-            if str(tran_result[3]) == "1":
-                principal = "principal"
-            else:
-                principal = ""
-            version = tran_result[4]
-            if not cds_start:
+        for _, transcript in transcripts.iterrows(
+        ):  # TODO: Replace with iter tuple
+            "SELECT length,cds_start,cds_stop,principal,version from transcripts WHERE transcript = '{}'"
+            if not transcript.cds_start:
                 cdslen = None
                 threeutrlen = None
             else:
-                cdslen = cds_stop - cds_start
-                threeutrlen = tranlen - cds_stop
+                cdslen = transcript.cds_stop - transcript.cds_start
+                threeutrlen = transcript.length - transcript.cds_stop
             if user == "test":
                 OPM_coverage = (orfQuant_res[transcript[0]]
                                 if transcript[0] in orfQuant_res else None)
@@ -238,18 +228,6 @@ def query() -> str:
         logging.debug(return_str)
         return return_str
 
-    lite = "y" if 'varlite' in data else "n"
-    preprocess = True if 'preprocess' in data else False
-    uga_diff = True if 'uga_diff' in data else False
-    color_readlen_dist = True if 'color_readlen_dist' in data else False
-    ribo_coverage = True if 'ribo_coverage' in data else False
-    nucseq = True if 'nucseq' in data else False
-    mismatches = True if 'mismatches' in data else False
-    ambiguous = True if 'ambiguous' in data else False
-    pcr = True if 'pcr' in data else False
-    noisered = True if 'noisered' in data else False
-    mismatch = True if 'mismatch' in data else False
-
     # user_short_passed = False
     # if data["user_short"] == "None" or user_short_passed == True:
     # short_code = generate_short_code(data, organism, data["transcriptome"],
@@ -272,50 +250,19 @@ def query() -> str:
     }
 
     # get user_id
-    if current_user.is_authenticated:
+    settings = config.DEFAULT_USER_SETTINGS.copy()
+    if current_user.is_authenticated: 
 
         user_name = current_user.name
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(
-                user_name))
-        result = (cursor.fetchone())
-        user_id = result[0]
-        print("current user id is", user_id)
-        # get a list of organism id's this user can access
-        cursor.execute(
-            "SELECT background_col,uga_col,uag_col,uaa_col,title_size,subheading_size,axis_label_size,marker_size,cds_marker_width,cds_marker_colour,legend_size,ribo_linewidth from user_settings WHERE user_id = '{}';"
-            .format(user_id))
-        result = (cursor.fetchone())
-        background_col = result[0]
-        uga_col = result[1]
-        uag_col = result[2]
-        uaa_col = result[3]
-        title_size = result[4]
-        subheading_size = result[5]
-        axis_label_size = result[6]
-        marker_size = result[7]
-        cds_marker_size = result[8]
-        cds_marker_colour = result[9]
-        legend_size = result[10]
-        ribo_linewidth = result[11]
-        # get rules for all custom seq types
-        cursor.execute(
-            "SELECT * from seq_rules WHERE user_id = {};".format(user_id))
-        result = (cursor.fetchall())
-        for row in result:
-            seq_name = row[1]
-            frame_breakdown = row[2]
-            seq_rules[seq_name] = {"frame_breakdown": frame_breakdown}
+        user_id = get_user_id(user_name)
+        user_settings = get_user_settings(user_id) # TODO: Push to default settings
+        for key in settings:
+            settings[key] = user_settings[key]
+        sequence_rule = get_table('seq_rules')
+        sequence_rule = sequence_rule.loc[sequence_rule.user_id == user_id]
     if tran:
         return riboflask.generate_plot(
-            tran, ambiguous, minread, maxread, lite, ribocoverage, organism,
-            readscore, noisered, primetype, minfiles, nucseq, user_hili_starts,
-            user_hili_stops, uga_diff, file_paths_dict, short_code,
-            color_readlen_dist, background_col, uga_col, uag_col, uaa_col,
-            advanced, seqhili, seq_rules, title_size, subheading_size,
-            axis_label_size, marker_size, transcriptome, config.UPLOADS_DIR,
-            cds_marker_size, cds_marker_colour, legend_size, ribo_linewidth,
-            secondary_readscore, pcr, mismatches, hili_start, hili_stop)
+                {'user_settings': settings, 'seq_rules': seq_rules,'data': data}))
 
     else:
         return "ERROR! Could not find any transcript or gene corresponding to {}".format(
