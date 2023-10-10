@@ -699,10 +699,6 @@ def anno_query() -> str:
 @app.route('/saved/')
 def saved():
 
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     advanced = False
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
@@ -710,7 +706,7 @@ def saved():
         flash(
             "To use the Saved ORFs page you either need to be logged in or allow cookies."
         )
-        return redirect(url_for('homepage'))
+        return redirect(url_for('/'))
 
     user_id = -1
     if user and logged_in:
@@ -734,43 +730,22 @@ def saved():
 def savedquery():
     data = json.loads(request.data)
     user = fetch_user()[0]
-    cursor = connection.cursor()
     organism = data["organism"]
     label = data["label"]
     # get user_id
     user_id = get_user_id(user)
-    start_codons = []
-    if "sc_aug" in data:  # TODO: Srink this part
-        start_codons.append("ATG")
-    if "sc_cug" in data:
-        start_codons.append("CTG")
-    if "sc_gug" in data:
-        start_codons.append("GTG")
-    if "sc_none" in data:
-        start_codons.append("None")
-
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
     user_saved_cases = get_table('users_saved_cases')
-    if organism != 'Select an Organism':  # TODO: Fix this as organism shouldn't be like this
-        if not label:
-            user_saved_cases = user_saved_cases[
-                user_saved_cases.user_id == user_id
-                & user_saved_cases.organism == organism]
-        else:
-            label_list = (label.strip(" ")).split(",")
-            user_saved_cases = user_saved_cases[
-                user_saved_cases.user_id == user_id
-                & user_saved_cases.organism == organism
-                & user_saved_cases.label.isin(label_list)]
-    else:
-        if not label:
-            user_saved_cases = user_saved_cases[user_saved_cases.user_id ==
-                                                user_id]
-        else:
-            label_list = (label.strip(" ")).split(",")
-            user_saved_cases = user_saved_cases[
-                user_saved_cases.user_id == user_id
-                & user_saved_cases.label.isin(label_list)]
+    user_saved_cases = user_saved_cases.loc[user_saved_cases.user_id ==
+                                            user_id]
+    if organism != 'Select an Organism':
+        user_saved_cases = user_saved_cases.loc[user_saved_cases.organism ==
+                                                organism]
+        if label:
+            label_list = label.strip().split(",")
+            user_saved_cases = user_saved_cases.loc[
+                user_saved_cases.label.isin(label_list)]
+
     user_saved_cases = user_saved_cases.head(1000)
     returnstr = user_saved_cases.apply(
         lambda x:
