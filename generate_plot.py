@@ -94,9 +94,8 @@ def generate_plot():
           cds_marker_size, cds_marker_colour, legend_size, ribo_linewidth,
           secondary_readscore, pcr, mismatches, hili_start, hili_stop)
 
-    if lite == "n" and ribocoverage == True:
-        return_str = "Error: Cannot display Ribo-Seq Coverage when 'Line Graph' is turned off"
-        return return_str
+    if not lite ribocoverage:
+        return "Error: Cannot display Ribo-Seq Coverage when 'Line Graph' is turned off"
     labels = [
         "Frame 1 profiles", "Frame 2 profiles", "Frame 3 profiles", "RNA",
         "Exon Junctions"
@@ -116,86 +115,31 @@ def generate_plot():
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     stop_codons = ["TAG", "TAA", "TGA"]
     frame_orfs = {1: [], 2: [], 3: []}
-    connection = sqlite3.connect('{}/trips.sqlite'.format(config.SCRIPT_LOC))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
+    owener = get_table('organisms')
+
+    owener = owener.loc[(owener['organism_name'] == organism, "owner"]) & (owener['transcriptome_list'] == transcriptome), "owner"].values[0]
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+        sql_file = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
                 config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
-            return_str = "Cannot find annotation file {}.{}.sqlite".format(
+                transcriptome)
+        if not os.path.isfile(sql_file):
+            return "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
-            return return_str
     else:
-        transhelve = sqlite3.connect(
+        sql_file=sqlite3.connect(
             "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                 trips_uploads_location, owner, organism, transcriptome))
-    connection.close()
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
-    traninfo = {
-        "transcript": result[0],
-        "gene": result[1],
-        "length": result[2],
-        "cds_start": result[3],
-        "cds_stop": result[4],
-        "seq": result[5],
-        "strand": result[6],
-        "stop_list": result[7].split(","),
-        "start_list": result[8].split(","),
-        "exon_junctions": result[9].split(","),
-        "tran_type": result[10],
-        "principal": result[11]
-    }
-    print(traninfo)
-    try:
-        traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]]
-    except Exception:
-        traninfo["stop_list"] = []
-
-    try:
-        traninfo["start_list"] = [int(x) for x in traninfo["start_list"]]
-    except Exception:
-        traninfo["start_list"] = []
-
-    if str(traninfo["exon_junctions"][0]) != "":
-        traninfo["exon_junctions"] = [
-            int(x) for x in traninfo["exon_junctions"]
-        ]
-    else:
-        traninfo["exon_junctions"] = []
+    transcripts = sqlquery(sql_file, "transcripts")
+    traninfo = transcripts.loc[transcripts.transcript == tran].iloc[0].fillna(0)
+    for k in traninfo: 
+        try: 
+            traninfo[k] = list(map(int,traninfo[k]))
+        except Exception: 
+            traninfo[k] = traninfo[k]
     all_cds_regions = []
-    # Check if the 'coding_regions' table exists
-    cursor.execute(  # TODO: Convert to model
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='coding_regions';"
-    )
-    result = cursor.fetchone()
-    if result != None:
-        cursor.execute(
-            "SELECT * from coding_regions WHERE transcript = '{}'".format(
-                tran))
-        result = cursor.fetchall()
-        for row in result:
-            all_cds_regions.append((row[1], row[2]))
-    transhelve.close()
-    gene = traninfo["gene"]
-    tranlen = traninfo["length"]
-    cds_start = traninfo["cds_start"]
-    cds_stop = traninfo["cds_stop"]
-    if cds_start == None:
-        cds_start = 0
-    if cds_stop == None:
-        cds_stop = 0
+    coding_regions = sqlquery(sql_file, "coding_regions")
+    coding_regions = coding_regions.loc[coding_regions.transcript == tran]
+    
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
@@ -467,15 +411,7 @@ def generate_plot():
         frame_counts["pos"].append(key)
         frame_counts["depth"].append(all_subcodon_reads[key])
         frame_counts["frame"].append(frame)
-        # rem = key % 3
-        # if rem == 1:  # frame 1
-        # frame = 0
-        # elif rem == 2:  # frame 2
-        # frame = 1
-        # elif rem == 0:  # frame 3
-        # frame = 2
-        # frame_counts[frame][key] = all_subcodon_reads[key]
-        if lite == "n":
+        if not lite:
             frame_counts["pos"] += [key, key + 1]
             frame_counts["depth"] += [0, 0]
             frame_counts["frame"] += [frame, frame]
@@ -494,7 +430,7 @@ def generate_plot():
 
     # altair plots
 
-    if mismatches == True:
+    if mismatches:
         a_mismatches = ax_main.plot(seq_var_dict["A"].keys(),
                                     seq_var_dict["A"].values(),
                                     alpha=0.01,
@@ -525,7 +461,7 @@ def generate_plot():
                                     linewidth=2)
 
     xy = 0
-    if nucseq == True:
+    if nucseq:
         ax_nucseq.set_facecolor(background_col)
         mrnaseq = seq.replace("T", "U")
         color_list = ["#FF4A45", "#64FC44", "#5687F9"]
@@ -738,8 +674,8 @@ def generate_plot():
         con_scores = SqliteDict(
             "{0}/{1}/homo_sapiens/score_dict.sqlite".format(
                 config.SCRIPT_LOC, config.ANNOTATION_DIR))
-    except Exception as e:
-        con_scores = []
+    except FileNotFoundError:
+        con_scores = {}
     for frame in [1, 2, 3]:
         orf_list = frame_orfs[frame]
         for tup in orf_list:
@@ -747,33 +683,28 @@ def generate_plot():
             outframe_ribo = 0.0
             orf_rna = 0.0001
             start = tup[0]
-            try:
-                context = (seq[start - 7:start + 4].upper()).replace("T", "U")
-            except Exception as e:
-                con_score = "?"
+            context = seq[start - 7:start + 4].upper().replace("T", "U")
             if len(context) != 11 or context[6:9] != "AUG":
                 con_score = "?"
             else:
                 try:
                     con_score = con_scores[context.upper()]
-                except Exception as e:
+                except KeyError:
                     con_score = "?"
             all_start_points[frame].append(start - 1)
             stop = tup[1]
+                pass
             for i in range(start + 2, stop, 3):
                 for subframe in [0, 1, 2]:
                     if i in frame_counts[subframe]:
                         orf_ribo += frame_counts[subframe][i]
 
-            for i in range(start, stop, 3):
-                for subframe in [0, 1, 2]:
-                    if i in frame_counts[subframe]:
-                        outframe_ribo += frame_counts[subframe][i]
+            for k in [0,1]:
+                for i in range(start+k, stop, 3):
+                    for subframe in [0, 1, 2]:
+                        if i in frame_counts[subframe]:
+                            outframe_ribo += frame_counts[subframe][i]
 
-            for i in range(start + 1, stop, 3):
-                for subframe in [0, 1, 2]:
-                    if i in frame_counts[subframe]:
-                        outframe_ribo += frame_counts[subframe][i]
 
             for i in range(start, stop + 1):
                 if i in all_rna_reads:
@@ -833,21 +764,6 @@ def generate_plot():
                          alpha=0,
                          zorder=3)
 
-    tooltip1 = PointHTMLTooltip(points1[0],
-                                htmllabels[1],
-                                voffset=10,
-                                hoffset=10,
-                                css=point_tooltip_css)
-    tooltip2 = PointHTMLTooltip(points2[0],
-                                htmllabels[2],
-                                voffset=10,
-                                hoffset=10,
-                                css=point_tooltip_css)
-    tooltip3 = PointHTMLTooltip(points3[0],
-                                htmllabels[3],
-                                voffset=10,
-                                hoffset=10,
-                                css=point_tooltip_css)
 
     for key, spine in ax_f1.spines.items():
         spine.set_visible(False)
@@ -879,19 +795,6 @@ def generate_plot():
             returnstr += ",{}".format(count)
         returnstr += "\n"
 
-    if seqhili == ['']:
-        plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3,
-                        TopToolbar(yoffset=-50, xoffset=-300),
-                        DownloadProfile(returnstr=returnstr),
-                        DownloadPNG(returnstr=title_str),
-                        DownloadSVG(returnstr=title_str))
-    else:
-        plugins.connect(fig, ilp, tooltip1, tooltip2, tooltip3, signaltooltip1,
-                        signaltooltip2, signaltooltip3,
-                        TopToolbar(yoffset=-50, xoffset=-300),
-                        DownloadProfile(returnstr=returnstr),
-                        DownloadPNG(returnstr=title_str),
-                        DownloadSVG(returnstr=title_str))
 
     ax_main.set_facecolor("white")
     # This changes the size of the tick markers, works on both firefox and chrome.

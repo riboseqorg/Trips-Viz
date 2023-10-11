@@ -46,10 +46,7 @@ def get_reads(
             try:
                 sqlite_db = SqliteDict(filename, autocommit=False)
             except FileNotFoundError:
-                if read_type == "unambig":
-                    return "Could not open file:", filename.split("/")[-1]
-                else:
-                    return "File not found", mismatch_dict
+                return pd.DataFrame(), pd.DataFrame()
 
             accepted_offsets = {}
             try:
