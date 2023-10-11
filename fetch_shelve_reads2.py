@@ -30,7 +30,7 @@ def get_reads(
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]], Tuple[str, DataFrame]]:
     mismatch_dict = pd.DataFrame(0,
-                                 index=range(0, tranlen + 1),
+                                 index=range(tranlen + 1),
                                  columns=["A", "T", "G", "C"])
 
     master_dict = collections.OrderedDict()
@@ -40,127 +40,74 @@ def get_reads(
 
     # first make a master dict consisting of all the read dicts from each filename
     offset_dict = {}
-    if read_type == "unambig":
-        if filetype in user_files:
-            for file_id in user_files[filetype]:
-                filename = user_files[filetype][file_id]
-                try:
-                    sqlite_db = SqliteDict(filename, autocommit=False)
-                except FileNotFoundError:
+    if filetype in user_files:
+        for file_id in user_files[filetype]:
+            filename = user_files[filetype][file_id]
+            try:
+                sqlite_db = SqliteDict(filename, autocommit=False)
+            except FileNotFoundError:
+                if read_type == "unambig":
                     return "Could not open file:", filename.split("/")[-1]
-                accepted_offsets = {}
-                try:
-                    all_offsets = sqlite_db["offsets"][primetype]["offsets"]
-                    scores = sqlite_db["offsets"][primetype]["read_scores"]
-                except KeyError:
-                    all_offsets = {}
-                    scores = {}
-                    for i in range(min_read, max_read):
-                        scores[i] = 1
-                        all_offsets[i] = 15
-                for rl in scores:
-                    if scores[rl] >= readscore:
-                        if rl in all_offsets:
-                            accepted_offsets[rl] = all_offsets[rl]
-                        else:
-                            accepted_offsets[rl] = 15
-
-                if accepted_offsets:
-                    offset_dict[filename] = {}
-                    for length in accepted_offsets:
-                        offset_dict[filename][length] = accepted_offsets[
-                            length]
-
-                if get_mismatches:
-                    try:
-                        sqlite_db_seqvar = sqlite_db[tran]["seq"]
-
-                        for pos in sqlite_db_seqvar:
-                            # convert to one based
-                            fixed_pos = pos + 1
-                            for char in sqlite_db_seqvar[pos]:
-                                mismatch_dict.loc[
-                                    fixed_pos,
-                                    char] += sqlite_db_seqvar[pos][char]
-
-                    except Exception:
-                        pass
-
-                try:
-                    alltrandict = sqlite_db[tran]
-                    unambig_tran_dict = alltrandict["unambig"]
-                    if pcr:
-                        if "unambig_pcr" in alltrandict:
-                            unambig_tran_dict = merge_dicts(
-                                unambig_tran_dict, alltrandict["unambig_pcr"])
-                    sqlite_db.close()
-                    master_file_dict[filename] = unambig_tran_dict
-                except Exception:
-                    pass
-    else:
-        if filetype in user_files:
-            for file_id in user_files[filetype]:
-                filename = user_files[filetype][file_id]
-                if os.path.isfile(filename):
-                    sqlite_db = SqliteDict(filename, autocommit=False)
                 else:
                     return "File not found", mismatch_dict
-                accepted_offsets = {}
-                if "offsets" in sqlite_db:
-                    all_offsets = sqlite_db["offsets"][primetype]["offsets"]
-                    scores = sqlite_db["offsets"][primetype]["read_scores"]
-                else:
-                    all_offsets = {}
-                    scores = {}
-                # oyster has no readscores so subcodon profiles not displaying, so i put this in to give every readlength a score of 1
-                if scores == {}:
-                    for i in range(min_read, max_read):
-                        scores[i] = 1
-                        all_offsets[i] = 15
 
-                for rl in scores:
-                    if float(scores[rl]) >= float(readscore):
-                        if rl in all_offsets:
-                            accepted_offsets[rl] = all_offsets[rl]
-                        else:
-                            accepted_offsets[rl] = 15
+            accepted_offsets = {}
+            try:
+                all_offsets = sqlite_db["offsets"][primetype]["offsets"]
+                scores = sqlite_db["offsets"][primetype]["read_scores"]
+            except KeyError:
+                all_offsets = {}
+                scores = {}
+                for i in range(min_read, max_read):
+                    scores[i] = 1
+                    all_offsets[i] = 15
+            for rl in scores:
+                if scores[rl] >= readscore:
+                    if rl in all_offsets:
+                        accepted_offsets[rl] = all_offsets[rl]
+                    else:
+                        accepted_offsets[rl] = 15
 
-                if accepted_offsets != {}:
-                    offset_dict[filename] = {}
-                    for length in accepted_offsets:
-                        offset_dict[filename][length] = accepted_offsets[
-                            length]
+            if accepted_offsets:
+                offset_dict[filename] = {}
+                for length in accepted_offsets:
+                    offset_dict[filename][length] = accepted_offsets[length]
+
+            if get_mismatches:
                 try:
                     sqlite_db_seqvar = sqlite_db[tran]["seq"]
+
                     for pos in sqlite_db_seqvar:
                         # convert to one based
                         fixed_pos = pos + 1
                         for char in sqlite_db_seqvar[pos]:
                             mismatch_dict.loc[
                                 fixed_pos, char] += sqlite_db_seqvar[pos][char]
+
                 except Exception:
                     pass
 
-                try:
-                    alltrandict = sqlite_db[tran]
-                    sqlite_db.close()
-                    unambig_tran_dict = alltrandict["unambig"]
-                    if "ambig" in alltrandict:
-                        ambig_tran_dict = alltrandict["ambig"]
+            try:
+                alltrandict = sqlite_db[tran]
+                sqlite_db.close()
+                unambig_tran_dict = alltrandict["unambig"]
+                if read_type == "ambig":
+                    if read_type in alltrandict:
+                        ambig_tran_dict = alltrandict[read_type]
                     else:
                         ambig_tran_dict = {}
-                    # TODO: Change merge_dicts to take a list of dicts instead of two
-                    trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
-                    if pcr:  # TODO: Convert this value as ambig and unambig
-                        if "unambig_pcr" in alltrandict:
-                            trandict = merge_dicts(trandict,
-                                                   alltrandict["unambig_pcr"])
-                        if "ambig_pcr" in alltrandict:
-                            trandict = merge_dicts(trandict,
-                                                   alltrandict["ambig_pcr"])
-                    master_file_dict[filename] = trandict
-                except Exception:
-                    pass
+                # TODO: Change merge_dicts to take a list of dicts instead of two
+                trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
+                if pcr:  # TODO: Convert this value as ambig and unambig
+                    if "unambig_pcr" in alltrandict:
+                        trandict = merge_dicts(trandict,
+                                               alltrandict["unambig_pcr"])
+                    if read_type == "ambig" and "ambig_pcr" in alltrandict:
+                        trandict = merge_dicts(trandict,
+                                               alltrandict["ambig_pcr"])
+                master_file_dict[filename] = trandict
+            except Exception:
+                pass
     # Next check coverage, if that's true then calculate coverage for each rl and return dict
         if not subcodon:
             for filename in master_file_dict:
