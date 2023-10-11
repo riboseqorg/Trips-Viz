@@ -145,6 +145,21 @@ def merge_dicts(dict1: Dict[str, Dict[int, int]],
     return dict1
 
 
+def merge_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
+    """
+    Merge two dataframes.
+    >>> df1 = pd.DataFrame({'pos': [1, 2], 'A': [1, 2], 'C': [3, 4], 'G': [5, 6], 'T': [7, 8]})
+    >>> df2 = pd.DataFrame({'pos': [1, 3], 'A': [10,20], 'C': [30, 40], 'G': [50, 60]})
+    >>> merge_dfs(df1, df2)
+       pos   A   C   G    T
+    0    1  11  33  55  7.0
+    1    2   2   4   6  8.0
+    2    3  20  40  60  0.0
+
+    """
+    return pd.concat([df1, df2]).grouby('pos').sum().reset_index()
+
+
 def codon_usage(codon_dict: Dict[str, int], short_code: str, title_size: int,
                 axis_label_size: int, marker_size: int, filename: str) -> None:
     allxvals: List[int] = []
