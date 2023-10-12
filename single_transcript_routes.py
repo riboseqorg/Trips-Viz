@@ -8,6 +8,7 @@ from flask import (
 )
 from flask import current_app as app
 from typing import Text
+from sqlqueries import get_user_id
 import sqlite3
 import os
 import config
@@ -76,12 +77,8 @@ single_transcript_query_blueprint = Blueprint("query",
 
 
 @single_transcript_query_blueprint.route('/query', methods=['POST'])
-def query() -> str:
+def query():  #TODO: add return type
     # global user_short_passed
-    try:
-        user = current_user.name
-    except Exception:
-        user = None
     data = request.get_json()
     print(data, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     file_list = []
@@ -108,7 +105,7 @@ def query() -> str:
                       "owner"].values[0]
     print(owner)
 
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
 
     if owner == 1:
         sql_path = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
@@ -132,17 +129,22 @@ def query() -> str:
     else:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
-    transcripts = sqlquery(sql_path, "transcripts")
-    transcripts = transcripts[(
-        transcripts.transcript == data["transcript"].upper()) |
-                              (transcripts.gene == data["transcript"].upper())]
+    transcripts_full = sqlquery(sql_path, "transcripts")
+    transcripts = transcripts_full[
+        (transcripts_full.transcript == data["transcript"].upper()) |
+        (transcripts_full.gene == data["transcript"].upper())]
 
-    if not transcripts.empty:
+    if transcripts.empty:
+        return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
+            data['transcript'])
+        logging.debug(return_str)
+        return return_str
 
+    if data['transcript'].upper() not in transcripts.transcript:
         return_str = "TRANSCRIPTS"
         if user == "test":
             return_str = "QUANT_TRANSCRIPTS"
-            if 'riboseq' in file_paths_dict["file_type"]:
+            try:  #  Riboseq
                 pre_orfQuant_res = incl_OPM_run_orfQuant(
                     transcripts.transcript[0], sql_path,
                     file_paths_dict.loc[file_paths_dict["file_type"] ==
@@ -166,17 +168,14 @@ def query() -> str:
                     for transcript in pre_orfQuant_res
                 }
 
-            else:
+            except KeyError:
                 orfQuant_res = {
                     transcript: None
                     for transcript in transcripts.transcript
                 }
-                TPM_Ribo = {
-                    transcript: None
-                    for transcript in transcripts.transcript
-                }
+                TPM_Ribo = orfQuant_res.copy()
 
-            if 'rnaseq' in file_paths_dict["file_type"]:
+            try:  #RNA Seq
                 pre_TPM_RNA = TPM(
                     transcripts.transcript[0], sql_path,
                     file_paths_dict.loc[file_paths_dict["file_type"] ==
@@ -188,7 +187,7 @@ def query() -> str:
                     for transcript in pre_TPM_RNA
                 }
 
-            else:
+            except KeyError:
                 TPM_RNA = {
                     transcript: None
                     for transcript in transcripts.transcript
@@ -196,47 +195,38 @@ def query() -> str:
 
         for _, transcript in transcripts.iterrows(
         ):  # TODO: Replace with iter tuple
-            "SELECT length,cds_start,cds_stop,principal,version from transcripts WHERE transcript = '{}'"
             if not transcript.cds_start:
                 cdslen = None
-                threeutrlen = None
+                three_utr_len = None
             else:
                 cdslen = transcript.cds_stop - transcript.cds_start
-                threeutrlen = transcript.length - transcript.cds_stop
+                three_utr_len = transcript.length - transcript.cds_stop
             if user == "test":
-                OPM_coverage = (orfQuant_res[transcript[0]]
-                                if transcript[0] in orfQuant_res else None)
-
-                RNA_coverage = (TPM_RNA[transcript[0]]
-                                if transcript[0] in TPM_RNA else None)
-
-                ribo_coverage = (TPM_Ribo[transcript[0]]
-                                 if transcript[0] in TPM_Ribo else None)
-
+                try:
+                    OPM_coverage = orfQuant_res[transcript.length]
+                except KeyError:
+                    OPM_coverage = None
+                try:
+                    RNA_coverage = TPM_RNA[transcript.length]
+                except KeyError:
+                    RNA_coverage = None
+                try:
+                    ribo_coverage = TPM_Ribo[transcript.length]
+                except KeyError:
+                    ribo_coverage = None
                 return_str += (":{},{},{},{},{},{},{},{},{}".format(
-                    transcript[0], version, tranlen, cds_start, cdslen,
-                    threeutrlen, OPM_coverage, ribo_coverage, RNA_coverage))
+                    transcript.transcript, transcript.version,
+                    transcript.length, transcript.cds_start, cdslen,
+                    three_utr_len, OPM_coverage, ribo_coverage, RNA_coverage))
+
             else:
                 return_str += (":{},{},{},{},{},{},{}".format(
-                    transcript[0], version, tranlen, cds_start, cdslen,
-                    threeutrlen, principal))
+                    transcript.transcript, transcript.version,
+                    transcript.length, transcript.cds_start, cdslen,
+                    three_utr_len, transcript.principal))
+        print(return_str)
         return return_str
 
-    else:
-        return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
-            data['transcript'])
-        logging.debug(return_str)
-        return return_str
-
-    # user_short_passed = False
-    # if data["user_short"] == "None" or user_short_passed == True:
-    # short_code = generate_short_code(data, organism, data["transcriptome"],
-    # "interactive_plot")
-    # else:
-    # short_code = data["user_short"]
-    # user_short_passed = True
-
-    # Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {
         "proteomics": {
             "frame_breakdown": 1
@@ -251,19 +241,19 @@ def query() -> str:
 
     # get user_id
     settings = config.DEFAULT_USER_SETTINGS.copy()
-    if current_user.is_authenticated: 
+    if current_user.is_authenticated:
 
         user_name = current_user.name
         user_id = get_user_id(user_name)
-        user_settings = get_user_settings(user_id) # TODO: Push to default settings
+        user_settings = get_table('user_settings')
+        user_settings = user_settings.loc[
+            user_settings.user_id == user_id]  # TODO: Push to default settings
         for key in settings:
             settings[key] = user_settings[key]
         sequence_rule = get_table('seq_rules')
         sequence_rule = sequence_rule.loc[sequence_rule.user_id == user_id]
-    if tran:
-        return riboflask.generate_plot(
-                {'user_settings': settings, 'seq_rules': seq_rules,'data': data}))
-
-    else:
-        return "ERROR! Could not find any transcript or gene corresponding to {}".format(
-            data["transcript"])
+    return riboflask.generate_plot({
+        'user_settings': settings,
+        'seq_rules': seq_rules,
+        'data': data
+    })
