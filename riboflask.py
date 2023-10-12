@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import fixed_values
 from fixed_values import get_user_defined_seqs
+from sqlqueries import get_table
 
 matplotlib.use('agg')
 
@@ -53,9 +54,10 @@ def generate_plot(
         pcr: bool,
         mismatches: bool,
         hili_start: bool,
-        hili_stop: bool) -> str:
+        hili_stop: bool,
+        data: Dict) -> str:
 
-    if lite == "n" and ribocoverage:
+    if ('lite' not in data) and ('ribocoverage' in data):
         return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
                 " is turned off")
     labels = [
@@ -66,42 +68,28 @@ def generate_plot(
     if mismatches:
         labels += [f"Mismatches {nuc}" for nuc in "ATGC"]
         start_visible += [False] * 4
-    start_visible.append(True)
     labels.append("CDS markers")
+    start_visible.append(True)
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     stop_codons = ["TAG", "TAA", "TGA"]
     frame_orfs = {1: [], 2: [], 3: []}
     owner = get_table("organisms")
-    owner = owner.loc[(owner.organism_name == organism) &
-                      (owner.transcriptome_list == transcriptome),
+    owner = owner.loc[(owner.organism_name == data["organism"]) &
+                      (owner.transcriptome_list == data["transcript"]),
                       "owner"].values[0]
     if owner == 1:
         sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
                                                       organism, transcriptome)
         if not os.path.isfile(sqlpath):
-            return_str = "Cannot find annotation file {}.{}.sqlite".format(
+            return "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
-            return return_str
     else:
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             trips_uploads_location, owner, organism, transcriptome)
     transcripts = get_table("transcripts")
-    transcripts = transcripts[transcripts.transcript == tran].iloc[0]
-    traninfo = {
-        "transcript": result[0],
-        "gene": result[1],
-        "length": result[2],
-        "cds_start": result[3],
-        "cds_stop": result[4],
-        "seq": result[5],
-        "strand": result[6],
-        "stop_list": result[7].split(","),
-        "start_list": result[8].split(","),
-        "exon_junctions": result[9].split(","),
-        "tran_type": result[10],
-        "principal": result[11]
-    }
+    traninfo = transcripts[transcripts.transcript ==
+                           data["transcript"]].iloc[0]
     try:
         traninfo["stop_list"] = [int(x) for x in traninfo["stop_list"]
                                  ]  #TODO: make it sure that it is list of int
@@ -113,34 +101,23 @@ def generate_plot(
     except Exception:
         traninfo["start_list"] = []
 
-    if str(traninfo["exon_junctions"][0]) != "":
-        traninfo["exon_junctions"] = [
-            int(x) for x in traninfo["exon_junctions"]
-        ]
+    if traninfo.exon_junctions[0]:
+        traninfo.exon_junctions = [int(x) for x in traninfo.exon_junctions]
     else:
-        traninfo["exon_junctions"] = []
+        traninfo.exon_junctions = []
     all_cds_regions = []
     # Check if the 'coding_regions' table exists
-    cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='coding_regions';"
-    )
-    result = cursor.fetchone()
-    if result:
-        cursor.execute(
-            "SELECT * from coding_regions WHERE transcript = '{}'".format(
-                tran))
-        result = cursor.fetchall()
-        for row in result:
-            all_cds_regions.append((row[1], row[2]))
-    transhelve.close()
-    gene = traninfo["gene"]
-    tranlen = traninfo["length"]
-    cds_start = traninfo["cds_start"]
-    cds_stop = traninfo["cds_stop"]
-    if not cds_start:
-        cds_start = 0
-    if not cds_stop:
-        cds_stop = 0
+    sqlmaster = get_table("sqlite_master")
+    sqlmaster = sqlmaster[(sqlmaster.type == "table")
+                          & (sqlmaster.name == "coding_regions")]
+    if not sqlmaster.empty:
+        coding_regions = get_table("coding_regions")
+        coding_regions = coding_regions[coding_regions.transcript ==
+                                        data["transcript"]]
+    if not traninfo.cds_start:
+        traninfo.cds_start = 0
+    if not traninfo.cds_stop:
+        traninfo.cds_stop = 0
     all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]

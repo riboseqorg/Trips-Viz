@@ -9,7 +9,6 @@ from flask import (
 from flask import current_app as app
 from typing import Text
 from sqlqueries import get_user_id
-import sqlite3
 import os
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
@@ -52,7 +51,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     user_hili_starts = []
     user_hili_stops = []
     try:
-        for item in user_hili.split(","):
+        for item in data['user_hili'].split(","):
             user_hili_starts.append(int(item.split("_")[0]))
             user_hili_stops.append(int(item.split("_")[1]))
     except Exception:
@@ -80,7 +79,6 @@ single_transcript_query_blueprint = Blueprint("query",
 def query():  #TODO: add return type
     # global user_short_passed
     data = request.get_json()
-    print(data, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
     file_list = []
     file_ids = []
     study_ids = []
@@ -92,18 +90,15 @@ def query():  #TODO: add return type
     data["file_list"] = file_list
     data["file_ids"] = file_ids
     data["study_ids"] = study_ids
-    print(file_ids)
 
     file_paths_dict = fetch_file_paths(data)
 
     # user_short = data["user_short"]
 
     owner = get_table('organisms')
-    print(data['transcript'])
     owner = owner.loc[(owner.organism_name == data["organism"]) &
                       (owner.transcriptome_list == data["transcriptome"]),
                       "owner"].values[0]
-    print(owner)
 
     user = fetch_user()[0]
 
@@ -140,7 +135,7 @@ def query():  #TODO: add return type
         logging.debug(return_str)
         return return_str
 
-    if data['transcript'].upper() not in transcripts.transcript:
+    if data['transcript'].upper() not in transcripts.transcript.values:
         return_str = "TRANSCRIPTS"
         if user == "test":
             return_str = "QUANT_TRANSCRIPTS"
