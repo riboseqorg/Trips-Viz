@@ -28,14 +28,12 @@ def get_reads(
     get_mismatches: bool = False,
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
-        str, Dict[str, Dict[int, int]]]], Tuple[str, DataFrame]]:
+        str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
     mismatch_dict = pd.DataFrame(0,
                                  index=range(tranlen + 1),
                                  columns=["A", "T", "G", "C"])
 
-    master_dict = collections.OrderedDict()
-    for i in range(0, tranlen + 1):
-        master_dict[i] = 0
+    master_dict = pd.DataFrame({'count': 0}, index=range(tranlen + 1))
     master_file_dict = {}
 
     # first make a master dict consisting of all the read dicts from each filename
@@ -48,27 +46,30 @@ def get_reads(
             except FileNotFoundError:
                 return pd.DataFrame(), pd.DataFrame()
 
-            accepted_offsets = {}
             try:
                 all_offsets = sqlite_db["offsets"][primetype]["offsets"]
+                all_offsets = pd.DataFrame(list(all_offsets.keys()),
+                                           index=list(all_offsets.values()),
+                                           columns=["offset"])
                 scores = sqlite_db["offsets"][primetype]["read_scores"]
+                scores = pd.DataFrame(list(scores.keys()),
+                                      index=list(scores.values()),
+                                      columns=["score"])
+                all_offsets_n_scores = all_offsets.join(scores, how='outer')
+                all_offsets_n_scores.loc[
+                    all_offsets_n_scores['offset'].isnull(), 'offset'] = 15
+                all_offsets_n_scores.loc[
+                    all_offsets_n_scores['score'].isnull(), 'score'] = 1
             except KeyError:
-                all_offsets = {}
-                scores = {}
-                for i in range(min_read, max_read):
-                    scores[i] = 1
-                    all_offsets[i] = 15
-            for rl in scores:
-                if scores[rl] >= readscore:
-                    if rl in all_offsets:
-                        accepted_offsets[rl] = all_offsets[rl]
-                    else:
-                        accepted_offsets[rl] = 15
+                all_offsets_n_scores = pd.DataFrame(
+                    [15, 1],
+                    index=range(min_read, max_read),
+                    columns=["offset", 'score'])
+            accepted_offsets = all_offsets_n_scores[
+                all_offsets_n_scores['score'] >= readscore]
 
-            if accepted_offsets:
-                offset_dict[filename] = {}
-                for length in accepted_offsets:
-                    offset_dict[filename][length] = accepted_offsets[length]
+            offset_dict[filename] = accepted_offsets
+            # Till here
 
             if get_mismatches:
                 try:

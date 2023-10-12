@@ -392,11 +392,11 @@ def generate_plot(
         elif rem == 0:  # frame 3
             frame = 2
         frame_counts[frame][key] = all_subcodon_reads[key]
-        if lite == "n":
+        if not data['lite']:
             frame_counts[frame][key + 1] = 0
             frame_counts[frame][key + 2] = 0
 
-    if lite == "n":
+    if not data['lite']: 
         frame0subpro = ax_main.bar(frame_counts[0].keys(),
                                    frame_counts[0].values(),
                                    alpha=0.75,
