@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 import typing
 import pickle
+from pandas.core.frame import DataFrame
 import pandas as pd
 
 iupac_dict: Dict[str, str] = {
