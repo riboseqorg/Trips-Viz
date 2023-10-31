@@ -23,6 +23,7 @@ def get_reads(
     primetype: str,
     filetype: str,
     readscore: int,
+    data: Dict,
     # secondary_readscore=1,
     pcr: bool = False,
     get_mismatches: bool = False,
@@ -78,22 +79,18 @@ def get_reads(
                     for pos in sqlite_db_seqvar:
                         # convert to one based
                         fixed_pos = pos + 1
-                        for char in sqlite_db_seqvar[pos]:
-                            mismatch_dict.loc[
-                                fixed_pos, char] += sqlite_db_seqvar[pos][char]
+                        for char, count in sqlite_db_seqvar[pos]:
+                            mismatch_dict.loc[fixed_pos, char] += count
 
                 except Exception:
                     pass
 
             try:
-                alltrandict = sqlite_db[tran]
-                sqlite_db.close()
+                alltrandict = sqlite_db[data['transcript']]
                 unambig_tran_dict = alltrandict["unambig"]
-                if read_type == "ambig":
-                    if read_type in alltrandict:
-                        ambig_tran_dict = alltrandict[read_type]
-                    else:
-                        ambig_tran_dict = {}
+                ambig_tran_dict = {}
+                if (read_type == "ambig") and ("ambig" in alltrandict):
+                    ambig_tran_dict = alltrandict[read_type]
                 # TODO: Change merge_dicts to take a list of dicts instead of two
                 trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
                 if pcr:  # TODO: Convert this value as ambig and unambig
@@ -131,39 +128,38 @@ def get_reads(
                                     master_dict[offset_pos + 1] = 0
                                 master_dict[offset_pos] += count
 
-        # Fetching subcodon reads
-        if subcodon:
-            if not coverage:
-                for filename in master_file_dict:
-                    if filename not in offset_dict:
-                        continue
-                    for readlen in master_file_dict[filename]:
-                        if readlen >= min_read and readlen <= max_read:
-                            if readlen in offset_dict[filename]:
-                                offset = offset_dict[filename][readlen] + 1
-                                for pos in master_file_dict[filename][readlen]:
-                                    count = master_file_dict[filename][
-                                        readlen][pos]
-                                    if primetype == "threeprime":
-                                        pos += readlen
+        if subcodon and not coverage:
+            for filename in master_file_dict:
+                if filename not in offset_dict:
+                    continue
+                for readlen in master_file_dict[filename]:
+                    if readlen >= min_read and readlen <= max_read:
+                        if readlen in offset_dict[filename]:
+                            offset = offset_dict[filename][readlen] + 1
+                            for pos in master_file_dict[filename][readlen]:
+                                count = master_file_dict[filename][readlen][
+                                    pos]
+                                if primetype == "threeprime":
+                                    pos += readlen
 
-                                    if coverage:
-                                        for i in range(0, readlen, 3):
-                                            new_offset_pos = (i + pos) + (
-                                                offset % 3)
-                                            try:
-                                                master_dict[
-                                                    new_offset_pos] += count
-                                            except KeyError:
-                                                pass
-                                    else:
-                                        offset_pos = pos + offset
+                                if coverage:
+                                    for i in range(0, readlen, 3):
+                                        new_offset_pos = (i + pos) + (offset %
+                                                                      3)
                                         try:
-                                            master_dict[offset_pos] += count
+                                            master_dict[
+                                                new_offset_pos] += count
                                         except KeyError:
-                                            print("Error tried adding to "
-                                                  f"position {e} but tranlen "
-                                                  f"is only {tranlen}")
+                                            pass
+                                else:
+                                    offset_pos = pos + offset
+                                    try:
+                                        master_dict[offset_pos] += count
+                                    except KeyError:
+                                        print(
+                                            "Error tried adding to "
+                                            f"position {offset_pos} but tranlen "
+                                            f"is only {tranlen}")
         if not get_mismatches:
             mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
         return master_dict, mismatch_dict
@@ -220,19 +216,18 @@ def get_readlength_breakdown(
                         for i in range(pos, pos + (readlen + 1)):
                             master_dict[i][readlen] += count
                 else:
-                    if os.path.isfile(filename):
+                    try:
                         openshelf = SqliteDict(filename)
-                    else:
+                    except FileNotFoundError:
                         continue
                     offsets = openshelf["offsets"]["fiveprime"]["offsets"]
-                    if readlen in offsets:
-                        offset = offsets[readlen]
-                    else:
-                        offset = 15
+                    offset = offsets[readlen] if readlen in offsets else 15
                     for pos in master_file_dict[filename][readlen]:
                         count = master_file_dict[filename][readlen][pos]
-                        if (pos + offset) in master_dict:
+                        try:
                             master_dict[pos + offset][readlen] += count
+                        except KeyError:
+                            pass
     sorted_master_dict = collections.OrderedDict()
     for key in sorted(master_dict.keys()):
         sorted_master_dict[key] = master_dict[key]
@@ -245,18 +240,13 @@ def get_readlength_breakdown(
             tot_count += sorted_master_dict[pos][readlen]
             tot_readlen += (sorted_master_dict[pos][readlen] * readlen)
         avg_readlen = int(tot_readlen / tot_count)
-        if avg_readlen < colorbar_minread:
-            avg_readlen = colorbar_minread
         if avg_readlen > colorbar_maxread:
             avg_readlen = colorbar_maxread
         # find where this avg readlen lies in the range of min readlen
         # to max readlen and use that to assign a color
 
-        y = avg_readlen - colorbar_minread
-        per = y / color_range
-        final_per = int(per * 10)
-        if final_per > 9:
-            final_per = 9
+        per = (avg_readlen - colorbar_minread) / color_range
+        final_per = int(per * 10) if per > 0.9 else 9
         color = color_list[final_per]
         if color not in colored_master_dict:
             colored_master_dict[color] = collections.OrderedDict()
@@ -274,31 +264,30 @@ def get_seq_var(
     tranlen: int,
     #organism,
     tran: str,
-) -> Union[str, Dict[str, Dict[str, int]]]:
+) -> Union[str, DataFrame]:
     mismatch_dict = pd.DataFrame(0,
                                  index=range(1, tranlen + 1),
                                  columns=["A", "T", "G", "C"])
     for filetype in ["riboseq", "rnaseq"]:
-        if filetype in user_files:
+        try:
             for file_id in user_files[filetype]:
                 filename = user_files[filetype][file_id]
-                if os.path.isfile(filename):
+                try:
                     sqlite_db = SqliteDict(filename, autocommit=False)
-                else:
-                    return "File not found"
-                if tran in sqlite_db:
-                    if "seq" in sqlite_db[tran]:
-                        sqlite_db_seqvar = dict(sqlite_db[tran]["seq"])
+                except FileNotFoundError:
+                    return f"File not found {filename}"
+                sqlite_db_seqvar = dict(sqlite_db[tran]["seq"])
+                for pos in sqlite_db_seqvar:
+                    #convert to one based
+                    fixed_pos = pos + 1
+                    for char in sqlite_db_seqvar[pos]:
+                        if char == "N":
+                            continue
+                        mismatch_dict.loc[fixed_pos,
+                                          char] += sqlite_db_seqvar[pos][char]
 
-                        for pos in sqlite_db_seqvar:
-                            #convert to one based
-                            fixed_pos = pos + 1
-                            for char in sqlite_db_seqvar[pos]:
-                                if char != "N":
-                                    mismatch_dict.loc[
-                                        fixed_pos,
-                                        char] += sqlite_db_seqvar[pos][char]
-
-                    sqlite_db.close()
+                sqlite_db.close()
+        except KeyError:
+            pass
 
     return mismatch_dict

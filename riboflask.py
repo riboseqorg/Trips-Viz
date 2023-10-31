@@ -212,7 +212,7 @@ def generate_plot(
     except Exception:
         subcodonmax = 0
     y_max = max(1, rnamax, subcodonmax) * 1.1
-    fig = plt.figure(figsize=(13, 8))
+    # fig = plt.figure(figsize=(13, 8))
     ax_main = plt.subplot2grid((31, 1), (0, 0), rowspan=22)
 
     ax_main.spines['bottom'].set_visible(False)
@@ -225,7 +225,7 @@ def generate_plot(
     # Plot any alternative sequence types if there are any
     for seq_type in file_paths_dict:
 
-        if seq_type != "riboseq" and seq_type != "rnaseq":
+        if seq_type not in ["riboseq", "rnaseq"]:
             if file_paths_dict[seq_type] == {}:
                 continue
             if seq_type in seq_rules:
@@ -396,7 +396,7 @@ def generate_plot(
             frame_counts[frame][key + 1] = 0
             frame_counts[frame][key + 2] = 0
 
-    if not data['lite']: 
+    if not data['lite']:
         frame0subpro = ax_main.bar(frame_counts[0].keys(),
                                    frame_counts[0].values(),
                                    alpha=0.75,

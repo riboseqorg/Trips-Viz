@@ -13,7 +13,7 @@ from core_functions import (fetch_studies, fetch_files, fetch_study_info,
 import json
 from fixed_values import my_decoder
 
-#This page is used to detect pauses
+# This page is used to detect pauses
 pause_detection_blueprint = Blueprint("pause_detection_page",
                                       __name__,
                                       template_folder="templates")
@@ -22,7 +22,7 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
 @pause_detection_blueprint.route('/<organism>/<transcriptome>/pause_detection/'
                                  )
 def pause_detection_page(organism: str, transcriptome: str) -> str:
-    #ip = request.environ['REMOTE_ADDR']
+    # ip = request.environ['REMOTE_ADDR']
     organism = str(organism)
     user, logged_in = fetch_user()
     accepted_studies = fetch_studies(user, organism, transcriptome)
@@ -31,27 +31,16 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
     advanced = False
 
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = {
-        "user_short": str(request.args.get('short')),
-        "min_fold_change": str(request.args.get('min_fold_change')),
-        "window_size": str(request.args.get('window_size')),
-        "min_coverage": str(request.args.get('min_coverage')),
-        "nuc_output": str(request.args.get('nuc_output')),
-        "min_read_length": str(request.args.get('min_read_length')),
-        "max_read_length": str(request.args.get('max_read_length')),
-        "saved_check": str(request.args.get('saved_check')),
-        "tranlist": str(request.args.get('tranlist')),
-        "custom_tran_list": str(request.args.get('custom_tran_list'))
-    }
+    html_args = request.args.to_dict()
 
     user_files = request.args.get('files')
-    if user_files:
+    try:
         user_files = user_files.split(",")
-        html_args["user_files"] = [str(x) for x in user_files]
-    else:
-        html_args["user_files"] = []
+        html_args["files"] = [str(x) for x in html_args["files"].split(",")]
+    except KeyError:
+        html_args["files"] = []
 
-    #If ever need to use other seq types than these modify fetch_files to return a proper list
+    # If ever need to use other seq types than these modify fetch_files to return a proper list
     seq_types = ["riboseq", "proteomics"]
     # If seq type not riboseq remove it from accepted files as orf translation is only appicable to riboseq
     del_types = []
@@ -81,31 +70,22 @@ def tran_to_genome(tran: str, pos: int, transcriptome_info_dict: Dict) -> str:
         traninfo = transcriptome_info_dict[tran]
     else:
         return None, 0  # Fix same as another file
-    chrom = traninfo["chrom"]
-    strand = traninfo["strand"]
-    exons = traninfo["exons"]
-    #logging.debug(exons)
-    if strand == "+":
-        exon_start = 0
-        for tup in exons:
-            exon_start = tup[0]
-            exonlen = tup[1] - tup[0]
-            if pos > exonlen:
-                pos = (pos - exonlen) - 1
-            else:
-                break
+    exon_start = traninfo["exons"][0][0]
+    if traninfo["strand"] == "-":
+        traninfo["exons"] = traninfo["exons"][::-1]
+        exon_start = traninfo["exons"][0][1]
+    # logging.debug(exons)
+    for tup in traninfo["exons"]:
+        exonlen = tup[1] - tup[0]
+        if pos > exonlen:
+            pos = (pos - exonlen) - 1
+        else:
+            break
+    if traninfo["strand"] == "+":
         genomic_pos = (exon_start + pos) - 1
-    elif strand == "-":
-        exon_start = 0
-        for tup in exons[::-1]:
-            exon_start = tup[1]
-            exonlen = tup[1] - tup[0]
-            if pos > exonlen:
-                pos = (pos - exonlen) - 1
-            else:
-                break
+    else:
         genomic_pos = (exon_start - pos) + 1
-    return "{}_{}".format(chrom, genomic_pos)
+    return "{}_{}".format(traninfo["chrom"], genomic_pos)
 
 
 def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
@@ -302,7 +282,7 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
 
 def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
                   transcriptome, file_string, label_string, short_code):
-    #logging.debug("all sorted all values", sorted_all_values)
+    # logging.debug("all sorted all values", sorted_all_values)
     print("writing to file")
     returnstr = "Table|"
     tmp_filepath = "{}/static/tmp/{}.csv".format(config.SCRIPT_LOC, short_code)
@@ -328,9 +308,9 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
     )
     tup_count = 0
 
-    #logging.debug("writing to file",len(sorted_all_values))
+    # logging.debug("writing to file",len(sorted_all_values))
     for tup in sorted_all_values:
-        #logging.debug("tup", tup)
+        # logging.debug("tup", tup)
         gene = tup[0]
         transcript = tup[1]
         position = tup[2]
@@ -356,7 +336,7 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
                 downstream_seq, count, ebc_link)
         tup_count += 1
     tmp_result_file.close()
-    #Create a zip file of all output files
+    # Create a zip file of all output files
     print("zip -j {}/static/tmp/{}.zip {}".format(config.SCRIPT_LOC,
                                                   short_code, all_filepaths))
     subprocess.call("zip -j {}/static/tmp/{}.zip {}".format(
@@ -381,14 +361,14 @@ def find_pauses(data, user, logged_in):
     owner = (cursor.fetchone())[0]
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
-    #Find out which studies have all files of a specific sequence type selected (to create aggregates)
+    # Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
     aggregate_dict = {}
     full_studies = []
 
     logging.debug("Full studies {}".format(full_studies))
-    #return str(full_studies)
-    #return str(all_study_ids)
+    # return str(full_studies)
+    # return str(all_study_ids)
 
     html_args = data["html_args"]
     returnstr = ""
@@ -401,12 +381,12 @@ def find_pauses(data, user, logged_in):
     nuc_output = int(data["nuc_output"])
 
     user_defined_transcripts = []
-    #tran_list is a radio button, user can choose between principal, all or a custom list
+    # tran_list is a radio button, user can choose between principal, all or a custom list
     tranlist = data["tran_list"]
-    #custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
+    # custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
     custom_tran_list = data["custom_tran_list"]
 
-    #feature_list.append("Inframe Count Value")
+    # feature_list.append("Inframe Count Value")
     if not html_args["user_short"]:
         short_code = generate_short_code(data, organism, data["transcriptome"],
                                          "pause_pred")
@@ -439,7 +419,7 @@ def find_pauses(data, user, logged_in):
             "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
                 config.UPLOADS_DIR, owner, organism, transcriptome))
 
-    #traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
+    # traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
     traninfo_cursor = traninfo_connection.cursor()
 
     traninfo_dict = {}
@@ -515,12 +495,12 @@ def find_pauses(data, user, logged_in):
     result = traninfo_cursor.fetchall()
     for row in result:
         sequence_dict[row[0]] = row[1]
-    #logging.debug("sequence dict keys",sequence_dict.keys())
-    #Holds a list of all transcripts in accepted_orf_dict
+    # logging.debug("sequence dict keys",sequence_dict.keys())
+    # Holds a list of all transcripts in accepted_orf_dict
 
-    #logging.debug("accepted orf dict", accepted_orf_dict)
+    # logging.debug("accepted orf dict", accepted_orf_dict)
     logging.debug("accepted orf dict built")
-    #Now build a profile for every transcript in accepted_transcripts
+    # Now build a profile for every transcript in accepted_transcripts
 
     if file_paths_dict["rnaseq"] == {}:
         if "te_check" in data:
@@ -551,7 +531,7 @@ def find_pauses(data, user, logged_in):
     if sorted_all_values:
         return ("No results, try making filters less restrictive")
 
-    #TODO change extension to csv if only one file
+    # TODO change extension to csv if only one file
     filename = short_code + ".zip"
     returnstr = write_to_file(sorted_all_values, file_output_dict,
                               sequence_dict, organism, transcriptome,
@@ -567,7 +547,7 @@ def find_pauses(data, user, logged_in):
     returnstr += "|{}".format(filename)
     returnstr += "|{}".format(
         str(data["file_list"]).strip("[]").replace("'", "").replace(" ", "")
-    )  #file_list is empty after passin through generate short_Code need to make a copy of it beforehand
+    )  # file_list is empty after passin through generate short_Code need to make a copy of it beforehand
     returnstr += "|{}".format(short_code)
 
     logging.debug("returning result")
