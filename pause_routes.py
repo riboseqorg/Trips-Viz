@@ -24,7 +24,7 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
 def pause_detection_page(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
     organism = str(organism)
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
     accepted_studies = fetch_studies(user, organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
@@ -41,17 +41,11 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
         html_args["files"] = []
 
     # If ever need to use other seq types than these modify fetch_files to return a proper list
-    seq_types = ["riboseq", "proteomics"]
+    seq_types = {"riboseq", "proteomics"}
     # If seq type not riboseq remove it from accepted files as orf translation is only appicable to riboseq
-    del_types = []
-    for seq_type in accepted_files:
-        if seq_type not in seq_types:
-            del_types.append(seq_type)
-    for seq_type in del_types:
+    for seq_type in set(accepted_files) - seq_types:
         del accepted_files[seq_type]
     studyinfo_dict = fetch_study_info(organism)
-
-    print("html args", html_args)
     return render_template('pause_detection.html',
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
@@ -65,16 +59,16 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
                            transcriptome=transcriptome)
 
 
-def tran_to_genome(tran: str, pos: int, transcriptome_info_dict: Dict) -> str:
-    if tran in transcriptome_info_dict:
+def tran_to_genome(tran: str, pos: int,
+                   transcriptome_info_dict: Dict) -> str | Tuple[None, int]:
+    try:
         traninfo = transcriptome_info_dict[tran]
-    else:
+    except KeyError:
         return None, 0  # Fix same as another file
     exon_start = traninfo["exons"][0][0]
     if traninfo["strand"] == "-":
         traninfo["exons"] = traninfo["exons"][::-1]
         exon_start = traninfo["exons"][0][1]
-    # logging.debug(exons)
     for tup in traninfo["exons"]:
         exonlen = tup[1] - tup[0]
         if pos > exonlen:
@@ -159,7 +153,6 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
                     except Exception:
                         profile_dict[file_id][transcript][seq_type][
                             pos] = subprofile[pos]
-        sqlite_db.close()
     file_string = file_string[:-1]
     label_string = label_string[:-1]
     return (profile_dict, file_string, label_string)
@@ -168,7 +161,7 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
 def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
                    profile_dict, min_fold_change, window, min_coverage,
                    nuc_output):
-    step = int(window / 2)
+    step = window // 2
     all_values_dict = {}
     file_output_dict = {}
     file_number = len(list(profile_dict))
@@ -348,22 +341,15 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
 def find_pauses(data, user, logged_in):
     logging.debug("pause query called")
     global user_short_passed
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    cursor = connection.cursor()
 
     organism = data["organism"]
     transcriptome = data["transcriptome"]
     print("organism, transcriptome", organism, transcriptome)
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
+    owner = get_owner(organism, transcriptome)
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
     # Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
-    aggregate_dict = {}
     full_studies = []
 
     logging.debug("Full studies {}".format(full_studies))
@@ -380,10 +366,6 @@ def find_pauses(data, user, logged_in):
     min_coverage = float(data["min_coverage"]) / 100
     nuc_output = int(data["nuc_output"])
 
-    user_defined_transcripts = []
-    # tran_list is a radio button, user can choose between principal, all or a custom list
-    tranlist = data["tran_list"]
-    # custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
     custom_tran_list = data["custom_tran_list"]
 
     # feature_list.append("Inframe Count Value")
@@ -399,104 +381,37 @@ def find_pauses(data, user, logged_in):
         for item in custom_tran_list.split(" "):
             user_defined_transcripts.append(item)
 
-    tran_gene_dict = {}
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
 
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            traninfo_connection = sqlite3.connect(
-                "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
-                                                    config.ANNOTATION_DIR,
-                                                    organism, transcriptome))
-        else:
-            return prepare_return_str(
-                "Cannot find annotation file {}.{}.sqlite".format(
-                    organism, transcriptome))
+        sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                      config.ANNOTATION_DIR,
+                                                      organism, transcriptome)
+        if not os.path.isfile(sqlfile):
+            return "Cannot find annotation file {}.{}.sqlite".format(
+                organism, transcriptome)
     else:
-        traninfo_connection = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-
-    # traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
-    traninfo_cursor = traninfo_connection.cursor()
-
-    traninfo_dict = {}
-    traninfo_cursor.execute(
-        "SELECT transcript, cds_start, cds_stop,length,gene,sequence FROM transcripts;"
-    )
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        tran = str(row[0])
-        try:
-            cds_start = int(row[1])
-            cds_stop = int(row[2])
-        except Exception:
-            cds_start = row[1]
-            cds_stop = row[2]
-        length = int(row[3])
-        gene = str(row[4])
-        seq = str(row[5])
-        traninfo_dict[tran] = {
-            "cds_start": cds_start,
-            "cds_stop": cds_stop,
-            "length": length,
-            "gene": gene,
-            "coding_regions": [],
-            "seq": seq
-        }
+        sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, organism, transcriptome)
+    traninfo = sqlquery(sqlfile, "transcripts")
+    #    "SELECT transcript, cds_start, cds_stop,length,gene,sequence, principle FROM transcripts;"
+    #       traninfo_dict[tran] = {
+    tran_gene_dict = {}
 
     principal_transcripts = []
     if tranlist == "prin_trans":
-        traninfo_cursor.execute(
-            "SELECT transcript,gene FROM transcripts WHERE principal = 1;")
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            principal_transcripts.append(str(row[0]))
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
-    elif tranlist == "all_trans":
-        traninfo_cursor.execute("SELECT transcript,gene FROM transcripts;")
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            principal_transcripts.append(str(row[0]))
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
+        traninfo = traninfo[traninfo.principal == 1]
     elif tranlist == "custom_trans":
-        principal_transcripts = user_defined_transcripts
-        traninfo_cursor.execute(
-            "SELECT transcript,gene FROM transcripts WHERE transcript IN ({});"
-            .format(str(principal_transcripts).strip("[]")))
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
+        traninfo = traninfo[traninfo.transcript.isin(user_defined_transcripts)]
+        # "SELECT transcript,gene FROM transcripts WHERE transcript IN ({});"
+    tran_gene = traninfo[["transcript", "gene"]]
+    tran_gene.gene = tran_gene.gene.apply(lambda x: x.replace(",", "_"))
 
-    transcriptome_info_dict = {}
-    traninfo_cursor.execute(
-        "SELECT transcript,strand,chrom from transcripts WHERE transcript IN ({});"
-        .format(str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        transcriptome_info_dict[str(row[0])] = {
-            "strand": row[1],
-            "chrom": row[2],
-            "exons": []
-        }
-    traninfo_cursor.execute(
-        "SELECT * from exons WHERE transcript IN ({});".format(
-            str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        transcriptome_info_dict[str(row[0])]["exons"].append((row[1], row[2]))
-    logging.debug("building transcriptom info dict")
-    sequence_dict = {}
-    traninfo_cursor.execute(
-        "SELECT transcript,sequence FROM transcripts WHERE transcript IN ({})".
-        format(str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        sequence_dict[row[0]] = row[1]
-    # logging.debug("sequence dict keys",sequence_dict.keys())
-    # Holds a list of all transcripts in accepted_orf_dict
+    transcriptome_info_dict = traninfo[["transcript", "strand", "chrom"]]
+    exons = sqlquery(sqlfile, "exons")
+    exons = exons[exons.transcript.isin(traninfo.transcript)]
+    transcriptome_info_dict = transcriptome_info_dict.merge(exons,
+                                                            on="transcript")
 
     # logging.debug("accepted orf dict", accepted_orf_dict)
     logging.debug("accepted orf dict built")
@@ -508,8 +423,7 @@ def find_pauses(data, user, logged_in):
 
     if file_paths_dict["riboseq"] == {} and file_paths_dict[
             "proteomics"] == {}:
-        returnstr = "Error no files selected"
-        return returnstr
+        return "Error no files selected"
 
     total_files = 0
     selected_seq_types = []
@@ -529,7 +443,7 @@ def find_pauses(data, user, logged_in):
         traninfo_dict, data, tran_gene_dict, selected_seq_types, profile_dict,
         min_fold_change, window, min_coverage, nuc_output)
     if sorted_all_values:
-        return ("No results, try making filters less restrictive")
+        return "No results, try making filters less restrictive"
 
     # TODO change extension to csv if only one file
     filename = short_code + ".zip"
@@ -565,6 +479,5 @@ pausequery_blueprint = Blueprint("pausequery",
 def pausequery():
 
     data = request.args.to_dict()
-    print("pausequery called", data)
     user, logged_in = fetch_user()
     return find_pauses(data, user, logged_in)
