@@ -4,18 +4,18 @@
     </p>
 </div>
 <div class="page-section">
-    <div id="seq_types">
+    <div id="seq_types" class="box">
         <div class="row">
             <div class="col">Seq Types</div>
         </div>
         <div class="row">
             <div class="col-6">
-                <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
+                <button class="button all_checks" name="uncheckall" type="button">
                     <b>Uncheck All Files With Selected Seq-type</b>
                 </button>
             </div>
             <div class="col-6">
-                <button class="button all_checks" type="button" onclick='check_all_multi()'>
+                <button class="button all_checks" name="checkall" type="button">
                     <b>Check All Files with Selected Seq-type</b>
                 </button>
             </div>
@@ -24,7 +24,7 @@
             {% for seq_type in template_dict["studies_and_files"] %}
                 <div class="col-sm-6">
                     <input type="radio"
-                           class="seq_type_radio all_checks"
+                           class="seq_type_radio"
                            id="{{ seq_type }}"
                            name="seq_type"
                            value="{{ seq_type }}"
@@ -34,7 +34,7 @@
             {% endfor %}
         </div>
     </div>
-    <div id="studies_box">
+    <div id="studies" class="box">
         <!--TODO: Change it to class-->
         <div class="row">
             <div class="col">Studies</div>
@@ -58,29 +58,34 @@
                 </button>
             </div>
         </div>
-        {% for study_type, studies in template_dict["studies_and_files"].items() %}
-            <div class="{{ study_type }}">
-                <div class="row">
-                    {% for study in template_dict["accepted_studies"] %}
-                        <div class="col">
-                            <input type="radio"
-                                   class="study_radio"
-                                   id="study{{ study }}"
-                                   name="content_type"
-                                   value="study{{ study }}"
-                                   {% if loop.first %} checked {% else %} {% endif %}>
-                            <label for="study{{ study }}"
-                                   id="label{{ study }}"
-                                   class="radio_label"
-                                   style="border-color: rgb(119, 171, 255);
-                                          opacity: 1">{{ study }}</label>
-                        </div>
-                    {% endfor %}
+        <div class="toggles">
+            {% for study_type, studies in template_dict["studies_and_files"].items() %}
+                <div class="{{ study_type }}"
+                     style="{% if loop.first %}display: block;
+                            {% else %}display: none;
+                            {% endif %}">
+                    <div class="row">
+                        {% for study in studies %}
+                            <div class="col">
+                                <input type="radio"
+                                       class="study"
+                                       id="study{{ study[1] }}"
+                                       name="study"
+                                       value="{{ study[1] }}"
+                                       {% if loop.first %} checked {% else %} {% endif %}>
+                                <label for="study{{ study }}"
+                                       id="label{{ study }}"
+                                       class="radio_label"
+                                       style="border-color: rgb(119, 171, 255);
+                                              opacity: 1">{{ study }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endfor %}
         </div>
     </div>
-    <div id="files">
+    <div id="files" class="box">
         <p>
             <b><u>Files[ <span id="filecount">0</span>  Selected ]</u></b>
         </p>
@@ -88,12 +93,12 @@
             <div class="{{ study_type }}">
                 {% for study, files in studies.items() %}
                     <div class="{{ study }}">
-                        {% for file,desc in files.items() %}
+                        {% for file, desc in files.items() %}
                             <div class="file">
                                 <input type="checkbox"
-                                       class="{{ study_type }} {{ study[0] }}"
+                                       class="{{ study_type }} {{ study[1] }}"
                                        id="{{ file[0] }}"
-                                       name="file_{{ study_type }}_{{ study[0] }}_{{ file[0] }}"
+                                       name="file_{{ study_type }}_{{ study[1] }}_{{ file[0] }}"
                                        value="{{ file[1] }}"
                                        {% if loop.first %} checked {% else %} {% endif %}>
                                 <label for="{{ file }}" id="label{{ file[0] }}" class="radio_label">{{ file[1] }}</label>

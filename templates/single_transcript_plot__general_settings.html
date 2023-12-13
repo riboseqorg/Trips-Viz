@@ -1,5 +1,5 @@
 <div class="page-section">
-    <div class="row">
+    <div class="row" style="text-align: center;">
         <div class="col">{{ template_dict['organism'] }}</div>
         <div class="col">{{ template_dict['transcriptome'] }}</div>
     </div>
@@ -10,19 +10,20 @@
     </p>
 </div>
 <div class='hidden'>
+    <!--Hidden Parameters-->
     {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
 </div>
-{{ template_dict }}
+<!--{{ template_dict }}-->
 <div class="page-section">
     <div class="row">
         <div class="col-6">
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Gene/Transcript:</b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_single_gene&child_acc=child_gene">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input id="transcript"
                            class="upper"
                            name="transcript"
@@ -31,12 +32,12 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Min triplet periodicity score:</b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_single_gene&child_acc=child_max_read_score">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input id="readscore"
                            type="number"
                            min="0"
@@ -46,12 +47,12 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Min Read: </b></tran> <a class="whatsthis"
     target="_blank"
     href="/help/?parent_acc=parent_single_gene&child_acc=child_single_minread">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input id="minread"
                            type="number"
                            min="1"
@@ -61,12 +62,12 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Max Read: </b></tran> <a class="whatsthis"
     target="_blank"
     href="/help/?parent_acc=parent_single_gene&child_acc=child_single_maxread">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input id="maxread"
                            type="number"
                            min="1"
@@ -75,42 +76,42 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Highlight sequences list: </b></tran> <a class="whatsthis"
     target="_blank"
     href="/help/?parent_acc=parent_single_gene&child_acc=child_seq_element_hili">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input id="seqhili" name="seqhili" value="" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Highlight start: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input type="text" id="hili_start" name="hili_start" value="0" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Highlight stop: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <input type="text" id="hili_stop" name="hili_stop" value="0" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-8">
                     <b>Offset Direction: </b> <a class="whatsthis"
     target="_blank"
     href="/help/?parent_acc=parent_single_gene&child_acc=child_offset_dir">&#9432;</a>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <select id="offsite">
                         <option value="fiveprime">5'</option>
                         <option value="threeprime">3'</option>
@@ -120,7 +121,7 @@
         </div>
         <div class="col-6">
             <div class="row">
-                <div class="col-2">
+                <div class="col-4">
                     <input class="line_graph"
                            id="line_graph"
                            type="checkbox"
@@ -128,7 +129,7 @@
                            value="lite1"
                            {% if line_graph == "T" %} checked {% else %} {% endif %} />
                 </div>
-                <div class="col-4">
+                <div class="col-8">
                     <label for='line_graph' class='padded_label'>Line Graph</label>
                     <a class="whatsthis"
                        target="_blank"
@@ -136,7 +137,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-2">
+                <div class="col-4">
                     <input class="ambig_check"
                            id="ambig_check"
                            type="checkbox"
@@ -144,7 +145,7 @@
                            value="ambiguous"
                            {% if ambig=="T" %} checked {% else %}  {% endif %} />
                 </div>
-                <div class="col-4">
+                <div class="col-8">
                     <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
                     <a class="whatsthis"
                        target="_blank"
@@ -152,14 +153,14 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-2">
+                <div class="col-4">
                     <input class="pcr_check"
                            id="pcr_check"
                            type="checkbox"
                            name="pcr"
                            value="pcr" />
                 </div>
-                <div class="col-4">
+                <div class="col-8">
                     <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
                     <a class="whatsthis"
                        target="_blank"
@@ -167,7 +168,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-2">
+                <div class="col-4">
                     <input class="cov_check"
                            id="cov_check"
                            type="checkbox"
@@ -176,7 +177,7 @@
                            id="coverageid"
                            {% if cov=="T" %} checked {% else %} {% endif %} />
                 </div>
-                <div class="col-4">
+                <div class="col-8">
                     <label for='cov_check' class='padded_label'>Ribo-Seq coverage</label>
                     <a class="whatsthis"
                        target="_blank"
@@ -184,7 +185,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-2">
+                <div class="col-4">
                     <input class="mismatch_check"
                            id="mismatch_check"
                            type="checkbox"
@@ -192,7 +193,7 @@
                            value="mismatchseq"
                            id="mismatchseqid" />
                 </div>
-                <div class="col-4">
+                <div class="col-8">
                     <label for='mismatch_check' class='padded_label'>Display mismatches</label>
                     <a class="whatsthis"
                        target="_blank"
