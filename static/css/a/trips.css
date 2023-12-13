@@ -80,6 +80,16 @@ input[type="text"]::placeholder {
   font-weight: bold;
 }
 
+/*options boxes*/
+.box {
+  text-align: center;
+  display: inline-block;
+  border: 1px solid #dbdbdb;
+  padding: 10px 0px;
+  border-radius: 20px;
+  width: 99%;
+}
+
 /* species slider*/
 .slider-container {
   max-width: 100%;
