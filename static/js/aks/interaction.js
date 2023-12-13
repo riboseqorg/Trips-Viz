@@ -1,27 +1,48 @@
 // Display or hide samples and project
-$('input[name="seq_type"]').on("click", function() {
-        let seq_type = $('input[name = "seq_type"]:checked').val();
-        $(document).ready(function() { // Toggles project and samples visibility
-                $('input[id$="project"]').each(function(project) { // Project visibility
-                        if (project.startsWith(seq_type)) {
-                                project.style.display = "block";
-                        } else {
-                                project.style.display = "none";
-                        }
-                });
-                $('input[id$="sample"]').each(function(sample) { // Sample visibility
-                        if (sample.startsWith(seq_type)) {
-                                sample.style.display = "block";
-                        } else {
-                                sample.style.display = "none";
-                        }
-                });
-                //alert(content_type);
+
+function autoproject(name) {
+
+        const name_type = $(`input[name = "${name}"]:checked`).val();
+        //$("." + seq_type).css("display", "block"); //.style.display = "block";
+        $(`input[name="${name}"]`).each((_, element) => {
+                if (element.value === name_type) {
+
+                        $(`.${element.value}`).css("display", "block"); //.style.display = "block";
+                } else {
+
+                        $(`.${element.value}`).css("display", "none"); //.style.display = "block";
+                        //$("." + element.value).css("display", "none");
+                }
 
         });
+
+}
+
+
+$(document).ready(() => { // Toggles project and samples visibility
+
+        autoproject("seq_type");
+        $('input[name="seq_type"]').on("click", () => {
+                autoproject("seq_type");
+        });
+        $('button[name="checkall"]').on("click", () => {
+                const seq_type = $('input[name = "seq_type"]:checked').val();
+                $(`.${seq_type}`).prop('checked', true);
+        });
+        $('button[name="uncheckall"]').on("click", () => {
+                const seq_type = $('input[name = "seq_type"]:checked').val();
+                $(`.${seq_type}`).prop('checked', false);
+        });
+        $('button[name="checkallfiles"]').on("click", () => {
+                const seq_type = $('input[name = "study"]:checked').val();
+                $(`.${seq_type}`).prop('checked', true);
+        });
+        $('button[name="uncheckallfiles"]').on("click", () => {
+                const seq_type = $('input[name = "study"]:checked').val();
+                $(`.${seq_type}`).prop('checked', false);
+        });
+
 });
-
-
 
 // TO hide and show on click
 function hideOnClick(triggerSelector, targetSelector) {
