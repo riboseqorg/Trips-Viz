@@ -131,7 +131,7 @@ def ribo_seq_read_counting(
         unique: bool = True) -> Dict[str, float | None] | str:
     supported = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
     exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism,
-                                           supported)
+                                           True)
 
     orf_regions = genomic_orf_coordinate_ranges(sqlite_path_organism,
                                                 supported, exons)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from typing import Dict, List
+import pandas as pd
 
 from sqlitedict import SqliteDict
 
@@ -62,7 +63,7 @@ def region_coverage(
 def coverage_junction_transcript(
     junction_scores: Dict[str, Dict[str,
                                     float]]) -> Dict[str, Dict[str, float]]:
-    #function to calculate the normalised coverage of junction features. returns a nested dict.
+    # function to calculate the normalised coverage of junction features. returns a nested dict.
     # 60 = 30 + 30 which is the sum of two riboseq read lengths.
     coverage_junction = {}
     for transcript in junction_scores:
@@ -257,17 +258,13 @@ def aORF(cORF: Dict[str, float], counts: Dict[str, List]) -> Dict[str, float]:
     return a_sites_perORF
 
 
-def lORF(coding: List[str], sqlite_path_organism: str) -> Dict[str, int]:
+def lORF(coding: List[str], sqlite_path_organism: str) -> DataFrame:
     # Returns the lengths of each open reading frame in a dictionary. Transcript as keys, lengths as values
-    lORFs = {}
 
-    for transcript in coding:
-        start, stop = get_start_stop_codon_positions(transcript,
-                                                     sqlite_path_organism)
-        length = (stop + 1) - start
-        if transcript not in lORFs:
-            lORFs[transcript] = length
-    return lORFs
+    lORFs = get_start_stop_codon_positions(
+        coding, sqlite_path_organism).drop_duplicates('transcript')
+    lORFs['length'] = lORFs['stop'] - lORFs['start'] + 1
+    return lORFs[['transcript', 'length']]
 
 
 def ORFs_per_million(aORF: Dict[str, float],
@@ -328,6 +325,13 @@ def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
         cORF = shared_coverage(coverage_exons, coverage_junctions)
     else:
         cORF = cORF_ratio(average_unique, average_all)
+    # -- Need to0 recheck
+    cORF = pd.DataFrame.from_dict(cORF, orient="index").rename(columns={
+        0: "cORF"
+    }).drop_duplicates("cORF")
+    # counts = pd.DataFrame.from_dict(counts, orient="index").rename(columns={
+    # 0: "counts"
+    # }).drop_duplicates("counts")
 
     adjusted_a_sites = aORF(cORF, counts)
     orf_lengths = lORF(supported, sqlite_path_organism)
@@ -342,18 +346,17 @@ def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
     # Run the ORFquant algorithm on the files that do not have a OPM value stored for the required trancripts
     # Store calculated OPMs for a file back in the read sqlitedict under "OPM"
     # Returns the average OPMs of the selected files for this locus
-    #print "gene", gene
-    #print "sqlitepath", sqlite_path_organism
-    #print "sqlite_path_reads",sqlite_path_reads
-    coding = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
-    exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, coding)
+    # print "gene", gene
+    # print "sqlitepath", sqlite_path_organism
+    # print "sqlite_path_reads",sqlite_path_reads
+    exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, True)
 
     transcript_OPMs = {}
     read_files = []
     for file in sqlite_path_reads:
         infile = SqliteDict(file)
         for transcript in coding:
-            try: 
+            try:
                 if transcript not in transcript_OPMs:
                     transcript_OPMs[transcript] = []
                 transcript_OPMs[transcript].append(infile[transcript]["OPM"])

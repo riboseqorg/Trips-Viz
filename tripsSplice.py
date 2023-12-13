@@ -105,12 +105,14 @@ def get_protein_coding_transcript_ids(gene: str,
                            & transcripts.tran_type == 1, "transcript"].values
 
 
-def get_start_stop_codon_positions(
-        transcript_id: str, sqlite_path_organism: str) -> Tuple[int, int]:
+def get_start_stop_codon_positions(transcript_id: str | List[str],
+                                   sqlite_path_organism: str) -> DataFrame:
     # Get start and stop codon positions from annotation sqlite
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
-    return transcripts.loc[transcripts.transcript == transcript_id,
-                           ['cds_start', 'cds_stop']].values[0]
+    if isinstance(transcript_id, str):
+        transcript_id = [transcript_id]
+    return transcripts.loc[transcripts.transcript.isin(transcript_id),
+                           ['transcript', 'cds_start', 'cds_stop']]
 
 
 def get_orf_exon_structure(start_stop: Tuple[int, int],
@@ -173,37 +175,29 @@ def get_exon_coordinate_ranges(sequence: str, exons: List[str],
     return ranges
 
 
-def get_exon_info(gene: str,
-                  sqlite_path_organism: str,
-                  supported_transcripts: List[str],
-                  filte_r: bool = True) -> DataFrame:
+def genomic_exon_coordinate_ranges(
+        gene: str,
+        sqlite_path_organism: str,
+        coding_transcripts: bool = True) -> DataFrame:
+    """
+
+    Return the exon starts,stops and transcript for a given gene
+    """
+    # NOTE: Might need to remove filter as consider suupport transcripts
     # Return the exon starts,stops and transcript for a given gene
     gene = gene.upper()
     exons = sqlquery(sqlite_path_organism, "exons")
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
-    exons = exons.loc[exons.transcript.isin(transcripts.loc[
+    if coding_transcripts:
+        transcripts = transcripts.loc[transcripts.tran_type == 1]
+    exon_info = exons.loc[exons.transcript.isin(transcripts.loc[
         transcripts.gene == gene, "transcript"].values),
-                      ["transcript", "exon_start", "exon_stop"]]
-    if filte_r:
-        return exons[exons.transcript.isin(supported_transcripts)]
-    return exons
+                          ["transcript", "exon_start", "exon_stop"]]
 
-
-def genomic_exon_coordinate_ranges(gene: str,
-                                   sqlite_path_organism: str,
-                                   supported_transcripts: List[str],
-                                   filte_r: bool = True) -> DataFrame:
-    # create a dictionary with transcript_ids as keys and exon coordinates in tuple (start, stop) as values
-    # subtract the minumum start codon position of any exon for the gene
-    exon_info = get_exon_info(gene,
-                              sqlite_path_organism,
-                              supported_transcripts,
-                              filte_r=filte_r)
     minimum = min(exon_info.exon_start)
-    exon_info["exon_start"] = list(
-        map(lambda x: x - minimum, exon_info.exon_start))
-    exon_info["exon_stop"] = list(
-        map(lambda x: x - minimum, exon_info.exon_stop))
+    exon_info[["exon_start",
+               "exon_stop"]] = exon_info[["exon_start", "exon_stop"
+                                          ]].map(lambda x: x - minimum)
     return exon_info
 
 
@@ -211,10 +205,11 @@ def genomic_orf_coordinate_ranges(
     # gene,
     sqlite_path_organism: str,
     supported_transcripts: List[str],
-    genomic_coordinates: Dict[str, List[Tuple[int, int]]],
+    genomic_coordinates: DataFrame
     # filter=True
 ) -> Dict[str, List[Tuple[int, int]]]:
     # Translate the orf structure to genomic coordinates using genomic coordinates from the exons table of sqlite file
+
     orf_structures = {}
     genomic_orf_structures = {}
     for transcript in supported_transcripts:

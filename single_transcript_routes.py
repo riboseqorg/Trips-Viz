@@ -51,17 +51,18 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     user_hili_starts = []
     user_hili_stops = []
     try:
-        for item in data['user_hili'].split(","):
+        for item in template_dict['user_hili'].split(","):
             user_hili_starts.append(int(item.split("_")[0]))
             user_hili_stops.append(int(item.split("_")[1]))
     except Exception:
         pass
 
-    advanced = 'True'
+    advanced = True
     consent = request.cookies.get("cookieconsent_status")
     rendered_template = render_template('single_transcript_plot.html',
                                         template_dict=template_dict)
     if consent == "deny":
+        # TODO: Convert this according to django
         rendered_template = make_response(rendered_template)
         for cookie_name in request.cookies:
             if cookie_name != "cookieconsent_status":
@@ -78,7 +79,7 @@ single_transcript_query_blueprint = Blueprint("query",
 @single_transcript_query_blueprint.route('/query', methods=['POST'])
 def query():  #TODO: add return type
     # global user_short_passed
-    data = request.get_json()
+    data = request.args.to_dict()
     file_list = []
     file_ids = []
     study_ids = []
