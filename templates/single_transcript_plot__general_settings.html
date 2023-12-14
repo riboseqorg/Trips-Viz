@@ -126,8 +126,7 @@
                     <input class="line_graph"
                            id="line_graph"
                            type="checkbox"
-                           name="namelite"
-                           value="lite1"
+                           name="line"
                            {% if line_graph == "T" %} checked {% else %} {% endif %} />
                 </div>
                 <div class="col-8">
@@ -143,7 +142,6 @@
                            id="ambig_check"
                            type="checkbox"
                            name="ambiguous"
-                           value="ambiguous"
                            {% if ambig=="T" %} checked {% else %}  {% endif %} />
                 </div>
                 <div class="col-8">
@@ -159,7 +157,7 @@
                            id="pcr_check"
                            type="checkbox"
                            name="pcr"
-                           value="pcr" />
+										/>
                 </div>
                 <div class="col-8">
                     <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
@@ -173,8 +171,7 @@
                     <input class="cov_check"
                            id="cov_check"
                            type="checkbox"
-                           name="coverage"
-                           value="coverage"
+                           name="ribocoverage"
                            id="coverageid"
                            {% if cov=="T" %} checked {% else %} {% endif %} />
                 </div>
@@ -191,7 +188,6 @@
                            id="mismatch_check"
                            type="checkbox"
                            name="mismatchseq"
-                           value="mismatchseq"
                            id="mismatchseqid" />
                 </div>
                 <div class="col-8">
