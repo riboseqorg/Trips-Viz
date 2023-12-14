@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from typing import Dict, List
 import pandas as pd
+from pandas.core.frame import DataFrame
 
 from sqlitedict import SqliteDict
 
@@ -247,15 +248,14 @@ def shared_coverage(
     return shared_cORF
 
 
-def aORF(cORF: Dict[str, float], counts: Dict[str, List]) -> Dict[str, float]:
+def aORF(cORF: DataFrame, counts: DataFrame) -> DataFrame:
     # Returns a dictionary of the number of a sites found in each transcript. Coverage by the sum of counts.
-    a_sites_perORF = {}
-    for transcript in cORF:
-        if transcript not in a_sites_perORF:
-            a_sites_perORF[transcript] = (cORF[transcript] *
-                                          sum(counts[transcript]))
-
-    return a_sites_perORF
+    cORF = cORF.drop_duplicates('transcript')
+    counts = counts.drop_duplicates('transcript')
+    cORF_count = cORF.merge(counts, on='transcript')
+    cORF_count['a_sites_perORF'] = cORF_count.apply(
+        lambda x: sum(x['counts']) * x['cORF'], axis=1)
+    return cORF_count
 
 
 def lORF(coding: List[str], sqlite_path_organism: str) -> DataFrame:

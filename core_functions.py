@@ -184,14 +184,13 @@ def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
 def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")  # users is name of table
-    studies = studies.loc[studies.study_id.isin(data['study_ids']),
+    studies = studies.loc[studies.study_id.isin(set(data['study_ids'])),
                           ['study_id', 'study_name']]
     files = sqlquery(dbpath, "files")
     files = files[files["file_id"].isin(data['file_ids'])]
     files = files.merge(studies, on='study_id')
     files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', '.sqlite'))
-    print(files)
     files['path'] = files.apply(
         lambda x: "{}/{}/{}/{}/{}/{}.sqlite".format(
             config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[

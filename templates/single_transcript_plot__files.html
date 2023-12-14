@@ -98,7 +98,7 @@
                                 <input type="checkbox"
                                        class="{{ study_type }} {{ study[1] }}"
                                        id="{{ file[0] }}"
-                                       name="file_{{ study_type }}_{{ study[1] }}_{{ file[0] }}"
+                                       name="file_{{ study_type }}_{{ study[0] }}_{{ file[0] }}"
                                        value="{{ file[1] }}"
                                        {% if loop.first %} checked {% else %} {% endif %}>
                                 <label for="{{ file }}" id="label{{ file[0] }}" class="radio_label">{{ file[1] }}</label>

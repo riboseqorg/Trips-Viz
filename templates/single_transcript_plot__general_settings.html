@@ -12,6 +12,7 @@
 <div class='hidden'>
     <!--Hidden Parameters-->
     {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+		<input name="override" value="{{override}}" />
 </div>
 <!--{{ template_dict }}-->
 <div class="page-section">
@@ -196,7 +197,6 @@
                 <div class="col-8">
                     <label for='mismatch_check' class='padded_label'>Display mismatches</label>
                     <a class="whatsthis"
-                       target="_blank"
                        target="_blank"
                        href="/help/?parent_acc=parent_single_gene&child_acc=child_nucseq">&#9432;</a>
                 </div>

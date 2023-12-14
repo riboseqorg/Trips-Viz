@@ -35,7 +35,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     template_dict['studies_and_files'] = fetch_files(accepted_studies)
     gwips = get_table("organisms")
-    print(accepted_studies)
+    # print(accepted_studies)
     gwips_info = gwips.loc[(gwips.organism_id == organism_id)
                            & (gwips.transcriptome_list == transcriptome), [
                                "gwips_clade", "gwips_organism",
@@ -76,10 +76,10 @@ single_transcript_query_blueprint = Blueprint("query",
                                               template_folder="templates")
 
 
-@single_transcript_query_blueprint.route('/query', methods=['POST'])
+@single_transcript_query_blueprint.route('/query', methods=['POST',"GET"])
 def query():  #TODO: add return type
     # global user_short_passed
-    data = request.args.to_dict()
+    data = request.form.to_dict()
     file_list = []
     file_ids = []
     study_ids = []
@@ -93,6 +93,7 @@ def query():  #TODO: add return type
     data["study_ids"] = study_ids
 
     file_paths_dict = fetch_file_paths(data)
+    print(file_paths_dict, "Kiran")
 
     # user_short = data["user_short"]
 
