@@ -29,8 +29,7 @@ def calc_gc(seq):
 def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     print(organism, transcriptome)
 
-    user = fetch_user()[0]
-    accepted_studies = fetch_studies(user, organism, transcriptome)
+    accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     organisms = get_table("organisms")
@@ -73,7 +72,7 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
                            transcriptome=transcriptome,
                            organism=organism,
                            default_tran=default_tran,
-                           current_username=user,
+                           current_username=fetch_user()[0],
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
                            html_args=html_args,

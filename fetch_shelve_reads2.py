@@ -1,5 +1,4 @@
 from typing import Dict, Tuple, Union
-import os
 import collections
 from bokeh.palettes import all_palettes
 from fixed_values import merge_dicts
@@ -30,7 +29,8 @@ def get_reads(
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
-    mismatch_dict = pd.DataFrame(0,
+    if get_mismatches:
+        mismatch_dict = pd.DataFrame(0,
                                  index=range(tranlen + 1),
                                  columns=["A", "T", "G", "C"])
 
@@ -89,7 +89,7 @@ def get_reads(
                 alltrandict = sqlite_db[data['transcript']]
                 unambig_tran_dict = alltrandict["unambig"]
                 ambig_tran_dict = {}
-                if (read_type == "ambig") and ("ambig" in alltrandict):
+                if ( "ambiguous" in data) and ("ambig" in alltrandict):
                     ambig_tran_dict = alltrandict[read_type]
                 # TODO: Change merge_dicts to take a list of dicts instead of two
                 trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)

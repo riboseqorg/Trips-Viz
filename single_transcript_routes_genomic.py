@@ -24,15 +24,7 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
 def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     #global user_short_passed
 
-    organism = str(organism)
-
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-
-    user, logged_in = fetch_user()
-    accepted_studies = fetch_studies(user, organism, transcriptome)
+    accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
 
@@ -428,10 +420,7 @@ def query_genomic() -> str:
         mismatches = True
     else:
         mismatches = False
-    if "ambiguous" in data:
-        ambiguous = "ambig"
-    else:
-        ambiguous = "unambig"
+
     if "pcr" in data:
         pcr = True
     else:
@@ -519,8 +508,8 @@ def query_genomic() -> str:
         connection.close()
     if tran != "":
         return riboflask.generate_plot(
-            tran, ambiguous, minread, maxread, lite, ribocoverage, organism,
-            readscore, noisered, primetype, minfiles, nucseq, user_hili_starts,
+            tran, minread, maxread, lite, ribocoverage, organism, readscore,
+            noisered, primetype, minfiles, nucseq, user_hili_starts,
             user_hili_stops, uga_diff, file_paths_dict, short_code,
             color_readlen_dist, background_col, uga_col, uag_col, uaa_col,
             advanced, seqhili, seq_rules, title_size, subheading_size,

@@ -24,8 +24,7 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
 def pause_detection_page(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
     organism = str(organism)
-    user = fetch_user()[0]
-    accepted_studies = fetch_studies(user, organism, transcriptome)
+    accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     advanced = False
@@ -49,7 +48,7 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
     return render_template('pause_detection.html',
                            studies_dict=accepted_studies,
                            accepted_files=accepted_files,
-                           user=user,
+                           user=fetch_user()[0],
                            default_tran="",
                            advanced=advanced,
                            seq_types=seq_types,

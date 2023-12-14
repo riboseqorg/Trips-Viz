@@ -75,33 +75,32 @@ def fetch_user() -> Tuple[str | None, bool]:
 # Given a username and an organism returns a list of relevant studies.
 def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
     '''Fetches studies from database using organism and transcriptome information.'''
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     study_access_list = []
     # get a list of organism id's this user can access
     if current_user.is_authenticated:
-        # getting user ID
-        result = sqlquery(dbpath, "users")  # users is name of table
-        user_id = result[result.username ==
-                         current_user.name].user_id.values[0]
-        # Study accession list
-        result = sqlquery(dbpath, "study_accesion")  # users is name of table
-        study_access_list = result.loc[result.user_id == user_id,
+        result = get_table("study_accesion")  # users is name of table
+        study_access_list = result.loc[result.user_id == current_user.id,
                                        "study_id"].values
 
     # Getting organism id
-    result = sqlquery(dbpath, "organisms")  # users is name of table
+    result = get_table("organisms")  # users is name of table
     organism_id = result.loc[(result.organism_name == organism)
                              & (result.transcriptome_list == transcriptome),
                              "organism_id"].values[0]
 
     # Getting studies
-    studies = sqlquery(dbpath, "studies")  # users is name of table
+    studies = get_table("studies")  # users is name of table
     studies = studies.loc[studies.organism_id == organism_id,
                           ["study_id", "study_name", "private"]]
     studies = studies.loc[studies.private == 0
                           | studies.study_id.isin(study_access_list),
-                          ["study_id", "study_name"]]
-    return organism_id, studies  # Accepted studies
+                          ["study_id", "study_name", "private"]].sort_values(
+                              "private",
+                              ascending=False).drop_duplicates("study_id")
+    # TODO: Compare with original code and discuss which one too choose
+    studies = studies[["study_id", "study_name"]]  # Accepted studies
+    studies["filetype"] = []
+    return studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.

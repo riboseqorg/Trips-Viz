@@ -80,6 +80,7 @@ single_transcript_query_blueprint = Blueprint("query",
 def query():  #TODO: add return type
     # global user_short_passed
     data = request.form.to_dict()
+    print(data)
     file_list = []
     file_ids = []
     study_ids = []
@@ -249,8 +250,9 @@ def query():  #TODO: add return type
             settings[key] = user_settings[key]
         sequence_rule = get_table('seq_rules')
         sequence_rule = sequence_rule.loc[sequence_rule.user_id == user_id]
-    return riboflask.generate_plot({
-        'user_settings': settings,
-        'seq_rules': seq_rules,
-        'data': data
-    })
+    return ""
+#     return riboflask.generate_plot({
+        # 'user_settings': settings,
+        # 'seq_rules': seq_rules,
+        # 'data': data
+    # })

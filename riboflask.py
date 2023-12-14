@@ -17,8 +17,7 @@ matplotlib.use("agg")
 
 
 def generate_plot(
-    tran: str,
-    ambig: str,
+    tran: str, # => data['transcript']
     min_read: int,
     max_read: int,
     lite: str,
@@ -58,10 +57,8 @@ def generate_plot(
     data: Dict,
 ) -> str:
     if ("line" not in data) and ("ribocoverage" in data):
-        return (
-            "Error: Cannot display Ribo-Seq Coverage when 'Line Graph'"
-            + " is turned off"
-        )
+        return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
+                " is turned off")
 
     # Label and visibility for the interactive legends
     labels = [
@@ -86,29 +83,30 @@ def generate_plot(
         "owner",
     ].values[0]
     if owner == 1:
-        sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome
-        )
+        sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                      config.ANNOTATION_DIR,
+                                                      organism, transcriptome)
         if not os.path.isfile(sqlpath):
             return "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome
-            )
+                organism, transcriptome)
     else:
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            trips_uploads_location, owner, organism, transcriptome
-        )
-    transcripts = sqlquery(sqlpath,"transcripts")
-    traninfo = transcripts[transcripts.transcript == data["transcript"]].iloc[0]
+            trips_uploads_location, owner, organism, transcriptome)
+    transcripts = sqlquery(sqlpath, "transcripts")
+    traninfo = transcripts[transcripts.transcript ==
+                           data["transcript"]].iloc[0]
     for ss in ['start_list', 'stop_list', 'exon_junctions']:
         try:
-            traninfo[ss] = [ int(x) for x in traninfo[ss].split(",") ]  
+            traninfo[ss] = [int(x) for x in traninfo[ss].split(",")]
         except Exception:
             traninfo[ss] = []
 
     try:
-        coding_regions = sqlquery(sqlpath,"coding_regions")
-        coding_regions = coding_regions.loc[coding_regions.transcript == data["transcript"],["coding_start", "coding_stop"]]
-    except Exception: # pragma: no cover
+        coding_regions = sqlquery(sqlpath, "coding_regions")
+        coding_regions = coding_regions.loc[coding_regions.transcript ==
+                                            data["transcript"],
+                                            ["coding_start", "coding_stop"]]
+    except Exception:  # pragma: no cover
         coding_regions = pd.DataFrame(columns=["coding_start", "coding_stop"])
 
     if not traninfo.cds_start:
@@ -117,16 +115,37 @@ def generate_plot(
         traninfo.cds_stop = 0
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
-    seq = traninfo["seq"].upper() # NOTE: I guess it is already upper case
+    seq = traninfo["seq"].upper()  # NOTE: I guess it is already upper case
     for i in range(len(seq)):
-        if seq[i : i + 3] in all_stops:
-            all_stops[seq[i : i + 3]].append(i + 1)
+        if seq[i:i + 3] in all_stops:
+            all_stops[seq[i:i + 3]].append(i + 1)
     # Error occurs if one of the frames is empty for any given start/stop, so we initialise with -5 as this won't be seen by user and will prevent the error
-    
+
     start_stop_dict = {
-        1: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
-        2: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
-        3: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
+        1: {
+            "starts": [-5],
+            "stops": {
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
+            }
+        },
+        2: {
+            "starts": [-5],
+            "stops": {
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
+            }
+        },
+        3: {
+            "starts": [-5],
+            "stops": {
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
+            }
+        },
     }
     for start in traninfo.start_list:
         rem = ((start - 1) % 3) + 1
@@ -137,7 +156,7 @@ def generate_plot(
             rem = ((stop_pos - 1) % 3) + 1
             start_stop_dict[rem]["stops"][stop].append(stop_pos)
     # find all open reading frames
-    for frame in [1, 2, 3]: # TODO: Can be optimised
+    for frame in [1, 2, 3]:  # TODO: Can be optimised
         for start in start_stop_dict[frame]["starts"]:
             best_stop_pos = 10000000
             for stop in start_stop_dict[frame]["stops"]:
@@ -150,23 +169,22 @@ def generate_plot(
             if best_stop_pos != 10000000:
                 frame_orfs[frame].append((start, best_stop_pos))
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching RNA-Seq Reads"})
-    all_rna_reads, rna_seqvar_dict = get_reads(
-        ambig,
-        min_read,
-        max_read,
-        tran,
-        file_paths_dict,
-        tranlen,
-        True,
-        organism,
-        False,
-        noisered,
-        primetype,
-        "rnaseq",
-        readscore,
-        pcr,
-        get_mismatches=mismatches,
-    )
+    all_rna_reads, rna_seqvar_dict = get_reads(ambig,
+                                               min_read,
+                                               max_read,
+                                               tran,
+                                               file_paths_dict,
+                                               tranlen,
+                                               True,
+                                               organism,
+                                               False,
+                                               noisered,
+                                               primetype,
+                                               "rnaseq",
+                                               readscore,
+                                               pcr,
+                                               get_mismatches=mismatches,
+                                               data)
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
     all_subcodon_reads, ribo_seqvar_dict = get_reads(
         ambig,
@@ -329,9 +347,12 @@ def generate_plot(
         linestyle="solid",
         linewidth=cds_marker_size,
     )
-    ax_main.text(
-        cds_start, y_max * 0.97, "CDS start", fontsize=18, color="black", ha="center"
-    )
+    ax_main.text(cds_start,
+                 y_max * 0.97,
+                 "CDS start",
+                 fontsize=18,
+                 color="black",
+                 ha="center")
     cds_markers += ax_main.plot(
         (cds_stop + 1, cds_stop + 1),
         (0, y_max * 0.97),
@@ -339,9 +360,12 @@ def generate_plot(
         linestyle="solid",
         linewidth=cds_marker_size,
     )
-    ax_main.text(
-        cds_stop, y_max * 0.97, "CDS stop", fontsize=18, color="black", ha="center"
-    )
+    ax_main.text(cds_stop,
+                 y_max * 0.97,
+                 "CDS stop",
+                 fontsize=18,
+                 color="black",
+                 ha="center")
     ax_cds = plt.subplot2grid((31, 1), (23, 0), rowspan=1, sharex=ax_main)
     ax_cds.set_facecolor("white")
     ax_cds.set_ylabel(
@@ -361,19 +385,22 @@ def generate_plot(
     ax_f3 = plt.subplot2grid((31, 1), (29, 0), rowspan=1, sharex=ax_main)
     ax_f3.set_facecolor(color_dict["frames"][2])
     ax_nucseq = plt.subplot2grid((31, 1), (30, 0), rowspan=1, sharex=ax_main)
-    ax_nucseq.set_xlabel(
-        "Transcript: {} Length: {} nt".format(tran, tranlen), fontsize=subheading_size
-    )
+    ax_nucseq.set_xlabel("Transcript: {} Length: {} nt".format(tran, tranlen),
+                         fontsize=subheading_size)
 
-    for _, tup in coding_regions.iterrows(): # TODO: Change it to tuple for speed boost
-        ax_cds.fill_between(
-            [tup[0], tup[1]], [1, 1], zorder=0, alpha=1, color="#001285"
-        )
+    for _, tup in coding_regions.iterrows(
+    ):  # TODO: Change it to tuple for speed boost
+        ax_cds.fill_between([tup[0], tup[1]], [1, 1],
+                            zorder=0,
+                            alpha=1,
+                            color="#001285")
 
     # plot a dummy exon junction at postion -1, needed in cases there are no exon junctions, this wont be seen
-    allexons = ax_main.plot(
-        (-1, -1), (0, 1), alpha=0.01, color="black", linestyle="-.", linewidth=2
-    )
+    allexons = ax_main.plot((-1, -1), (0, 1),
+                            alpha=0.01,
+                            color="black",
+                            linestyle="-.",
+                            linewidth=2)
     for exon in exon_junctions:
         allexons += ax_main.plot(
             (exon, exon),
@@ -628,15 +655,30 @@ def generate_plot(
     for axis, frame in ((ax_f1, 1), (ax_f2, 2), (ax_f3, 3)):
         axis.set_xlim(1, tranlen)
         starts = [(item, 1) for item in start_stop_dict[frame]["starts"]]
-        uag_stops = [(item, 1) for item in start_stop_dict[frame]["stops"]["TAG"]]
-        uaa_stops = [(item, 1) for item in start_stop_dict[frame]["stops"]["TAA"]]
-        uga_stops = [(item, 1) for item in start_stop_dict[frame]["stops"]["TGA"]]
+        uag_stops = [(item, 1)
+                     for item in start_stop_dict[frame]["stops"]["TAG"]]
+        uaa_stops = [(item, 1)
+                     for item in start_stop_dict[frame]["stops"]["TAA"]]
+        uga_stops = [(item, 1)
+                     for item in start_stop_dict[frame]["stops"]["TGA"]]
         # Plot start positions
-        axis.broken_barh(starts, (0.30, 1), color="white", zorder=2, linewidth=7)
+        axis.broken_barh(starts, (0.30, 1),
+                         color="white",
+                         zorder=2,
+                         linewidth=7)
         # Plot stop positions
-        axis.broken_barh(uag_stops, (0, 1), color=uag_col, zorder=2, linewidth=4)
-        axis.broken_barh(uaa_stops, (0, 1), color=uaa_col, zorder=2, linewidth=4)
-        axis.broken_barh(uga_stops, (0, 1), color=uga_col, zorder=2, linewidth=4)
+        axis.broken_barh(uag_stops, (0, 1),
+                         color=uag_col,
+                         zorder=2,
+                         linewidth=4)
+        axis.broken_barh(uaa_stops, (0, 1),
+                         color=uaa_col,
+                         zorder=2,
+                         linewidth=4)
+        axis.broken_barh(uga_stops, (0, 1),
+                         color=uga_col,
+                         zorder=2,
+                         linewidth=4)
         axis.set_ylim(0, 1)
         axis.set_ylabel(
             "Frame {}".format(frame),
@@ -649,7 +691,9 @@ def generate_plot(
         )
     title_str = "{} ({})".format(gene, short_code)
     plt.title(title_str, fontsize=50, y=38)
-    line_collections = [frame0subpro, frame1subpro, frame2subpro, rna_bars, allexons]
+    line_collections = [
+        frame0subpro, frame1subpro, frame2subpro, rna_bars, allexons
+    ]
     if mismatches:
         line_collections.append(a_mismatches)
         line_collections.append(t_mismatches)
@@ -708,9 +752,7 @@ def generate_plot(
     try:
         con_scores = SqliteDict(
             "{0}/{1}/homo_sapiens/score_dict.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR
-            )
-        )
+                config.SCRIPT_LOC, config.ANNOTATION_DIR))
     except Exception:
         con_scores = []
     for frame in [1, 2, 3]:
@@ -721,7 +763,7 @@ def generate_plot(
             orf_rna = 0.0001
             start = tup[0]
             try:
-                context = (seq[start - 7 : start + 4].upper()).replace("T", "U")
+                context = (seq[start - 7:start + 4].upper()).replace("T", "U")
             except Exception:
                 con_score = "?"
             if len(context) != 11 or context[6:9] != "AUG":
@@ -771,17 +813,15 @@ def generate_plot(
             }
             df = pd.DataFrame(
                 datadict,
-                columns=(
-                    [
-                        "inframe ribo",
-                        "outframe ribo",
-                        "in/out ratio",
-                        "rna",
-                        "te",
-                        "len",
-                        "context_score",
-                    ]
-                ),
+                columns=([
+                    "inframe ribo",
+                    "outframe ribo",
+                    "in/out ratio",
+                    "rna",
+                    "te",
+                    "len",
+                    "context_score",
+                ]),
             )
             label = df.iloc[[0], :].T
             label.columns = ["Start pos: {}".format(start - 1)]
@@ -840,9 +880,8 @@ def generate_plot(
             f3_count = frame_counts[2][i + 1]
         if i + 1 in all_rna_reads:
             rna_count = all_rna_reads[i + 1]
-        returnstr += "{},{},{},{},{},{}".format(
-            i + 1, seq[i], f1_count, f2_count, f3_count, rna_count
-        )
+        returnstr += "{},{},{},{},{},{}".format(i + 1, seq[i], f1_count,
+                                                f2_count, f3_count, rna_count)
         for seq_type in alt_seq_dict:
             if i + 1 in alt_seq_dict[seq_type]:
                 count = alt_seq_dict[seq_type][i + 1]
@@ -866,16 +905,13 @@ def generate_plot(
         )
         axisname.set_yticklabels([])
 
-    plt.savefig(
-        "test.png", dpi=300, bbox_inches="tight"
-    )  # NOTE: What is it doing here?
+    plt.savefig("test.png", dpi=300,
+                bbox_inches="tight")  # NOTE: What is it doing here?
     # ax_main.grid(False, color="white", linewidth=30,linestyle="solid")
     # Without this style tag the markers sizes will appear correct on browser but be original size when downloaded via png
     graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size
-    )
+        marker_size)
     graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code
-    )
+        short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
