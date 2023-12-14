@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import fixed_values
 from fixed_values import get_user_defined_seqs
-from sqlqueries import get_table
+from sqlqueries import get_table, sqlquery
 
 matplotlib.use("agg")
 
@@ -57,11 +57,13 @@ def generate_plot(
     hili_stop: bool,
     data: Dict,
 ) -> str:
-    if ("lite" not in data) and ("ribocoverage" in data):
+    if ("line" not in data) and ("ribocoverage" in data):
         return (
             "Error: Cannot display Ribo-Seq Coverage when 'Line Graph'"
             + " is turned off"
         )
+
+    # Label and visibility for the interactive legends
     labels = [
         "Frame 1 profiles",
         "Frame 2 profiles",
@@ -76,7 +78,6 @@ def generate_plot(
     labels.append("CDS markers")
     start_visible.append(True)
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
-    stop_codons = ["TAG", "TAA", "TGA"]
     frame_orfs = {1: [], 2: [], 3: []}
     owner = get_table("organisms")
     owner = owner.loc[
@@ -96,65 +97,56 @@ def generate_plot(
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             trips_uploads_location, owner, organism, transcriptome
         )
-    transcripts = get_table("transcripts")
+    transcripts = sqlquery(sqlpath,"transcripts")
     traninfo = transcripts[transcripts.transcript == data["transcript"]].iloc[0]
-    try:
-        traninfo["stop_list"] = [
-            int(x) for x in traninfo["stop_list"]
-        ]  # TODO: make it sure that it is list of int
-    except Exception:
-        traninfo["stop_list"] = []
+    for ss in ['start_list', 'stop_list', 'exon_junctions']:
+        try:
+            traninfo[ss] = [ int(x) for x in traninfo[ss].split(",") ]  
+        except Exception:
+            traninfo[ss] = []
 
     try:
-        traninfo["start_list"] = [int(x) for x in traninfo["start_list"]]
-    except Exception:
-        traninfo["start_list"] = []
+        coding_regions = sqlquery(sqlpath,"coding_regions")
+        coding_regions = coding_regions.loc[coding_regions.transcript == data["transcript"],["coding_start", "coding_stop"]]
+    except Exception: # pragma: no cover
+        coding_regions = pd.DataFrame(columns=["coding_start", "coding_stop"])
 
-    if traninfo.exon_junctions[0]:
-        traninfo.exon_junctions = [int(x) for x in traninfo.exon_junctions]
-    else:
-        traninfo.exon_junctions = []
-    all_cds_regions = []
-    # Check if the 'coding_regions' table exists
-    sqlmaster = get_table("sqlite_master")
-    sqlmaster = sqlmaster[
-        (sqlmaster.type == "table") & (sqlmaster.name == "coding_regions")
-    ]
-    if not sqlmaster.empty:
-        coding_regions = get_table("coding_regions")
-        coding_regions = coding_regions[coding_regions.transcript == data["transcript"]]
     if not traninfo.cds_start:
         traninfo.cds_start = 0
     if not traninfo.cds_stop:
         traninfo.cds_stop = 0
-    all_starts = traninfo["start_list"]
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
-    seq = traninfo["seq"].upper()
-    for i in range(0, len(seq)):
-        if seq[i : i + 3] in stop_codons:
+    seq = traninfo["seq"].upper() # NOTE: I guess it is already upper case
+    for i in range(len(seq)):
+        if seq[i : i + 3] in all_stops:
             all_stops[seq[i : i + 3]].append(i + 1)
     # Error occurs if one of the frames is empty for any given start/stop, so we initialise with -5 as this won't be seen by user and will prevent the error
+    
     start_stop_dict = {
-        1: {"starts": [-5], "stops": {"TGA": [-5], "TAG": [-5], "TAA": [-5]}},
-        2: {"starts": [-5], "stops": {"TGA": [-5], "TAG": [-5], "TAA": [-5]}},
-        3: {"starts": [-5], "stops": {"TGA": [-5], "TAG": [-5], "TAA": [-5]}},
+        1: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
+        2: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
+        3: {"starts": [-5], "stops": {"TGA": [], "TAG": [], "TAA": []}},
     }
-    for start in all_starts:
+    for start in traninfo.start_list:
         rem = ((start - 1) % 3) + 1
+        # TODO: Use numpy array instead of list for speed boost
         start_stop_dict[rem]["starts"].append(start)
     for stop in all_stops:
         for stop_pos in all_stops[stop]:
             rem = ((stop_pos - 1) % 3) + 1
             start_stop_dict[rem]["stops"][stop].append(stop_pos)
     # find all open reading frames
-    for frame in [1, 2, 3]:
+    for frame in [1, 2, 3]: # TODO: Can be optimised
         for start in start_stop_dict[frame]["starts"]:
             best_stop_pos = 10000000
             for stop in start_stop_dict[frame]["stops"]:
                 for stop_pos in start_stop_dict[frame]["stops"][stop]:
                     if stop_pos > start and stop_pos < best_stop_pos:
                         best_stop_pos = stop_pos
+                        break
+                    if stop_pos > best_stop_pos:
+                        break
             if best_stop_pos != 10000000:
                 frame_orfs[frame].append((start, best_stop_pos))
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching RNA-Seq Reads"})
@@ -373,7 +365,7 @@ def generate_plot(
         "Transcript: {} Length: {} nt".format(tran, tranlen), fontsize=subheading_size
     )
 
-    for tup in all_cds_regions:
+    for _, tup in coding_regions.iterrows(): # TODO: Change it to tuple for speed boost
         ax_cds.fill_between(
             [tup[0], tup[1]], [1, 1], zorder=0, alpha=1, color="#001285"
         )
