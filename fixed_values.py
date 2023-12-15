@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-import typing
 import pickle
 from pandas.core.frame import DataFrame
 import pandas as pd
@@ -128,6 +127,15 @@ def merge_dicts(dict1: Dict[str, Dict[int, int]],
                 dict2: Dict[str, Dict[int, int]]) -> Dict[str, Dict[int, int]]:
     """
     Merge two dicts based on keys.
+
+    Parameters:
+    - dict1 (Dict[str, Dict[int, int]]): first dict
+    - dict2 (Dict[str, Dict[int, int]]): second dict
+
+    Returns:
+    - Dict[str, Dict[int, int]]: merged dict
+
+    Example:
     >>> dict1 = {'a': {1: 1}, 'b': {2: 2}}
     >>> dict2 = {'a': {1: 3}}
     >>> merge_dicts(dict1, dict2)
@@ -149,6 +157,15 @@ def merge_dicts(dict1: Dict[str, Dict[int, int]],
 def merge_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
     """
     Merge two dataframes.
+
+    Parameters:
+    - df1 (DataFrame): first dataframe
+    - df2 (DataFrame): second dataframe
+
+    Returns:
+    - DataFrame: merged dataframe
+
+    Example:
     >>> df1 = pd.DataFrame({'pos': [1, 2], 'A': [1, 2], 'C': [3, 4], 'G': [5, 6], 'T': [7, 8]})
     >>> df2 = pd.DataFrame({'pos': [1, 3], 'A': [10,20], 'C': [30, 40], 'G': [50, 60]})
     >>> merge_dfs(df1, df2)
@@ -163,6 +180,23 @@ def merge_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
 
 def codon_usage(codon_dict: Dict[str, int], short_code: str, title_size: int,
                 axis_label_size: int, marker_size: int, filename: str) -> None:
+    """
+    Plot codon usage.
+
+    Parameters:
+    - codon_dict (Dict[str, int]): codon dictionary
+    - short_code (str): short code
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - filename (str): filename
+
+    Returns:
+    - None
+
+    Example:
+
+    """
     allxvals: List[int] = []
     allyvals: List[int] = []
     alllabels: List[str] = []
@@ -284,12 +318,33 @@ def codon_usage(codon_dict: Dict[str, int], short_code: str, title_size: int,
 
 
 def my_decoder(obj):
+    """
+    Decodes a pickle file
+
+    Parameters: 
+    obj (str): path to pickle file
+
+    Returns:
+
+    Example:
+
+    """
     return pickle.load(open(obj, "rb"))
 
 
 def get_user_defined_seqs(
         seq: str, seqhili: List[str]
 ) -> Tuple[Dict[int, List[int]], Dict[int, List[str]]]:
+    """
+
+    Parameters:
+    - seq (str): sequence
+    - seqhili (List[str]): sequence highlights
+
+    Returns:
+
+    Example:
+    """
     signalhtml = {0: [], 1: [], 2: []}
     seq = seq.replace("T", "U")
     near_cog_starts = {0: [], 1: [], 2: []}

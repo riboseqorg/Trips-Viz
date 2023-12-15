@@ -17,7 +17,7 @@ matplotlib.use("agg")
 
 
 def generate_plot(
-    tran: str, # => data['transcript']
+    tran: str,  # => data['transcript']
     min_read: int,
     max_read: int,
     lite: str,
@@ -101,6 +101,11 @@ def generate_plot(
         except Exception:
             traninfo[ss] = []
 
+    if not traninfo.cds_start:
+        traninfo.cds_start = 0
+    if not traninfo.cds_stop:
+        traninfo.cds_stop = 0
+
     try:
         coding_regions = sqlquery(sqlpath, "coding_regions")
         coding_regions = coding_regions.loc[coding_regions.transcript ==
@@ -109,10 +114,9 @@ def generate_plot(
     except Exception:  # pragma: no cover
         coding_regions = pd.DataFrame(columns=["coding_start", "coding_stop"])
 
-    if not traninfo.cds_start:
-        traninfo.cds_start = 0
-    if not traninfo.cds_stop:
-        traninfo.cds_stop = 0
+    data["coding_regions"] = coding_regions
+    data["traninfo"] = traninfo
+
     all_stops = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
     seq = traninfo["seq"].upper()  # NOTE: I guess it is already upper case
@@ -169,37 +173,38 @@ def generate_plot(
             if best_stop_pos != 10000000:
                 frame_orfs[frame].append((start, best_stop_pos))
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching RNA-Seq Reads"})
-    all_rna_reads, rna_seqvar_dict = get_reads(ambig,
-                                               min_read,
-                                               max_read,
-                                               tran,
-                                               file_paths_dict,
-                                               tranlen,
-                                               True,
-                                               organism,
-                                               False,
-                                               noisered,
-                                               primetype,
-                                               "rnaseq",
-                                               readscore,
-                                               pcr,
-                                               get_mismatches=mismatches,
-                                               data)
+    all_rna_reads, rna_seqvar_dict = get_reads(
+        ambig,  # data.ambigious
+        min_read,  # data.minread
+        max_read,  # data.maxread
+        tran,  #data.transcript
+        file_paths_dict,  #data.filepath
+        tranlen,  # data.traninfo.length
+        True,
+        organism,  # data.organism
+        False,
+        noisered,  # TODO: Remove
+        primetype,  # data.primetype
+        "rnaseq", # data.filetype
+        readscore,  #data.readscore
+        pcr,  # data.pcr
+        get_mismatches=mismatches,  # data.mismatchseq
+        data)
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
     all_subcodon_reads, ribo_seqvar_dict = get_reads(
-        ambig,
-        min_read,
-        max_read,
-        tran,
-        file_paths_dict,
-        tranlen,
-        ribocoverage,
-        organism,
+        ambig,  # data.ambigious
+        min_read, # data.minread
+        max_read, # data.maxread
+        tran, # data.transcript
+        file_paths_dict, # data.filepath
+        tranlen, # data.traninfo.length
+        ribocoverage, # data.ribocoverage
+        organism, # data.organism
         True,
-        noisered,
-        primetype,
-        "riboseq",
-        readscore,
+        noisered, # TODO: Remove
+        primetype, # data.primetype
+        "riboseq",  # Riboseq related
+        readscore, #  
         secondary_readscore,
         pcr,
         get_mismatches=mismatches,

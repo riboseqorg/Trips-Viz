@@ -111,6 +111,13 @@ mail = Mail(app)
 def sanitize_get_request(request: Any | None) -> Any | None:
     '''
     take a get request and remove any XSS attempts
+
+    Parameters:
+    - request: Any | None
+
+    Returns:
+    - Any | None
+
     '''
     if isinstance(request, str):
         request = re.sub("<.*>", "", request)
@@ -139,11 +146,29 @@ login_manager.session_protection = 'basic'
 # Provides statistics on trips such as number of organisms, number of files, number of studies etc and lists updates.
 @app.route('/stats/')
 def statisticspage() -> str:
-    '''Display statistics'''
+    '''
+    Display statistics
+
+    Parameters:
+
+    Returns:
+
+    Example:
+
+    '''
 
     def rename_organism(organism: str) -> str:
         '''
         Rename the organism name to the short name
+
+        Parameters:
+        - organism (str): name of the organism
+
+        Returns:
+        - str: 
+
+        Example:
+
         '''
         if '_' in organism:
             orgt = organism.split('_')
@@ -202,6 +227,15 @@ def statisticspage() -> str:
 # Contact page
 @app.route('/contactus/', methods=["GET", "POST"])
 def contactus() -> str | Response:
+    """
+    Contact page
+
+    Parameters:
+
+    Returns:
+
+    Example:
+    """
     if request.method == "POST":
         if xcaptcha.verify():
             fromaddr = "ribopipe@gmail.com"
@@ -231,6 +265,14 @@ def contactus() -> str | Response:
 # This is the page where users create a new login.
 @app.route("/create", methods=["GET", "POST"])
 def create() -> str | Response:
+    """
+    This is the page where users create a new login.
+
+    Parameters:
+
+    Returns:
+
+    """
     # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
@@ -290,6 +332,9 @@ def create() -> str | Response:
 @app.route('/settings/')
 # @login_required
 def settingspage() -> Response:
+    """
+    Allows users to change some global settings such as plot background colour, title size, tick label size, etc.
+    """
 
     user = fetch_user()[0]
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
@@ -312,6 +357,9 @@ def settingspage() -> Response:
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
 @app.route('/downloads/')
 def downloadspage() -> str:
+    """
+    Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
+    """
 
     organism_dict = {
         "Scripts": [
@@ -349,6 +397,10 @@ def downloadspage() -> str:
 # Called when user downloads something from the downloads page
 @app.route('/downloadquery', methods=['POST'])
 def download_file() -> Response:
+    """
+    Called when user downloads something from the downloads page
+    
+    """
     organism = request.form["organism"]
     assembly = request.form["assembly"]
     return send_from_directory("{}/{}/{}".format(config.SCRIPT_LOC,
@@ -362,6 +414,9 @@ def download_file() -> Response:
 @app.route('/uploads/')
 # @login_required
 def uploadspage() -> str:
+    """
+    Allows users to upload their own sqlite files and transcriptomes.
+    """
 
     user, logged_in = fetch_user()
     # If user is not logged in and has rejected cookies they cannot use this page, so redirect to the homepage.
@@ -456,6 +511,9 @@ def uploadspage() -> str:
 @app.route('/uploadquery', methods=['POST'])
 # @login_required
 def upload_file() -> Response:
+    """
+    Called when user uploads something on the uploads page
+    """
     # uploaded_files = request.files.getlist("file")
     f = request.files["file"]
     print(request.form)
@@ -572,6 +630,7 @@ def upload_file() -> Response:
 @app.route('/uploadtranscriptome', methods=['GET', 'POST'])
 # @login_required
 def upload_transcriptome() -> Union[str, Response, None]:
+    """Upload transcriptomes"""
     user, logged_in = fetch_user()
     user_id = get_user_id(user)
     if request.method == 'POST':
@@ -620,6 +679,7 @@ def upload_transcriptome() -> Union[str, Response, None]:
 # Called by flask in case of an error in the code, returns the exception so it can be displayed to user
 @app.errorhandler(500)
 def handle_bad_request(e: Exception) -> str:
+    """Handle bad request"""
     return_str = 'ERROR: ' + str(
         e
     ) + " please report this to tripsvizsite@gmail.com or via the contact page. "
@@ -629,6 +689,7 @@ def handle_bad_request(e: Exception) -> str:
 # This is the page where users login.
 @app.route("/user/login", methods=["GET", "POST"])
 def login() -> Union[str, Response]:
+    """Login page"""
     # if user is already logged in then redirect to homepage
     if current_user.is_authenticated:
         return redirect("/")
@@ -660,6 +721,7 @@ def login() -> Union[str, Response]:
 @app.route("/user/logout")
 @login_required
 def logout() -> Response:
+    """Logout page"""
     logout_user()
     return redirect(url_for('/'))
 
@@ -667,12 +729,14 @@ def logout() -> Response:
 # callback to reload the user object
 @login_manager.user_loader
 def load_user(userid):
+    """Load user"""
     return User(userid)
 
 
 # Called when user presses the save button on the orf_translation page.
 @app.route('/anno_query', methods=['POST'])
 def anno_query() -> str:
+    """Called when user presses the save button on the orf_translation page"""
     data = json.loads(request.data)
     user = fetch_user()[0]
     data["user_id"] = get_user_id(user)
@@ -689,6 +753,7 @@ def anno_query() -> str:
 # This page shows the saved ORFs specific to the signed in user
 @app.route('/saved/')
 def saved():
+    """This page shows the saved ORFs specific to the signed in user"""
 
     advanced = False
     user, logged_in = fetch_user()
@@ -719,6 +784,7 @@ def saved():
 # Retrieves saved ORFs
 @app.route('/savedquery', methods=['POST'])
 def savedquery():
+    """"""
     data = json.loads(request.data)
     user = fetch_user()[0]
     organism = data["organism"]
@@ -749,6 +815,7 @@ def savedquery():
 # Allows users to delete previously saved cases
 @app.route('/del_query', methods=['POST'])
 def del_query():
+    """Delete previously saved cases"""
     data = json.loads(request.data)
     try:
         user = current_user.name

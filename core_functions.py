@@ -21,9 +21,27 @@ class User(UserMixin):
         self.password = self.name + "_secret"
 
     def is_authenticated(self) -> bool:
+        """
+        Checks if user is authenticated. 
+
+        Parameters: 
+        - None 
+
+        Returns:
+        - bool
+        """
         return self.is_authenticated
 
     def get_id(self) -> str:
+        """
+        Returns user id.
+
+        Parameters:
+        - None
+
+        Returns:
+        - str
+        """
         return str(self.id)
 
     def __repr__(self) -> str:
@@ -31,7 +49,15 @@ class User(UserMixin):
 
 
 def fetch_user() -> Tuple[str | None, bool]:
-    '''Fetches active user from cookies if present and returns username and login status.'''
+    '''
+    Fetches active user from cookies if present and returns username and login status.
+
+    Parameters: 
+    - None
+
+    Returns:
+    - Tuple
+    '''
     consent = request.cookies.get("cookieconsent_status")
     # If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":
@@ -74,7 +100,16 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 # Given a username and an organism returns a list of relevant studies.
 def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
-    '''Fetches studies from database using organism and transcriptome information.'''
+    '''
+    Fetches studies from database using organism and transcriptome information.
+
+    Parameters:
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - Tuple
+    '''
     study_access_list = []
     # get a list of organism id's this user can access
     if current_user.is_authenticated:
@@ -105,7 +140,14 @@ def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
 def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
-    '''Fetches files from database for give studies.'''
+    '''
+    Fetches files from database for give studies.
+
+    Parameters: 
+    - accepted_studies (DataFrame): list of accepted studies
+
+    Returns:
+    '''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     files = sqlquery(dbpath, "files")
     files = files.loc[
@@ -142,6 +184,12 @@ def type_detector(dct: Dict[str, Any]) -> None:
     >>> type_detector(x)
     >>> x
     {'is_private': True, 'tpm_max': 123.4, 'rpm_max': 12345, 'organism': 'human'}
+
+    Parameters: 
+    - dct (Dict[str, Any]): dictionary of values 
+
+    Returns:
+    - None
     '''
     for key, value in dct.items():
         if value in ['true', 'false']:
@@ -159,7 +207,18 @@ def type_detector(dct: Dict[str, Any]) -> None:
 
 
 def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
-    '''Fetches studies from database for organism.'''
+    '''
+    Fetches studies from database for organism.
+
+    Parameters:
+    - organism_id (int): id of organism
+
+    Returns:
+    - Dict[str, List[str]]
+
+    Example:
+
+    '''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")
     studies = studies.loc[studies.organism_id == organism_id, [
@@ -181,6 +240,17 @@ def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
 def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
+    '''
+
+    Parameters:
+    - data (Dict[str, Any]): dictionary of values
+
+    Returns:
+    - DataFrame
+
+    Example:
+
+    '''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
     studies = sqlquery(dbpath, "studies")  # users is name of table
     studies = studies.loc[studies.study_id.isin(set(data['study_ids'])),
@@ -204,6 +274,20 @@ def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
 # Builds a url and inserts it into sqlite database
 def generate_short_code(data, organism: str, transcriptome: str,
                         plot_type: str) -> str:
+    """
+    Generates a short code for a plot
+
+    Parameters:
+    - data (Dict[str, Any]): dictionary of values
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+    - plot_type (str): type of plot
+
+    Returns: 
+    - str : short code
+
+    Example:
+    """
     connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
                                                 config.DATABASE_NAME))
     connection.text_factory = str
@@ -632,7 +716,17 @@ def generate_short_code(data, organism: str, transcriptome: str,
 
 # Converts an integer to base62, needed to encode short urls
 def integer_to_base62(num: int) -> str:
-    '''Converts an integer to base62, needed to encode short urls.'''
+    '''
+    Converts an integer to base62, needed to encode short urls.
+
+    Parameters: 
+    - num (int): integer to be converted
+
+    Returns: 
+    - str
+
+    Example:
+    '''
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     r = num % 62
     res = base[r]
@@ -646,7 +740,17 @@ def integer_to_base62(num: int) -> str:
 
 # Converts a base62 encoded string to an integer, needed to decode short urls
 def base62_to_integer(base62_str: str) -> int:
-    '''Converts a base62 encoded string to an integer, needed to decode short urls.'''
+    """
+    Converts a base62 encoded string to an integer, needed to decode short urls.
+
+    Parameters:
+    - base62_str (str): base62 encoded string
+
+    Returns:
+    - int
+
+    Example:
+    """
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     res = 0
     for i in base62_str:
@@ -656,7 +760,19 @@ def base62_to_integer(base62_str: str) -> int:
 
 # Takes a nucleotide string and returns the amino acide sequence
 def nuc_to_aa(nuc_seq: str) -> str:
-    '''Takes a nucleotide string and returns the amino acide sequence.'''
+    """
+    Takes a nucleotide string and returns the amino acide sequence. 
+
+    Parameters:
+    - nuc_seq (str): nucleotide sequence
+
+    Returns:
+    - str: amino acid sequence
+
+    Example:
+
+
+    """
     return str(Seq(nuc_seq).translate())
 
 
@@ -664,6 +780,18 @@ def nuc_to_aa(nuc_seq: str) -> str:
 def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
                         longest_tran_list: List[str],
                         traninfo_dict: Dict[str, Dict[str, int]]) -> None:
+    """
+
+    Parameters:
+    - sqlite_db (Dict[str, Dict[str, Dict[int, int]]]): sqlite database 
+    - longest_tran_list (List[str]): list of longest transcripts
+    - traninfo_dict (Dict[str, Dict[str, int]]): dictionary of transcript information
+
+    Returns:
+    - None
+
+    Example:
+    """
     coverage_types = [
         "unambig_fiveprime_coverage", "unambig_cds_coverage",
         "unambig_threeprime_coverage", "unambig_all_coverage",
@@ -734,6 +862,19 @@ def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
 def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
                   offsets: Dict[int, int], ambig: bool, minscore: int,
                   scores: Dict[int, int]):
+    """
+
+    Parameters:
+    - trancounts
+    - offsets 
+    - ambig
+    - minscore
+    - scores 
+
+    Returns:
+
+    Example:
+    """
     # print ("trancounts", trancounts)
     # print ("minscore", minscore)
     minreadlen = 15
@@ -792,6 +933,15 @@ def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
 def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
                              # , ambig
                              ) -> Dict[int, int]:
+    """
+
+    Parameters:
+    - trancounts
+     
+    Returns:
+
+    Example:
+    """
     minreadlen = 15
     maxreadlen = 150
     profile = {}
@@ -819,7 +969,15 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
 
 def fetch_filename_file_id(file_id: int) -> str:
     '''
-        Return the filename from the database given a file id.
-        '''
+    Return the filename from the database given a file id.
+
+    Parameters: 
+    - file_id (int): id of file 
+
+    Returns: 
+    - str 
+
+    Example:
+    '''
     files = get_table("files")
     return files.loc[files["file_id"] == file_id, 'file_name'].values[0]

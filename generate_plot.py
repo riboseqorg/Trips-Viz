@@ -6,36 +6,10 @@ from fetch_shelve_reads2 import get_reads
 import pandas as pd
 from sqlitedict import SqliteDict
 import collections
-from bokeh.plotting import figure, output_file
 
 import altair as alt
-import fixed_values
 from fixed_values import get_user_defined_seqs
 
-matplotlib.use('agg')
-
-# CSS for popup tables that appear when hovering over aug codons
-point_tooltip_css = """
-table
-{
-  border-collapse: collapse;
-}
-th
-{
-  color: #000000;
-  background-color: #d2d4d8;
-}
-td
-{
-  background-color: #ffffff;
-}
-table, th, td
-{
-  font-family:Arial, Helvetica, sans-serif;
-  border: 0px solid black;
-  text-align: left;
-}
-"""
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
@@ -119,7 +93,7 @@ def generate_plot():
 
     owener = owener.loc[(owener['organism_name'] == organism, "owner"]) & (owener['transcriptome_list'] == transcriptome), "owner"].values[0]
     if owner == 1:
-        sql_file = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+        sql_file= "{0}/{1}/{2}/{2}.{3}.sqlite".format(
                 config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
                 transcriptome)
         if not os.path.isfile(sql_file):

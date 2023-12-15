@@ -27,19 +27,18 @@ bluehex = "#9ACAFF"
 yellowhex = "#FFFF91"
 
 # Define some CSS to control our custom labels
-line_tooltip_css = """
-.tooltip
-{
-  color: #000000;
-  background-color: #d2d4d8;
-  font-family:Arial, Helvetica, sans-serif;
-  text-align: left;
-}
-
-"""
-
 
 def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
+    """
+
+    Parameters:
+    - master_dict (Dict[str, float]): master dictionary
+
+    Returns:
+
+    Example:
+
+    """
     maxval = max(master_dict.values())
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
@@ -54,6 +53,24 @@ def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
                  background_col: str, readlength_col: str, title_size: int,
                  axis_label_size: int, subheading_size: int,
                  marker_size: int) -> str:
+    """
+
+    Parameters:
+    - master_dict (Dict[str, int]): master dictionary
+    - title (str): title
+    - short_code (str): short code
+    - background_col (str): background color 
+    - readlength_col (str): readlength color
+    - title_size (int): title size 
+    - axis_label_size (int): axis label size
+    - subheading_size (int): subheading size
+    - marker_size (int): marker size 
+
+    Returns:
+
+    Example:
+
+    """
     master_dict, factor = calc_factor(master_dict)
     returnstr = "Readlen,Count\n"
     for key in master_dict:

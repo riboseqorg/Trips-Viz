@@ -1,5 +1,6 @@
 from typing import Dict, Tuple, List, Union
 from typing_extensions import Literal
+from numpy.typing import NDArray
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 from sqlqueries import sqlquery
@@ -8,6 +9,7 @@ import pandas as pd
 
 
 class TripsSplice:
+    """Class for extracting information from the trips splice database."""
 
     def __init__(self, sqlite_path_organism: str) -> None:
         self.transcript_table = sqlquery(sqlite_path_organism, 'transcripts')
@@ -16,9 +18,25 @@ class TripsSplice:
         return [int(i) if i else 0 for i in lst]
 
     def get_gene_info(self, gene_id: str) -> DataFrame:
-        return self.transcript_table.loc[
+        """
+        Get the transcript, junctions and sequence for a given gene.
+
+        Parameters: 
+        - gene_id (str): name of the gene
+
+        Returns:
+        - DataFrame: A pandas DataFrame with the following columns
+
+        |transcript|exon_junctions |sequence|
+        |----------|---------------|--------|
+        |A         |100,200,300,...|ATGCT...|
+        """
+        gene_info = self.transcript_table.loc[
             self.transcript_table.gene == gene_id,
             ['transcript', 'exon_junctions', 'sequence']]
+        gene_info['exon_junctions'] = gene_info['exon_junctions'].apply(
+            lambda x: list(map(int, x.split(","))))
+        return gene_info
 
     def get_transcript_length(self, gene: str) -> DataFrame:
         return self.transcript_table.loc[self.transcript_table.gene == gene,
@@ -98,8 +116,17 @@ def get_exon_coordinates_for_orf(transcript_id: str,
 
 
 def get_protein_coding_transcript_ids(gene: str,
-                                      sqlite_path_organism: str) -> List[str]:
-    """gets the transcript IDs for protein coding genes for the given gene"""
+                                      sqlite_path_organism: str) -> NDArray:
+    """
+    Gets the transcript IDs for protein coding genes for the given gene.
+
+    Parameters:
+    - gene (str): The name of the gene
+    - sqlite_path_organism (str): The path to the sqlite database file
+
+    Return: 
+    - NDArray: A Numpy Array[str] of coding transcript IDs
+    """
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
     return transcripts.loc[transcripts.gene == gene
                            & transcripts.tran_type == 1, "transcript"].values
@@ -165,7 +192,18 @@ def exons_of_transcript(transcript_id: str,
 
 def get_exon_coordinate_ranges(sequence: str, exons: List[str],
                                junctions: List[int]) -> List[Tuple[int, int]]:
-    """Return list of transcript coordinate ranges (start position, stop position)."""
+    """
+    Return list of transcript coordinate ranges (start position, stop position).
+
+    Parameters:
+    - sequence (str): The transcript sequence
+    - exons (List[str]): The list of exons
+    - junctions (List[int]): The list of junctions
+
+    Returns:
+    - List[Tuple[int, int]]: The list of transcript coordinate ranges
+
+    """
     end = len(sequence) - 1
     junctions.append(end)
 
@@ -180,8 +218,19 @@ def genomic_exon_coordinate_ranges(
         sqlite_path_organism: str,
         coding_transcripts: bool = True) -> DataFrame:
     """
+    Return the exon starts,stops and transcript in dataframe for a given gene
 
-    Return the exon starts,stops and transcript for a given gene
+    Parameters:
+    - gene (str): The name of the gene
+    - sqlite_path_organism (str): The path to the sqlite database file 
+    - coding_transcripts (bool): Return only coding transcripts 
+
+    Returns: 
+    - DataFrame: A pandas DataFrame with the following columns
+
+    |transcript|exon_start|exon_stop|
+    |----------|----------|---------|
+    |A         |100       |200      |
     """
     # NOTE: Might need to remove filter as consider suupport transcripts
     # Return the exon starts,stops and transcript for a given gene
@@ -208,6 +257,19 @@ def genomic_orf_coordinate_ranges(
     genomic_coordinates: DataFrame
     # filter=True
 ) -> Dict[str, List[Tuple[int, int]]]:
+    """ 
+    Return the orf starts,stops and transcript in dataframe for a given gene 
+
+    Parameters:
+    - gene (str): The name of the gene
+    - sqlite_path_organism (str): The path to the sqlite database file
+    - supported_transcripts (List[str]): List of transcript ids
+    - genomic_coordinates (DataFrame): DataFrame with the following columns 
+
+    Returns:
+    - DataFrame: A pandas DataFrame with the following columns
+
+    """
     # Translate the orf structure to genomic coordinates using genomic coordinates from the exons table of sqlite file
 
     orf_structures = {}
@@ -256,6 +318,14 @@ def genomic_junction_positions(
     exons: Dict[str, List[Tuple[int, int]]],
     # filter=True
 ) -> Dict[str, List[Tuple[int, int]]]:
+    """
+    Class for extracting information from the trips splice database.
+
+    Parameters:
+
+    Returns:
+
+    """
     genomic_junctions = {}
     for transcript in exons:
         if transcript not in genomic_junctions:
@@ -279,6 +349,15 @@ def genomic_junction_scores(
     genomic_junctions: Dict[str, List[Tuple[int, int]]],
     # filter=True
 ) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    """
+    Class for extracting information from the trips splice database. 
+
+    Parameters: 
+
+    Returns:
+
+
+    """
 
     scores = get_scores_per_exonjunction_for_gene(sqlite_path_organism,
                                                   sqlite_path_reads,
@@ -304,6 +383,18 @@ def genomic_junction_scores(
 def get_reads_per_transcript_location(
         transcript_id: str,
         sqlite_path_reads: str) -> Union[None, Dict[int, List[int]]]:
+    """
+    Class for extracting information from the trips splice database.
+
+    Parameters: 
+    - transcript_id (str): name of the transcript
+    - sqlite_path_reads (str): path to the sqlite database file
+
+    Returns:
+
+
+    """
+
     infile = SqliteDict(sqlite_path_reads)
     try:
         return infile[transcript_id]["unambig"]
@@ -316,21 +407,33 @@ def get_reads_per_genomic_location(
     gene: str,
     sqlite_path_reads: List[str],
     sqlite_path_organism: str,
-    supported_transcripts: List[str],
+    supported_transcripts: List[str] | NDArray,
     genomic_exon_coordinates: DataFrame,
     filte_r: bool = True,
     site: Literal[
         'asite', 'fiveprime',
         'range'] = 'asite'  # NOTE: fiveprime is not required, but keep for reference
 ) -> Dict[int, Dict[str, List[Tuple[int, int]]]]:
+    """
+    Return list of transcript coordinate ranges (start position, stop position). 
+
+    Parameters: 
+    - gene (str): name of the gene
+    - sqlite_path_reads (List[str]): path to the sqlite database file
+    - sqlite_path_organism (str): path to the sqlite database file 
+    - supported_transcripts (List[str]|NDArray): list of transcript ids
+    - genomic_exon_coordinates (DataFrame): DataFrame with the following columns
+    - filte_r (bool): filter reads
+    - site (Literal['asite', 'fiveprime', 'range']): asite, fiveprime or range
+
+    """
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
     trips_splice = TripsSplice(sqlite_path_organism)
 
     gene_info = trips_splice.get_gene_info(gene)
-    gene_info['exon_junctions'] = gene_info['exon_junctions'].apply(
-        lambda x: list(map(int, x.split(","))))
+
     genomic_read_dictionary = {}
     counted_reads = []
     for read_file in sqlite_path_reads:
@@ -343,18 +446,21 @@ def get_reads_per_genomic_location(
             ])
             # ------
 
-        for transcript in gene_info:  # gene_info is a data frame ['transcript', 'exon_junctions', 'sequence']
-            if ((filte_r and transcript[0] not in supported_transcripts)
-                    or (transcript[0] not in infile)):
+        for _, transcript in gene_info.iterrows(
+        ):  # gene_info is a data frame ['transcript', 'exon_junctions', 'sequence']
+            if ((filte_r
+                 and transcript.transcript not in supported_transcripts)
+                    or (transcript.transcript not in infile)):
                 continue
-            transcript_read_dictionary = infile[transcript[0]]["unambig"]
+            transcript_read_dictionary = infile[
+                transcript.transcript]["unambig"]
             genomic_ranges = genomic_exon_coordinates.loc[
-                genomic_exon_coordinayes.gene == transcript[0],
+                genomic_exon_coordinates.gene == transcript.transcript,
                 ['exon_start', 'exon_end']].sort_values('exon_start')
 
-            exon_junctions = list(map(int, transcript[1].split(",")))
-            sequence = transcript[2]
-            exons = exons_of_transcript(transcript[0], sqlite_path_organism)
+            sequence = transcript.sequence
+            exons = exons_of_transcript(transcript.transcript,
+                                        sqlite_path_organism)
             transcript_ranges = get_exon_coordinate_ranges(
                 sequence, exons, exon_junctions)
 
@@ -394,6 +500,16 @@ def get_reads_per_genomic_location(
 def get_exonjunction_pileup_for_transcript(
         transcript_id: str, sqlite_path_organism: str,
         sqlite_path_reads: str) -> Dict[str, int]:
+    """
+    Class for extracting information from the trips splice database. 
+
+    Parameters: 
+    - transcript_id (str): name of the transcript
+    - sqlite_path_reads (str): path to the sqlite database file 
+
+    Returns:
+
+    """
     # count the number of reads in the read file that span each exon-exon junction. for a given transcript
     # returns a dictionary with junctions as keys and counts as values d
     trips_splice = TripsSplice(sqlite_path_organism)
@@ -417,6 +533,16 @@ def get_exonjunction_pileup_for_transcript(
 def get_scores_per_exonjunction_for_gene(
         sqlite_path_organism: str, sqlite_path_reads: str,
         supported: List[str]) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    """
+    Class for extracting information from the trips splice database. 
+
+    Parameters: 
+    - sqlite_path_reads (str): path to the sqlite database file 
+    - supported (List[str]): list of transcripts that are supported by the model 
+
+    Returns: 
+
+    """
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     pileup = {}

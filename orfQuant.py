@@ -2,6 +2,7 @@
 from typing import Dict, List
 import pandas as pd
 from pandas.core.frame import DataFrame
+from numpy.typing import NDArray
 
 from sqlitedict import SqliteDict
 
@@ -342,13 +343,16 @@ def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
 
 
 def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
-                          sqlite_path_reads: str) -> Dict[str, float]:
+                          sqlite_path_reads: NDArray) -> Dict[str, float]:
+    #WARNING: Find what is OPM
+
     # Run the ORFquant algorithm on the files that do not have a OPM value stored for the required trancripts
     # Store calculated OPMs for a file back in the read sqlitedict under "OPM"
     # Returns the average OPMs of the selected files for this locus
     # print "gene", gene
     # print "sqlitepath", sqlite_path_organism
     # print "sqlite_path_reads",sqlite_path_reads
+    coding = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
     exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, True)
 
     transcript_OPMs = {}

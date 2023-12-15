@@ -26,7 +26,15 @@ diff_plotpage_blueprint = Blueprint("diffpage",
 
 @diff_plotpage_blueprint.route('/<organism>/<transcriptome>/differential/')
 def diffpage(organism: str, transcriptome: str) -> str:
-    
+    """
+    Parameters:
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - html page
+    """
+
     organisms = get_table("organism")
     organisms = organisms.loc[organisms.organism_name == organism, [
         "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
@@ -41,7 +49,6 @@ def diffpage(organism: str, transcriptome: str) -> str:
         "rnaseq_files_1": [],
         "rnaseq_files_2": [],
     },**request.args.to_dict()}
-    
 
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -65,6 +72,12 @@ diffquery_blueprint = Blueprint("diffquery",
 
 @diffquery_blueprint.route('/diffquery', methods=['POST'])
 def diffquery():
+    """
+    Parameters:
+
+    Returns:
+    - html page
+    """
     # global user_short_passed
     user_short_passed = True
     data = json.loads(request.data)
@@ -1253,6 +1266,28 @@ def calculate_zscore(riboseq1_filepath: str, riboseq2_filepath: str,
                      master_dict: Dict, longest_tran_list: List[str],
                      mapped_reads_norm, label, region, traninfo_dict, minreads,
                      minzscore, ambiguous, min_cov: int):
+    """
+
+    Parameters:
+    - riboseq1_filepath (str): filepath to riboseq1 sqlite database
+    - riboseq2_filepath (str): filepath to riboseq2 sqlite database
+    - rnaseq1_filepath (str): filepath to rnaseq1 sqlite database
+    - rnaseq2_filepath (str): filepath to rnaseq2 sqlite database
+    - master_dict (dict): master dict
+    - longest_tran_list (list): list of longest transcripts
+    - mapped_reads_norm (bool): whether to normalize mapped reads 
+    - label (str): label
+    - region (str): region
+    - traninfo_dict (dict): transcript information
+    - minreads (int): minimum number of reads
+    - minzscore (int): minimum z-score
+    - ambiguous (bool): whether to use ambiguous or unambiguous transcripts
+    - min_cov (int): minimum coverage
+
+    Returns:
+
+    Example:
+    """
     riboseq1_tot_reads = 0.001
     riboseq2_tot_reads = 0.001
     rnaseq1_tot_reads = 0.001

@@ -29,10 +29,30 @@ def get_reads(
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
+    """
+
+    Parameters: 
+    - read_type (str): type of read to fetch
+    - min_read (int): minimum read length
+    - max_read (int): maximum read length
+    - tran (str): transcript
+    - user_files (Dict[str, Dict[str, str]]): dictionary of user files
+    - tranlen (int): transcript length
+    - coverage (int): coverage
+    - filetype (str): filetype
+    - readscore (int): read score
+    - data (Dict): data
+    - pcr (bool): pcr
+    - get_mismatches (bool): get mismatches
+
+    Returns:
+
+    Example:
+    """
     if get_mismatches:
         mismatch_dict = pd.DataFrame(0,
-                                 index=range(tranlen + 1),
-                                 columns=["A", "T", "G", "C"])
+                                     index=range(tranlen + 1),
+                                     columns=["A", "T", "G", "C"])
 
     master_dict = pd.DataFrame({'count': 0}, index=range(tranlen + 1))
     master_file_dict = {}
@@ -89,7 +109,7 @@ def get_reads(
                 alltrandict = sqlite_db[data['transcript']]
                 unambig_tran_dict = alltrandict["unambig"]
                 ambig_tran_dict = {}
-                if ( "ambiguous" in data) and ("ambig" in alltrandict):
+                if ("ambiguous" in data) and ("ambig" in alltrandict):
                     ambig_tran_dict = alltrandict[read_type]
                 # TODO: Change merge_dicts to take a list of dicts instead of two
                 trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
@@ -180,6 +200,24 @@ def get_readlength_breakdown(
     colorbar_minread: int,
     colorbar_maxread: int,
 ) -> Tuple[Dict[int, str], Dict[str, Dict[int, int]]]:
+    """
+
+    Parameters:
+    - read_type (str): either 'unambig' or 'ambig'
+    - min_read (int): minimum read length
+    - max_read (int): maximum read length
+    - tran (str): transcript
+    - user_files (Dict[str, Dict[str, str]]): user files
+    - tranlen (int): transcript length
+    - coverage (int): coverage
+    - filetype (str): filetype
+    - colorbar_minread (int): colorbar minimum read length
+    - colorbar_maxread (int): colorbar maximum read length
+
+    Returns:
+
+    Example:
+    """
     master_dict = {}
     color_range = float(colorbar_maxread - colorbar_minread)
     color_list = all_palettes["RdYlGn"][10]
@@ -265,6 +303,17 @@ def get_seq_var(
     #organism,
     tran: str,
 ) -> Union[str, DataFrame]:
+    """
+
+    Parameters:
+    - user_files (Dict[str, Dict[str, str]]): dictionary of user files
+    - tranlen (int): transcript length
+    - tran (str): transcript
+
+    Returns:
+
+    Example:
+    """
     mismatch_dict = pd.DataFrame(0,
                                  index=range(1, tranlen + 1),
                                  columns=["A", "T", "G", "C"])

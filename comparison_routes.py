@@ -20,6 +20,14 @@ comparison_plotpage_blueprint = Blueprint("comparisonpage",
 
 @comparison_plotpage_blueprint.route('/<organism>/<transcriptome>/comparison/')
 def comparisonpage(organism: str, transcriptome: str) -> str:
+    """ 
+    Parameters: 
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - html page
+    """
     #global user_short_passed
 
     organisms = get_tables("organisms")
@@ -98,6 +106,13 @@ comparisonquery_blueprint = Blueprint("comparequery",
 
 @comparisonquery_blueprint.route('/comparequery', methods=['POST'])
 def comparequery() -> str | Tuple:
+    """ 
+    Parameters: 
+    - None
+
+    Returns:
+    - html page
+    """
     #global user_short_passed
     user_short_passed = False
     data = json.loads(request.data)
