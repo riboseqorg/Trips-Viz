@@ -30,6 +30,18 @@ single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
 @single_transcript_plotpage_blueprint.route(
     '/<organism>/<transcriptome>/single_transcript_plot/')
 def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
+    """
+    Single transcript plot page.
+
+    Parameters:
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - html page
+
+    Example:
+    """
 
     template_dict = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
@@ -76,8 +88,15 @@ single_transcript_query_blueprint = Blueprint("query",
                                               template_folder="templates")
 
 
-@single_transcript_query_blueprint.route('/query', methods=['POST',"GET"])
+@single_transcript_query_blueprint.route('/query', methods=['POST', "GET"])
 def query():  #TODO: add return type
+    """
+    jquery route for single transcript plot.
+
+    Parameters:
+
+    Returns:
+    """
     # global user_short_passed
     data = request.form.to_dict()
     print(data)
@@ -251,8 +270,10 @@ def query():  #TODO: add return type
         sequence_rule = get_table('seq_rules')
         sequence_rule = sequence_rule.loc[sequence_rule.user_id == user_id]
     return ""
+
+
 #     return riboflask.generate_plot({
-        # 'user_settings': settings,
-        # 'seq_rules': seq_rules,
-        # 'data': data
-    # })
+# 'user_settings': settings,
+# 'seq_rules': seq_rules,
+# 'data': data
+# })

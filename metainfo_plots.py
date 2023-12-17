@@ -28,6 +28,7 @@ yellowhex = "#FFFF91"
 
 # Define some CSS to control our custom labels
 
+
 def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
     """
 
@@ -129,6 +130,23 @@ def mismatch_pos(
     #subheading_size,
     marker_size: int,
 ) -> str:
+    """
+
+    Parameters:
+    - master_dict (Dict[str, int]): master dictionary
+    - title (str): title
+    - short_code (str): short code
+    - background_col (str): background color 
+    - readlength_col (str): readlength color 
+    - title_size (int): title size 
+    - axis_label_size (int): axis label size 
+    - marker_size (int): marker size 
+
+    Returns:
+
+    Example:
+    """
+
     fig, ax = plt.subplots(figsize=(13, 8))
     #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Read Length', fontsize="26")
@@ -186,6 +204,30 @@ def nuc_comp(
     marker_size: int,
     legend_size: int,
 ) -> str:
+    """
+
+    Parameters:
+    - master_dict (Dict[str, int]): master dictionary
+    - maxreadlen (int): maximum read length
+    - title (str): title
+    - nuc_comp_type (str): nucleotide composition type
+    - nuc_comp_direction (str): nucleotide composition direction
+    - short_code (str): short code 
+    - background_col (str): background color
+    - a_col (str): A color
+    - t_col (str): T color
+    - g_col (str): G color
+    - c_col (str): C color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - legend_size (int): legend size
+
+    Returns:
+
+    Example:
+
+    """
 
     labels = ["A", "T", "G", "C"]
     returnstr = "Position,A,T,G,C\n"
@@ -270,6 +312,22 @@ def mrna_dist_readlen(
     marker_size: int,
     #legend_size
 ):
+    """
+
+    Parameters: 
+    - mrna_dist_dict (Dict[str, Dict[str, int]]): mrna distribution dictionary
+    - mrna_readlen_per (bool): mrna readlen per
+    - short_code (str): short code
+    - background_col (str): background color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+
+    Returns:
+
+    Example:
+
+    """
 
     if not mrna_readlen_per:
         mrna_dist_dict, factor = calc_mrnadist_factor(mrna_dist_dict)
@@ -365,6 +423,21 @@ def dinuc_bias(
     axis_label_size: int,  # subheading_size, 
     marker_size: int,
 ) -> str:
+    """
+    
+    Parameters:
+    - master_count_dict (Dict[str, int]): master dictionary
+    - short_code (str): short code
+    - background_col (str): background color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+
+    Returns:
+
+    Example:
+
+    """
     master_count_dict, factor = calc_factor(master_count_dict)
     fig, ax = plt.subplots(figsize=(13, 8))
     N = 16
@@ -398,6 +471,16 @@ def dinuc_bias(
 
 
 def calc_meta_factor(inlist: List[float]) -> Tuple[List[float], int]:
+    """
+
+    Parameters:
+    - inlist (List[float]): list of floats
+
+    Returns:
+
+    Example:
+
+    """
     maxval = max(inlist)
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
@@ -427,6 +510,16 @@ def metagene_plot(
     metagene_end: str,
     metagene_aggregate: bool,
 ) -> str:
+    """
+
+    Parameters:
+    - readlen_list (List[int]): list of read lengths
+    - fiveprime_list (List[int]): list of fiveprime counts
+    - threeprime_list (List[int]): list of threeprime counts
+    - metagene_type (str): type of metagene
+    - title (str): title
+
+    """
     fig, ax = plt.subplots(figsize=(13, 8))
     ind = np.array(readlen_list)
     file_colors = [

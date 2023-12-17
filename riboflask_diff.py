@@ -12,27 +12,6 @@ import logging
 
 matplotlib.use('agg')
 # Define some CSS to control our custom labels
-point_tooltip_css = """
-table
-{
-  border-collapse: collapse;
-}
-th
-{
-  color: #000000;
-  background-color: #d2d4d8;
-}
-td
-{
-  background-color: #ffffff;
-}
-table, th, td
-{
-  font-family:Arial, Helvetica, sans-serif;
-  border: 0px solid black;
-  text-align: left;
-}
-"""
 
 
 def generate_plot(
@@ -55,6 +34,35 @@ def generate_plot(
     ambiguous: bool,
     gene_list_str: str,
 ) -> str:
+    """
+    Generate plot
+
+    Parameters:
+    - sorted_min_exp_list (List[Tuple[float, float, float, float]]): sorted
+    list of tuples
+    - bin_list (List[Tuple[float, float, float, float]]): list of tuples
+    - organism (str): label
+    - transcriptome (str):
+    - riboseq1 (str):
+    - riboseq2 (str):
+    - rnaseq1 (str):
+    - rnaseq2 (str):
+    - background_color (str):
+    - short_code (str):
+    - normalized (bool):
+    - filename (str):
+    - no_groups (int):
+    - title_size (int):
+    - axis_label_size (int):
+    - marker_size (int):
+    - ambiguous (bool):
+    - gene_list_str (str):
+
+    Returns:
+
+    Example:
+
+    """
     #Convert gene_list from string to list
     logging.debug("generate plot called")
     #logging.debug("sorted_min_exp_list: {}".format(sorted_min_exp_list))
@@ -300,6 +308,33 @@ def ribo_vs_rna(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                 normalized: bool, filename: str, title_size: int,
                 axis_label_size: int, marker_size: int, ambiguous: bool,
                 gene_list_str: str, label: str) -> str:
+    """
+    Ribo vs. RNA
+
+    Parameters:
+    - ribo_rna_dict (dict): Dictionary of ribo vs. rna values
+    - organism (str): Organism
+    - transcriptome (str): Transcriptome
+    - riboseq1 (str): Ribo-seq
+    - riboseq2 (str): Ribo-seq
+    - rnaseq1 (str): Rna-seq
+    - rnaseq2 (str): Rna-seq
+    - background_col (str): Background color
+    - short_code (str): Short code
+    - normalized (bool): Normalized
+    - filename (str): Filename
+    - title_size (int): Title size
+    - axis_label_size (int): Axis label size
+    - marker_size (int): Marker size
+    - ambiguous (bool): Ambiguous
+    - gene_list_str (str): Gene list
+    - label (str): Label
+
+    Returns:
+
+    Example:
+
+    """
     #Convert gene_list from string to list
     gene_list: List[str] = []
     if gene_list_str:
@@ -533,6 +568,32 @@ def deseq2_plot(ribo_rna_dict: Dict[str, Dict[str, float]], organism: str,
                 normalized: bool, filename: str, title_size: int,
                 axis_label_size: int, marker_size: int, ambiguous: bool,
                 gene_list: str, label: str, minzscore: float) -> str:
+    """
+
+    Parameters:
+    - ribo_rna_dict (Dict[str, Dict[str, float]]):
+    - organism (str):
+    - transcriptome (str):
+    - riboseq1 (str):
+    - riboseq2 (str):
+    - rnaseq1 (str):
+    - rnaseq2 (str):
+    - background_col (str):
+    - short_code (str):
+    - normalized (bool):
+    - filename (str):
+    - title_size (int):
+    - axis_label_size (int):
+    - marker_size (int):
+    - ambiguous (bool):
+    - gene_list (str):
+    - label (str):
+    - minzscore (float):
+
+    Returns:
+
+    Example:
+    """
     #Convert gene_list from string to list
     if gene_list != "":
         gene_list = gene_list.upper().replace(",", " ").replace("\t", " ")
@@ -1045,6 +1106,34 @@ def anota2seq_plot(
     sig_rna: bool,
     sig_buffering: bool,
 ) -> str:
+    """
+
+    Parameters:
+    - ribo_rna_dict (dict): Dictionary of ribo vs. rna values
+    - organism (str): Organism
+    - transcriptome (str): Transcriptome
+    - riboseq1 (str): Ribo-seq
+    - riboseq2 (str): Ribo-seq
+    - rnaseq1 (str): Rna-seq
+    - rnaseq2 (str): Rna-seq
+    - background_col (str): Background color
+    - short_code (str): Short code
+    - normalized (bool): Normalized
+    - filename (str): Filename
+    - title_size (int): Title size
+    - axis_label_size (int): Axis label size
+    - marker_size (int): Marker size
+    - ambiguous (bool): Ambiguous
+    - gene_list (str): Gene list
+    - label (str): Label
+    - sig_translated (bool): Sig translated
+    - sig_rna (bool): Sig rna 
+    - sig_buffering (bool): Sig buffering
+
+    Returns:
+
+    Example:
+    """
     #Convert gene_list from string to list
     # ("gene list passed to deseq2_plot", gene_list)
     if gene_list != "":

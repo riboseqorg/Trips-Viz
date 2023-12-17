@@ -29,6 +29,35 @@ def generate_compare_plot(
     legend_size: int,
     transcriptome: str,
 ) -> str:
+    """
+
+    Parameters:
+    - tran (str): transcript
+    - ambig (str): ambiguity
+    - master_filepath_dict (dict): master filepath dictionary
+    - ribocoverage (bool): ribocoverage
+    - organism (str): organism
+    - normalize (bool): normalize
+    - short_code (str): short code
+    - background_col (str): background color
+    - hili_start (str): hili start
+    - hili_stop (str): hili stop
+    - comp_uag_col (str): comp uag color
+    - comp_uga_col (str): comp uga color
+    - comp_uaa_col (str): comp uaa color
+    - title_size (int): title size
+    - subheading_size (int): subheading size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - cds_marker_size (int): cds marker size
+    - cds_marker_colour (int): cds marker colour
+    - legend_size (int): legend size
+    - transcriptome (str): transcriptome
+
+    Returns:
+
+    Example:
+    """
     labels = []
     start_visible = []
     line_collections = []

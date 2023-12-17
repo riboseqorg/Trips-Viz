@@ -19,6 +19,17 @@ from tripsSplice import (
 
 def classify_regions_shared_unique(
         regions: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    """
+
+    Parameters:
+    - regions: dictionary of genomic coordinates that make up the features for each transcript
+
+    Returns:
+
+    Example:
+
+
+    """
     # Takes in dictionary of genomic coordinates that make up the features for each transcript
     # for each region consider each transcript and count the number of occurences of this exact region in that transcript
     # If this count is > 1 it is considered not unique. Otherwise unique

@@ -11,6 +11,16 @@ import pandas as pd
 def get_unique_regions(
     genomic_exon_coordinates: Dict[str, List[Tuple[int, int]]]
 ) -> Dict[str, List[Tuple[int, int]]]:
+    """
+
+    Parameters:
+    - genomic_exon_coordinates (Dict[str, List[Tuple[int, int]]]): dictionary
+    with transcript ids as keys and list of coordinates as values
+
+    Returns:
+
+    Example:
+    """
 
     unique_regions = {}
     exon_coordinates = []
@@ -57,6 +67,17 @@ def get_unique_regions(
 def count_read_supporting_regions_per_transcript(
         regions: Dict[str, List[Tuple[int, int]]],
         genomic_read_positions: List[int]) -> Dict[str, List[int]]:
+    """
+
+    Parameters:
+    - regions (Dict[str, List[Tuple[int, int]]]): dictionary
+    with transcript ids as keys and list of coordinates as values
+    - genomic_read_positions (List[int]): list of read positions
+
+    Returns:
+
+    Example:
+    """
     exons_counts = {}
     for read in genomic_read_positions:
         for transcript in regions:
@@ -72,6 +93,18 @@ def count_read_supporting_regions_per_transcript(
 def get_coverage_per_region(
         regions: Dict[str, List[Tuple[int, int]]],
         counts: Dict[str, List[int]]) -> Dict[str, List[float]]:
+    """
+
+    Parameters:
+    - regions (Dict[str, List[Tuple[int, int]]]): dictionary
+    with transcript ids as keys and list of coordinates as values
+    - counts (Dict[str, List[int]]): dictionary with transcript ids as keys
+    and list of counts as values
+
+    Returns:
+
+    Example:
+    """
 
     region_lengths = {}
     for transcript in regions:
@@ -100,6 +133,16 @@ def get_coverage_per_region(
 
 def average_coverage_per_transcript(
         region_coverage: Dict[str, List[float]]) -> Dict[str, float | None]:
+    """
+
+    Parameters:
+    - region_coverage (Dict[str, List[float]]): dictionary  with transcript ids as keys
+    and list of coverage as values
+
+    Returns:
+
+    Example:
+    """
 
     # TODO: Check what values are being passed here
     average_coverage = {}
@@ -129,9 +172,22 @@ def ribo_seq_read_counting(
         sqlite_path_reads: List[str],
         count_type: Literal["range", "fiveprime", "asite"] = "range",
         unique: bool = True) -> Dict[str, float | None] | str:
+    """
+
+    Parameters:
+    - gene (str): name of the gene
+    - sqlite_path_organism (str): path to the sqlite database file
+    - sqlite_path_reads (List[str]): list of paths to the sqlite database files
+    - count_type (Literal["range", "fiveprime", "asite"]): type of counting
+    - unique (bool): filter reads
+
+    Returns:
+
+    Example:
+
+    """
     supported = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
-    exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism,
-                                           True)
+    exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, True)
 
     orf_regions = genomic_orf_coordinate_ranges(sqlite_path_organism,
                                                 supported, exons)

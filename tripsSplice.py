@@ -39,21 +39,67 @@ class TripsSplice:
         return gene_info
 
     def get_transcript_length(self, gene: str) -> DataFrame:
+        """
+        Returns transcript length of given `gene`. 
+
+        Parameters:
+        - gene (str): name of the gene
+
+        Returns:
+        - DataFrame: 
+
+
+        Example:
+
+        """
         return self.transcript_table.loc[self.transcript_table.gene == gene,
                                          ["transcript", "length"]]
 
     def get_genes_principal(self, gene_id: str) -> str:
+        """
+        Get the name of transcripts. 
+
+        Parameters:
+        - gene_id (str): name of the gene
+
+        Return: 
+        - str: The transcript id 
+
+        Example: 
+
+        """
         return self.transcript_table.loc[self.transcript_table.gene == gene_id
                                          & self.transcript_table.principle,
                                          "transcript"].values[0]
 
     def get_transcript_info(self, transcript_id: str) -> Series:
+        """
+
+        Parameters:
+        - transcript_id (str): name of the transcript
+
+        Return: 
+        - Series: 
+
+        Example:
+
+        """
         return self.transcript_table[self.transcript_table.transcript ==
                                      transcript_id,
                                      ['exon_junctions', 'sequence']].iloc[0]
 
     def _exon_coordinates_list(self, lst: List[int],
                                transcript_length: int) -> List[List[int]]:
+        """
+
+        Parameters:
+        - lst (List[int]): 
+
+        Return: 
+
+        Example:
+
+        """
         # Return the list of integers from a list of strings. If the list is empty then return 0
         if not lst:
             return [[0, transcript_length]]
@@ -62,6 +108,15 @@ class TripsSplice:
 
     def get_exon_coordinates_for_orf(self,
                                      transcript_id: str) -> List[List[int]]:
+        """
+
+        Parameters:
+        - transcript_id (str): name of the transcript
+
+        Return: 
+        
+        Example:
+        """
         transcript_info = self.get_transcript_info(transcript_id)
         exon_junctions = self.string_to_integer_list(
             transcript_info['exon_junctions'].split(","))
@@ -71,6 +126,16 @@ class TripsSplice:
         return exon_coordinates
 
     def get_protein_coding_transcript_ids(self, gene: str) -> DataFrame:
+        """
+
+        Parameters:
+        - gene (str): name of the gene
+
+        Results: 
+
+        Example:
+
+        """
         return self.transcript_table[self.transcript_table.gene == gene]
 
     def get_start_stop_codon_positions(self, transcript_id: str) -> DataFrame:
@@ -84,6 +149,16 @@ class TripsSplice:
 
 def get_3prime_exon(junction_list: List[int],
                     sequence: str) -> Tuple[str, str]:
+    """
+
+    Parameters:
+    - junctions (List[int]): The list of junctions
+    - sequence (str): The transcript sequence
+
+    Results:
+
+    Example:
+    """
     # Part of the process of producing the sequences of all exons in a transcript.
     # this function slices the 3' exon sequence from the transcript sequence returning
     # both the exon sequence and the remaining sequence of the transcript
@@ -95,6 +170,18 @@ def get_3prime_exon(junction_list: List[int],
 
 def get_exon_coordinates_for_orf(transcript_id: str,
                                  sqlite_path_organism: str) -> List[List[int]]:
+    """
+
+    Parameters:
+    - transcript_id (str): name of the transcript
+    - sqlite_path_organism (str): path to the sqlite database file
+
+
+    Return: 
+
+    Example:
+
+    """
     # return the coordinates of the exons in a given transcript. 0 -> first junction, first junction -> second junction
     # last junction -> end
     tripsplice = TripsSplice(sqlite_path_organism)
@@ -134,6 +221,16 @@ def get_protein_coding_transcript_ids(gene: str,
 
 def get_start_stop_codon_positions(transcript_id: str | List[str],
                                    sqlite_path_organism: str) -> DataFrame:
+    """
+
+    Parameters:
+    - transcript_id (str): name of the transcript
+    - sqlite_path_organism (str): The path to the sqlite database file
+
+    Returns:
+
+    Example:
+    """
     # Get start and stop codon positions from annotation sqlite
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
     if isinstance(transcript_id, str):
@@ -144,6 +241,16 @@ def get_start_stop_codon_positions(transcript_id: str | List[str],
 
 def get_orf_exon_structure(start_stop: Tuple[int, int],
                            exon_coordinates: List[List[int]]) -> DataFrame:
+    """
+    
+    Parameters:
+    - start_stop (Tuple[int, int])
+    - exon_coordinates 
+
+    Returns: 
+    
+    Example:
+    """
     # determine the stucture of each ORF. Returns coordinates in the form:
     # Initiation site to junction, junction to junction, junction to translation stop
     # TODO: Sort exon coordinates and select last
@@ -173,6 +280,17 @@ def get_coding_regions_for_genes_transcripts(
 
 def exons_of_transcript(transcript_id: str,
                         sqlite_path_organism: str) -> List[str]:
+    """
+
+    Parameters: 
+    - transcript_id (str): name of the transcript
+    - sqlite_path_organism (str): The path to the sqlite database file
+
+    Returns: 
+
+    Example:
+
+    """
     # For a given transcript return the exon sequences in a list in 5' to 3' direction
     # WARNING: This function doesn't make sense
     exon_lst = []

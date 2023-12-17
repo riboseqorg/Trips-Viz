@@ -22,6 +22,19 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
 @single_transcript_plotpage_genomic_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot_genomic/')
 def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
+    """
+    Interactive plot page.
+
+    Parameters:
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - html page
+
+    Example:
+
+    """
     #global user_short_passed
 
     accepted_studies = fetch_studies(organism, transcriptome)
@@ -183,6 +196,9 @@ single_transcript_query_genomic_blueprint = Blueprint(
 @single_transcript_query_genomic_blueprint.route('/query_genomic',
                                                  methods=['POST'])
 def query_genomic() -> str:
+    """
+
+    """
     #global user_short_passed
     try:
         user = current_user.name

@@ -17,16 +17,20 @@ traninfo_plotpage_blueprint = Blueprint("traninfo_plotpage",
                                         template_folder="templates")
 
 
-def calc_gc(seq):
-    count_dict = {"A": 0.0, "T": 0.0, "G": 0.0, "C": 0.0, "N": 0.0}
-    for char in seq:
-        count_dict[char] += 1
-    return count_dict
-
-
 @traninfo_plotpage_blueprint.route('/<organism>/<transcriptome>/traninfo_plot/'
                                    )
 def traninfo_plotpage(organism: str, transcriptome: str) -> str:
+    """
+
+
+    Parameters:
+    - organism (str): name of the organism
+    - transcriptome (str): name of the transcript
+
+    Returns:
+    - html page
+
+    """
     print(organism, transcriptome)
 
     accepted_studies = fetch_studies(organism, transcriptome)
@@ -89,6 +93,14 @@ traninfoquery_blueprint = Blueprint("traninfoquery",
 
 @traninfoquery_blueprint.route('/traninfoquery', methods=['POST'])
 def traninfoquery() -> str:
+    """
+    Transcript information query
+
+    Parameters:
+
+    Returns:
+    - html page
+    """
     # global user_short_passed
     user_short_passed = True
     data = json.loads(request.data)

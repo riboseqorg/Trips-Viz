@@ -24,24 +24,32 @@ redhex = "#FF5F5B"
 greenhex = "#90E090"
 bluehex = "#9ACAFF"
 yellowhex = "#FFFF91"
-
-# Define some CSS to control our custom labels
-line_tooltip_css = """
-.tooltip
-{
-  color: #000000;
-  background-color: #d2d4d8;
-  font-family:Arial, Helvetica, sans-serif;
-  text-align: left;
-}
-
-"""
+""
 
 
 def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
                   short_code: str, background_col: str, readlength_col: str,
                   title_size: int, axis_label_size: int, subheading_size: int,
                   marker_size: int, filename: str) -> str:
+    """
+
+    Parameters:
+    - master_dict (Dict[str, Dict[str, str]]): master dictionary
+    - title (str): title
+    - short_code (str): short code
+    - background_col (str): background color
+    - readlength_col (str): readlength color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - subheading_size (int): subheading size
+    - marker_size (int): marker size
+    - filename (str): filename
+
+    Returns:
+
+
+    Example:
+    """
     labels = ["A", "T", "G", "C"]
     returnstr = "Position,A,T,G,C\n"
     minpos = min(master_dict.keys())
@@ -105,6 +113,26 @@ def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
 def nuc_comp_single(tran, master_dict, title, short_code, background_col,
                     readlength_col, title_size, axis_label_size,
                     subheading_size, marker_size, traninfo):
+    """
+
+    Parameters:
+    - tran (str): transcript
+    - master_dict (dict): master dictionary
+    - title (str): title
+    - short_code (str): short code
+    - background_col (str): background color
+    - readlength_col (str): read length color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - subheading_size (int): subheading size
+    - marker_size (int): marker size
+    - traninfo (dict): transcript information
+
+    Returns:
+
+    Example:
+
+    """
     labels = ["Exon Junctions", "CDS markers"]
     start_visible = [True, True]
     stop_codons = ["TAG", "TAA", "TGA"]
@@ -445,6 +473,23 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
 def gc_metagene(title: str, short_code: str, background_col: str,
                 readlength_col: str, title_size: int, axis_label_size: int,
                 subheading_size: int, marker_size: int, traninfo: str) -> str:
+    """
+
+    Parameters:
+    - title (str): title
+    - short_code (str): short code
+    - background_col (str): background color
+    - readlength_col (str): readlength color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - subheading_size (int): subheading size
+    - marker_size (int): marker size
+    - traninfo (str): traninfo
+
+    Returns:
+
+    Example:
+    """
     labels = ["CDS markers"]
     start_visible = [True]
     color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
@@ -688,6 +733,21 @@ def gc_metagene(title: str, short_code: str, background_col: str,
 
 def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
                      marker_size, nucleotide, short_code):
+    """
+
+    Parameters:
+    - master_dict (Dict[str, Dict[str, str]]): master dictionary
+    - filename (str): filename
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - nucleotide (str): nucleotide
+    - short_code (str): short code
+
+    Returns:
+
+    Example:
+    """
     x_values = []
     gc_list = master_dict[1]["lengths"]
     tran_list = master_dict[1]["trans"]
@@ -797,6 +857,20 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
 
 def lengths_scatter(master_dict, filename, title_size, axis_label_size,
                     marker_size, short_code):
+    """
+
+    Parameters:
+    - master_dict (Dict[str, Dict[str, str]]): master dictionary
+    - filename (str): filename
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - short_code (str): short code
+
+    Returns:
+
+    Example:
+    """
     x_values = []
     gc_list = master_dict[1]["lengths"]
     tran_list = master_dict[1]["trans"]
@@ -906,6 +980,22 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
 
 def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
                  axis_label_size, marker_size, short_code):
+    """
+
+    Parameters:
+    - master_dict (Dict[str, Dict[str, str]]): master dictionary
+    - filename (str): filename
+    - nucleotide (str): nucleotide
+    - title_size (int): title size
+    - box_colour (str): box colour
+    - axis_label_size (int): axis label size
+    - marker_size (int): marker size
+    - short_code (str): short code
+
+    Returns:
+
+    Example:
+    """
     gc_list = master_dict[1]["gc"]
     gc_list2 = master_dict[2]["gc"]
     gc_list3 = master_dict[3]["gc"]
@@ -1044,19 +1134,22 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
     upper = q3 + 1.5 * iqr
     lower = q1 - 1.5 * iqr
 
-    # find the outliers for each category
     def outliers(group):
+        """
+
+        Find the outliers for each category
+        Parameters:
+        - group: dataframe
+
+        Returns:
+
+        Example:
+        """
         cat = group.name
         return group[(group.gc > upper.loc[cat]['gc']) |
                      (group.gc < lower.loc[cat]['gc'])]['gc']
 
     out = groups.apply(outliers).dropna()
-
-    # find the outliers for each category
-    def outliers(group):
-        cat = group.name
-        return group[(group.gc > upper.loc[cat]['gc']) |
-                     (group.gc < lower.loc[cat]['gc'])]['gc']
 
     # prepare outlier data for plotting, we need coordinates for every outlier.
     if not out.empty:
@@ -1122,6 +1215,21 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
 
 def lengths_box(master_dict, filename, box_colour, short_code, title_size,
                 marker_size, axis_label_size):
+    """
+
+    Parameters:
+    - master_dict (Dict[str, Dict[str, str]]): master dictionary
+    - filename (str): filename
+    - box_colour (str): box colour
+    - short_code (str): short code
+    - title_size (int): title size
+    - marker_size (int): marker size
+    - axis_label_size (int): axis label size
+
+    Returns:
+
+    Example:
+    """
     gc_list = master_dict[1]["lengths"]
     gc_list2 = master_dict[2]["lengths"]
     gc_list3 = master_dict[3]["lengths"]
@@ -1161,17 +1269,15 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
 
     # find the outliers for each category
     def outliers(group):
+        """
+        Find the outliers for each category
+        """
+        # TODO: Merge with other same function
         cat = group.name
         return group[(group.lengths > upper.loc[cat]['lengths']) |
                      (group.lengths < lower.loc[cat]['lengths'])]['lengths']
 
     out = groups.apply(outliers).dropna()
-
-    # find the outliers for each category
-    def outliers(group):
-        cat = group.name
-        return group[(group.lengths > upper.loc[cat]['lengths']) |
-                     (group.lengths < lower.loc[cat]['lengths'])]['lengths']
 
     # prepare outlier data for plotting, we need coordinates for every outlier.
     if not out.empty:
@@ -1244,6 +1350,22 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
 
 def gene_count(short_code, background_col, title_size, axis_label_size,
                subheading_size, marker_size, coding, noncoding):
+    """
+
+    Parameters:
+    - short_code (str): short code
+    - background_col (str): background color
+    - title_size (int): title size
+    - axis_label_size (int): axis label size
+    - subheading_size (int): subheading size
+    - marker_size (int): marker size
+    - coding (List[int]): coding
+    - noncoding (List[int]): noncoding
+
+    Returns:
+
+    Example:
+    """
     labels = ["", "Genes", "Transcripts", ""]
     fig, ax = plt.subplots(figsize=(13, 8))
     N = 4
