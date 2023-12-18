@@ -205,22 +205,8 @@ def query_genomic() -> str:
     except Exception:
         user = None
     #print "user", user
-    tran_dict = {}
-    gene_dict = {}
-    ribo_user_files = {}
-    data = json.loads(request.data)
+    data = request.data.to_dict()
 
-    tran = data['transcript'].upper().strip()
-    readscore = data['readscore']
-    secondary_readscore = data['secondary_readscore']
-    minread = int(data['minread'])
-    maxread = int(data['maxread'])
-    minfiles = int(data['minfiles'])
-    organism = data['organism']
-    seqhili = data['seqhili'].split(",")
-    hili_start = int(data['hili_start'])
-    hili_stop = int(data['hili_stop'])
-    transcriptome = data['transcriptome']
     advanced = data["advanced"]
     logging.debug("FILE LIST")
     logging.debug(str(data["file_list"]))
@@ -234,36 +220,23 @@ def query_genomic() -> str:
             total_files)
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
+    organisms = get_tables("organisms")
+    owner = organisms.loc[(organisms.organism_name == organism) &
+                          (organisms.transcriptome_list == transcriptome),
+                          "owner"].values[0]
 
-    primetype = data["primetype"]
-    user_hili_starts = data["user_hili_starts"]
-    user_hili_stops = data["user_hili_stops"]
-    user_short = data["user_short"]
-
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    owner = (cursor.fetchone())[0]
-
-    user, logged_in = fetch_user()
+    user = fetch_user()[0]
 
     if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)
-            print("sqlite_path_organism", sqlite_path_organism)
-            transhelve = sqlite3.connect(sqlite_path_organism)
+        sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+                                                      config.ANNOTATION_DIR,
+                                                      organism, transcriptome)
+        if os.path.isfile(sqlpath):
+            print("sqlite_path_organism", sqlpath)
         else:
             return_str = "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
-            if app.debug == True:
+            if app.debug:
                 return return_str, "NO_CELERY", {'Location': None}
             else:
                 return jsonify({
@@ -275,22 +248,19 @@ def query_genomic() -> str:
                     'Location': ""
                 }
     else:
-        sqlite_path_organism = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+        sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
-        print("sqlite_path_organism", sqlite_path_organism)
-        transhelve = sqlite3.connect(sqlite_path_organism)
-    cursor = transhelve.cursor()
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
+        print("sqlite_path_organism", sqlpath)
+
     inputtran = True
 
-    if result != None:
-        newtran = result[0]
-    else:
+    try:
+        newtran = sqlquery(sqlpath,
+                           "transcripts").iloc[0]["transcript"]  # 0:transcript
+    except Exception:
         inputtran = False
 
-    if inputtran == False:
+    if not inputtran:
         cursor.execute(
             "SELECT * from transcripts WHERE gene = '{}'".format(tran))
         result = cursor.fetchall()
@@ -406,74 +376,15 @@ def query_genomic() -> str:
                 tran)
             logging.debug(return_str)
             return return_str
-    transhelve.close()
 
-    if 'varlite' in data:
-        lite = "y"
-    else:
-        lite = "n"
-    if 'preprocess' in data:
-        preprocess = True
-    else:
-        preprocess = False
-    if 'uga_diff' in data:
-        uga_diff = True
-    else:
-        uga_diff = False
-    if 'color_readlen_dist' in data:
-        color_readlen_dist = True
-    else:
-        color_readlen_dist = False
-    if 'ribocoverage' in data:
-        ribocoverage = True
-    else:
-        ribocoverage = False
-    if "nucseq" in data:
-        nucseq = True
-    else:
-        nucseq = False
-    if "mismatches" in data:
-        mismatches = True
-    else:
-        mismatches = False
-
-    if "pcr" in data:
-        pcr = True
-    else:
-        pcr = False
-    if "noisered" in data:
-        noisered = True
-    else:
-        noisered = False
-
-    if "mismatch" in data:
-        mismatch = True
-    else:
-        mismatch = False
     user_short_passed = False
-    if data["user_short"] == "None" or user_short_passed == True:
+    if not data["user_short"] or user_short_passed == True:
         short_code = generate_short_code(data, organism, data["transcriptome"],
                                          "interactive_plot")
     else:
         short_code = data["user_short"]
         user_short_passed = True
 
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
-    background_col = config.BACKGROUND_COL
-    uga_col = config.UGA_COL
-    uag_col = config.UAG_COL
-    uaa_col = config.UAA_COL
-    title_size = config.TITLE_SIZE
-    subheading_size = config.SUBHEADING_SIZE
-    axis_label_size = config.AXIS_LABEL_SIZE
-    marker_size = config.MARKER_SIZE
-    cds_marker_size = config.CDS_MARKER_SIZE
-    cds_marker_colour = config.CDS_MARKER_COLOUR
-    legend_size = config.LEGEND_SIZE
-    ribo_linewidth = config.RIBO_LINEWIDTH
     #Put any publicly available seq types (apart from riboseq and rnaseq) here
     seq_rules = {
         "proteomics": {
@@ -487,32 +398,16 @@ def query_genomic() -> str:
         }
     }
 
+    new_conf = config.copy()
+
     #get user_id
     if current_user.is_authenticated:
         user_name = current_user.name
-        cursor.execute(
-            "SELECT user_id from users WHERE username = '{}';".format(
-                user_name))
-        result = (cursor.fetchone())
-        user_id = result[0]
-        print("current user id is", user_id)
-        #get a list of organism id's this user can access
-        cursor.execute(
-            "SELECT background_col,uga_col,uag_col,uaa_col,title_size,subheading_size,axis_label_size,marker_size,cds_marker_width,cds_marker_colour,legend_size,ribo_linewidth from user_settings WHERE user_id = '{}';"
-            .format(user_id))
-        result = (cursor.fetchone())
-        background_col = result[0]
-        uga_col = result[1]
-        uag_col = result[2]
-        uaa_col = result[3]
-        title_size = result[4]
-        subheading_size = result[5]
-        axis_label_size = result[6]
-        marker_size = result[7]
-        cds_marker_size = result[8]
-        cds_marker_colour = result[9]
-        legend_size = result[10]
-        ribo_linewidth = result[11]
+        user_id = get_user_id(current_user.name)
+        user_conf = get_user_settings(user_id)
+        for key, value in user_conf.items():
+            new_conf[key] = value
+
         #get rules for all custom seq types
         cursor.execute(
             "SELECT * from seq_rules WHERE user_id = {};".format(user_id))
@@ -522,7 +417,7 @@ def query_genomic() -> str:
             frame_breakdown = row[2]
             seq_rules[seq_name] = {"frame_breakdown": frame_breakdown}
         connection.close()
-    if tran != "":
+    if tran:
         return riboflask.generate_plot(
             tran, minread, maxread, lite, ribocoverage, organism, readscore,
             noisered, primetype, minfiles, nucseq, user_hili_starts,
