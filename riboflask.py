@@ -1,7 +1,6 @@
 from typing import List, Dict
 import config
 import os
-import sqlite3
 from fetch_shelve_reads2 import get_reads
 import pandas as pd
 from sqlitedict import SqliteDict
@@ -16,64 +15,36 @@ from sqlqueries import get_table, sqlquery
 matplotlib.use("agg")
 
 
-def generate_plot(
-    tran: str,  # => data['transcript']
-    min_read: int,
-    max_read: int,
-    lite: str,
-    ribocoverage: bool,
-    organism: str,
-    readscore: str,
-    noisered: str,
-    primetype: str,
-    # minfiles,
-    nucseq: str,
-    user_hili_starts: str,
-    user_hili_stops: str,
-    # uga_diff,
-    file_paths_dict: Dict[str, str],
-    short_code: str,
-    # color_readlen_dist,
-    background_col: str,
-    uga_col: str,
-    uag_col: str,
-    uaa_col: str,
-    # advanced, seqhili, seq_rules,
-    # title_size,
-    subheading_size: int,
-    axis_label_size: int,
-    marker_size: int,
-    transcriptome: str,
-    trips_uploads_location: str,
-    cds_marker_size: int,
-    cds_marker_colour: int,
-    legend_size: int,
-    ribo_linewidth: int,
-    secondary_readscore: str,
-    pcr: bool,
-    mismatches: bool,
-    hili_start: bool,
-    hili_stop: bool,
-    data: Dict,
-) -> str:
+def generate_plot(data, settings) -> str:
+    seq_rules = {
+        "proteomics": {
+            "frame_breakdown": 1
+        },
+        "conservation": {
+            "frame_breakdown": 1
+        },
+        "tcpseq": {
+            "frame_breakdown": 0
+        }
+    }
+
     if ("line" not in data) and ("ribocoverage" in data):
+        # TODO: Convert this into notification
         return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
                 " is turned off")
 
     # Label and visibility for the interactive legends
-    labels = [
-        "Frame 1 profiles",
-        "Frame 2 profiles",
-        "Frame 3 profiles",
-        "RNA",
-        "Exon Junctions",
-    ]
-    start_visible = [True] * 5
-    if mismatches:
-        labels += [f"Mismatches {nuc}" for nuc in "ATGC"]
-        start_visible += [False] * 4
-    labels.append("CDS markers")
-    start_visible.append(True)
+    labels_visibility = {
+        "Frame 1 profiles": True,
+        "Frame 2 profiles": True,
+        "Frame 3 profiles": True,
+        "RNA": True,
+        "Exon Junctions": True,
+        "CDS markers": True,
+    }
+    if "mismatches" in data:
+        for nuc in "ATGC":
+            labels_visibility[f"Mismatches {nuc}"] = False
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     frame_orfs = {1: [], 2: [], 3: []}
     owner = get_table("organisms")
@@ -267,8 +238,7 @@ def generate_plot(
                     color="#5c5c5c",
                     linewidth=2,
                 )
-                labels.append(seq_type)
-                start_visible.append(True)
+                labels_visibility[seq_type] = True
                 alt_seq_type_vars.append(alt_seq_plot)
             else:
                 alt_frame_counts = {
@@ -306,12 +276,8 @@ def generate_plot(
                     color="#5687F9",
                     linewidth=2,
                 )
-                labels.append(seq_type + "frame 1")
-                labels.append(seq_type + "frame 2")
-                labels.append(seq_type + "frame 3")
-                start_visible.append(True)
-                start_visible.append(True)
-                start_visible.append(True)
+                for i in range(1, 4):
+                    labels_visibility[f"{seq_type}frame {i}"] = True
                 alt_seq_type_vars.append(frame0_altseqplot)
                 alt_seq_type_vars.append(frame1_altseqplot)
                 alt_seq_type_vars.append(frame2_altseqplot)
@@ -328,7 +294,7 @@ def generate_plot(
             all_rna_reads.keys(),
             all_rna_reads.values(),
             alpha=1,
-            label=labels,
+            label=labels_visibility,
             zorder=1,
             color="lightgray",
             linewidth=0,
@@ -339,7 +305,7 @@ def generate_plot(
             all_rna_reads.keys(),
             all_rna_reads.values(),
             alpha=1,
-            label=labels,
+            label=labels_visibility,
             zorder=1,
             color="#a7adb7",
             linewidth=4,
@@ -440,7 +406,7 @@ def generate_plot(
             frame_counts[0].keys(),
             frame_counts[0].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#FF4A45",
             edgecolor="#FF4A45",
@@ -451,7 +417,7 @@ def generate_plot(
             frame_counts[1].keys(),
             frame_counts[1].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#64FC44",
             edgecolor="#64FC44",
@@ -462,7 +428,7 @@ def generate_plot(
             frame_counts[2].keys(),
             frame_counts[2].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#5687F9",
             edgecolor="#5687F9",
@@ -474,7 +440,7 @@ def generate_plot(
             frame_counts[0].keys(),
             frame_counts[0].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#FF4A45",
             linewidth=ribo_linewidth,
@@ -483,7 +449,7 @@ def generate_plot(
             frame_counts[1].keys(),
             frame_counts[1].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#64FC44",
             linewidth=ribo_linewidth,
@@ -492,17 +458,17 @@ def generate_plot(
             frame_counts[2].keys(),
             frame_counts[2].values(),
             alpha=0.75,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="#5687F9",
             linewidth=ribo_linewidth,
         )
-    if mismatches:
+    if "mismatches" in data:
         a_mismatches = ax_main.plot(
             seq_var_dict["A"].keys(),
             seq_var_dict["A"].values(),
             alpha=0.01,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="purple",
             linewidth=2,
@@ -511,7 +477,7 @@ def generate_plot(
             seq_var_dict["T"].keys(),
             seq_var_dict["T"].values(),
             alpha=0.01,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="yellow",
             linewidth=2,
@@ -520,7 +486,7 @@ def generate_plot(
             seq_var_dict["G"].keys(),
             seq_var_dict["G"].values(),
             alpha=0.01,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="orange",
             linewidth=2,
@@ -529,7 +495,7 @@ def generate_plot(
             seq_var_dict["C"].keys(),
             seq_var_dict["C"].values(),
             alpha=0.01,
-            label=labels,
+            label=labels_visibility,
             zorder=2,
             color="pink",
             linewidth=2,
@@ -561,7 +527,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -571,7 +537,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -582,7 +548,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -592,7 +558,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -603,7 +569,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -613,7 +579,7 @@ def generate_plot(
                     (slip, slip),
                     (0, 0.5),
                     alpha=1,
-                    label=labels,
+                    label=labels_visibility,
                     zorder=4,
                     color="black",
                     linewidth=5,
@@ -699,7 +665,7 @@ def generate_plot(
     line_collections = [
         frame0subpro, frame1subpro, frame2subpro, rna_bars, allexons
     ]
-    if mismatches:
+    if "mismatches" in data:
         line_collections.append(a_mismatches)
         line_collections.append(t_mismatches)
         line_collections.append(g_mismatches)
@@ -716,15 +682,13 @@ def generate_plot(
             alpha=0.75,
             color="#fffbaf",
         )
-        labels.append("Highligted region")
-        start_visible.append(True)
+        labels_visibility["Highligted region"] = True
         line_collections.append(hili)
 
     for alt_plot in alt_seq_type_vars:
         line_collections.append(alt_plot)
     if "hili_sequences" in locals():
-        labels.append("Highligted sequences")
-        start_visible.append(True)
+        labels_visibility["Highligted sequences"] = True
         line_collections.append(hili_sequences)
     if user_hili_starts != [] and user_hili_stops != []:
         for i in range(0, len(user_hili_starts)):
@@ -744,8 +708,7 @@ def generate_plot(
                     alpha=0.75,
                     color="#fffbaf",
                 )
-        labels.append("Highligter")
-        start_visible.append(True)
+        labels_visibility["Highligter"] = True
         line_collections.append(hili)
 
     leg_offset = (legend_size - 17) * 5
