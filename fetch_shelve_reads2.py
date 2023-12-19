@@ -9,70 +9,45 @@ from pandas.core.frame import DataFrame
 
 # Create dictionary of read counts at each position in a transcript
 def get_reads(
-    read_type: str,
-    min_read: int,
-    max_read: int,
-    tran: str,
-    user_files: Dict[str, Dict[str, str]],
-    tranlen: int,
-    coverage,
+    data,
     # organism,
     subcodon: bool,
-    # noisered,
-    primetype: str,
-    filetype: str,
-    readscore: int,
-    data: Dict,
-    # secondary_readscore=1,
-    pcr: bool = False,
-    get_mismatches: bool = False,
     # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
     """
 
     Parameters: 
-    - read_type (str): type of read to fetch
-    - min_read (int): minimum read length
-    - max_read (int): maximum read length
-    - tran (str): transcript
-    - user_files (Dict[str, Dict[str, str]]): dictionary of user files
-    - tranlen (int): transcript length
-    - coverage (int): coverage
-    - filetype (str): filetype
-    - readscore (int): read score
-    - data (Dict): data
-    - pcr (bool): pcr
-    - get_mismatches (bool): get mismatches
 
     Returns:
 
     Example:
     """
-    if get_mismatches:
+    if "mismatch_dict" not in data:
         mismatch_dict = pd.DataFrame(0,
-                                     index=range(tranlen + 1),
+                                     index=range(data["tranlen"] + 1),
                                      columns=["A", "T", "G", "C"])
 
-    master_dict = pd.DataFrame({'count': 0}, index=range(tranlen + 1))
+    master_dict = pd.DataFrame({'count': 0}, index=range(data["tranlen"] + 1))
     master_file_dict = {}
 
     # first make a master dict consisting of all the read dicts from each filename
     offset_dict = {}
-    if filetype in user_files:
-        for file_id in user_files[filetype]:
-            filename = user_files[filetype][file_id]
+    if data["filetype"] in data["user_files"]:
+        for file_id in data["user_files"][data["filetype"]]:
+            filename = data["user_files"][data["filetype"]][file_id]
             try:
                 sqlite_db = SqliteDict(filename, autocommit=False)
             except FileNotFoundError:
                 return pd.DataFrame(), pd.DataFrame()
 
             try:
-                all_offsets = sqlite_db["offsets"][primetype]["offsets"]
+                all_offsets = sqlite_db["offsets"][
+                    data["primetype"]]["offsets"]
                 all_offsets = pd.DataFrame(list(all_offsets.keys()),
                                            index=list(all_offsets.values()),
                                            columns=["offset"])
-                scores = sqlite_db["offsets"][primetype]["read_scores"]
+                scores = sqlite_db["offsets"][data["primetype"]]["read_scores"]
                 scores = pd.DataFrame(list(scores.keys()),
                                       index=list(scores.values()),
                                       columns=["score"])
@@ -84,17 +59,17 @@ def get_reads(
             except KeyError:
                 all_offsets_n_scores = pd.DataFrame(
                     [15, 1],
-                    index=range(min_read, max_read),
+                    index=range(data["min_read"], data["max_read"] + 1),
                     columns=["offset", 'score'])
             accepted_offsets = all_offsets_n_scores[
-                all_offsets_n_scores['score'] >= readscore]
+                all_offsets_n_scores['score'] >= data["readscore"]]
 
             offset_dict[filename] = accepted_offsets
             # Till here
 
-            if get_mismatches:
+            if "mismatch" in data:
                 try:
-                    sqlite_db_seqvar = sqlite_db[tran]["seq"]
+                    sqlite_db_seqvar = sqlite_db[data['transcript']]["seq"]
 
                     for pos in sqlite_db_seqvar:
                         # convert to one based
@@ -110,27 +85,28 @@ def get_reads(
                 unambig_tran_dict = alltrandict["unambig"]
                 ambig_tran_dict = {}
                 if ("ambiguous" in data) and ("ambig" in alltrandict):
-                    ambig_tran_dict = alltrandict[read_type]
+                    ambig_tran_dict = alltrandict[data["read_type"]]
                 # TODO: Change merge_dicts to take a list of dicts instead of two
                 trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
-                if pcr:  # TODO: Convert this value as ambig and unambig
+                if "pcr" in data:  # TODO: Convert this value as ambig and unambig
                     if "unambig_pcr" in alltrandict:
                         trandict = merge_dicts(trandict,
                                                alltrandict["unambig_pcr"])
-                    if read_type == "ambig" and "ambig_pcr" in alltrandict:
+                    if data["read_type"] == "ambig" and "ambig_pcr" in alltrandict:
                         trandict = merge_dicts(trandict,
                                                alltrandict["ambig_pcr"])
                 master_file_dict[filename] = trandict
             except Exception:
                 pass
     # Next check coverage, if that's true then calculate coverage for each rl and return dict
-        if not subcodon:
+        if "subcodon" not in data:
             for filename in master_file_dict:
                 for readlen in master_file_dict[filename]:
-                    if readlen >= min_read and readlen <= max_read:
+                    if readlen >= data["min_read"] and readlen <= data[
+                            "max_read"]:
                         for pos in master_file_dict[filename][readlen]:
                             count = master_file_dict[filename][readlen][pos]
-                            if coverage:
+                            if "coverage" in data:
                                 if pos != 0 and pos - 1 not in master_dict:
                                     master_dict[pos - 1] = 0
                                 i = 0
@@ -148,21 +124,22 @@ def get_reads(
                                     master_dict[offset_pos + 1] = 0
                                 master_dict[offset_pos] += count
 
-        if subcodon and not coverage:
+        if ("subcodon" in data) and ("coverage" not in data):
             for filename in master_file_dict:
                 if filename not in offset_dict:
                     continue
                 for readlen in master_file_dict[filename]:
-                    if readlen >= min_read and readlen <= max_read:
+                    if readlen >= data["min_read"] and readlen <= data[
+                            "max_read"]:
                         if readlen in offset_dict[filename]:
                             offset = offset_dict[filename][readlen] + 1
                             for pos in master_file_dict[filename][readlen]:
                                 count = master_file_dict[filename][readlen][
                                     pos]
-                                if primetype == "threeprime":
+                                if data["primetype"] == "threeprime":
                                     pos += readlen
 
-                                if coverage:
+                                if "coverage" in data:
                                     for i in range(0, readlen, 3):
                                         new_offset_pos = (i + pos) + (offset %
                                                                       3)
@@ -179,8 +156,8 @@ def get_reads(
                                         print(
                                             "Error tried adding to "
                                             f"position {offset_pos} but tranlen "
-                                            f"is only {tranlen}")
-        if not get_mismatches:
+                                            f"is only {data['tranlen']}")
+        if "mismatches" not in data:
             mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
         return master_dict, mismatch_dict
 

@@ -56,13 +56,15 @@ def generate_plot(data, settings) -> str:
     if owner == 1:
         sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
-                                                      organism, transcriptome)
+                                                      data["organism"], data[
+                                                          
+                                                          "transcriptome"])
         if not os.path.isfile(sqlpath):
             return "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome)
+                data["organism"], data["transcriptome"])
     else:
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            trips_uploads_location, owner, organism, transcriptome)
+            trips_uploads_location, owner, data["organism"], data["transcriptome"])
     transcripts = sqlquery(sqlpath, "transcripts")
     traninfo = transcripts[transcripts.transcript ==
                            data["transcript"]].iloc[0]
@@ -145,6 +147,7 @@ def generate_plot(data, settings) -> str:
                 frame_orfs[frame].append((start, best_stop_pos))
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching RNA-Seq Reads"})
     all_rna_reads, rna_seqvar_dict = get_reads(
+        data,
         ambig,  # data.ambigious
         min_read,  # data.minread
         max_read,  # data.maxread
