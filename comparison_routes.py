@@ -115,7 +115,7 @@ def comparequery() -> str | Tuple:
     """
     #global user_short_passed
     user_short_passed = False
-    data = json.loads(request.data)
+    data = request.data.to_dict()
     tran = data['transcript'].upper().strip()
     organism = data['organism']
     transcriptome = data['transcriptome']
@@ -133,44 +133,37 @@ def comparequery() -> str | Tuple:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
     transcripts = sqlquery(transhelve, "transcripts")
-    transcripts = transcripts[transcripts.transcript == tran].iloc[0]
-    cursor.execute(
-        "SELECT * from transcripts WHERE transcript = '{}'".format(tran))
-    result = cursor.fetchone()
-    if not result:
-        cursor.execute(
-            "SELECT * from transcripts WHERE gene = '{}'".format(tran))
-        result = cursor.fetchall()
-        if result != []:
-            if len(result) == 1:
-                tran = str(result[0][0])
-            else:
-                return_str = "TRANSCRIPTS"
-                for transcript in result:
-                    cursor.execute(
-                        "SELECT length,cds_start,cds_stop,principal from transcripts WHERE transcript = '{}'"
-                        .format(transcript[0]))
-                    tran_result = cursor.fetchone()
-                    tranlen = tran_result[0]
-                    cds_start = tran_result[1]
-                    cds_stop = tran_result[2]
-                    if tran_result[3] == 1:
-                        principal = "principal"
-                    else:
-                        principal = ""
-                    if not cds_start:
-                        cdslen = None
-                        threeutrlen = None
-                    else:
-                        cdslen = cds_stop - cds_start
-                        threeutrlen = tranlen - cds_stop
-                    return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
+    transcripts = transcripts[(transcripts.transcript == data['transcript']) |
+                              (transcripts.gene == data['transcript'])]
+    if data.empty:
+        # TODO: I messed it. Check original Code here
 
-                return return_str
-        else:
-            return_str = f"ERROR! Could not find any transcript corresponding to {tran}"
+        return_str = "TRANSCRIPTS"
+        for transcript in result:
+            cursor.execute(
+                "SELECT length,cds_start,cds_stop,principal from transcripts WHERE transcript = '{}'"
+                .format(transcript[0]))
+            tran_result = cursor.fetchone()
+            tranlen = tran_result[0]
+            cds_start = tran_result[1]
+            cds_stop = tran_result[2]
+            if tran_result[3] == 1:
+                principal = "principal"
+            else:
+                principal = ""
+            if not cds_start:
+                cdslen = None
+                threeutrlen = None
+            else:
+                cdslen = cds_stop - cds_start
+                threeutrlen = tranlen - cds_stop
+            return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
+
             return return_str
-    transhelve.close()
+    else:
+        tran = data.iloc[0].transcript
+        return_str = f"ERROR! Could not find any transcript corresponding to {tran}"
+        return return_str
     minread = int(data['minread'])
     maxread = int(data['maxread'])
     hili_start = int(data['hili_start'])
@@ -259,10 +252,6 @@ def comparequery() -> str | Tuple:
                     master_filepath_dict[color]["file_descs"].append(result[1])
                     master_filepath_dict[color]["file_type"] = result[2]
 
-    ribocoverage = True if 'ribocoverage' in data else False
-    ambiguous = "ambig" if "ambiguous" in data else "unambig"
-    normalize = True if "normalize" in data else False
-
     html_args = data["html_args"]
     if html_args["user_short"] == "None" or user_short_passed:
         short_code = generate_short_code(data, organism,
@@ -278,9 +267,6 @@ def comparequery() -> str | Tuple:
         user_settings = get_table("user_settings")
         user_settings = user_settings[user_settings.user_id == user_id].iloc[0]
     if tran:
-        return riboflask_compare.generate_compare_plot(
-            tran, ambiguous, master_filepath_dict, ribocoverage, organism,
-            normalize, short_code, hili_start, hili_stop, user_settings,
-            transcriptome)
+        return riboflask_compare.generate_compare_plot(data)
 
     return "ERROR! Could not find any transcript corresponding to {tran}"

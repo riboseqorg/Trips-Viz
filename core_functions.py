@@ -108,7 +108,7 @@ def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
     - transcriptome (str): name of the transcript
 
     Returns:
-    - Tuple
+    - Tuple[organism_id:str, studies:DataFrame[study_id, study_name]]
     '''
     study_access_list = []
     # get a list of organism id's this user can access
@@ -134,8 +134,7 @@ def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
                               ascending=False).drop_duplicates("study_id")
     # TODO: Compare with original code and discuss which one too choose
     studies = studies[["study_id", "study_name"]]  # Accepted studies
-    studies["filetype"] = []
-    return studies
+    return organism_id, studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
@@ -144,34 +143,27 @@ def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
     Fetches files from database for give studies.
 
     Parameters: 
-    - accepted_studies (DataFrame): list of accepted studies
+    - accepted_studies (DataFrame[study_id, study_name]): list of accepted studies
 
     Returns:
+    - {'seqtype':{('project_id', 'project_name'): {('file_id', 'file_name'): ['file_description']}}}
     '''
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    files = sqlquery(dbpath, "files")
+    files = get_table("files")
     files = files.loc[
         files.study_id.isin(accepted_studies['study_id']),
         ["file_id", "study_id", "file_name", "file_description", "file_type"
          ]].sort_values("file_description")  # Files Details
-    print(files)
     files = files.merge(accepted_studies, on='study_id')
-    print(files)
     files['file_name'] = files['file_name'].apply(
         lambda x: x.replace('.self', ''))
-    print(files)
     files['study'] = files.apply(lambda x: (x['study_id'], x['study_name']),
                                  axis=1)  # Paired info (ID, Name)
-    print(files)
     files['file'] = files.apply(lambda x: (x['file_id'], x['file_name']),
                                 axis=1)  # Paired info (ID, Name)
-    print(files)
     files = files.drop(['study_id', 'study_name', 'file_id', 'file_name'],
                        axis=1)
-    print(files)
 
     files = table2dict(files, ['file_type', 'study', 'file'])
-    print(files)
     return files
 
 
@@ -251,11 +243,10 @@ def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
     Example:
 
     '''
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(dbpath, "studies")  # users is name of table
-    studies = studies.loc[studies.study_id.isin(set(data['study_ids'])),
+    studies = get_table("studies")  # users is name of table
+    studies = studies.loc[studies.study_id.isin(data['study_ids']),
                           ['study_id', 'study_name']]
-    files = sqlquery(dbpath, "files")
+    files = get_table("files")
     files = files[files["file_id"].isin(data['file_ids'])]
     files = files.merge(studies, on='study_id')
     files['file_name'] = files['file_name'].apply(
@@ -267,7 +258,7 @@ def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
         if x['owner'] else "{}/{}/{}.sqlite".format(config.UPLOADS_DIR, data[
             'study'], x['file_name']),
         axis=1)
-    logging.debug("fetch_file_paths closing connection")
+    # logging.debug("fetch_file_paths closing connection")
     return files
 
 

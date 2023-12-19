@@ -36,7 +36,7 @@ def get_table(table: str) -> pd.DataFrame:
                     table)
 
 
-def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[Hashable, Any]:
+def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[str, Any]:
     '''
     Convert a table to a dictionary of lists. 
     >>> data = {'key1': [1, 2, 3], 'key2': [4, 5, 6], 'key3': [7, 8, 9], 

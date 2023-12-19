@@ -43,36 +43,39 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     Example:
     """
 
-    template_dict = request.args.to_dict()
+    data = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
-    template_dict['studies_and_files'] = fetch_files(accepted_studies)
-    gwips = get_table("organisms")
+    data['studies_and_files'] = fetch_files(accepted_studies)
+    gwips_info = get_table("organisms")
     # print(accepted_studies)
-    gwips_info = gwips.loc[(gwips.organism_id == organism_id)
-                           & (gwips.transcriptome_list == transcriptome), [
-                               "gwips_clade", "gwips_organism",
-                               "gwips_database", "default_transcript"
-                           ]].iloc[0]
+    gwips_info = gwips_info.loc[
+        (gwips_info.organism_id == organism_id)
+        & (gwips_info.transcriptome_list == transcriptome), [
+            "gwips_clade", "gwips_organism", "gwips_database",
+            "default_transcript"
+        ]].iloc[0]
 
-    template_dict['transcript'] = gwips_info['default_transcript']
-    template_dict['gwips_info'] = gwips_info
-    template_dict['studyinfo_dict'] = fetch_study_info(organism_id)
-    template_dict['organism'] = organism
-    template_dict['transcriptome'] = transcriptome
+    data['transcript'] = gwips_info['default_transcript']
+    data['gwips_info'] = gwips_info
+    data['studyinfo_dict'] = fetch_study_info(organism_id)
+    data['organism'] = organism
+    data['transcriptome'] = transcriptome
 
-    user_hili_starts = []
-    user_hili_stops = []
+    data['user_hili_starts'] = []
+    data['user_hili_stops'] = []
     try:
-        for item in template_dict['user_hili'].split(","):
-            user_hili_starts.append(int(item.split("_")[0]))
-            user_hili_stops.append(int(item.split("_")[1]))
+        for item in data['user_hili'].split(","):
+            item_split = item.split("_")
+            data['user_hili_starts'].append(int(item_split[0]))
+            data['user_hili_stops'].append(int(item_split[1]))
     except Exception:
         pass
+    data['user_hili_starts'] = ','.join(data['user_hili_starts'])
+    data['user_hili_stops'] = ','.join(data['user_hili_stops'])
 
-    advanced = True
     consent = request.cookies.get("cookieconsent_status")
     rendered_template = render_template('single_transcript_plot.html',
-                                        template_dict=template_dict)
+                                        template_dict=data)
     if consent == "deny":
         # TODO: Convert this according to django
         rendered_template = make_response(rendered_template)
@@ -94,24 +97,27 @@ def query():  #TODO: add return type
     jquery route for single transcript plot.
 
     Parameters:
+    - request
 
     Returns:
     """
     # global user_short_passed
     data = request.form.to_dict()
-    print(data)
-    file_list = []
-    file_ids = []
-    study_ids = []
+    data["transcript"] = data["transcript"].upper()
+    print(data, "Anmol")
+    data["file_list"] = []
+    data["file_ids"] = []
+    data["study_ids"] = []
+
     for key, value in data.items():
         if key.startswith('file') and value:
-            file_list.append(value)
-            file_ids.append(int(key.split('_')[-1]))
-            study_ids.append(int(key.split('_')[2]))
-    data["file_list"] = file_list
-    data["file_ids"] = file_ids
-    data["study_ids"] = study_ids
-
+            file_n_study = key.split('_')
+            if len(file_n_study) != 4:
+                continue
+            data["file_list"].append(value)
+            print(file_n_study, "test")
+            data["file_ids"].append(int(file_n_study[-1]))
+            data["study_ids"].append(int(file_n_study[2]))
     file_paths_dict = fetch_file_paths(data)
     print(file_paths_dict, "Kiran")
 
@@ -148,16 +154,17 @@ def query():  #TODO: add return type
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
     transcripts_full = sqlquery(sql_path, "transcripts")
     transcripts = transcripts_full[
-        (transcripts_full.transcript == data["transcript"].upper()) |
-        (transcripts_full.gene == data["transcript"].upper())]
+        (transcripts_full.transcript == data["transcript"]) |
+        (transcripts_full.gene == data["transcript"])]
 
     if transcripts.empty:
         return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
             data['transcript'])
         logging.debug(return_str)
         return return_str
+    print(data['transcript'], transcripts.transcript.values, "yyyyyyyyyyyyy")
 
-    if data['transcript'].upper() not in transcripts.transcript.values:
+    if data['transcript'] not in transcripts.transcript.values:
         return_str = "TRANSCRIPTS"
         if user == "test":
             return_str = "QUANT_TRANSCRIPTS"
@@ -243,6 +250,7 @@ def query():  #TODO: add return type
                     three_utr_len, transcript.principal))
         print(return_str)
         return return_str
+    # NOTE: Till here
 
     seq_rules = {
         "proteomics": {

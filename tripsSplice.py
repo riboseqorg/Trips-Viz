@@ -208,11 +208,12 @@ def get_protein_coding_transcript_ids(gene: str,
     Gets the transcript IDs for protein coding genes for the given gene.
 
     Parameters:
-    - gene (str): The name of the gene
-    - sqlite_path_organism (str): The path to the sqlite database file
+    - gene (str): The name of the gene `ABCD`
+
+    - sqlite_path_organism (str): The path to the sqlite database file `/path/to/db.sqlite`
 
     Return: 
-    - NDArray: A Numpy Array[str] of coding transcript IDs
+    - NDArray: A Numpy Array[str] of coding transcript IDs `Array(['A', 'B', 'C', 'D'])`
     """
     transcripts = sqlquery(sqlite_path_organism, "transcripts")
     return transcripts.loc[transcripts.gene == gene

@@ -363,14 +363,15 @@ def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
     # print "gene", gene
     # print "sqlitepath", sqlite_path_organism
     # print "sqlite_path_reads",sqlite_path_reads
-    coding = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
+    coding_transcripts = get_protein_coding_transcript_ids(
+        gene, sqlite_path_organism)
     exons = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, True)
 
     transcript_OPMs = {}
     read_files = []
     for file in sqlite_path_reads:
         infile = SqliteDict(file)
-        for transcript in coding:
+        for transcript in coding_transcripts:
             try:
                 if transcript not in transcript_OPMs:
                     transcript_OPMs[transcript] = []
@@ -383,7 +384,7 @@ def incl_OPM_run_orfQuant(gene: str, sqlite_path_organism: str,
         genomic_read_positions = get_reads_per_genomic_location(
             gene, [file],
             sqlite_path_organism,
-            coding,
+            coding_transcripts,
             exons,
             filte_r=True,
             site="asite")
