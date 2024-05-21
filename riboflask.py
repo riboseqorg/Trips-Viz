@@ -1,16 +1,15 @@
-from typing import List, Dict
 import config
 import os
+import polars as pl
 from fetch_shelve_reads2 import get_reads
 import pandas as pd
 from sqlitedict import SqliteDict
 import collections
-import mpld3
 import matplotlib.pyplot as plt
 import matplotlib
 import fixed_values
 from fixed_values import get_user_defined_seqs
-from sqlqueries import get_table, sqlquery
+from sqlqueries_2 import get_table, sqlquery
 
 matplotlib.use("agg")
 
@@ -47,27 +46,23 @@ def generate_plot(data, settings) -> str:
             labels_visibility[f"Mismatches {nuc}"] = False
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     frame_orfs = {1: [], 2: [], 3: []}
-    owner = get_table("organisms")
-    owner = owner.loc[
-        (owner.organism_name == data["organism"])
-        & (owner.transcriptome_list == data["transcript"]),
-        "owner",
-    ].values[0]
+    owner = get_table("organisms").filter(
+        (pl.col("organism_name") == data["organism"])
+        & (pl.col("transcriptome_list") == data["transcript"]))[0, "owner"]
     if owner == 1:
         sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
-                                                      data["organism"], data[
-                                                          
-                                                          "transcriptome"])
+                                                      data["organism"],
+                                                      data["transcriptome"])
         if not os.path.isfile(sqlpath):
             return "Cannot find annotation file {}.{}.sqlite".format(
                 data["organism"], data["transcriptome"])
     else:
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            trips_uploads_location, owner, data["organism"], data["transcriptome"])
-    transcripts = sqlquery(sqlpath, "transcripts")
-    traninfo = transcripts[transcripts.transcript ==
-                           data["transcript"]].iloc[0]
+            trips_uploads_location, owner, data["organism"],
+            data["transcriptome"])
+    traninfo = sqlquery(sqlpath, "transcripts").filter(
+        pl.col("transcript") == data["transcript"])[0].to_dict()
     for ss in ['start_list', 'stop_list', 'exon_junctions']:
         try:
             traninfo[ss] = [int(x) for x in traninfo[ss].split(",")]
@@ -80,17 +75,19 @@ def generate_plot(data, settings) -> str:
         traninfo.cds_stop = 0
 
     try:
-        coding_regions = sqlquery(sqlpath, "coding_regions")
-        coding_regions = coding_regions.loc[coding_regions.transcript ==
-                                            data["transcript"],
-                                            ["coding_start", "coding_stop"]]
+        coding_regions = sqlquery(sqlpath, "coding_regions").filter(
+            pl.col("transcript") == data["transcript"]).select(
+                "coding_start", "coding_stop")
     except Exception:  # pragma: no cover
-        coding_regions = pd.DataFrame(columns=["coding_start", "coding_stop"])
+        coding_regions = pl.DataFrame(schema={
+            "coding_start": int,
+            "coding_stop": int
+        })
 
     data["coding_regions"] = coding_regions
     data["traninfo"] = traninfo
 
-    all_stops = {"TAG": [], "TAA": [], "TGA": []}
+    all_stops: dict[str, list[int]] = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
     seq = traninfo["seq"].upper()  # NOTE: I guess it is already upper case
     for i in range(len(seq)):
@@ -146,43 +143,9 @@ def generate_plot(data, settings) -> str:
             if best_stop_pos != 10000000:
                 frame_orfs[frame].append((start, best_stop_pos))
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching RNA-Seq Reads"})
-    all_rna_reads, rna_seqvar_dict = get_reads(
-        data,
-        ambig,  # data.ambigious
-        min_read,  # data.minread
-        max_read,  # data.maxread
-        tran,  #data.transcript
-        file_paths_dict,  #data.filepath
-        tranlen,  # data.traninfo.length
-        True,
-        organism,  # data.organism
-        False,
-        noisered,  # TODO: Remove
-        primetype,  # data.primetype
-        "rnaseq",  # data.filetype
-        readscore,  #data.readscore
-        pcr,  # data.pcr
-        get_mismatches=mismatches,  # data.mismatchseq
-    )
+    all_rna_reads, rna_seqvar_dict = get_reads(data)
     # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
-    all_subcodon_reads, ribo_seqvar_dict = get_reads(
-        ambig,  # data.ambigious
-        min_read,  # data.minread
-        max_read,  # data.maxread
-        tran,  # data.transcript
-        file_paths_dict,  # data.filepath
-        tranlen,  # data.traninfo.length
-        ribocoverage,  # data.ribocoverage
-        organism,  # data.organism
-        True,
-        noisered,  # TODO: Remove
-        primetype,  # data.primetype
-        "riboseq",  # Riboseq related
-        readscore,  #  
-        secondary_readscore,
-        pcr,
-        get_mismatches=mismatches,
-    )
+    all_subcodon_reads, ribo_seqvar_dict = get_reads(data)
     seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
     try:
         rnamax = max(all_rna_reads.values())
@@ -204,9 +167,9 @@ def generate_plot(data, settings) -> str:
     # Store the  counts of any alt seq types so they can be written to csv file later
     alt_seq_dict = {}
     # Plot any alternative sequence types if there are any
-    for seq_type in file_paths_dict:
+    for seq_type in data["file_paths_dict"]:
         if seq_type not in ["riboseq", "rnaseq"]:
-            if file_paths_dict[seq_type] == {}:
+            if data["file_paths_dict"][seq_type] == {}:
                 continue
             if seq_type in seq_rules:
                 if seq_rules[seq_type]["frame_breakdown"] == 1:
@@ -215,21 +178,7 @@ def generate_plot(data, settings) -> str:
                     frame_breakdown = False
             else:
                 frame_breakdown = False
-            alt_sequence_reads, _ = get_reads(
-                ambig,
-                min_read,
-                max_read,
-                tran,
-                file_paths_dict,
-                tranlen,
-                True,
-                organism,
-                frame_breakdown,
-                noisered,
-                primetype,
-                seq_type,
-                readscore,
-            )
+            alt_sequence_reads, _ = get_reads(data)
             alt_seq_dict[seq_type] = alt_sequence_reads
             if not frame_breakdown:
                 alt_seq_plot = ax_main.plot(

@@ -8,8 +8,9 @@ from flask import (
 )
 from flask import current_app as app
 from typing import Text
-from sqlqueries import get_user_id
+from sqlqueries_2 import get_user_id, sqlquery, get_table
 import os
+import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code, fetch_user)
@@ -17,7 +18,6 @@ import riboflask
 from flask_login import current_user
 import logging
 import json
-from sqlqueries import sqlquery, get_table
 from orfQuant import incl_OPM_run_orfQuant
 from tripsTPM import TPM
 
@@ -45,15 +45,15 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
 
     data = request.args.to_dict()
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
+    # Accepted_studies is a DataFrame of (study_id, study_name)
     data['studies_and_files'] = fetch_files(accepted_studies)
-    gwips_info = get_table("organisms")
+    gwips_info = get_table("organisms").filter(
+        (pl.col('organism_id') == organism_id)
+        & (pl.col('transcriptome_list') == transcriptome)
+    )[0, [
+        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
+    ]]
     # print(accepted_studies)
-    gwips_info = gwips_info.loc[
-        (gwips_info.organism_id == organism_id)
-        & (gwips_info.transcriptome_list == transcriptome), [
-            "gwips_clade", "gwips_organism", "gwips_database",
-            "default_transcript"
-        ]].iloc[0]
 
     data['transcript'] = gwips_info['default_transcript']
     data['gwips_info'] = gwips_info
@@ -123,10 +123,9 @@ def query():  #TODO: add return type
 
     # user_short = data["user_short"]
 
-    owner = get_table('organisms')
-    owner = owner.loc[(owner.organism_name == data["organism"]) &
-                      (owner.transcriptome_list == data["transcriptome"]),
-                      "owner"].values[0]
+    owner = get_table('organisms').filter(
+        (pl.col('organism_name') == data["organism"])
+        & (pl.col('transcriptome_list') == data['transcriptome']))[0, 'owner']
 
     user = fetch_user()[0]
 
@@ -152,29 +151,29 @@ def query():  #TODO: add return type
     else:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
-    transcripts_full = sqlquery(sql_path, "transcripts")
-    transcripts = transcripts_full[
-        (transcripts_full.transcript == data["transcript"]) |
-        (transcripts_full.gene == data["transcript"])]
+    transcripts = sqlquery(
+        sql_path,
+        "transcripts").filter((pl.col('transcript') == data['transcript'])
+                              | (pl.col('gene') == data['transcript']))
 
-    if transcripts.empty:
+    if transcripts.is_empty():
         return_str = "ERROR! Could not find any gene or transcript corresponding to {}".format(
             data['transcript'])
         logging.debug(return_str)
         return return_str
-    print(data['transcript'], transcripts.transcript.values, "yyyyyyyyyyyyy")
+    print(data['transcript'], transcripts['transcript'], "yyyyyyyyyyyyy")
 
-    if data['transcript'] not in transcripts.transcript.values:
+    if data['transcript'] not in transcripts['transcript']:
         return_str = "TRANSCRIPTS"
         if user == "test":
             return_str = "QUANT_TRANSCRIPTS"
             try:  #  Riboseq
                 pre_orfQuant_res = incl_OPM_run_orfQuant(
-                    transcripts.transcript[0], sql_path,
+                    transcripts[0, 'transcript'], sql_path,
                     file_paths_dict.loc[file_paths_dict["file_type"] ==
                                         "riboseq", "path"].values)
                 pre_TPM_Ribo = TPM(
-                    transcripts.transcript[0], sql_path,
+                    transcripts[0, 'transcript'], sql_path,
                     file_paths_dict.loc[file_paths_dict["file_type"] ==
                                         "riboseq", "path"].values, "ribo")
 
@@ -201,7 +200,7 @@ def query():  #TODO: add return type
 
             try:  #RNA Seq
                 pre_TPM_RNA = TPM(
-                    transcripts.transcript[0], sql_path,
+                    transcripts[0, 'transcript'], sql_path,
                     file_paths_dict.loc[file_paths_dict["file_type"] ==
                                         "rnaseq", "path"].values, "rna")
                 max_TPM_RNA = max(pre_TPM_RNA.values())
@@ -214,74 +213,58 @@ def query():  #TODO: add return type
             except KeyError:
                 TPM_RNA = {
                     transcript: None
-                    for transcript in transcripts.transcript
+                    for transcript in transcripts["transcript"]
                 }
 
-        for _, transcript in transcripts.iterrows(
-        ):  # TODO: Replace with iter tuple
-            if not transcript.cds_start:
+        for transcript in transcripts.iter_rows(
+                named=True):  # TODO: Replace with iter tuple
+            if not transcript['cds_start']:
                 cdslen = None
                 three_utr_len = None
             else:
-                cdslen = transcript.cds_stop - transcript.cds_start
-                three_utr_len = transcript.length - transcript.cds_stop
+                cdslen = transcript['cds_stop'] - transcript['cds_start']
+                three_utr_len = transcript['length'] - transcript['cds_stop']
             if user == "test":
                 try:
-                    OPM_coverage = orfQuant_res[transcript.length]
+                    OPM_coverage = orfQuant_res[transcript['length']]
                 except KeyError:
                     OPM_coverage = None
                 try:
-                    RNA_coverage = TPM_RNA[transcript.length]
+                    RNA_coverage = TPM_RNA[transcript['length']]
                 except KeyError:
                     RNA_coverage = None
                 try:
-                    ribo_coverage = TPM_Ribo[transcript.length]
+                    ribo_coverage = TPM_Ribo[transcript['length']]
                 except KeyError:
                     ribo_coverage = None
                 return_str += (":{},{},{},{},{},{},{},{},{}".format(
-                    transcript.transcript, transcript.version,
-                    transcript.length, transcript.cds_start, cdslen,
+                    transcript['transcript'], transcript['version'],
+                    transcript['length'], transcript['cds_start'], cdslen,
                     three_utr_len, OPM_coverage, ribo_coverage, RNA_coverage))
 
             else:
                 return_str += (":{},{},{},{},{},{},{}".format(
-                    transcript.transcript, transcript.version,
-                    transcript.length, transcript.cds_start, cdslen,
-                    three_utr_len, transcript.principal))
+                    transcript['transcript'], transcript['version'],
+                    transcript['length'], transcript['cds_start'], cdslen,
+                    three_utr_len, transcript['principle']))
         print(return_str)
         return return_str
     # NOTE: Till here
 
-    seq_rules = {
-        "proteomics": {
-            "frame_breakdown": 1
-        },
-        "conservation": {
-            "frame_breakdown": 1
-        },
-        "tcpseq": {
-            "frame_breakdown": 0
-        }
-    }
-
     # get user_id
     settings = config.DEFAULT_USER_SETTINGS.copy()
+    print(current_user.is_authenticated, "ZZZZZZZZZZZ")
     if current_user.is_authenticated:
 
         user_name = current_user.name
         user_id = get_user_id(user_name)
-        user_settings = get_table('user_settings')
-        user_settings = user_settings.loc[
-            user_settings.user_id == user_id]  # TODO: Push to default settings
+        user_settings = get_table('user_settings').filter(
+            pl.col('user_id') == user_id)
         for key in settings:
-            settings[key] = user_settings[key]
-        sequence_rule = get_table('seq_rules')
-        sequence_rule = sequence_rule.loc[sequence_rule.user_id == user_id]
-    return ""
+            settings[key] = user_settings[0, key]
+        data['sequence_rule'] = get_table('seq_rules').filter(
+            pl.col('user_id') == user_id)
+    # return ""
+    data['file_paths_dict'] = file_paths_dict
 
-
-#     return riboflask.generate_plot({
-# 'user_settings': settings,
-# 'seq_rules': seq_rules,
-# 'data': data
-# })
+    return riboflask.generate_plot(data, settings)

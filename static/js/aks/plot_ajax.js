@@ -6,8 +6,8 @@ $("#query").click(() => {
                 json[name] = value;
                 return json;
         }, {});
-        console.log(JSON.stringify(formJson));
-        console.log("Inside plotting");
+        //console.log(JSON.stringify(formJson));
+        //console.log("Inside plotting");
         $.ajax({
                 type: "POST",
                 url: "/query",
@@ -16,6 +16,7 @@ $("#query").click(() => {
 
                 //contentType: "application/json; charset=utf-8",
                 success: (data) => {
+                        $("#plot").html(data);
                         alert(data.d);
                 },
                 error: (data) => {

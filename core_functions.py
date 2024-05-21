@@ -1,12 +1,13 @@
 import string
 from typing import Dict, List, Tuple, Any
 import pandas as pd
+import polars as pl
 from pandas.core.frame import DataFrame
 import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
 from Bio.Seq import Seq
-from sqlqueries import sqlquery, table2dict, get_table, update_table
+from sqlqueries_2 import sqlquery, table2dict, get_table, update_table
 import uuid
 import config
 import logging
@@ -99,7 +100,8 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
+def fetch_studies(organism: str,
+                  transcriptome: str) -> Tuple[int, pl.DataFrame]:
     '''
     Fetches studies from database using organism and transcriptome information.
 
@@ -110,61 +112,45 @@ def fetch_studies(organism: str, transcriptome: str) -> Tuple[int, DataFrame]:
     Returns:
     - Tuple[organism_id:str, studies:DataFrame[study_id, study_name]]
     '''
-    study_access_list = []
     # get a list of organism id's this user can access
-    if current_user.is_authenticated:
-        result = get_table("study_accesion")  # users is name of table
-        study_access_list = result.loc[result.user_id == current_user.id,
-                                       "study_id"].values
+    study_access_list = get_table("study_accesion").filter(
+        pl.col("user_id") ==
+        current_user.id)["study_id"] if current_user.is_authenticated else []
+    # users is name of table
 
     # Getting organism id
-    result = get_table("organisms")  # users is name of table
-    organism_id = result.loc[(result.organism_name == organism)
-                             & (result.transcriptome_list == transcriptome),
-                             "organism_id"].values[0]
-
+    organism_id = get_table("organisms").filter(
+        (pl.col("organism_name") == organism)
+        & (pl.col("transcriptome_list") == transcriptome))[
+            0, "organism_id"]  # users is name of table
     # Getting studies
-    studies = get_table("studies")  # users is name of table
-    studies = studies.loc[studies.organism_id == organism_id,
-                          ["study_id", "study_name", "private"]]
-    studies = studies.loc[studies.private == 0
-                          | studies.study_id.isin(study_access_list),
-                          ["study_id", "study_name", "private"]].sort_values(
-                              "private",
-                              ascending=False).drop_duplicates("study_id")
+    studies = get_table("studies").filter(
+        (pl.col("organism_id") == organism_id)
+        & pl.col("study_id").is_in(study_access_list)
+        & (pl.col("private") == 0)).select("study_id", "study_name").unique(
+            subset=["study_id"])  # users is name of table
     # TODO: Compare with original code and discuss which one too choose
-    studies = studies[["study_id", "study_name"]]  # Accepted studies
     return organism_id, studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
-def fetch_files(accepted_studies: pd.DataFrame) -> Dict[str, List[str]]:
+def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
     '''
     Fetches files from database for give studies.
 
     Parameters: 
     - accepted_studies (DataFrame[study_id, study_name]): list of accepted studies
 
-    Returns:
+    Returns: -- Fix this part
     - {'seqtype':{('project_id', 'project_name'): {('file_id', 'file_name'): ['file_description']}}}
     '''
-    files = get_table("files")
-    files = files.loc[
-        files.study_id.isin(accepted_studies['study_id']),
-        ["file_id", "study_id", "file_name", "file_description", "file_type"
-         ]].sort_values("file_description")  # Files Details
-    files = files.merge(accepted_studies, on='study_id')
-    files['file_name'] = files['file_name'].apply(
-        lambda x: x.replace('.self', ''))
-    files['study'] = files.apply(lambda x: (x['study_id'], x['study_name']),
-                                 axis=1)  # Paired info (ID, Name)
-    files['file'] = files.apply(lambda x: (x['file_id'], x['file_name']),
-                                axis=1)  # Paired info (ID, Name)
-    files = files.drop(['study_id', 'study_name', 'file_id', 'file_name'],
-                       axis=1)
-
-    files = table2dict(files, ['file_type', 'study', 'file'])
-    return files
+    return get_table("files").filter(
+        pl.col("study_id").is_in(accepted_studies['study_id'])).select(
+            "file_id", "study_id", "file_name", "file_description",
+            "file_type").with_columns(
+                pl.col('file_name').apply(
+                    lambda x: x.replace('.self', ''))).join(accepted_studies,
+                                                            on="study_id")
 
 
 def type_detector(dct: Dict[str, Any]) -> None:
@@ -198,9 +184,10 @@ def type_detector(dct: Dict[str, Any]) -> None:
     # Gets a list of all studies associated with an organism
 
 
-def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
+def fetch_study_info(organism_id: int) -> pl.DataFrame:
     '''
     Fetches studies from database for organism.
+
 
     Parameters:
     - organism_id (int): id of organism
@@ -212,22 +199,23 @@ def fetch_study_info(organism_id: int) -> Dict[str, List[str]]:
 
     '''
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(dbpath, "studies")
-    studies = studies.loc[studies.organism_id == organism_id, [
-        "study_id",
-        "paper_authors",
-        "srp_nos",
-        "paper_year",
-        "paper_pmid",
-        "paper_link",
-        "gse_nos",
-        "adapters",
-        "paper_title",
-        "description",
-        "study_name",
-    ]]
+    studies = sqlquery(
+        dbpath, "studies").filter(pl.col('organism_id') == organism_id).select(
+            "study_id",
+            "paper_authors",
+            "srp_nos",
+            "paper_year",
+            "paper_pmid",
+            "paper_link",
+            "gse_nos",
+            "adapters",
+            "paper_title",
+            "description",
+            "study_name",
+        )
+
     # "paper_link": row[5].strip('"'),  # generate link using pubmed id
-    return table2dict(studies, ["study_id"])
+    return studies
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.

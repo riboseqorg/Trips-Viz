@@ -1,40 +1,35 @@
-from typing import Dict, List, Tuple, Union, Any, Hashable  #, Unknown
+from typing import Dict, List, Tuple, Union, Any, Hashable  # , Unknown
 from typing_extensions import Literal
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import create_engine, Table, MetaData  #, insert
+from sqlalchemy import create_engine, Table, MetaData  # , insert
 import config
 import polars as pl
+from polars.dataframe.frame import DataFrame
 import pandas as pd
-from pandas.core.frame import DataFrame
 from sqlalchemy.orm.query import Query
-from sqlalchemy.engine.base import Engine
 from sqlalchemy import insert, delete, update
 # from sqlalchemy.dialects.sqlite import insert, delete, update
 
 
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
-    engine = create_engine('sqlite:///' + sqlfilepath).connect()
-    table = pd.read_sql_table(table_name=tablename, con=engine)
-    return table
+    return pl.read_database_uri(f"SELECT * FROM {tablename}", sqlfilepath)
 
 
-def sqldict2table(sqldict: Dict, tablename: str) -> pd.DataFrame:
+def sqldict2table(sqldict: Dict) -> pd.DataFrame:
     return pd.DataFrame(sqldict)
 
 
 def get_user_id(username: str) -> int:
     '''Return the user_id for a given username'''
-    users = sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),
-                     'users')
-
-    return users.loc[users['username'] == username, 'user_id'].values[0]
-
-
-def get_table(table: str) -> pd.DataFrame:
-    '''Return a table as a pandas dataframe.'''
     return sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),
-                    table)
+                    'users').filter(pl.col('username') == username)[0,
+                                                                    'user_id']
+
+
+def get_table(table: str) -> DataFrame:
+    '''Return a table as a polars dataframe.'''
+    return sqlquery(f'{config.SCRIPT_LOC}/{config.DATABASE_NAME}', table)
 
 
 def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[str, Any]:

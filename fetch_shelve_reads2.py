@@ -10,9 +10,6 @@ from pandas.core.frame import DataFrame
 # Create dictionary of read counts at each position in a transcript
 def get_reads(
     data,
-    # organism,
-    subcodon: bool,
-    # self_obj=None
 ) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
         str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
     """
@@ -65,7 +62,6 @@ def get_reads(
                 all_offsets_n_scores['score'] >= data["readscore"]]
 
             offset_dict[filename] = accepted_offsets
-            # Till here
 
             if "mismatch" in data:
                 try:
@@ -102,8 +98,7 @@ def get_reads(
         if "subcodon" not in data:
             for filename in master_file_dict:
                 for readlen in master_file_dict[filename]:
-                    if readlen >= data["min_read"] and readlen <= data[
-                            "max_read"]:
+                    if data["min_read"] <= readlen <= data["max_read"]:
                         for pos in master_file_dict[filename][readlen]:
                             count = master_file_dict[filename][readlen][pos]
                             if "coverage" in data:
@@ -129,8 +124,7 @@ def get_reads(
                 if filename not in offset_dict:
                     continue
                 for readlen in master_file_dict[filename]:
-                    if readlen >= data["min_read"] and readlen <= data[
-                            "max_read"]:
+                    if data["min_read"] <= readlen <= data["max_read"]:
                         if readlen in offset_dict[filename]:
                             offset = offset_dict[filename][readlen] + 1
                             for pos in master_file_dict[filename][readlen]:
@@ -164,58 +158,40 @@ def get_reads(
 
 # Create dictionary of counts at each position, averged by readlength
 def get_readlength_breakdown(
-    read_type: str,
-    min_read: int,
-    max_read: int,
-    tran: str,
-    user_files: Dict[str, Dict[str, str]],
-    # offset_dict,
-    tranlen: int,
-    # subcodon, noisered, primetype, preprocess,
-    coverage: int,  # organism,
-    filetype: str,
-    colorbar_minread: int,
-    colorbar_maxread: int,
+        data,
+        # offset_dict,
+        # subcodon, noisered, primetype, preprocess,
+        coverage: int,  # organism,
 ) -> Tuple[Dict[int, str], Dict[str, Dict[int, int]]]:
     """
 
     Parameters:
-    - read_type (str): either 'unambig' or 'ambig'
-    - min_read (int): minimum read length
-    - max_read (int): maximum read length
-    - tran (str): transcript
-    - user_files (Dict[str, Dict[str, str]]): user files
-    - tranlen (int): transcript length
-    - coverage (int): coverage
-    - filetype (str): filetype
-    - colorbar_minread (int): colorbar minimum read length
-    - colorbar_maxread (int): colorbar maximum read length
 
     Returns:
 
     Example:
     """
     master_dict = {}
-    color_range = float(colorbar_maxread - colorbar_minread)
+    color_range = float(data["colorbar_maxread"] - data["colorbar_minread"])
     color_list = all_palettes["RdYlGn"][10]
 
-    for i in range(0, tranlen + max_read):
+    for i in range(0, data["tranlen"] + data["max_read"]):
         master_dict[i] = {}
-        for x in range(min_read, max_read + 1):
+        for x in range(data["min_read"], data["max_read"] + 1):
             master_dict[i][x] = 0
     # the keys of master readlen dict are readlengths the value is a dictionary
     # of position:count, there is also a colour key
     colored_master_dict = {}
     master_file_dict = {}
     # first make a master dict consisting of all the read dicts from each filename
-    if filetype in user_files:
-        for file_id in user_files[filetype]:
-            filename = user_files[filetype][file_id]
+    if data["filetype"] in data["user_files"]:
+        for file_id in data["user_files"][data["filetype"]]:
+            filename = data["user_files"][data["filetype"]][file_id]
             try:
                 openshelf = SqliteDict(filename)
-                alltrandict = dict(openshelf[tran])
+                alltrandict = dict(openshelf[data["transcript"]])
                 trandict = alltrandict["unambig"]
-                if read_type == "ambig":
+                if data["read_type"] == "ambig":
                     trandict = merge_dicts(trandict, alltrandict["ambig"])
                 master_file_dict[filename] = trandict
                 openshelf.close()
@@ -224,8 +200,8 @@ def get_readlength_breakdown(
 
     for filename in master_file_dict:
         for readlen in master_file_dict[filename]:
-            if readlen >= min_read and readlen <= max_read:
-                if coverage:
+            if data["min_read"] <= readlen <= data["max_read"]:
+                if "coverage" in data:
                     for pos in master_file_dict[filename][readlen]:
                         count = master_file_dict[filename][readlen][pos]
                         for i in range(pos, pos + (readlen + 1)):
@@ -255,17 +231,17 @@ def get_readlength_breakdown(
             tot_count += sorted_master_dict[pos][readlen]
             tot_readlen += (sorted_master_dict[pos][readlen] * readlen)
         avg_readlen = int(tot_readlen / tot_count)
-        if avg_readlen > colorbar_maxread:
-            avg_readlen = colorbar_maxread
+        if avg_readlen > data["colorbar_maxread"]:
+            avg_readlen = data["colorbar_maxread"]
         # find where this avg readlen lies in the range of min readlen
         # to max readlen and use that to assign a color
 
-        per = (avg_readlen - colorbar_minread) / color_range
+        per = (avg_readlen - data["colorbar_minread"]) / color_range
         final_per = int(per * 10) if per > 0.9 else 9
         color = color_list[final_per]
         if color not in colored_master_dict:
             colored_master_dict[color] = collections.OrderedDict()
-            for i in range(0, tranlen + max_read + 1):
+            for i in range(0, data["tranlen"] + data["max_read"] + 1):
                 colored_master_dict[color][i] = 0
         if pos not in colored_master_dict[color]:
             colored_master_dict[color][pos] = 0
