@@ -70,7 +70,7 @@ def fetch_user() -> Tuple[str | None, bool]:
     session_id = str(session["uid"])
     # Check if this session uid is already in the users table
     users = get_table("users")
-    if session_id not in users.username:
+    if session_id not in users['username']:
         # Add session uid to user table
         update_table(
             "users", {
@@ -82,21 +82,18 @@ def fetch_user() -> Tuple[str | None, bool]:
                 'advanced': 0,
                 'temp_user': 1
             }, 'insert')
-        user_id = max(users.user_id) + 1
+        user_id = max(users['user_id']) + 1
         defaul_user_settings = config.DEFAULT_USER_SETTINGS.copy()
         for stop in ['uaa', 'uag', 'uga']:
             defaul_user_settings[f'comp_{stop}_col'] = defaul_user_settings[
                 f'{stop}_col']
         defaul_user_settings['user_id'] = user_id
         update_table("user_settings", defaul_user_settings, 'insert')
-
+# id and login starus
     try:
-        user = current_user.name
-        logged_in = True
+        return current_user.name, True
     except Exception:
-        user = session_id
-        logged_in = False
-    return (user, logged_in)
+        return session_id, False
 
 
 # Given a username and an organism returns a list of relevant studies.
@@ -231,14 +228,16 @@ def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
     Example:
 
     '''
-    studies = get_table("studies")  # users is name of table
-    studies = studies.loc[studies.study_id.isin(data['study_ids']),
-                          ['study_id', 'study_name']]
-    files = get_table("files")
-    files = files[files["file_id"].isin(data['file_ids'])]
-    files = files.merge(studies, on='study_id')
-    files['file_name'] = files['file_name'].apply(
-        lambda x: x.replace('.self', '.sqlite'))
+    studies = get_table("studies").filter(
+        pl.col("study_id").is_in(data['study_ids'])).select(
+            "study_id", "study_name")
+    # users is name of table
+    files = get_table("files").filter(
+        pl.col("file_id").is_in(data['file_ids'])).join(
+            studies, on='study_id').with_columns(
+                pl.col('file_name').apply(lambda x: x.replace(
+                    '.self', '.sqlite')).alias('file_name'))
+
     files['path'] = files.apply(
         lambda x: "{}/{}/{}/{}/{}/{}.sqlite".format(
             config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[
@@ -267,10 +266,6 @@ def generate_short_code(data, organism: str, transcriptome: str,
 
     Example:
     """
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
-    connection.text_factory = str
-    cursor = connection.cursor()
     # build a url so that this plot can be recreated later on
     url = "/{}/{}/{}/?".format(organism, transcriptome, plot_type)
     # To stop the file_list argument in the url being extremely long, pass a riboseq_studies and rnaseq_studies arguments, these are study_ids of any study which
@@ -278,22 +273,12 @@ def generate_short_code(data, organism: str, transcriptome: str,
     riboseq_studies = []
     rnaseq_studies = []
     proteomics_studies = []
-    oraganisms = get_table("organisms")
-    organism_id = oraganisms.loc[oraganisms.organism_name == organism,
-                                 "organism_id"].values[0]
-    studies = get_table("studies")
-    studies = studies.loc[studies.organism_id == organism_id,
-                          "study_id"].values
-    files = get_table("files")
-    riboseq_files = files.loc[files.study_id.isin(studies)
-                              & files.file_type == "riboseq", "file_id"].values
-    rnaseq_files = files.loc[files.study_id.isin(studies)
-                             & files.file_type == "rnaseq", "file_id"].values
-    proteomics_files = files.loc[files.study_id.isin(studies)
-                                 & files.file_type == "proteomics",
-                                 "file_id"].values
-
-    result = cursor.fetchall()
+    oraganism_id = get_table("organisms").filter(
+        (pl.col("organism_name") == organism))[0, "organism_id"]
+    studies = get_table("studies").filter(
+        (pl.col("organism_id") == oraganism_id))['study_id']
+    files = get_table("files").filter((pl.col("study_id").is_in(studies)) & (
+        pl.col('file_type').is_in(['riboseq', 'rnaseq', 'proteomics'])))
 
     if plot_type == "interactive_plot" or plot_type == "metainfo_plot" or plot_type == "orf_translation":
         url += "files="
@@ -363,30 +348,12 @@ def generate_short_code(data, organism: str, transcriptome: str,
         url += "&minread={}".format(data['minread'])
         url += "&maxread={}".format(data['maxread'])
         url += "&user_dir={}".format(data["primetype"])
-        if "ambiguous" in data:
-            url += "&ambig=T"
-        else:
-            url += "&ambig=F"
-        if "ribocoverage" in data:
-            url += "&cov=T"
-        else:
-            url += "&cov=F"
-        if "varlite" in data:
-            url += "&lg=T"
-        else:
-            url += "&lg=F"
-        if "nucseq" in data:
-            url += "&nuc=T"
-        else:
-            url += "&nuc=F"
-        if "readscore" in data:
-            url += "&rs={}".format(data["readscore"])
-        else:
-            url += "&rs=1"
-        if "color_readlen_dist" in data:
-            url += "&crd=T"
-        else:
-            url += "&crd=F"
+        url += f"&ambig={'T' if 'ambiguous' in data else 'F'}"
+        url += f"&cov={'T' if 'ribocoverage' in data else 'F'}"
+        url += f"&nuc={'T' if 'nucseq' in data else 'F'}"
+        url += f"&lg={'T' if 'varlite' in data else 'F'}"
+        url += f"&rs={data['readscore'] if 'readscore' in data else 1}"
+        url += f"&crd={'T' if 'color_readlen_dist' in data else 'F'}"
 
     if plot_type == "traninfo_plot":  # TODO: Hide these values some where in html
         url += "&plot={}".format(data['plottype'])
@@ -449,14 +416,9 @@ def generate_short_code(data, organism: str, transcriptome: str,
             if "heatmap_direction" in data:
                 if data["heatmap_direction"] != "None":
                     url += "&hm_dir={}".format(data["heatmap_direction"])
-            if "log_scale" in data:
-                url += "&hm_log=T"
-            else:
-                url += "&hm_log=F"
-            if "reverse_scale" in data:
-                url += "&hm_rev=T"
-            else:
-                url += "&hm_rev=F"
+            url += f"&hm_log={'T' if 'log_scale' in data else 'F'}"
+            url += f"&hm_rev={'T' if 'reverse_scale' in data else 'F'}"
+
             if "heatmap_metagene_type" in data:
                 if data["heatmap_metagene_type"] != "None":
                     url += "&hm_pos={}".format(data["heatmap_metagene_type"])
@@ -572,28 +534,15 @@ def generate_short_code(data, organism: str, transcriptome: str,
         label_string = label_string[:len(label_string) - 1]
 
         url += file_string
-        url += "&labels={}".format(label_string)
-        url += "&transcript={}".format(data['transcript'].upper().strip())
-        url += "&minread={}".format(data['minread'])
-        url += "&maxread={}".format(data['maxread'])
-
-        url += "&hili_start={}".format(data['hili_start'])
-        url += "&hili_stop={}".format(data['hili_stop'])
-
-        if "ambiguous" in data:
-            url += "&ambig=T"
-        else:
-            url += "&ambig=F"
-
-        if "coverage" in data:
-            url += "&cov=T"
-        else:
-            url += "&cov=F"
-
-        if "normalize" in data:
-            url += "&normalize=T"
-        else:
-            url += "&normalize=F"
+        url += f"&labels={label_string}"
+        url += f"&transcript={data['transcript'].upper().strip()}"
+        url += f"&minread={data['minread']}"
+        url += f"&maxread={data['maxread']}"
+        url += f"&hili_start={data['hili_start']}"
+        url += f"&hili_stop={data['hili_stop']}"
+        url += f"&ambig={'T' if 'ambiguous' in data else 'F'}"
+        url += f"&cov={'T' if 'coverage' in data else 'F'}"
+        url += f"&normalize={'T' if 'normalize' in data else 'F'}"
 
     if plot_type == "differential":
         url += "&minzscore={}".format(data["minzscore"])
@@ -651,36 +600,12 @@ def generate_short_code(data, organism: str, transcriptome: str,
             data["min_cds"], data["max_cds"], data["min_len"], data["max_len"],
             data["min_avg"], data["max_avg"])
         url += "&tran_list={}".format(data["tran_list"])
-
-        if "start_increase_check" in data:
-            url += "&sic=T"
-        else:
-            url += "&sic=F"
-
-        if "stop_decrease_check" in data:
-            url += "&sdc=T"
-        else:
-            url += "&sdc=F"
-
-        if "lowest_frame_diff_check" in data:
-            url += "&lfdc=T"
-        else:
-            url += "&lfdc=F"
-
-        if "highest_frame_diff_check" in data:
-            url += "&hfdc=T"
-        else:
-            url += "&hfdc=F"
-
-        if "ambig_check" in data:
-            url += "&ambig=T"
-        else:
-            url += "&ambig=F"
-
-        if "saved_check" in data:
-            url += "&saved_check=T"
-        else:
-            url += "&saved_check=F"
+        url += f"&sic={'T' if 'start_increase_check' in data else 'F'}"
+        url += f"&sdc={'T' if 'stop_decrease_check' in data else 'F'}"
+        url += f"&lfdc={'T' if 'lowest_frame_diff_check' in data else 'F'}"
+        url += f"&hfdc={'T' if 'highest_frame_diff_check' in data else 'F'}"
+        url += f"&ambig={'T' if 'ambig_check' in data else 'F'}"
+        url += f"&saved_check={'T' if 'saved_check' in data else 'F'}"
 
     cursor.execute("SELECT MAX(url_id) from urls;")
     result = cursor.fetchone()

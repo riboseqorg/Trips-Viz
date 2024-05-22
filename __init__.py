@@ -3,9 +3,10 @@ import pandas as pd
 import os
 import time
 from datetime import date
+import polars as pl
 import sys
 import sqlite3
-from sqlqueries import sqlquery, get_user_id, get_table, update_table
+from sqlqueries_2 import sqlquery, get_user_id, get_table, update_table
 # import riboflask_datasets
 import logging
 from flask import (Flask, get_flashed_messages, render_template, request,
@@ -175,25 +176,26 @@ def statisticspage() -> str:
             organism = f"{orgt[0][0]}.{orgt[1]}"
         return organism.capitalize()
 
-    organisms = get_table('organisms')
-    organisms = organisms.loc[organisms.private == 0,
-                              ['organism_id', 'organism_name']]
-    organisms['organism_name'] = organisms['organism_name'].apply(
-        rename_organism)
+    organisms = get_table('organisms').filter(
+        pl.col('private') == 0).with_columns(
+            pl.col('organism_name').apply(rename_organism))[[
+                'organism_id', 'organism_name'
+            ]]
 
-    no_organisms = len(organisms)
+    no_organisms = organisms.shape[0]
 
-    files = get_table('files')[['organism_id', 'file_type']]
-    riboseq_files = files[files.file_type == 'riboseq'].shape[0]
-    rnaseq_files = files[files.file_type == 'rnaseq'].shape[0]
-    files['file_type'] = files['file_type'].apply(
-        lambda x: f"{x.capitalize()} files")
-    org_files_count = organisms.merge(files, on='organism_id').groupby(
-        ['organism_name',
-         'file_type']).size().reset_index().rename(columns={
-             0: 'Count',
-             'organism_name': 'Organism'
-         })
+    files = get_table('files').with_columns(
+        pl.col('file_type').apply(lambda x: f"{x.capitalize()} files"))[[
+            'organism_id', 'file_type'
+        ]]
+    file_type_counts = files.group_by('file_type').len().rename(
+        {'len': 'Count'})
+    # RiboSEq and Rna seq file counts
+    org_files_count = organisms.join(files, on='organism_id').group_by(
+        'organism_name', 'file_type').len().rename({
+            'len': 'Count',
+            'organism_name': 'Organism'
+        })
 
     # NOTE: Till here
 
@@ -202,17 +204,15 @@ def statisticspage() -> str:
     org_breakdown_graph = stats_plots.org_breakdown_plot(org_files_count)
 
     # Create the graph which breaks down studies published per year
-    public_studies = get_table('studies')
-    public_studies = public_studies[((public_studies.private == 0) and
-                                     (~pd.isnull(public_studies.paper_year)))]
-    no_studies = len(public_studies)
-    year_dist = public_studies.groupby(
-        ['paper_year']).size().reset_index().rename(columns={0: 'Count'})
+    public_studies = get_table('studies').filter(
+        (pl.col('private') == 0) & (pl.col('paper_year').is_not_null()))
+
+    no_studies = public_studies.shape[0]
+    year_dist = public_studies.group_by("paper_year").len().rename(
+        {'len': 'Count'})
 
     year_plot = stats_plots.year_dist(year_dist)
-    updates = get_table('updates')
-    updates = updates.sort_values(by='date',
-                                  ascending=False).to_html(classes='')
+    updates = get_table('updates').sort('date', descending=True)._repr_html_()
 
     return render_template('statistics.html',
                            no_organisms=no_organisms,
@@ -373,8 +373,8 @@ def downloadspage() -> str:
     except Exception:
         user = None
     dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    organisms = sqlquery(dbpath, 'organisms')
-    organisms.loc[organisms.private == 0, 'organism_name'].values
+    organisms = sqlquery(
+        dbpath, 'organisms').filter(pl.col('private') == 0)['organism_name']
 
     for organism in organisms:
         organism_dict[organism] = []
@@ -433,10 +433,11 @@ def uploadspage() -> str:
         )
 
     user_id = get_user_id(user)
-    organisms = get_table('organisms')
-    organisms_t = organisms.loc[
-        ~organisms.private | organisms.owner == user_id,
-        ["organism_name", "transcriptome_list", "organism_id"]]
+    organisms = get_table('organisms').filter((pl.col('private') == 0)
+                                              & (pl.col('owner') == user_id))
+    organisms_t = organisms[[
+        "organism_name", "transcriptome_list", "organism_id"
+    ]]
 
     organism_dict = table_to_dict(
         organisms_t)  # key: organism name, value: transcriptome_list
@@ -481,13 +482,12 @@ def uploadspage() -> str:
         user_names = users[users.user_id.isin(user_ids)].username
         user_names = set(user_names) - set(study_dict[study_id][3])
         study_dict[study_id][3] += list(user_names)
-    files = get_table('files')
+    files = get_table('files').filter(pl.col('owner') == user_id)
     # [file_name,study_id,file_id,file_description]
-    files = files[files.owner == user_id]
-    studies = get_table('studies')
-    studies = studies.merge(files, on='study_id')
-    studies['study_name'] = studies['study_name'].apply(
-        lambda x: x.replace("_{}".format(user_id), "", 1))
+    studies = get_table('studies').with_columns(
+        pl.col('study_name').apply(
+            lambda x: x.replace("_{}".format(user_id), "", 1))).join(
+                files, on='study_id')
 
     # key: file_name, value: [study_name,file_id,file_description]
     file_dict = {}
@@ -567,8 +567,6 @@ def upload_file() -> Response:
                 break
             fout.write(chunk)
 
-    # f.save("{}/uploads/{}/{}".format(config.SCRIPT_LOC, foldername,
-    # filename))
     sqlite_db = SqliteDict("{}/uploads/{}/{}".format(config.SCRIPT_LOC,
                                                      foldername, filename))
     try:
@@ -792,16 +790,15 @@ def savedquery():
     # get user_id
     user_id = get_user_id(user)
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
-    user_saved_cases = get_table('users_saved_cases')
-    user_saved_cases = user_saved_cases.loc[user_saved_cases.user_id ==
-                                            user_id]
+    user_saved_cases = get_table('users_saved_cases').filter(
+        pl.col('user_id') == user_id)
     if organism != 'Select an Organism':
-        user_saved_cases = user_saved_cases.loc[user_saved_cases.organism ==
-                                                organism]
+        user_saved_cases = user_saved_cases.filter(
+            pl.col('organism') == organism)
         if label:
             label_list = label.strip().split(",")
-            user_saved_cases = user_saved_cases.loc[
-                user_saved_cases.label.isin(label_list)]
+            user_saved_cases = user_saved_cases.filter(
+                pl.col('label').is_in(label_list))
 
     user_saved_cases = user_saved_cases.head(1000)
     returnstr = user_saved_cases.apply(
@@ -886,11 +883,10 @@ def viewfile(folder, filename):
 def short(short_code):
     # First convert short code to an integer
     integer = base62_to_integer(short_code)
-    url = get_table('urls')
-    url = url[url.url_id == integer]
-    if url.empty:
+    url = get_table('urls').filter(pl.col('url_id') == integer)
+    if url.is_empty():
         return "Short code not recognized."
-    url = url.url.values[0]
+    url = url[0, 'url']
     # add a keyword to the url to prevent generating another shortcode
     url += "&short={}".format(short_code)
     return redirect(url)
@@ -910,7 +906,6 @@ def homepage2() -> str:
     sanitize_get_request(request.cookies.get("cookieconsent_status"))
 
     # For All
-    organisms = get_table('organisms')
 
     # user related details
     user, logged_in = fetch_user()
@@ -919,13 +914,11 @@ def homepage2() -> str:
         # TODO: Replace login and register part with username
         flash(f"You are logged in as {user}")
         user_id = get_user_id(user)  # TODO: Find a way to pass only str
-        organism_access = get_table('organism_access')
-        private_organisms_id = organism_access.loc[
-            organism_access.user_id == user_id, 'organism_id'].values.tolist()
-    organisms = organisms.loc[
-        ~organisms.private |
-        (organisms.organism_id.isin(private_organisms_id)),
-        ["organism_name", "transcriptome_list"]].drop_duplicates()
+        private_organisms_id = get_table('organism_access').filter(
+            pl.col('user_id') == user_id)["organism_id"].to_list()
+    organisms = get_table('organisms').filter((pl.col('private') == 0) | (
+        pl.col('organism_id').is_in(private_organisms_id))).select(
+            'organism_name', 'transcriptome_list').unique().to_pandas()
     organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
         list).reset_index()
 
@@ -1198,6 +1191,7 @@ def deletestudyquery():
             "SELECT organism_id FROM studies WHERE study_id = {}".format(
                 study_id))
         org_id = cursor.fetchone()[0]
+        org_id = get_table() 
         cursor.execute(
             "SELECT organism_name,transcriptome_list FROM organisms WHERE organism_id = {}"
             .format(org_id))
@@ -1230,29 +1224,29 @@ def deletestudyquery():
 # Allows users to delete transcriptomes
 @app.route('/deletetranscriptomequery', methods=['GET', 'POST'])
 # @login_required
+# Convert this as chon task which runs every 12 hours
 def deletetranscriptomequery():
     data = json.loads(request.data)
 
     user = fetch_user()[0]
-    organisms = get_table("organisms")
     organism_ids = [
         val[0].split("_")[-1] for _, val in data.items()
         if not val[0].endswith("_undefined")
     ]
     user_id = get_user_id(user)
-    organisms = organisms.loc[
-        organisms.organism_id.isin(organism_ids) &
-        (organisms.owner == user_id),
-        ['organism_name', 'transcriptome_list']].drop_duplicates()
+    organisms = get_table("organisms").filter(
+        pl.col("organism_id").is_in(organism_ids)
+        & (pl.col("owner") == user_id)).select(
+            'organism_name', 'transcriptome_list').unique().with_columns(
+                pl.col('organism_name', 'transcriptome_list').apply(
+                    lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".
+                    format(config.UPLOADS_DIR, user_id, x['organism_name'], x[
+                        'transcriptome_list'])).alias('sqlite_path').filter(
+                            pl.col('sqlite_path').apply(os.path.isfile))
+            ).to_pandas()  # recheck if apply works correcly
     keep_time = 60 * 60 * 24 * 14  # 14 days
     curr_time = time.time()
     deletion_time = curr_time + keep_time
-    organisms['sqlite_path'] = organisms.apply(
-        lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, user_id, x['organism_name'], x[
-                'transcriptome_list']),
-        axis=1)
-    organisms = organisms[organisms['sqlite_path'].apply(os.path.isfile)]
     organisms.apply(lambda x: update_table("org_deletions", 'insert', {},
                                            {'file_id': x['file_id']}),
                     axis=1)
@@ -1284,12 +1278,11 @@ def deletetranscriptomequery():
         # if os.path.isdir(sqlite_dir):
         # os.rename(sqlite_dir,sqlite_dir+"_REMOVE")
         update_table("organisms", {"organism_id": organism_id})
-        files = get_table("files")
-        files = files[files.organism_id == organism_id]
+        files = get_table("files").filter(pl.col("organism_id") == organism_id)
         studies = get_table("studies")
-        files_studies = files.merge(studies, on="study_id")
-        study_ids = files.study_id.unique()
-        study_names = files_studies.study_name.unique()
+        files_studies = files.join(studies, on="study_id")
+        study_ids = files.select("study_id").unique()
+        study_names = files_studies.select("study_name").unique()
 
         # delete all files on the server associated with this organism, if there are any
         for _, row in files_studies.iterrows():
@@ -1321,12 +1314,8 @@ def seqrulesquery():
     cursor = connection.cursor()
 
     user = fetch_user()[0]
+    user_id = get_user_id(user)
 
-    # get user_id
-    cursor.execute(
-        "SELECT user_id from users WHERE username = '{}';".format(user))
-    result = (cursor.fetchone())
-    user_id = result[0]
     for seq_type in data:
         if data[seq_type][0] == 'False':
             cursor.execute(
@@ -1394,6 +1383,7 @@ def dataset_breakdown(organism, transcriptome):
         except Exception:
             raw_count = 0
             raw_reads.append(raw_count)
+
         orfquery_cursor.execute(
             "SELECT study_id,file_name,file_description from files WHERE file_id = {};"
             .format(file_id))
