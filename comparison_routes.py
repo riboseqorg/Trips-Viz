@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, jsonify
 from flask import current_app as app
 from sqlitedict import SqliteDict
 import os
+import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code)
@@ -11,7 +12,7 @@ from flask_login import current_user
 import json
 from fixed_values import my_decoder
 
-from sqlqueries import get_table, sqlquery
+from sqlqueries_2 import get_table, sqlquery
 # Single transcript comparison page, user chooses a gene and groups of files to display
 comparison_plotpage_blueprint = Blueprint("comparisonpage",
                                           __name__,
@@ -30,10 +31,9 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     """
     #global user_short_passed
 
-    organisms = get_tables("organisms")
-    organisms = organisms.loc[organisms.organism_name == organism, [
-        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
-    ]].iloc[0]
+    organisms = get_tables("organisms").filter(pl.col('organism_name') == organism).select(
+        'gwips_clade', 'gwips_organism', 'gwips_database', 'default_transcript'
+    )[0]
 
     gwips_info = {
         "organism": organisms["gwips_organism"],
@@ -119,10 +119,7 @@ def comparequery() -> str | Tuple:
     tran = data['transcript'].upper().strip()
     organism = data['organism']
     transcriptome = data['transcriptome']
-    organisms = get_table("organisms")
-    owner = organisms.loc[organisms.organism_name == organism
-                          & organisms.transcriptome_list == transcriptome,
-                          "owner"].values[0]
+    owner = get_table("organisms").filter((pl.col('organism_name') == organism) & (pl.col('transcriptome_list') == transcriptome))[0,"owner"]
 
     if owner:
         transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
@@ -132,11 +129,10 @@ def comparequery() -> str | Tuple:
     else:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
-    transcripts = sqlquery(transhelve, "transcripts")
-    transcripts = transcripts[(transcripts.transcript == data['transcript']) |
-                              (transcripts.gene == data['transcript'])]
-    if data.empty:
+    transcripts = sqlquery(transhelve, "transcripts").filter((pl.col('transcript') == data['transcript']) | (pl.col('gene') == data['transcript']))
+    if not transcripts.is_empty():
         # TODO: I messed it. Check original Code here
+
 
         return_str = "TRANSCRIPTS"
         for transcript in result:
@@ -144,7 +140,8 @@ def comparequery() -> str | Tuple:
                 "SELECT length,cds_start,cds_stop,principal from transcripts WHERE transcript = '{}'"
                 .format(transcript[0]))
             tran_result = cursor.fetchone()
-            tranlen = tran_result[0]
+        
+        tranlen = tran_result[0]
             cds_start = tran_result[1]
             cds_stop = tran_result[2]
             if tran_result[3] == 1:
@@ -159,7 +156,7 @@ def comparequery() -> str | Tuple:
                 threeutrlen = tranlen - cds_stop
             return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
 
-            return return_str
+        return return_str
     else:
         tran = data.iloc[0].transcript
         return_str = f"ERROR! Could not find any transcript corresponding to {tran}"
