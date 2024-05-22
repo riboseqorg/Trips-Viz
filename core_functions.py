@@ -390,119 +390,54 @@ def generate_short_code(data, organism: str, transcriptome: str,
 
         # Nuc comp plot
         if data["plottype"] == "nuc_comp":
-            if "nuc_comp_direction" in data:
-                if data["nuc_comp_direction"] != "None":
-                    url += "&nc_dir={}".format(data["nuc_comp_direction"])
-            if "nuc_comp_type" in data:
-                if data["nuc_comp_type"] != "None":
-                    url += "&nc_type={}".format(data["nuc_comp_type"])
-            if "nuc_minreadlen" in data:
-                if data["nuc_minreadlen"] != "None":
-                    url += "&nc_minreadlen={}".format(data["nuc_minreadlen"])
-            if "nuc_maxreadlen" in data:
-                if data["nuc_maxreadlen"] != "None":
-                    url += "&nc_maxreadlen={}".format(data["nuc_maxreadlen"])
+            for sc in [
+                    'nuc_comp_direction', 'nuc_comp_type', 'nuc_min_read_len',
+                    'nuc_max_read_len'
+            ]:
+                if sc in data and data[sc] != "None":
+                    url += f"&{sc}={data[sc]}"
 
         # Heatmap plot
         if data["plottype"] == "heatmap":
-            if "heatmap_minreadlen" in data:
-                if data["heatmap_minreadlen"] != "None":
-                    url += "&hm_minreadlen={}".format(
-                        data["heatmap_minreadlen"])
-            if "heatmap_maxreadlen" in data:
-                if data["heatmap_maxreadlen"] != "None":
-                    url += "&hm_maxreadlen={}".format(
-                        data["heatmap_maxreadlen"])
-            if "heatmap_direction" in data:
-                if data["heatmap_direction"] != "None":
-                    url += "&hm_dir={}".format(data["heatmap_direction"])
             url += f"&hm_log={'T' if 'log_scale' in data else 'F'}"
             url += f"&hm_rev={'T' if 'reverse_scale' in data else 'F'}"
-
-            if "heatmap_metagene_type" in data:
-                if data["heatmap_metagene_type"] != "None":
-                    url += "&hm_pos={}".format(data["heatmap_metagene_type"])
-            if "heatmap_startpos" in data:
-                if data["heatmap_startpos"] != "None":
-                    url += "&hm_start={}".format(data["heatmap_startpos"])
-            if "heatmap_endpos" in data:
-                if data["heatmap_endpos"] != "None":
-                    url += "&hm_stop={}".format(data["heatmap_endpos"])
-            if "color_palette" in data:
-                if data["color_palette"] != "None":
-                    url += "&hm_col={}".format(data["color_palette"])
-            if "maxscaleval" in data:
-                url += "&maxscaleval={}".format(data["maxscaleval"])
-            if "metagene_tranlist" in data:
-                if data["metagene_tranlist"] != "None":
-                    url += "&metagene_tranlist={}".format(
-                        data["metagene_tranlist"])
+            for sc in [
+                    "heatmap_min_read_len", "heatmap_max_read_len",
+                    "heatmap_direction", "heatmap_metagene_type",
+                    "heatmap_start_pos", "heatmap_end_pos",
+                    "heatmap_color_palette", "heatmap_max_scale_val",
+                    "heatmap_metagene_tran_list"
+            ]:
+                if sc in data:
+                    if data[sc] != "None":
+                        url += f"&{sc}={data[sc]}"
 
         # Triplet periodicity
         if data["plottype"] == "trip_periodicity":
-            if "trip_minreadlen" in data:
-                if data["trip_minreadlen"] != "None":
-                    url += "&tp_minreadlen={}".format(data["trip_minreadlen"])
-            if "trip_maxreadlen" in data:
-                if data["trip_maxreadlen"] != "None":
-                    url += "&tp_maxreadlen={}".format(data["trip_maxreadlen"])
+            for sc in ["tripplet_min_read_len", "tripplet_max_read_len"]:
+                if sc in data:
+                    if data[sc] != "None":
+                        url += f"&{sc}={data[sc]}"
 
         # mRNA readlen dist
         if data["plottype"] == "mrna_dist_readlen":
-            if "mrna_readlen_per" in data:
-                if data["mrna_readlen_per"] != "None":
-                    url += "&mdr_per={}".format(data["mrna_readlen_per"])
-            if "smooth_amount" in data:
-                if data["smooth_amount"] != "None":
-                    url += "&mdr_smooth={}".format(data["smooth_amount"])
+            for sc in ["mrna_read_len_per", "smooth_amount"]:
+                if sc in data:
+                    if data[sc] != "None":
+                        url += "&{}={}".format(sc, data[sc])
 
         # metagene
         if data["plottype"] == "metagene_plot":
-            if "include_first" in data:
-                if data["include_first"] != "None":
-                    url += "&include_first=T"
-            if "include_last" in data:
-                if data["include_last"] != "None":
-                    url += "&include_last=T"
-            if "exclude_first" in data:
-                if data["exclude_first"] != "None":
-                    url += "&exclude_first=T"
-            if "exclude_last" in data:
-                if data["exclude_last"] != "None":
-                    url += "&exclude_last=T"
-            if "custom_seq_list" in data:
-                if data["custom_seq_list"] != "None":
-                    url += "&custom_seq_list={}".format(
-                        data["custom_seq_list"])
-            if "exclude_first_val" in data:
-                if data["exclude_first_val"] != "None":
-                    url += "&exclude_first_val={}".format(
-                        data["exclude_first_val"])
-            if "exclude_last_val" in data:
-                if data["exclude_last_val"] != "None":
-                    url += "&exclude_last_val={}".format(
-                        data["exclude_last_val"])
-            if "include_first_val" in data:
-                if data["include_first_val"] != "None":
-                    url += "&include_first_val={}".format(
-                        data["include_first_val"])
-            if "include_last_val" in data:
-                if data["include_last_val"] != "None":
-                    url += "&include_last_val={}".format(
-                        data["include_last_val"])
-            if "metagene_tranlist" in data:
-                if data["metagene_tranlist"] != "None":
-                    url += "&metagene_tranlist={}".format(
-                        data["metagene_tranlist"])
-            if "metagene_type" in data:
-                if data["metagene_type"] != "None":
-                    url += "&mg_pos={}".format(data["metagene_type"])
-            if "minreadlen" in data:
-                if data["minreadlen"] != "None":
-                    url += "&mg_minreadlen={}".format(data["minreadlen"])
-            if "maxreadlen" in data:
-                if data["maxreadlen"] != "None":
-                    url += "&mg_maxreadlen={}".format(data["maxreadlen"])
+            for tp in [
+                    "include_first", "include_last", "exclude_first",
+                    "exclude_last", "custom_seq_list", "exclude_first_val",
+                    "exclude_last_val", "include_first_val",
+                    "include_last_val", "metagene_translist", "metagene_type",
+                    "minreadlen", "maxreadlen"
+            ]:
+                if tp in data:
+                    if data[tp] != "None":
+                        url += "&{}={}".format(tp, data[tp])
 
         # Replicate comparison
         if data["plottype"] == "replicate_comp":
@@ -572,40 +507,32 @@ def generate_short_code(data, organism: str, transcriptome: str,
         url += "&rnaseq_labels_2={}".format(
             str(data["master_file_dict"]["rnaseq2"]["file_names"]).strip(
                 "[]").replace("'", "").replace(" ", ""))
+        url += "&ambig={'T' if 'ambiguous' in data else 'F'}"
         if "plottype" in data:
             url += "&plottype={}".format(data["plottype"])
         if "min_cov" in data:
             url += "&min_cov={}".format(data["min_cov"])
         if "gene_list" in data:
             url += "&gene_list={}".format(data["gene_list"])
-        if "ambiguous" in data:
-            url += "&ambig=T"
-        else:
-            url += "&ambig=F"
 
     if plot_type == "orf_translation":
-        start_codons = []
-        if "sc_aug" in data:
-            start_codons.append("AUG")
-        if "sc_cug" in data:
-            start_codons.append("CUG")
-        if "sc_gug" in data:
-            start_codons.append("GUG")
-        if "sc_none" in data:
-            start_codons.append("NONE")
+
+        start_codons = [
+            st.upper() for st in config.START_CODONS if f'sc_{st}' in data
+        ]
 
         url += "&start_codons={}".format(
             str(start_codons).strip("[]").replace("'", ""))
         url += "&min_cds={}&max_cds={}&min_len={}&max_len={}&min_avg={}&max_avg={}".format(
             data["min_cds"], data["max_cds"], data["min_len"], data["max_len"],
             data["min_avg"], data["max_avg"])
-        url += "&tran_list={}".format(data["tran_list"])
-        url += f"&sic={'T' if 'start_increase_check' in data else 'F'}"
-        url += f"&sdc={'T' if 'stop_decrease_check' in data else 'F'}"
-        url += f"&lfdc={'T' if 'lowest_frame_diff_check' in data else 'F'}"
-        url += f"&hfdc={'T' if 'highest_frame_diff_check' in data else 'F'}"
-        url += f"&ambig={'T' if 'ambig_check' in data else 'F'}"
-        url += f"&saved_check={'T' if 'saved_check' in data else 'F'}"
+        url += f"&tran_list={'tran_list'}"
+        for sc in [
+                'start_increase_check', 'stop_decrease_check',
+                'lowest_frame_diff_check', 'highest_frame_diff_check',
+                'ambig_check', 'saved_check'
+        ]:
+            url += f"&{sc}={'T' if sc in data else 'F'}"
 
     cursor.execute("SELECT MAX(url_id) from urls;")
     result = cursor.fetchone()
@@ -784,14 +711,9 @@ def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
     minreadlen = 15
     maxreadlen = 150
     profile = {}
-    try:
-        unambig_trancounts = trancounts["unambig"]
-    except Exception:
-        unambig_trancounts = {}
-    try:
-        ambig_trancounts = trancounts["ambig"]
-    except Exception:
-        ambig_trancounts = {}
+    unambig_trancounts = trancounts[
+        "unambig"] if 'unambig' in trancounts else {}
+    ambig_trancounts = trancounts["ambig"] if 'ambig' in trancounts else {}
     for readlen in unambig_trancounts:
         if minscore:
             if readlen in scores:
