@@ -399,7 +399,7 @@ def downloadspage() -> str:
 def download_file() -> Response:
     """
     Called when user downloads something from the downloads page
-    
+
     """
     organism = request.form["organism"]
     assembly = request.form["assembly"]
@@ -445,18 +445,19 @@ def uploadspage() -> str:
         organisms_t)  # key: organism_id, value: [organism, transcriptome]
     # -- Selected one
     organism_access = get_table('organism_access')
-    organism_ids = organism_access[organism_access.user_id ==
-                                   user_id].organism_id
-    organisms_t = organisms[organisms.organism_id.isin(organism_ids)]
+    organism_ids = organism_access.filter(
+        pl.col('user_id') == user_id).select("organism_id")
+    organisms_t = organisms.filter(pl.col("organism_id").is_in(organism_ids))
     organism_dict = {**organism_dict, **table_to_dict(organisms_t)}
     org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
-    study_dict = get_table('studies')
-    study_dict = study_dict[study_dict.owner == user_id][[
-        'study_id', 'study_name', 'organism_id'
-    ]]
-    organisms_t = organisms[organisms.organism_id.isin(
-        set(study_dict.organism_id) - set(org_id_dict))]
+    study_dict = get_table('studies').filter(
+        pl.col('owner') == user_id).select('study_id', 'study_name',
+                                           'organism_id')
+
+    organisms_t = organisms.filter(
+        pl.col("organism_id").is_in(
+            set(study_dict["organism_id"]) - set(org_id_dict)))
     org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
     study_dict[int(row[0])] = [  # TODO: Study dict format
@@ -464,15 +465,15 @@ def uploadspage() -> str:
         org_id_dict[row[2]][1], []
     ]
 
-    transcriptome_dict = organisms[organism_access.user_id == user_id]
+    transcriptome_dict = organism_access.filter(pl.col("user_id") == user_id)
     transcriptome_dict = table_to_dict(
         transcriptome_dict
     )  # key: organism_id, value: [organism_name, transcriptome_list]
-    study_access = get_table('study_access')
-    study_access = study_access[study_access.study_id.isin(study_dict)]
-    users = get_table('users')
-    users = users[users.user_id.isin(study_access.user_id)]
-    users = set(users.username) - set(study_dict.keys())
+    study_access = get_table('study_access').filter(
+        pl.col("study_id").is_in(study_dict))
+    users = get_table('users').filter(
+        pl.col("user_id").is_in(study_access["user_id"]))
+    users = set(users["username"]) - set(study_dict.keys())
     # NOTE : Till here
 
     for study_id in study_dict:
@@ -491,13 +492,14 @@ def uploadspage() -> str:
 
     # key: file_name, value: [study_name,file_id,file_description]
     file_dict = {}
-    for _, row in studies.iterrows():  # TODO: Table 2 dict
+    for row in studies.iter_rows(named=True):  # TODO: Table 2 dict
         file_dict[row['file_name']] = [
             row['study_name'], row['file_id'], row['file_description']
         ]
     seq_dict = get_table('seq_rules')
-    seq_dict = table_to_dict(seq_dict[seq_dict.user_id == user_id],
-                             ['seq_name', 'frame_breakdown'])
+    seq_dict = table_to_dict(
+        seq_dict.filter(seq_dict.user_id == user_id).select(
+            'seq_name', 'frame_breakdown'))
     return render_template('uploads.html',
                            user=user,
                            organism_dict=organism_dict,
@@ -1019,11 +1021,12 @@ def deletequery():
     for key in data:
         file_id = data[key]["file_id"]
         if "filecheck" in data[key]:
-            files = files_all[files_all["file_id"] == file_id].iloc[0]
-            studies = studies_all[studies_all["study_id"] ==
-                                  files.study_id].iloc[0]
-            full_path = "{}{}/{}".format(config.UPLOADS_DIR,
-                                         studies.study_name, files.filename)
+            study_id = files_all.filter(
+                pl.col("file_id") == file_id)[0, "study_id"]
+            study_name = studies_all.filter(
+                pl.col("study_id") == study_id)[0, "study_name"]
+            full_path = "{}{}/{}".format(config.UPLOADS_DIR, study_name,
+                                         study_id)
             # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
             # The time to keep the file in seconds, currently set to 14 days
@@ -1039,11 +1042,10 @@ def deletequery():
             "UPDATE files SET file_description = '{}' WHERE file_id = {}".
             format(data[key]["file_desc"], file_id))
         if data[key]["cutadapt_removed"] != '0':
-            organism_id = files_all.loc[files_all["file_id"] == file_id,
-                                        "organism_id"].values[0]
-            organism = organisms_all.loc[organisms_all["organism_id"] ==
-                                         organism_id,
-                                         "organism_name"].values[0]
+            organism_id = files_all.filter(
+                pl.col("file_id") == file_id)[0, "organism_id"]
+            organism = organisms_all.filter(
+                pl.col("organism_id") == organism_id)[0, "organism_name"]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1054,10 +1056,11 @@ def deletequery():
                     opendict.close()
 
         if data[key]["rrna_removed"] != '0':
-            organism_id = files_all.loc[files.file_id == file_id,
-                                        'organism_id'].values[0]
-            organism = organism_all.loc[organism_all.organism_id ==
-                                        organism_id, 'organism_name'].values[0]
+            organism_id = files_all.filter(
+                pl.col("file_id") == file_id)[0, "organism_id"]
+
+            organism = organisms_all.filter(
+                pl.col("organism_id") == organism_id)[0, "organism_name"]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1066,10 +1069,11 @@ def deletequery():
                     opendict["rrna_removed"] = int(data[key]["rrna_removed"])
                     opendict.close()
         if data[key]["unmapped"] != '0':
-            organism_id = files_all.loc[files.file_id == file_id,
-                                        'organism_id'].values[0]
-            organism = organism_all.loc[organism_all.organism_id ==
-                                        organism_id, 'organism_name'].values[0]
+            organism_id = files_all.filter(
+                pl.col("file_id") == file_id)[0, "organism_id"]
+
+            organism = organisms_all.filter(
+                pl.col("organism_id") == organism_id)[0, "organism_name"]
 
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
@@ -1191,7 +1195,7 @@ def deletestudyquery():
             "SELECT organism_id FROM studies WHERE study_id = {}".format(
                 study_id))
         org_id = cursor.fetchone()[0]
-        org_id = get_table() 
+        org_id = get_table()
         cursor.execute(
             "SELECT organism_name,transcriptome_list FROM organisms WHERE organism_id = {}"
             .format(org_id))

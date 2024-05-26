@@ -195,9 +195,8 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
     Example:
 
     '''
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    studies = sqlquery(
-        dbpath, "studies").filter(pl.col('organism_id') == organism_id).select(
+    studies = get_table("studies").filter(
+        pl.col('organism_id') == organism_id).select(
             "study_id",
             "paper_authors",
             "srp_nos",
@@ -244,7 +243,16 @@ def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
                 'organism'], x['study_name'], x['file_name'])
         if x['owner'] else "{}/{}/{}.sqlite".format(config.UPLOADS_DIR, data[
             'study'], x['file_name']),
-        axis=1)
+        axis=1)  # TODO: Fix this
+    file_not_found = []
+    for fl in files['path']:
+        if not os.path.isfile(fl):
+            file_not_found.append(fl.split('/')[-1])
+
+    if len(file_not_found) > 0:
+        # TODO: Fix the resturn accorind to original as it mught be used by js
+        return f"File(s) not found: {','.join(file_not_found)}"
+
     # logging.debug("fetch_file_paths closing connection")
     return files
 

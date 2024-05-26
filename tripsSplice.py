@@ -3,9 +3,9 @@ from typing_extensions import Literal
 from numpy.typing import NDArray
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
-from sqlqueries import sqlquery
+from sqlqueries_2 import sqlquery
 from sqlitedict import SqliteDict
-import pandas as pd
+import polars as pl
 
 
 class TripsSplice:
@@ -31,9 +31,9 @@ class TripsSplice:
         |----------|---------------|--------|
         |A         |100,200,300,...|ATGCT...|
         """
-        gene_info = self.transcript_table.loc[
-            self.transcript_table.gene == gene_id,
-            ['transcript', 'exon_junctions', 'sequence']]
+        gene_info = self.transcript_table.filter(
+            pl.col("gene") == gene_id).select("transcript", "exon_junctions",
+                                              "sequence")
         gene_info['exon_junctions'] = gene_info['exon_junctions'].apply(
             lambda x: list(map(int, x.split(","))))
         return gene_info
@@ -52,8 +52,8 @@ class TripsSplice:
         Example:
 
         """
-        return self.transcript_table.loc[self.transcript_table.gene == gene,
-                                         ["transcript", "length"]]
+        return self.transcript_table.filter(pl.col("gene") == gene).select(
+            "transcript", "length")
 
     def get_genes_principal(self, gene_id: str) -> str:
         """
@@ -68,9 +68,8 @@ class TripsSplice:
         Example: 
 
         """
-        return self.transcript_table.loc[self.transcript_table.gene == gene_id
-                                         & self.transcript_table.principle,
-                                         "transcript"].values[0]
+        return self.transcript_table.filter((pl.col("gene") == gene_id) & (
+            pl.col("principle") == a))[0, "transcript"]
 
     def get_transcript_info(self, transcript_id: str) -> Series:
         """
@@ -84,9 +83,9 @@ class TripsSplice:
         Example:
 
         """
-        return self.transcript_table[self.transcript_table.transcript ==
-                                     transcript_id,
-                                     ['exon_junctions', 'sequence']].iloc[0]
+        return self.transcript_table.filter(
+            pl.col("transcript") == transcript_id).select(
+                "exon_junctions", "sequence")[0]
 
     def _exon_coordinates_list(self, lst: List[int],
                                transcript_length: int) -> List[List[int]]:
@@ -136,15 +135,15 @@ class TripsSplice:
         Example:
 
         """
-        return self.transcript_table[self.transcript_table.gene == gene]
+        return self.transcript_table.filter(pl.col("gene") == gene)
 
     def get_start_stop_codon_positions(self, transcript_id: str) -> DataFrame:
-        return self.transcript_table[self.transcript_table.transcript ==
-                                     transcript_id]
+        return self.transcript_table.filter(
+            pl.col("transcript") == transcript_id)
 
     def get_orf_exon_coordinates(self, transcript_id: str) -> DataFrame:
-        return self.transcript_table[self.transcript_table.transcript ==
-                                     transcript_id]
+        return self.transcript_table.filter(
+            pl.col("transcript") == transcript_id)
 
 
 def get_3prime_exon(junction_list: List[int],

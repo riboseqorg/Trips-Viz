@@ -6,6 +6,7 @@ from tripsSplice import genomic_exon_coordinate_ranges
 from tripsSplice import get_protein_coding_transcript_ids
 from tripsSplice import genomic_orf_coordinate_ranges
 import pandas as pd
+import polars as pl
 
 
 def get_unique_regions(

@@ -9,7 +9,6 @@ from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code)
 import riboflask_compare
 from flask_login import current_user
-import json
 from fixed_values import my_decoder
 
 from sqlqueries_2 import get_table, sqlquery
@@ -21,18 +20,18 @@ comparison_plotpage_blueprint = Blueprint("comparisonpage",
 
 @comparison_plotpage_blueprint.route('/<organism>/<transcriptome>/comparison/')
 def comparisonpage(organism: str, transcriptome: str) -> str:
-    """ 
-    Parameters: 
+    """
+    Parameters:
     - organism (str): name of the organism
     - transcriptome (str): name of the transcript
 
     Returns:
     - html page
     """
-    #global user_short_passed
+    # global user_short_passed
 
-    organisms = get_tables("organisms").filter(pl.col('organism_name') == organism).select(
-        'gwips_clade', 'gwips_organism', 'gwips_database', 'default_transcript'
+    organisms = get_table("organisms").filter(pl.col('organism_name') == organism).select(
+        'gwips_clade', 'gwips_organism', 'gwips_database', 'default_transcript', "organism_id"
     )[0]
 
     gwips_info = {
@@ -40,7 +39,7 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
         "clade": organisms["gwips_clade"],
         "database": organisms["gwips_database"]
     }
-    studyinfo_dict = fetch_study_info(organism)
+    studyinfo_dict = fetch_study_info(organisms["organism_id"])
     user_file_dict = {}
     color = 'white'  # temp color
     if str(request.args.get('files')) != "None":
@@ -68,19 +67,11 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
             user_label_dict[color] = label
 
     html_args = {
-        "user_short": str(request.args.get('short')),
         "user_file_dict": user_file_dict,
         "user_label_dict": user_label_dict,
-        "transcript": str(request.args.get('transcript')),
-        "minread": str(request.args.get('minread')),
-        "maxread": str(request.args.get('maxread')),
-        "hili_start": str(request.args.get('hili_start')),
-        "hili_stop": str(request.args.get('hili_stop')),
-        "ambig": str(request.args.get('ambig')),
-        "cov": str(request.args.get('cov')),
-        "normalize": str(request.args.get('normalize')),
         "transcriptome": str(transcriptome)
     }
+    html_args = {**request.data.to_dict(), **html_args}
 
     accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
@@ -106,20 +97,23 @@ comparisonquery_blueprint = Blueprint("comparequery",
 
 @comparisonquery_blueprint.route('/comparequery', methods=['POST'])
 def comparequery() -> str | Tuple:
-    """ 
-    Parameters: 
+    """
+    Parameters:
     - None
 
     Returns:
     - html page
     """
-    #global user_short_passed
-    user_short_passed = False
+    # global user_short_passed
     data = request.data.to_dict()
+    if not data["master_file_dict"]:
+        return "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
+    user_short_passed = False
     tran = data['transcript'].upper().strip()
     organism = data['organism']
     transcriptome = data['transcriptome']
-    owner = get_table("organisms").filter((pl.col('organism_name') == organism) & (pl.col('transcriptome_list') == transcriptome))[0,"owner"]
+    owner = get_table("organisms").filter((pl.col('organism_name') == organism) & (
+        pl.col('transcriptome_list') == data["transcriptome"]))[0, "owner"]
 
     if owner:
         transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
@@ -129,10 +123,37 @@ def comparequery() -> str | Tuple:
     else:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
-    transcripts = sqlquery(transhelve, "transcripts").filter((pl.col('transcript') == data['transcript']) | (pl.col('gene') == data['transcript']))
+    transcripts = sqlquery(transhelve, "transcripts").filter((pl.col('transcript') == data['transcriptome']) | (
+        pl.col('gene') == data['transcriptome'])).unique(subset=['transcript'])
+    if transcripts.is_empty():
+        return f"ERROR! Could not find any transcript corresponding to {tran}"
+    if data.shape[0] > 1:
+        return_str = "TRANSCRIPTS"
+        for row in transcripts.iter_rows(named=True):
+            principle = "principle" if row["principle"] == 1 else ""
+            if row["cds_start"] in ["NONE", None]:
+                cdslen = "NULL"
+                threeutrlen = "NULL"
+            else:
+                cdslen = row["cds_stop"] - row["cds_start"]
+                threeutrlen = row["length"] - row["cds_stop"]
+
+            return_str += f":{row['transcript']},{row['length']},{row['cds_start']},{cdslen},{threeutrlen},{principle}"
+            return return_str
+
+    master_filepath_dict = {}
+
+    files = get_table("files")
+
+    for color in data["master_file_dict"]:
+        files_ids = data["master_file_dict"][color]["file_ids"]
+        files_infos = files.filter(pl.col("file_id").is_in(files_ids)).unique(
+            subset=["file_id"])
+        file_paths = fetch_file_paths(data)
+        # TODO: Continue here
+
     if not transcripts.is_empty():
         # TODO: I messed it. Check original Code here
-
 
         return_str = "TRANSCRIPTS"
         for transcript in result:
@@ -140,11 +161,11 @@ def comparequery() -> str | Tuple:
                 "SELECT length,cds_start,cds_stop,principal from transcripts WHERE transcript = '{}'"
                 .format(transcript[0]))
             tran_result = cursor.fetchone()
-        
+
         tranlen = tran_result[0]
-            cds_start = tran_result[1]
-            cds_stop = tran_result[2]
-            if tran_result[3] == 1:
+        cds_start = tran_result[1]
+          cds_stop = tran_result[2]
+           if tran_result[3] == 1:
                 principal = "principal"
             else:
                 principal = ""
