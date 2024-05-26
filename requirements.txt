@@ -104,3 +104,5 @@ zipp==3.9.0
 zipstream-new==1.1.8
 types-Flask
 pydeseq2
+connectorx
+pyarrow

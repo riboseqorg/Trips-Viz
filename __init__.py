@@ -25,7 +25,7 @@ import smtplib
 import json
 from core_functions import fetch_file_paths, base62_to_integer, User, fetch_user
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery_blueprint
-from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
+# from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
 from single_transcript_routes import (single_transcript_plotpage_blueprint,
                                       single_transcript_query_blueprint)
 from single_transcript_routes_genomic import (
@@ -73,8 +73,8 @@ app.register_blueprint(single_transcript_plotpage_blueprint)
 app.register_blueprint(single_transcript_query_blueprint)
 app.register_blueprint(single_transcript_plotpage_genomic_blueprint)
 app.register_blueprint(single_transcript_query_genomic_blueprint)
-app.register_blueprint(comparison_plotpage_blueprint)
-app.register_blueprint(comparisonquery_blueprint)
+# app.register_blueprint(comparison_plotpage_blueprint)
+# app.register_blueprint(comparisonquery_blueprint)
 app.register_blueprint(diff_plotpage_blueprint)
 app.register_blueprint(diffquery_blueprint)
 app.register_blueprint(translated_orf_blueprint)

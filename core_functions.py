@@ -1,9 +1,6 @@
 import string
 from typing import Dict, List, Tuple, Any
-import pandas as pd
 import polars as pl
-from pandas.core.frame import DataFrame
-import sqlite3
 from flask import session, request
 from flask_login import UserMixin, current_user
 from Bio.Seq import Seq
@@ -109,10 +106,13 @@ def fetch_studies(organism: str,
     Returns:
     - Tuple[organism_id:str, studies:DataFrame[study_id, study_name]]
     '''
+
+    print(current_user.is_authenticated, type(current_user), "Anmol")
     # get a list of organism id's this user can access
-    study_access_list = get_table("study_accesion").filter(
-        pl.col("user_id") ==
-        current_user.id)["study_id"] if current_user.is_authenticated else []
+    study_access_list = get_table("study_access").filter(
+        pl.col("user_id") == current_user.id)["study_id"].to_list(
+        ) if current_user.is_authenticated else []
+    # TODO: Check if it can work without list
     # users is name of table
 
     # Getting organism id
@@ -123,9 +123,11 @@ def fetch_studies(organism: str,
     # Getting studies
     studies = get_table("studies").filter(
         (pl.col("organism_id") == organism_id)
-        & pl.col("study_id").is_in(study_access_list)
-        & (pl.col("private") == 0)).select("study_id", "study_name").unique(
-            subset=["study_id"])  # users is name of table
+        & (pl.col("study_id").is_in(study_access_list)
+           | (pl.col("private") == 0))).select(
+               "study_id",
+               "study_name").unique(subset=["study_id"
+                                            ])  # users is name of table
     # TODO: Compare with original code and discuss which one too choose
     return organism_id, studies
 
@@ -215,7 +217,7 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
-def fetch_file_paths(data: Dict[str, Any]) -> DataFrame:
+def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
     '''
 
     Parameters:

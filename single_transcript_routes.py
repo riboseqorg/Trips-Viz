@@ -44,6 +44,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     """
 
     data = request.args.to_dict()
+    print(data, "anmol Kiran")
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     # Accepted_studies is a DataFrame of (study_id, study_name)
     data['studies_and_files'] = fetch_files(accepted_studies)
@@ -55,7 +56,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     ]]
     # print(accepted_studies)
 
-    data['transcript'] = gwips_info['default_transcript']
+    data['transcript'] = gwips_info[0, 'default_transcript']
     data['gwips_info'] = gwips_info
     data['studyinfo_dict'] = fetch_study_info(organism_id)
     data['organism'] = organism
@@ -74,6 +75,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     data['user_hili_stops'] = ','.join(data['user_hili_stops'])
 
     consent = request.cookies.get("cookieconsent_status")
+    print(data)
     rendered_template = render_template('single_transcript_plot.html',
                                         template_dict=data)
     if consent == "deny":

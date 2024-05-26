@@ -14,7 +14,10 @@ from sqlalchemy import insert, delete, update
 
 
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
-    return pl.read_database_uri(f"SELECT * FROM {tablename}", sqlfilepath)
+    print(sqlfilepath, tablename)
+    return pl.read_database_uri(f"SELECT * FROM {tablename}",
+                                f"sqlite://{sqlfilepath}")
+    # return pl.read_database_uri(f"SELECT * FROM {tablename}", sqlfilepath)
 
 
 def sqldict2table(sqldict: Dict) -> pd.DataFrame:
