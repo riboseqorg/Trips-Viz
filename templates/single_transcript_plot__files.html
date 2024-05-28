@@ -1,3 +1,7 @@
+<div id="local_vars">
+    {% set studies_files = template_dict["studies_and_files"] %}
+    {% set file_types = studies_files["file_type"].unique() %}
+</div>
 <div id="page_heading">
     <p>
         <font size="5"><b><u>File Selection</u></b></font>
@@ -21,15 +25,17 @@
             </div>
         </div>
         <div class="row">
-            {% for seq_type in template_dict["studies_and_files"] %}
+            {% for file_type in file_types %}
                 <div class="col-sm-6">
                     <input type="radio"
-                           class="seq_type_radio"
-                           id="{{ seq_type }}"
-                           name="seq_type"
-                           value="{{ seq_type }}"
+                           class="radio_input"
+                           id="input_{{ file_type }}"
+                           name="file_type"
+                           value="{{ file_type }}"
                            {% if loop.first %} checked {% else %} {% endif %}>
-                    <label for="{{ seq_type }}" id="label{{ seq_type }}" class="radio_label">{{ seq_type }}</label>
+                    <label for="input_{{ file_type }}"
+                           id="label_{{ file_type }}"
+                           class="radio_label">{{ file_type }}</label>
                 </div>
             {% endfor %}
         </div>
@@ -59,28 +65,23 @@
             </div>
         </div>
         <div class="toggles">
-            {% for study_type, studies in template_dict["studies_and_files"].items() %}
-                <div class="{{ study_type }}"
-                     style="{% if loop.first %}display: block;
-                            {% else %}display: none;
-                            {% endif %}">
-                    <div class="row">
-                        {% for study in studies %}
-                            <div class="col">
-                                <input type="radio"
-                                       class="study"
-                                       id="study{{ study[1] }}"
-                                       name="study"
-                                       value="{{ study[1] }}"
-                                       {% if loop.first %} checked {% else %} {% endif %}>
-                                <label for="study{{ study }}"
-                                       id="label{{ study }}"
-                                       class="radio_label"
-                                       style="border-color: rgb(119, 171, 255);
-                                              opacity: 1">{{ study }}</label>
-                            </div>
-                        {% endfor %}
-                    </div>
+            {% for file_type in file_types %}
+                <div class="{{ file_type }}"
+                     style="display:{% if loop.first %}block {% else %} none {% endif %}">
+                    {% set studies = studies_files[studies_files["file_type"] == file_type][["study_id","study_name"]].drop_duplicates() %}
+                    {% for _, study_row in studies.iterrows() %}
+                        <div class="study">
+                            <input type="radio"
+                                   class="radio_input"
+                                   id="input__{{ file_type }}__{{ study_row['study_id'] }}"
+                                   name="study"
+                                   value="{{ study_row['study_id'] }}"
+                                   {% if loop.first %} checked {% else %} {% endif %}>
+                            <label for="{{ file_type }}__{{ study_row['study_id'] }}"
+                                   id="label__{{ file_type }}__{{ study_row['study_id'] }}"
+                                   class="radio_label">{{ study_row['study_name'] }}</label>
+                        </div>
+                    {% endfor %}
                 </div>
             {% endfor %}
         </div>
@@ -89,30 +90,29 @@
         <p>
             <b><u>Files[ <span id="filecount">0</span>  Selected ]</u></b>
         </p>
-        {% for study_type, studies in template_dict["studies_and_files"].items() %}
-            <div class="{{ study_type }}">
-                {% for study, files in studies.items() %}
-                    <div class="{{ study }}">
-                        {% for file, desc in files.items() %}
+        {% for file_type in file_types %}
+            <div class="{{ file_type }}">
+                {% set file_type__filtered = studies_files[studies_files["file_type"] == file_type] %}
+                {% set studies = file_type__filtered[["study_id","study_name"]].drop_duplicates() %}
+                {% for _,study_row in studies.iterrows() %}
+                    <div class="{{ study_row['study_id'] }}">
+                        {% set files = file_type__filtered.loc[file_type__filtered["study_id"] == study_row["study_id"], ["file_id","file_name","file_description"]] %}
+                        {% for _,file_row in files.iterrows() %}
                             <div class="file">
                                 <input type="checkbox"
-                                       class="{{ study_type }} {{ study[1] }}"
-                                       id="{{ file[0] }}"
-                                       name="file_{{ study_type }}_{{ study[0] }}_{{ file[0] }}"
-                                       value="{{ file[1] }}"
-                                       {% if loop.first %} checked {% else %} {% endif %}>
-                                <label for="{{ file }}" id="label{{ file[0] }}" class="radio_label">{{ file[1] }}</label>
+                                       id="{{ file_row['file_id'] }}"
+                                       name="file_{{ file_type }}_{{ study_row['study_id'] }}">
+                                <label for="{{ file_row['file_name'] }}"
+                                       id="label_{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</label>
                             </div>
                         {% endfor %}
                     </div>
                 {% endfor %}
             </div>
         {% endfor %}
-    </br>
-</div>
-</div>
-{% block footer_static %}
-    <script>
+    </div>
+    {% block footer_static %}
+        <script>
 		$(document).ready(function(){
 
 				var $checkboxes = $('#files input[type="checkbox"]');
@@ -125,5 +125,5 @@
 				});
 
 		});
-    </script>
-{% endblock %}
+        </script>
+    {% endblock %}

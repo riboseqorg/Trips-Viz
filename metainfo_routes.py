@@ -20,7 +20,8 @@ from core_functions import (
 from flask_login import current_user
 import subprocess
 import json
-from sqlqueries import sqlquery, get_table, get_user_id, table2dict
+import polars as pl
+from sqlqueries_2 import sqlquery, get_table, get_user_id, table2dict
 
 
 def get_nuc_comp_reads(sqlite_db: Dict[str, Dict[str, Dict[str, str]]],
@@ -33,10 +34,10 @@ def get_nuc_comp_reads(sqlite_db: Dict[str, Dict[str, Dict[str, str]]],
         return "Cannot find annotation file {0}.{1}.sqlite".format(
             organism, transcriptome)
     transcripts = sqlquery(transhelve, "transcripts")
-    transcripts = transcripts.loc[
-        (transcripts.principal & transcripts.cds_start & transcripts.cds_stop
-         & transcripts.transcript.isin(sqlite_db)),
-        ["transcript", "cds_start", "cds_stop", "sequence"]]
+    transcripts = transcripts.filter(
+        pl.col('principle') & pl.col('cds_start') & pl.col('cds_stop')
+        & pl.col('transcript').is_in(sqlite_db)).select(
+            'transcript', 'cds_start', 'cds_stop', 'sequence')
     # TODO: Check some files for nan values in the table and remove them
     transcripts[["cds_start",
                  "cds_stop"]] = transcripts[["cds_start",
@@ -110,8 +111,8 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
                                         template_folder="templates")
 
 
-@metainfo_plotpage_blueprint.route("/<organism>/<transcriptome>/metainfo_plot/"
-                                   )
+@metainfo_plotpage_blueprint.route(
+    "/<organism>/<transcriptome>/metainfo_plot/")
 def metainfo_plotpage(organism: str, transcriptome: str):
     # global user_short_passed
 
@@ -125,34 +126,8 @@ def metainfo_plotpage(organism: str, transcriptome: str):
     studyinfo_dict = fetch_study_info(organism)
 
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = json.loads(request.get_json())
+    html_args = request.data.to_dict()
     html_args['transcriptome'] = transcriptome
-    html_args = { # TODO: make templates uniform
-        "user_short": request.args.get("short"),
-        "user_plot_type": request.args.get("plot"),
-        "nuc_comp_direction": request.args.get("nc_dir"),
-        "nuc_comp_type": request.args.get("nc_type"),
-        "nuc_comp_min_readlen": request.args.get("nc_minreadlen"),
-        "nuc_comp_max_readlen": request.args.get("nc_maxreadlen"),
-        "trip_periodicity_min_readlen": request.args.get("tp_minreadlen"),
-        "trip_periodicity_max_readlen": request.args.get("tp_maxreadlen"),
-        "heatmap_dir": request.args.get("hm_dir"),
-        "heatmap_log_scale": request.args.get("hm_log"),
-        "heatmap_reverse": request.args.get("hm_rev"),
-        "heatmap_position": request.args.get("hm_pos"),
-        "heatmap_minreadlen": request.args.get("hm_minreadlen"),
-        "heatmap_maxreadlen": request.args.get("hm_maxreadlen"),
-        "heatmap_start": request.args.get("hm_start"),
-        "heatmap_stop": request.args.get("hm_stop"),
-        "heatmap_colour": request.args.get("hm_col"),
-        "metagene_pos": request.args.get("mg_pos"),
-        "metagene_minreadlen": request.args.get("mg_minreadlen"),
-        "metagene_maxreadlen": request.args.get("mg_maxreadlen"),
-        "replicate_minreads": request.args.get("rp_minreads"),
-        "mrna_dist_readlen_per": request.args.get("mdr_per"),
-        "transcriptome": transcriptome,
-        "mrna_dist_readlen_smooth": request.args.get("mdr_smooth"),
-    }
     for arg in ["files", "ribo_studies", "rna_studies"]:
         arg_value = request.args.get(arg)
         if arg_value:
@@ -212,13 +187,13 @@ def create_custom_metagene(
     transcripts['sequence'] = transcripts['sequence'].apply(
         lambda x: x.replace('T', 'U'))
     if not metagene_tranlist:
-        transcripts = transcripts[transcripts.principal]
+        transcripts = transcripts.filter(pl.col('principle'))
     else:
         metagene_tranlist = metagene_tranlist.split(",")
         if "coverage" in metagene_tranlist:
             metagene_tranlist.remove("coverage")
-        transcripts = transcripts[transcripts.transcript.isin(
-            metagene_tranlist)]
+        transcripts = transcripts.filter(
+            pl.col('transcript').is_in(metagene_tranlist))
 
     result = transcripts
     mgc = {"fiveprime": {}, "threeprime": {}}
@@ -355,9 +330,9 @@ def create_custom_metagene(
 
 def redo_periodicity_plots(file_path: str) -> None:
     traninfo_dict = {}
-    transcripts = get_table("transcripts")
-    result = transcripts.loc[transcripts.principle & transcripts.tran_type,
-                             ["transcript", "cds_start", "cds_stop", "length"]]
+    transcripts = get_table("transcripts").filter(
+        pl.col('principle') & pl.col('tran_type')).select(
+            "transcript", "cds_start", "cds_stop", "length")
     for row in result:
         traninfo_dict[str(row[0])] = [int(row[1]), int(row[2]), int(row[3])]
     trip_periodicity_reads = 0

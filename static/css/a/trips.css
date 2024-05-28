@@ -89,6 +89,15 @@ input[type="text"]::placeholder {
   border-radius: 20px;
   width: 99%;
 }
+.file,
+.study {
+  padding: 10px;
+  float: left;
+}
+.radio_label {
+  border-color: blue;
+  opacity: 1;
+}
 
 /* species slider*/
 .slider-container {

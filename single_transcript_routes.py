@@ -6,6 +6,7 @@ from flask import (
     Response,
     jsonify,
 )
+
 from flask import current_app as app
 from typing import Text
 from sqlqueries_2 import get_user_id, sqlquery, get_table
@@ -17,7 +18,6 @@ from core_functions import (fetch_studies, fetch_files, fetch_study_info,
 import riboflask
 from flask_login import current_user
 import logging
-import json
 from orfQuant import incl_OPM_run_orfQuant
 from tripsTPM import TPM
 
@@ -47,7 +47,7 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     print(data, "anmol Kiran")
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     # Accepted_studies is a DataFrame of (study_id, study_name)
-    data['studies_and_files'] = fetch_files(accepted_studies)
+    data['studies_and_files'] = fetch_files(accepted_studies).to_pandas()
     gwips_info = get_table("organisms").filter(
         (pl.col('organism_id') == organism_id)
         & (pl.col('transcriptome_list') == transcriptome)
