@@ -100,10 +100,10 @@
                         {% for _,file_row in files.iterrows() %}
                             <div class="file">
                                 <input type="checkbox"
-                                       id="{{ file_row['file_id'] }}"
-                                       name="file_{{ file_type }}_{{ study_row['study_id'] }}">
-                                <label for="{{ file_row['file_name'] }}"
-                                       id="label_{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</label>
+                                       id="file__{{ file_row['file_id'] }}"
+                                       name="file_{{ file_type }}__{{ file_row['file_id'] }}">
+                                <label for="file__{{ file_row['file_id'] }}"
+                                       id="file__label__{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</label>
                             </div>
                         {% endfor %}
                     </div>

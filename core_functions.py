@@ -1,5 +1,6 @@
 import string
 from typing import Dict, List, Tuple, Any
+import os
 import polars as pl
 from flask import session, request
 from flask_login import UserMixin, current_user
@@ -229,29 +230,28 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
     Example:
 
     '''
-    studies = get_table("studies").filter(
-        pl.col("study_id").is_in(data['study_ids'])).select(
-            "study_id", "study_name")
-    # users is name of table
+
+    studies = get_table("studies").select(
+        "study_id", "study_name")  # users is name of table
     files = get_table("files").filter(
         pl.col("file_id").is_in(data['file_ids'])).join(
             studies, on='study_id').with_columns(
                 pl.col('file_name').apply(lambda x: x.replace(
-                    '.self', '.sqlite')).alias('file_name'))
+                    '.shelf', '.sqlite')).alias('file_name'))
+    print(files, "anmol")
 
     files['path'] = files.apply(
-        lambda x: "{}/{}/{}/{}/{}/{}.sqlite".format(
+        lambda x: "{}/{}/{}/{}/{}/{}".format(
             config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[
                 'organism'], x['study_name'], x['file_name'])
-        if x['owner'] else "{}/{}/{}.sqlite".format(config.UPLOADS_DIR, data[
-            'study'], x['file_name']),
-        axis=1)  # TODO: Fix this
+        if x['owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data['study'],
+                                             x['file_name']))  # TODO: Fix this
     file_not_found = []
     for fl in files['path']:
         if not os.path.isfile(fl):
             file_not_found.append(fl.split('/')[-1])
 
-    if len(file_not_found) > 0:
+    if not file_not_found:
         # TODO: Fix the resturn accorind to original as it mught be used by js
         return f"File(s) not found: {','.join(file_not_found)}"
 

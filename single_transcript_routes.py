@@ -107,19 +107,12 @@ def query():  #TODO: add return type
     data = request.form.to_dict()
     data["transcript"] = data["transcript"].upper()
     print(data, "Anmol")
-    data["file_list"] = []
     data["file_ids"] = []
-    data["study_ids"] = []
 
-    for key, value in data.items():
-        if key.startswith('file') and value:
-            file_n_study = key.split('_')
-            if len(file_n_study) != 4:
-                continue
-            data["file_list"].append(value)
-            print(file_n_study, "test")
-            data["file_ids"].append(int(file_n_study[-1]))
-            data["study_ids"].append(int(file_n_study[2]))
+    for key in data:
+        if key.startswith(f'file_{data["file_type"]}'):
+            file_id = int(key.split('__')[-1])
+            data["file_ids"].append(file_id)
     file_paths_dict = fetch_file_paths(data)
     print(file_paths_dict, "Kiran")
 
