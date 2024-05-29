@@ -16,7 +16,8 @@ from sqlalchemy import insert, delete, update
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
     print(sqlfilepath, tablename)
     return pl.read_database_uri(f"SELECT * FROM {tablename}",
-                                f"sqlite://{sqlfilepath}")
+                                f"sqlite://{sqlfilepath}",
+                                engine="adbc")
     # return pl.read_database_uri(f"SELECT * FROM {tablename}", sqlfilepath)
 
 
