@@ -7,6 +7,22 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 
 
+# Merge two dictionaries
+def merge_dicts(
+        dict1,
+        dict2):  # NOTE: expecting that second dictionary is always smaller
+    for readlen in dict2:
+        if readlen not in dict1:
+            dict1[readlen] = dict2[readlen]
+        else:
+            for pos in dict2[readlen]:
+                if pos in dict1[readlen]:
+                    dict1[readlen][pos] += dict2[readlen][pos]
+                else:
+                    dict1[readlen][pos] = dict2[readlen][pos]
+    return dict1
+
+
 # Create dictionary of read counts at each position in a transcript
 def get_reads(
     data,
@@ -21,9 +37,7 @@ def get_reads(
     Example:
     """
     if "mismatch_dict" not in data:
-        mismatch_dict = pd.DataFrame(0,
-                                     index=range(data["tranlen"] + 1),
-                                     columns=["A", "T", "G", "C"])
+        mismatch_dict = []
 
     master_dict = pd.DataFrame({'count': 0}, index=range(data["tranlen"] + 1))
     master_file_dict = {}
@@ -38,38 +52,41 @@ def get_reads(
             return pd.DataFrame(), pd.DataFrame()
         try:
             all_offsets = sqlite_db["offsets"][data["primetype"]]["offsets"]
-            all_offsets = pd.DataFrame(list(all_offsets.keys()),
-                                       index=list(all_offsets.values()),
-                                       columns=["offset"])
+            all_offsets = pl.DataFrame({
+                'read_len': all_offsets.keys(),
+                'offset': all_offsets.values()
+            })
             scores = sqlite_db["offsets"][data["primetype"]]["read_scores"]
-            scores = pd.DataFrame(list(scores.keys()),
-                                  index=list(scores.values()),
-                                  columns=["score"])
-            all_offsets_n_scores = all_offsets.join(scores, how='outer')
-            all_offsets_n_scores.loc[all_offsets_n_scores['offset'].isnull(),
-                                     'offset'] = 15
-            all_offsets_n_scores.loc[all_offsets_n_scores['score'].isnull(),
-                                     'score'] = 1
+            scores = pl.DataFrame({
+                'read_len': scores.keys(),
+                'read_score': scores.values()
+            })
+            all_offsets_n_scores = all_offsets.join(
+                scores, on='read_len', how='outer',
+                coalesce=True).with_columns([
+                    pl.col('offset').fill_null(15),
+                    pl.col('read_score').fill_null(1)
+                ])
 
         except KeyError:
-            all_offsets_n_scores = pd.DataFrame([15, 1],
-                                                index=range(
-                                                    data["min_read"],
-                                                    data["max_read"] + 1),
-                                                columns=["offset", 'score'])
-        accepted_offsets = all_offsets_n_scores[all_offsets_n_scores['score']
-                                                >= data["readscore"]]
-        offset_dict[fl] = accepted_offsets
+            read_length = list(range(data["min_read"], data["max_read"] + 1))
+            range_len = data["max_read"] - data["min_read"] + 1
+            all_offsets_n_scores = pl.DataFrame({
+                'read_len': read_length,
+                'offset': [15] * range_len,
+                'read_score': [1] * range_len
+            })
+        offset_dict[fl] = all_offsets_n_scores.filter(
+            pl.col('read_score') >= data["readscore"])
 
         if "mismatch" in data:
             try:
                 sqlite_db_seqvar = sqlite_db[data['transcript']]["seq"]
 
                 for pos in sqlite_db_seqvar:
-                    # convert to one based
-                    fixed_pos = pos + 1
-                    for char, count in sqlite_db_seqvar[pos]:
-                        mismatch_dict.loc[fixed_pos, char] += count
+                    for nuc, count in sqlite_db_seqvar[pos]:
+                        # convert to one based
+                        mismatch_dict.append(pos + 1, nuc, count)
 
             except Exception:
                 pass
@@ -77,9 +94,8 @@ def get_reads(
         try:
             alltrandict = sqlite_db[data['transcript']]
             unambig_tran_dict = alltrandict["unambig"]
-            ambig_tran_dict = {}
-            if ("ambiguous" in data) and ("ambig" in alltrandict):
-                ambig_tran_dict = alltrandict[data["read_type"]]
+            ambig_tran_dict = alltrandict["ambig"] if ("ambig"
+                                                       in alltrandict) else {}
             # TODO: Change merge_dicts to take a list of dicts instead of two
             trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
             if "pcr" in data:  # TODO: Convert this value as ambig and unambig
@@ -139,6 +155,8 @@ def get_reads(
                                 offset_pos = pos + offset
                                 try:
                                     master_dict[offset_pos] += count
+# Create dictionary of counts at each position, averged by readlength
+
                                 except KeyError:
                                     print(
                                         f"Error tries adding to position {offset_pos}, but tranlen is only {data['tranlen']}"
