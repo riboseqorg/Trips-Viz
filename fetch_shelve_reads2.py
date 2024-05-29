@@ -108,59 +108,56 @@ def get_reads(
             master_file_dict[fl] = trandict
         except Exception:
             pass
+    range_set = set(range(data["min_read"], data["max_read"] + 1))
     if "subcodon" not in data:
         for filename in master_file_dict:
-            for readlen in master_file_dict[filename]:
-                if data["min_read"] <= readlen <= data["max_read"]:
-                    for pos in master_file_dict[filename][readlen]:
-                        count = master_file_dict[filename][readlen][pos]
-                        if "coverage" in data:
-                            if pos != 0 and pos - 1 not in master_dict:
-                                master_dict[pos - 1] = 0
-                            i = 0
-                            for i in range(pos, pos + (readlen + 1)):
-                                if i in master_dict:
-                                    master_dict[i] += count
-                                else:
-                                    master_dict[i] = count
-                            # use this so line graph does not have 'ramps'
-                            if i + 1 not in master_dict:
-                                master_dict[i + 1] = 0
-                        else:
-                            offset = pos + 15
-                            if offset + 1 not in master_dict:
-                                master_dict[offset + 1] = 0
-                            master_dict[offset + 1] += count
-    if ("subcodon" in data) and ("coverage" not in data):
-        for filename in master_file_dict:
-            if filename not in offset_dict:
-                continue
-            for readlen in master_file_dict[filename]:
-                if data["min_read"] <= readlen <= data["max_read"]:
-                    if readlen in offset_dict[filename]:
-                        offset = offset_dict[filename][readlen] + 1
-                        for pos in master_file_dict[filename][readlen]:
-                            count = master_file_dict[filename][readlen][pos]
-                            if data["primetype"] == "threeprime":
-                                pos += readlen
-                            if "coverage" in data:
-                                for i in range(0, readlen, 3):
-                                    new_offset_pos = (i + pos) + (offset % 3)
-                                    try:
-                                        master_dict[new_offset_pos] += count
-                                    except KeyError:
-                                        pass
-
+            for readlen in set(master_file_dict[filename]) & range_set:
+                for pos in master_file_dict[filename][readlen]:
+                    count = master_file_dict[filename][readlen][pos]
+                    if "coverage" in data:
+                        if pos != 0 and pos - 1 not in master_dict:
+                            master_dict[pos - 1] = 0
+                        i = 0
+                        for i in range(pos, pos + (readlen + 1)):
+                            if i in master_dict:
+                                master_dict[i] += count
                             else:
-                                offset_pos = pos + offset
-                                try:
-                                    master_dict[offset_pos] += count
+                                master_dict[i] = count
+                        # use this so line graph does not have 'ramps'
+                        if i + 1 not in master_dict:
+                            master_dict[i + 1] = 0
+                    else:
+                        offset = pos + 15
+                        if offset + 1 not in master_dict:
+                            master_dict[offset + 1] = 0
+                        master_dict[offset + 1] += count
+    if ("subcodon" in data) and ("coverage" not in data):
+        for filename in set(offset_dict) & set(master_file_dict):
+            for readlen in set(master_file_dict[filename]) & range_set & set(
+                    offset_dict[filename]):
+                offset = offset_dict[filename][readlen] + 1
+                for pos in master_file_dict[filename][readlen]:
+                    count = master_file_dict[filename][readlen][pos]
+                    if data["primetype"] == "threeprime":
+                        pos += readlen
+                    if "coverage" in data:  # WARN:this shouldn't be here??
+                        for i in range(0, readlen, 3):
+                            new_offset_pos = (i + pos) + (offset % 3)
+                            try:
+                                master_dict[new_offset_pos] += count
+                            except KeyError:
+                                pass
+
+                    else:
+                        offset_pos = pos + offset
+                        try:
+                            master_dict[offset_pos] += count
 # Create dictionary of counts at each position, averged by readlength
 
-                                except KeyError:
-                                    print(
-                                        f"Error tries adding to position {offset_pos}, but tranlen is only {data['tranlen']}"
-                                    )
+                        except KeyError:
+                            print(
+                                f"Error tries adding to position {offset_pos}, but tranlen is only {data['tranlen']}"
+                            )
     if 'mismatches' not in data:
         mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
     return master_dict, mismatch_dict
@@ -199,7 +196,7 @@ def get_readlength_breakdown(
             filename = data["user_files"][data["filetype"]][file_id]
             try:
                 openshelf = SqliteDict(filename)
-                alltrandict = dict(openshelf[data["transcript"]])
+                alltrandict = openshelf[data["transcript"]]
                 trandict = alltrandict["unambig"]
                 if data["read_type"] == "ambig":
                     trandict = merge_dicts(trandict, alltrandict["ambig"])
@@ -209,26 +206,25 @@ def get_readlength_breakdown(
                 pass
 
     for filename in master_file_dict:
-        for readlen in master_file_dict[filename]:
-            if data["min_read"] <= readlen <= data["max_read"]:
-                if "coverage" in data:
-                    for pos in master_file_dict[filename][readlen]:
-                        count = master_file_dict[filename][readlen][pos]
-                        for i in range(pos, pos + (readlen + 1)):
-                            master_dict[i][readlen] += count
-                else:
+        for readlen in set(master_file_dict[filename]) & range_set:
+            if "coverage" in data:
+                for pos in master_file_dict[filename][readlen]:
+                    count = master_file_dict[filename][readlen][pos]
+                    for i in range(pos, pos + (readlen + 1)):
+                        master_dict[i][readlen] += count
+            else:
+                try:
+                    openshelf = SqliteDict(filename)
+                except FileNotFoundError:
+                    continue
+                offsets = openshelf["offsets"]["fiveprime"]["offsets"]
+                offset = offsets[readlen] if readlen in offsets else 15
+                for pos in master_file_dict[filename][readlen]:
+                    count = master_file_dict[filename][readlen][pos]
                     try:
-                        openshelf = SqliteDict(filename)
-                    except FileNotFoundError:
-                        continue
-                    offsets = openshelf["offsets"]["fiveprime"]["offsets"]
-                    offset = offsets[readlen] if readlen in offsets else 15
-                    for pos in master_file_dict[filename][readlen]:
-                        count = master_file_dict[filename][readlen][pos]
-                        try:
-                            master_dict[pos + offset][readlen] += count
-                        except KeyError:
-                            pass
+                        master_dict[pos + offset][readlen] += count
+                    except KeyError:
+                        pass
     sorted_master_dict = collections.OrderedDict()
     for key in sorted(master_dict.keys()):
         sorted_master_dict[key] = master_dict[key]
@@ -277,18 +273,21 @@ def get_seq_var(
 
     Example:
     """
-    mismatch_dict = pd.DataFrame(0,
-                                 index=range(1, tranlen + 1),
-                                 columns=["A", "T", "G", "C"])
+    mismatch_dict = pl.DataFrame({
+        'pos': range(1, tranlen + 1),
+        'A': [0] * tranlen,
+        'T': [0] * tranlen,
+        'G': [0] * tranlen,
+        'C': [0] * tranlen
+    })
     for filetype in ["riboseq", "rnaseq"]:
         try:
-            for file_id in user_files[filetype]:
-                filename = user_files[filetype][file_id]
+            for file_id, filename in user_files[filetype].items():
                 try:
                     sqlite_db = SqliteDict(filename, autocommit=False)
                 except FileNotFoundError:
                     return f"File not found {filename}"
-                sqlite_db_seqvar = dict(sqlite_db[tran]["seq"])
+                sqlite_db_seqvar = sqlite_db[tran]["seq"]
                 for pos in sqlite_db_seqvar:
                     #convert to one based
                     fixed_pos = pos + 1
