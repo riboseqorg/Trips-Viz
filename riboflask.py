@@ -46,10 +46,7 @@ def generate_plot(data, settings) -> str:
             labels_visibility[f"Mismatches {nuc}"] = False
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     frame_orfs = {1: [], 2: [], 3: []}
-    owner = get_table("organisms").filter(
-        (pl.col("organism_name") == data["organism"])
-        & (pl.col("transcriptome_list") == data["transcript"]))[0, "owner"]
-    if owner == 1:
+    if data['owner'] == 1:
         sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
                                                       data["organism"],
@@ -59,20 +56,22 @@ def generate_plot(data, settings) -> str:
                 data["organism"], data["transcriptome"])
     else:
         sqlpath = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            trips_uploads_location, owner, data["organism"],
+            trips_uploads_location, data['owner'], data["organism"],
             data["transcriptome"])
     traninfo = sqlquery(sqlpath, "transcripts").filter(
-        pl.col("transcript") == data["transcript"])[0].to_dict()
+        pl.col("transcript") == data["transcript"])[0].to_dicts()[0]
+    print(traninfo, 'ha ha ha')
+    data["tranlen"] = traninfo['length']
     for ss in ['start_list', 'stop_list', 'exon_junctions']:
         try:
             traninfo[ss] = [int(x) for x in traninfo[ss].split(",")]
         except Exception:
             traninfo[ss] = []
-
-    if not traninfo.cds_start:
-        traninfo.cds_start = 0
-    if not traninfo.cds_stop:
-        traninfo.cds_stop = 0
+    # TODO: Replace next with fill na in dataframe
+    if not traninfo["cds_start"]:
+        traninfo["cds_start"] = 0
+    if not traninfo["cds_stop"]:
+        traninfo["cds_stop"] = 0
 
     try:
         coding_regions = sqlquery(sqlpath, "coding_regions").filter(
@@ -89,7 +88,8 @@ def generate_plot(data, settings) -> str:
 
     all_stops: dict[str, list[int]] = {"TAG": [], "TAA": [], "TGA": []}
     exon_junctions = traninfo["exon_junctions"]
-    seq = traninfo["seq"].upper()  # NOTE: I guess it is already upper case
+    seq = traninfo["sequence"].upper(
+    )  # NOTE: I guess it is already upper case
     for i in range(len(seq)):
         if seq[i:i + 3] in all_stops:
             all_stops[seq[i:i + 3]].append(i + 1)
@@ -121,7 +121,7 @@ def generate_plot(data, settings) -> str:
             }
         },
     }
-    for start in traninfo.start_list:
+    for start in traninfo["start_list"]:
         rem = ((start - 1) % 3) + 1
         # TODO: Use numpy array instead of list for speed boost
         start_stop_dict[rem]["starts"].append(start)
