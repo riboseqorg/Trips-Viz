@@ -62,6 +62,7 @@ VARIABLE_CONVERSION = {
     "nuc_freq_plot_window": int,
     "nuc_maxreadlen": int,
     "nuc_minreadlen": int,
+    "readscore": int,
     "rrna_removed": int,
     "start": int,
     "stop": int,
