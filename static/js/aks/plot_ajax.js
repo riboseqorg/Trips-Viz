@@ -5,21 +5,9 @@ $("#query").click(() => {
       json[name] = value;
       return json;
     }, {});
-  console.log(JSON.stringify(formJson));
-  //console.log("Inside plotting");
-  $.ajax({
-    type: "POST",
-    url: "/query",
-    dataType: "json",
-    data: formJson,
-
-    //contentType: "application/json; charset=utf-8",
-    success: (data) => {
-      $("#plot").html(data);
-      alert(data.d);
-    },
-    error: (data) => {
-      alert("fail");
-    },
+  //  console.log(JSON.stringify(formJson));
+  $.post("/query", formJson, (data) => {
+    parse(data, "plot");
+    //alert(data);
   });
 });

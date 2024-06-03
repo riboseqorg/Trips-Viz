@@ -1,8 +1,10 @@
 from typing import Dict, Tuple, Union
+from time import sleep
 import collections
 from bokeh.palettes import all_palettes
 from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
+import polars as pl
 import pandas as pd
 from pandas.core.frame import DataFrame
 
@@ -36,10 +38,9 @@ def get_reads(
 
     Example:
     """
-    if "mismatch_dict" not in data:
-        mismatch_dict = []
+    mismatch_dict = []
+    master_dict = []
 
-    master_dict = pd.DataFrame({'count': 0}, index=range(data["tranlen"] + 1))
     master_file_dict = {}
 
     # first make a master dict consisting of all the read dicts from each filename
@@ -69,8 +70,8 @@ def get_reads(
                 ])
 
         except KeyError:
-            read_length = list(range(data["min_read"], data["max_read"] + 1))
-            range_len = data["max_read"] - data["min_read"] + 1
+            read_length = list(range(data["minread"], data["maxread"] + 1))
+            range_len = data["maxread"] - data["minread"] + 1
             all_offsets_n_scores = pl.DataFrame({
                 'read_len': read_length,
                 'offset': [15] * range_len,
@@ -82,11 +83,13 @@ def get_reads(
         if "mismatch" in data:
             try:
                 sqlite_db_seqvar = sqlite_db[data['transcript']]["seq"]
+                print(sqlite_db_seqvar)
+                sleep(10)
 
                 for pos in sqlite_db_seqvar:
                     for nuc, count in sqlite_db_seqvar[pos]:
                         # convert to one based
-                        mismatch_dict.append(pos + 1, nuc, count)
+                        mismatch_dict.append([pos + 1, nuc, count])
 
             except Exception:
                 pass
@@ -102,35 +105,27 @@ def get_reads(
                 if "unambig_pcr" in alltrandict:
                     trandict = merge_dicts(trandict,
                                            alltrandict["unambig_pcr"])
-                if data["read_type"] == "ambig" and "ambig_pcr" in alltrandict:
+                if ("ambig" in data) and "ambig_pcr" in alltrandict:
                     trandict = merge_dicts(trandict, alltrandict["ambig_pcr"])
 
             master_file_dict[fl] = trandict
         except Exception:
             pass
-    range_set = set(range(data["min_read"], data["max_read"] + 1))
+    range_set = set(range(data["minread"], data["maxread"] + 1))
     if "subcodon" not in data:
         for filename in master_file_dict:
             for readlen in set(master_file_dict[filename]) & range_set:
                 for pos in master_file_dict[filename][readlen]:
                     count = master_file_dict[filename][readlen][pos]
                     if "coverage" in data:
-                        if pos != 0 and pos - 1 not in master_dict:
-                            master_dict[pos - 1] = 0
-                        i = 0
                         for i in range(pos, pos + (readlen + 1)):
-                            if i in master_dict:
-                                master_dict[i] += count
-                            else:
-                                master_dict[i] = count
+                            master_dict.append([i, count])
                         # use this so line graph does not have 'ramps'
-                        if i + 1 not in master_dict:
-                            master_dict[i + 1] = 0
                     else:
                         offset = pos + 15
-                        if offset + 1 not in master_dict:
-                            master_dict[offset + 1] = 0
-                        master_dict[offset + 1] += count
+                        master_dict.append([offset + 1, count])
+
+    master_dict_sub = []
     if ("subcodon" in data) and ("coverage" not in data):
         for filename in set(offset_dict) & set(master_file_dict):
             for readlen in set(master_file_dict[filename]) & range_set & set(
@@ -143,23 +138,26 @@ def get_reads(
                     if "coverage" in data:  # WARN:this shouldn't be here??
                         for i in range(0, readlen, 3):
                             new_offset_pos = (i + pos) + (offset % 3)
-                            try:
-                                master_dict[new_offset_pos] += count
-                            except KeyError:
-                                pass
+                            master_dict_sub.append([new_offset_pos, count])
 
                     else:
                         offset_pos = pos + offset
-                        try:
-                            master_dict[offset_pos] += count
-# Create dictionary of counts at each position, averged by readlength
+                        master_dict_sub.append([offset_pos, count])
 
-                        except KeyError:
-                            print(
-                                f"Error tries adding to position {offset_pos}, but tranlen is only {data['tranlen']}"
-                            )
-    if 'mismatches' not in data:
-        mismatch_dict = mismatch_dict[mismatch_dict.sum(axis=1) > 0]
+    master_dict = pl.DataFrame(master_dict, schema=["pos", "count"])
+    master_dict_sub = pl.DataFrame(master_dict_sub,
+                                   schema=["pos", "count"]).filter(
+                                       pl.col('pos').is_in(master_dict['pos']))
+    master_dict = pl.concat([master_dict,
+                             master_dict_sub]).group_by('pos').agg(
+                                 pl.col('count').sum()).sort("count")
+    del master_dict_sub
+
+    mismatch_dict = pl.DataFrame(mismatch_dict, schema=["pos", "nuc", "count"])
+    if 'mismatch' in data:
+
+        mismatch_dict = mismatch_dict.filter(
+            pl.sum_horizontal('A', 'T', 'G', 'C') > 0)
     return master_dict, mismatch_dict
 
 
@@ -182,9 +180,9 @@ def get_readlength_breakdown(
     color_range = float(data["colorbar_maxread"] - data["colorbar_minread"])
     color_list = all_palettes["RdYlGn"][10]
 
-    for i in range(0, data["tranlen"] + data["max_read"]):
+    for i in range(0, data["tranlen"] + data["maxread"]):
         master_dict[i] = {}
-        for x in range(data["min_read"], data["max_read"] + 1):
+        for x in range(data["minread"], data["maxread"] + 1):
             master_dict[i][x] = 0
     # the keys of master readlen dict are readlengths the value is a dictionary
     # of position:count, there is also a colour key

@@ -21,10 +21,10 @@ class User(UserMixin):
 
     def is_authenticated(self) -> bool:
         """
-        Checks if user is authenticated. 
+        Checks if user is authenticated.
 
-        Parameters: 
-        - None 
+        Parameters:
+        - None
 
         Returns:
         - bool
@@ -51,7 +51,7 @@ def fetch_user() -> Tuple[str | None, bool]:
     '''
     Fetches active user from cookies if present and returns username and login status.
 
-    Parameters: 
+    Parameters:
     - None
 
     Returns:
@@ -138,11 +138,12 @@ def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
     '''
     Fetches files from database for give studies.
 
-    Parameters: 
+    Parameters:
     - accepted_studies (DataFrame[study_id, study_name]): list of accepted studies
 
     Returns: -- Fix this part
-    - {'seqtype':{('project_id', 'project_name'): {('file_id', 'file_name'): ['file_description']}}}
+    - {'seqtype':{('project_id', 'project_name')
+                   : {('file_id', 'file_name'): ['file_description']}}}
     '''
     return get_table("files").filter(
         pl.col("study_id").is_in(accepted_studies['study_id'])).select(
@@ -151,6 +152,22 @@ def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
                 pl.col('file_name').apply(
                     lambda x: x.replace('.self', ''))).join(accepted_studies,
                                                             on="study_id")
+
+
+def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
+    '''
+    Convert string in dict collected from web page form to right types.
+
+    Parameters:
+    - dct (Dict[str, Any]): dictionary of values
+
+    Returns:
+    - None
+    '''
+    for key, value in dct.items():
+        if key in config.VARIABLE_CONVERSION:
+            dct[key] = config.VARIABLE_CONVERSION[key](value)
+    return dct
 
 
 def type_detector(dct: Dict[str, Any]) -> None:
@@ -163,8 +180,8 @@ def type_detector(dct: Dict[str, Any]) -> None:
     >>> x
     {'is_private': True, 'tpm_max': 123.4, 'rpm_max': 12345, 'organism': 'human'}
 
-    Parameters: 
-    - dct (Dict[str, Any]): dictionary of values 
+    Parameters:
+    - dct (Dict[str, Any]): dictionary of values
 
     Returns:
     - None
@@ -218,7 +235,7 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
-def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
+def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame | str:
     '''
 
     Parameters:
@@ -238,20 +255,19 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
             studies, on='study_id').with_columns(
                 pl.col('file_name').apply(lambda x: x.replace(
                     '.shelf', '.sqlite')).alias('file_name'))
-    print(files, "anmol")
 
-    files['path'] = files.apply(
-        lambda x: "{}/{}/{}/{}/{}/{}".format(
-            config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'], data[
-                'organism'], x['study_name'], x['file_name'])
-        if x['owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data['study'],
-                                             x['file_name']))  # TODO: Fix this
+    files = files.with_columns(
+        pl.struct('*').map_elements(lambda x: "{}/{}/{}/{}/{}/{}".format(
+            config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'],
+            data['organism'], x['study_name'], x['file_name']) if x[
+                'owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data[
+                    'study'], x['file_name'])).alias('path'))  # TODO: Fix this
     file_not_found = []
     for fl in files['path']:
         if not os.path.isfile(fl):
             file_not_found.append(fl.split('/')[-1])
 
-    if not file_not_found:
+    if file_not_found:
         # TODO: Fix the resturn accorind to original as it mught be used by js
         return f"File(s) not found: {','.join(file_not_found)}"
 
@@ -271,7 +287,7 @@ def generate_short_code(data, organism: str, transcriptome: str,
     - transcriptome (str): name of the transcript
     - plot_type (str): type of plot
 
-    Returns: 
+    Returns:
     - str : short code
 
     Example:
@@ -560,10 +576,10 @@ def integer_to_base62(num: int) -> str:
     '''
     Converts an integer to base62, needed to encode short urls.
 
-    Parameters: 
+    Parameters:
     - num (int): integer to be converted
 
-    Returns: 
+    Returns:
     - str
 
     Example:
@@ -602,7 +618,7 @@ def base62_to_integer(base62_str: str) -> int:
 # Takes a nucleotide string and returns the amino acide sequence
 def nuc_to_aa(nuc_seq: str) -> str:
     """
-    Takes a nucleotide string and returns the amino acide sequence. 
+    Takes a nucleotide string and returns the amino acide sequence.
 
     Parameters:
     - nuc_seq (str): nucleotide sequence
@@ -624,7 +640,7 @@ def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
     """
 
     Parameters:
-    - sqlite_db (Dict[str, Dict[str, Dict[int, int]]]): sqlite database 
+    - sqlite_db (Dict[str, Dict[str, Dict[int, int]]]): sqlite database
     - longest_tran_list (List[str]): list of longest transcripts
     - traninfo_dict (Dict[str, Dict[str, int]]): dictionary of transcript information
 
@@ -707,10 +723,10 @@ def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
 
     Parameters:
     - trancounts
-    - offsets 
+    - offsets
     - ambig
     - minscore
-    - scores 
+    - scores
 
     Returns:
 
@@ -773,7 +789,7 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
 
     Parameters:
     - trancounts
-     
+
     Returns:
 
     Example:
@@ -807,11 +823,11 @@ def fetch_filename_file_id(file_id: int) -> str:
     '''
     Return the filename from the database given a file id.
 
-    Parameters: 
-    - file_id (int): id of file 
+    Parameters:
+    - file_id (int): id of file
 
-    Returns: 
-    - str 
+    Returns:
+    - str
 
     Example:
     '''

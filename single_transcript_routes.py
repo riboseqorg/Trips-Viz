@@ -14,7 +14,8 @@ import os
 import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code, fetch_user)
+                            fetch_file_paths, generate_short_code, fetch_user,
+                            string2other)
 import riboflask
 from flask_login import current_user
 import logging
@@ -104,7 +105,7 @@ def query():  #TODO: add return type
     Returns:
     """
     # global user_short_passed
-    data = request.form.to_dict()
+    data = string2other(request.form.to_dict())
     data["transcript"] = data["transcript"].upper()
     print(data, "Anmol")
     data["file_ids"] = []
@@ -121,6 +122,9 @@ def query():  #TODO: add return type
     owner = get_table('organisms').filter(
         (pl.col('organism_name') == data["organism"])
         & (pl.col('transcriptome_list') == data['transcriptome']))[0, 'owner']
+    data['owner'] = owner
+
+    print(owner, "Anmol")
 
     user = fetch_user()[0]
 
@@ -146,6 +150,7 @@ def query():  #TODO: add return type
     else:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
+    print(sql_path, "I am here")
     transcripts = sqlquery(
         sql_path,
         "transcripts").filter((pl.col('transcript') == data['transcript'])
@@ -156,7 +161,7 @@ def query():  #TODO: add return type
             data['transcript'])
         logging.debug(return_str)
         return return_str
-    print(data['transcript'], transcripts['transcript'], "yyyyyyyyyyyyy")
+    print(data['transcript'] in transcripts['transcript'], "yyyyyyyyyyyyy")
 
     if data['transcript'] not in transcripts['transcript']:
         return_str = "TRANSCRIPTS"
