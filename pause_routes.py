@@ -1,6 +1,5 @@
 from typing import Dict, List, Tuple, Union
 from flask import Blueprint, render_template, request
-import sqlite3
 from sqlitedict import SqliteDict
 import os
 import logging
@@ -10,8 +9,8 @@ from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code,
                             build_profile, build_proteomics_profile,
                             fetch_user, fetch_filename_file_id)
-import json
 from fixed_values import my_decoder
+import polars as pl
 
 # This page is used to detect pauses
 pause_detection_blueprint = Blueprint("pause_detection_page",
@@ -19,18 +18,17 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
                                       template_folder="templates")
 
 
-@pause_detection_blueprint.route('/<organism>/<transcriptome>/pause_detection/'
-                                 )
+@pause_detection_blueprint.route(
+    '/<organism>/<transcriptome>/pause_detection/')
 def pause_detection_page(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
-    organism = str(organism)
-    accepted_studies = fetch_studies(organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
+    organism_id, accepted_studies = fetch_studies(organism, transcriptome)
+    files = fetch_files(accepted_studies)
     advanced = False
 
     # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
     html_args = request.args.to_dict()
+    print(html_args, "Anmol Kiran")
 
     user_files = request.args.get('files')
     try:

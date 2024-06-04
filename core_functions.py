@@ -150,8 +150,8 @@ def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
             "file_id", "study_id", "file_name", "file_description",
             "file_type").with_columns(
                 pl.col('file_name').apply(
-                    lambda x: x.replace('.self', ''))).join(accepted_studies,
-                                                            on="study_id")
+                    lambda x: x.replace('.shelf', '.sqlite'))).join(
+                        accepted_studies, on="study_id")
 
 
 def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:

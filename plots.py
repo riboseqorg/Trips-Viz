@@ -47,35 +47,26 @@ class VegaPlot:
 
     def vline(self, x_col: str, last=False) -> Chart:
         """Vertical line."""
+        # area = self.chart.mark_area()
 
         vline = self.chart.encode(
             x=alt.X(f'{x_col}:Q',
                     axis=alt.Axis(tickSize=0, labels=True if last else False),
                     title=None),
+            # y=alt.Y(axis=alt.Axis(
+            # tickSize=0,
+            # labels=False,
+            # title="nucs",
+            # titleAngle=0,
+            # titleAlign="right",
+            # titleBaseline="middle",
+            # )),
             color='type:N',
         )
-        # if last:
-        # vline = self.chart.mark_rule().encode(
-        # x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
-        # color=self.color,
-        # )
-        return vline.mark_rule().properties(width=800, height=10)
-
-    def scatter(self, x_col: str, y_col: str) -> Chart:
-        """Scatter plot."""
-        return self.chart.mark_point().encode(
-            # x=x_col,
-            # y=y_col,
-            x=alt.X(f'{x_col}:Q', axis=alt.Axis(tickSize=0)),
-            y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
-            # opacity=alt.value(0.0),
-            # color=self.color,  # color based on differt type
-            # size=self.size
-        ).properties(width=800, height=30)
+        return vline.mark_rule(fill='firebrick').properties(width=800,
+                                                            height=10)
 
     def seq_plot(self):
-        # scatter = self.scatter('pos', 'y')
-        # return scatter
         return self.chart.mark_text().encode(
             x="pos",
             text='sequence',
