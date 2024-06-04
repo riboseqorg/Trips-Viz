@@ -130,22 +130,25 @@ def generate_plot(data, settings) -> str:
     )  # TODO: keep rna_Seqvar_dict and ribo_seq_var_dict meltated to compine them
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
     plt = VegaPlot(all_rna_reads)
-    lineplot = plt.lineplot("pos", "count")
+    if 'line' in data:
+        plot = plt.line("pos", "count")
+    else:
+        plot = plt.bar("pos", "count")
+    frame_3 = 0 if 'show_nuc' in data else 3
     start_stop_plot = []
     for frame in [1, 2, 3]:
         start_stop_plot.append(
             VegaPlot(start_stop.filter(pl.col("frame") == frame)).vline(
-                "pos", last=True if frame == 4 else False))
+                "pos", last=True if frame == frame_3 else False))
     # plt2 = VegaPlot(all_rna_reads).scatter("pos", "count")
-    seq_frames = pl.DataFrame({
-        'sequence': list(seq),
-        'pos': range(len(seq)),
-        'y': [0] * len(seq)
-    }).with_columns(frame=pl.col('pos') % 3 + 1)
-    print(seq_frames)
-    seq_plot = VegaPlot(seq_frames.to_pandas()).seq_plot()
-    print(seq_plot.to_json())
-    plt = plt.vact_plot_json([lineplot] + start_stop_plot + [seq_plot])
+    if not frame_3:
+        seq_frames = pl.DataFrame({
+            'sequence': list(seq),
+            'pos': range(len(seq)),
+            'y': [0] * len(seq)
+        }).with_columns(frame=pl.col('pos') % 3 + 1)
+        start_stop_plot.append(VegaPlot(seq_frames.to_pandas()).seq_plot())
+    plt = plt.vact_plot_json([plot] + start_stop_plot)
 
     print(all_rna_reads, rna_seqvar_dict, "Anmol Kiran You are here")
     return plt.to_json()

@@ -24,9 +24,9 @@ class VegaPlot:
         # Predefides
         self.size = 12
 
-    def lineplot(self, x_col: str, y_col: str, labels: str = False) -> Chart:
+    def _plot(self, x_col: str, y_col: str, labels: str = False) -> Chart:
         """Line plot."""
-        return self.chart.mark_line().encode(
+        return self.chart.encode(
             x=alt.X(
                 f'{x_col}:Q',
                 axis=alt.Axis(tickSize=0, labels=False),
@@ -36,6 +36,14 @@ class VegaPlot:
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
             color="frame:N",
         ).interactive(bind_y=False).properties(width=800, height=300)
+
+    def line(self, x_col: str, y_col: str) -> Chart:
+        """Line plot."""
+        return self._plot(x_col, y_col).mark_line()
+
+    def bar(self, x_col: str, y_col: str) -> Chart:
+        """Bar plot."""
+        return self._plot(x_col, y_col).mark_bar()
 
     def vline(self, x_col: str, last=False) -> Chart:
         """Vertical line."""
