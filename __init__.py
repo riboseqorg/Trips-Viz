@@ -1,5 +1,4 @@
 from typing import Union, Any
-import pandas as pd
 import os
 import time
 from datetime import date
@@ -25,9 +24,10 @@ import smtplib
 import json
 from core_functions import fetch_file_paths, base62_to_integer, User, fetch_user
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery_blueprint
-# from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
+from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
 from single_transcript_routes import (single_transcript_plotpage_blueprint,
                                       single_transcript_query_blueprint)
+
 from single_transcript_routes_genomic import (
     single_transcript_plotpage_genomic_blueprint,
     single_transcript_query_genomic_blueprint)
@@ -73,8 +73,8 @@ app.register_blueprint(single_transcript_plotpage_blueprint)
 app.register_blueprint(single_transcript_query_blueprint)
 app.register_blueprint(single_transcript_plotpage_genomic_blueprint)
 app.register_blueprint(single_transcript_query_genomic_blueprint)
-# app.register_blueprint(comparison_plotpage_blueprint)
-# app.register_blueprint(comparisonquery_blueprint)
+app.register_blueprint(comparison_plotpage_blueprint)
+app.register_blueprint(comparisonquery_blueprint)
 app.register_blueprint(diff_plotpage_blueprint)
 app.register_blueprint(diffquery_blueprint)
 app.register_blueprint(translated_orf_blueprint)
@@ -347,9 +347,8 @@ def settingspage() -> Response:
             ))
     # get user_id
     user_id = get_user_id(user)
-    user_settings = get_table('user_settings')
-    user_settings = user_settings[user_settings['user_id'] == user_id].to_dict(
-        orient='records')[0]
+    user_settings = get_table('user_settings').filter(
+        pl.col('user_id') == user_id).to_dicts()[0]
 
     return render_template('settings.html', user_settings=user_settings)
 
@@ -401,12 +400,11 @@ def download_file() -> Response:
     Called when user downloads something from the downloads page
 
     """
-    organism = request.form["organism"]
-    assembly = request.form["assembly"]
+    data = request.form.to_dict()
     return send_from_directory("{}/{}/{}".format(config.SCRIPT_LOC,
                                                  config.ANNOTATION_DIR,
-                                                 organism),
-                               assembly,
+                                                 data['organism']),
+                               data['assembly'],
                                as_attachment=True)
 
 
@@ -518,13 +516,10 @@ def upload_file() -> Response:
     """
     # uploaded_files = request.files.getlist("file")
     f = request.files["file"]
-    print(request.form)
-    print(request.files)
     user, logged_in = fetch_user()
     user_id = get_user_id(user)
     filename = f.filename
     # filename = secure_filename(f.filename)
-    print(filename)
     file_ext = filename.split(".")[-1]
     if file_ext != "sqlite":
         flash("Error: File extension should be sqlite not {}".format(file_ext))
@@ -537,20 +532,15 @@ def upload_file() -> Response:
     organism = request.form["organism"]
     assembly = request.form["assembly"]
     filetype_radio = request.form["filetype"]
-    filetype = None  # TODO: remove it later
-    if filetype_radio == "riboseq":
-        filetype = "riboseq"
-    elif filetype_radio == "rnaseq":
-        filetype = "rnaseq"
-    elif filetype_radio == "other":  # TODO: check it for correct type
-        filetype = (request.form["seq_type"]).lower().strip()
+    filetype = (request.form["seq_type"]).lower().strip(
+    ) if filetype_radio == "other" else filetype_radio
 
     # if this filetype is new for this user insert a new entry into seq_rules table
     if filetype not in ["riboseq", "rnaseq"]:
-        seq_rule = get_table('seq_rules')
-        seq_rule = seq_rule[seq_rule.user_id == user_id,
-                            seq_rule.seq_name == filetype]
-        if seq_rule.empty:
+        seq_rule = get_table('seq_rules').filter(
+            (pl.col('user_id') == user_id) & (pl.col('seq_name') == filetype))
+
+        if seq_rule.is_empty():
             update_table('seq_rules', {
                 'user_id': user_id,
                 'seq_name': filetype,
@@ -768,14 +758,11 @@ def saved():
     if user and logged_in:
         flash("You are logged in as {}".format(user))
         user_id = get_user_id(user)
-    organism_access = get_table('organism_access')
-    organism_access_list = organism_access.loc[organism_access.user_id ==
-                                               user_id, 'organism_id'].values
-    organism_list = get_table('organisms')
-    organism_list = organism_list.loc[
-        ~organism_list.private
-        | organism_list.organism_id.isin(organism_access_list),
-        'organism_id'].values
+    organism_access_list = get_table('organism_access').filter(
+        pl.col('user_id') == user_id)['organism_id']
+    organism_list = get_table('organisms').filter((pl.col('private') == 0) | (
+        pl.col('organism_id').is_in(organism_access_list)))[
+            'organism_id']  # TODO: Come back here to correct
     return render_template('user_saved_cases.html',
                            advanced=advanced,
                            organism_list=organism_list)
@@ -924,46 +911,9 @@ def homepage2() -> str:
     organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
         list).reset_index()
 
-    print("Anmol", organisms)
-
     # Create species list
 
     return render_template('landing2.html', organisms=organisms, message="")
-
-
-def homepage(message=""):
-    organism_access_list = []
-    logging.debug("homepage Connecting to trips.sqlite")
-    sanitize_get_request(request.cookies.get("cookieconsent_status"))
-    user, logged_in = fetch_user()
-
-    user_id = -1
-    if user:
-        if logged_in:
-            flash("You are logged in as {}".format(user))
-        user_id = get_user_id(user)
-        organism_access_list = get_table('organism_access')
-        organism_access_list = organism_access_list.loc[
-            organism_access_list.user_id == user_id, 'organism_id'].values
-        # get a list of organism id's this user can access
-
-    # returns a tuple with each field as a seperate string
-    organisms = get_table('organisms')
-    orgsnisms = organisms.loc[(
-        ~organisms.private | organisms.organism_id.isin(organism_access_list)
-        & organisms.organism_name == organism),
-                              ['organism_name', 'transcriptome_list']]
-    organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
-        list).reset_index()
-    # organism_list.sort()
-
-    logging.debug("homepage Closing trips.sqlite connection")
-    print(organisms)
-
-    message = sanitize_get_request(request.args.get('message'))
-    return render_template('landing.html',
-                           organisms=orgsnisms,
-                           message=message)
 
 
 # Updates the settings for a specific user
@@ -985,9 +935,8 @@ def settingsquery():
             if new_password != new_password2:
                 return "ERROR: New passwords do not match"
             generate_password_hash(curr_password)
-            users = get_table('users')
-            old_password_hash = users.loc[users.username == user,
-                                          'password'].values[0]
+            old_password_hash = get_table('users').filter(
+                pl.col('username') == user)[0, 'password']
 
             if check_password_hash(old_password_hash, curr_password):
                 new_password_hash = generate_password_hash(new_password)
@@ -1200,7 +1149,7 @@ def deletestudyquery():
             "SELECT organism_name,transcriptome_list FROM organisms WHERE organism_id = {}"
             .format(org_id))
         result = cursor.fetchone()
-        if result != None:
+        if result:
             old_organism = result[0]
             old_assembly = result[1]
             if old_organism != organism_name or old_assembly != assembly_name:
@@ -1209,7 +1158,7 @@ def deletestudyquery():
                     "SELECT organism_id  FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}'"
                     .format(organism_name, assembly_name))
                 result = cursor.fetchone()
-                if result == None:
+                if not result:
                     return "Invalid organism/transcriptome combo for study {}".format(
                         new_study_name)
                 else:
@@ -1238,35 +1187,36 @@ def deletetranscriptomequery():
         if not val[0].endswith("_undefined")
     ]
     user_id = get_user_id(user)
-    organisms = get_table("organisms").filter(
-        pl.col("organism_id").is_in(organism_ids)
-        & (pl.col("owner") == user_id)).select(
-            'organism_name', 'transcriptome_list').unique().with_columns(
-                pl.col('organism_name', 'transcriptome_list').apply(
-                    lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".
-                    format(config.UPLOADS_DIR, user_id, x['organism_name'], x[
-                        'transcriptome_list'])).alias('sqlite_path').filter(
-                            pl.col('sqlite_path').apply(os.path.isfile))
-            ).to_pandas()  # recheck if apply works correcly
-    keep_time = 60 * 60 * 24 * 14  # 14 days
-    curr_time = time.time()
-    deletion_time = curr_time + keep_time
-    organisms.apply(lambda x: update_table("org_deletions", 'insert', {},
-                                           {'file_id': x['file_id']}),
-                    axis=1)
+    if user:
+        organisms = get_table("organisms").filter(
+            pl.col("organism_id").is_in(organism_ids)
+            & (pl.col("owner") == user_id)
+        ).select('organism_name', 'transcriptome_list').unique().with_columns(
+            pl.col('organism_name', 'transcriptome_list').apply(
+                lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".
+                format(config.UPLOADS_DIR, user_id, x['organism_name'], x[
+                    'transcriptome_list'])).alias('sqlite_path').filter(
+                        pl.col('sqlite_path').apply(os.path.isfile))
+        ).to_pandas()  # recheck if apply works correcly
+        keep_time = 60 * 60 * 24 * 14  # 14 days
+        curr_time = time.time()
+        deletion_time = curr_time + keep_time
+        organisms.apply(lambda x: update_table("org_deletions", 'insert', {},
+                                               {'file_id': x['file_id']}),
+                        axis=1)
 
     for organism_id in data:
         organism_id = data[organism_id][0].split("_")[-1]
         if organism_id == "undefined":
             continue
         # Delete the annotation sqlite file
-        organisms = get_table("organisms")
-        organisms = organisms[organisms.organism_id == organism_id
-                              & organisms.owner == user_id].iloc[0][
-                                  "organism_name", "transcriptome_list"]
+        organisms = get_table("organisms").filter(
+            (pl.col("organism_id") == organism_id)
+            & (pl.col("owner") == user_id)).select("organism_name",
+                                                   "transcriptome_list")[0]
         sqlite_path = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, user_id, organisms.organism_name,
-            organisms.transcriptome_list)
+            config.UPLOADS_DIR, user_id, organisms["organism_name"],
+            organisms["transcriptome_list"])
         if os.path.isfile(sqlite_path):
             # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
@@ -1278,9 +1228,6 @@ def deletetranscriptomequery():
                 "deletion_time": deletion_time,
                 "sqlite_path": sqlite_path
             })
-        # sqlite_dir = "{0}transcriptomes/{1}/{2}/{3}".format(config.UPLOADS_DIR, user_id, organism_name,transcriptome_list)
-        # if os.path.isdir(sqlite_dir):
-        # os.rename(sqlite_dir,sqlite_dir+"_REMOVE")
         update_table("organisms", {"organism_id": organism_id})
         files = get_table("files").filter(pl.col("organism_id") == organism_id)
         studies = get_table("studies")
@@ -1428,7 +1375,7 @@ if __name__ == '__main__':
         port_no = int(sys.argv[2])
     except Exception:
         port_no = 5000
-    if local == False:
+    if not local:
         app.run(host='0.0.0.0', debug=False)
     else:
         app.run(host='0.0.0.0', port=port_no, debug=True, threaded=True)
