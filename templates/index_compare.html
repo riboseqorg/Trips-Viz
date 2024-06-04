@@ -1,241 +1,138 @@
 {% extends "layout.html" %}
 {% block content %}
-    <head>
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/common.css') }}">
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/comparison.css') }}">
-    </head>
-    <style type="text/css">
-.list {
-    border: 1px solid grey;
-    border-radius: 12px;
-    margin: 0px;
-    padding: 2px;
-    cursor: pointer;
-    overflow: hidden;
-}
- 
-.jscolor {
-    width:30px; 
-    height:30px; 
-    border-radius:20px; 
-    margin-left:30%;
-}
- 
-.items {
-    list-style-type: none;
-    columns: 4;
-    -webkit-columns: 4;
-    -moz-columns: 4;
-    min-height:150px;
-    border: 1px solid #dbdbdb;
-    text-align:center;
-    border-radius: 20px;
-    padding: 10px;
-}
- 
-.draggable_filelist {
-    list-style-type: none;
-    margin: 2px;
-    padding: 10px;
-    cursor: pointer;
-    border: 1px solid #dbdbdb;
-    border-radius: 20px;
-    min-height:150px;
-    text-align:center;
-}
- 
- 
-
-/* Outline dragged file with blue */   
-.highlight {                                    
-     background: #9dc1fc !important;                 
-     border-radius: 15px;    
- }   
- 
-.group_div {
-
-    border-radius: 20px;
-    width:24%;
-    display: inline-block;
-    vertical-align: top;
-} 
- 
-
-
-
-
-ul:empty:after {
-    content: "Drag files from the files section and drop them here.";
-}
-
-
-    </style>
-    <div id="general_settings">
-        <p>
-            <font size="5" align="center"><b><u>General Settings </u></b></font>
-        </p>
-        <table align="center" class="studytable">
-            <tr>
-                <td>
-                    <input id="ambiguous"
-                           class="ambig_check"
-                           type="checkbox"
-                           name="ambiguous"
-                           value="ambiguous"
-                           unchecked>
-                </input>
-                <label for='ambiguous' class='checkbox_label'></label>
-                <label for='line_graph' class='padded_label'>Allow ambiguous reads</label>
+    <div class="page-section">
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>General Settings</u></b></font>
+            </p>
+        </div>
+    </div>
+    <div class="page-section">
+        <div class="row">
+            <div class="col-4">
+                <input id="ambig_check"
+                       type="checkbox"
+                       name="ambig"
+                       {% if ambig=="T" %} checked {% else %}  {% endif %} />
+            </div>
+            <div class="col-8">
+                <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
                 <a class="whatsthis"
                    target="_blank"
-                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432; </a>
-            </tr>
-        </td>
-        <tr>
-            <td>
+                   href="/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
                 <input id="normalize"
-                       class="norm_check"
                        type="checkbox"
                        name="normalize"
-                       value="normalize"
-                       checked>
-            </input>
-            <label for='normalize' class='checkbox_label'></label>
-            <label for='line_graph' class='padded_label'>Normalize by mapped reads</label>
-            <a class="whatsthis"
-               target="_blank"
-               href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
-        </tr>
-    </td>
-    <tr>
-        <td>
-            <input id="comp_ribocov"
-                   class="comp_ribocov_check"
-                   type="checkbox"
-                   name="comp_ribocov"
-                   value="comp_ribocov"
-                   checked>
-        </input>
-        <label for='comp_ribocov' class='checkbox_label'></label>
-        <label for='line_graph' class='padded_label'>Ribo-Seq coverage</label>
-        <a class="whatsthis"
-           target="_blank"
-           href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
-    </tr>
-</td>
-<tr>
-    <td>
-        <b>Gene/Transcript: </b><a class="whatsthis"
+                       {% if normalize=="T" %} checked {% else %}  {% endif %} />
+            </div>
+            <div class="col-8">
+                <label for='normalize' class='padded_label'>Normalize by mapped reads</label>
+                <a class="whatsthis"
+                   target="_blank"
+                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <input id="comp_ribocov"
+                       type="checkbox"
+                       name="comp_ribocov"
+                       {% if comp_ribocov=="T" %} checked {% else %}  {% endif %} />
+            </div>
+            <div class="col-8">
+                <label for='normalize' class='padded_label'>Ribo-Seq coverage</label>
+                <a class="whatsthis"
+                   target="_blank"
+                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <b>Gene/Transcript: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_gene">&#9432;</a>
-        <input align="center"
-               id="tran"
-               type="text"
-               name="transcript"
-               value="ENST00000367055">
-    </input>
-</tr>
-</td>
-<tr>
-    <td>
-        <b>Min Read: </b><a class="whatsthis"
+            </div>
+            <div class="col-8">
+                <input align="center"
+                       id="tran"
+                       type="text"
+                       name="transcript"
+                       value="ENST00000367055" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <b>Min Read: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_minread">&#9432;</a>
-        <input type="text" id="minread" name="minread" value="25">
-    </input>
-</tr>
-</td>
-<tr>
-    <td>
-        <b>Max Read: </b><a class="whatsthis"
+            </div>
+            <div class="col-8">
+                <input type="text" id="minread" name="minread" value="25" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <b>Max Read: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_maxread">&#9432;</a>
-        <input type="text" id="maxread" name="maxread" value="150">
-    </input>
-</tr>
-</td>
-<tr>
-    <td>
-        <b>Highlight start: </b><a class="whatsthis"
+            </div>
+            <div class="col-8">
+                <input type="text" id="maxread" name="maxread" value="150" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <b>Highlight start: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
-        <input type="text" id="hili_start" name="hili_start" value="0">
-    </input>
-</tr>
-</td>
-<tr>
-    <td>
-        <b>Highlight stop: </b><a class="whatsthis"
+            </div>
+            <div class="col-8">
+                <input type="text" id="hili_start" name="hili_start" value="0" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <b>Highlight stop: </b><a class="whatsthis"
    target="_blank"
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
-        <input type="text" id="hili_stop" name="hili_stop" value="0">
-    </input>
-</tr>
-</td>
-</table>
-</div>
-<div id="seq_types">
-    <p>
-        <font size="5" align="center"><b><u>Seq types</u></b></font>
-    </p>
-</br>
-</div>
-<div id = "dialog-2" title = "Choose a transcript..."></div>
-<div id="studies">
-    <p>
-        <font size="5" align="center"><b><u>Studies</u></b></font>
-    </p>
-</br>
-<table align="center">
-    <tr>
-        <td></td>
-        <td>
-            <button class="study_button" type="button" onclick='view_study_info()'>
-                <b>View study info</b>
-            </button>
-        </td>
-    </tr>
-</table>
-</br>
-<table align="center"
-       width="90%"
-       name="studytable"
-       id="studytable"
-       class="studytable">
-    <tr id="tablerow1"></tr>
-    <tr id="tablerow2"></tr>
-    <tr id="tablerow3"></tr>
-    <tr id="tablerow4"></tr>
-    <tr id="tablerow5"></tr>
-    <tr id="tablerow6"></tr>
-    <tr id="tablerow7"></tr>
-    <tr id="tablerow8"></tr>
-    <tr id="tablerow9"></tr>
-    <tr id="tablerow10"></tr>
-    <tr id="tablerow11"></tr>
-    <tr id="tablerow12"></tr>
-    <tr id="tablerow13"></tr>
-    <tr id="tablerow14"></tr>
-    <tr id="tablerow15"></tr>
-    <tr id="tablerow16"></tr>
-    <tr id="tablerow17"></tr>
-    <tr id="tablerow18"></tr>
-    <tr id="tablerow19"></tr>
-    <tr id="tablerow20"></tr>
-    <tr id="tablerow21"></tr>
-    <tr id="tablerow22"></tr>
-    <tr id="tablerow23"></tr>
-</table>
-</div>
-<div id="buttons"></div>
-<div id="files">
-</br>
-<p>
-    <font size="5" align="center"><b><u>Files</u></b>
+            </div>
+            <div class="col-8">
+                <input type="text" id="hili_stop" name="hili_stop" value="0" />
+            </div>
+        </div>
+    </div>
+    <div class="page-section">
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>Seq Types</u></b></font>
+            </p>
+        </div>
+    </div>
+    <div class="page-section">
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>Studies</u></b></font>
+            </p>
+        </div>
+    </div>
+    <div class="page-section">
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>Files</u></b></font>
+            </p>
+        </div>
+    </div>
+    <div id = "dialog-2" title = "Choose a transcript..."></div>
+    <div id="files">
     </br>
-</font>
+    <p>
+        <font size="5" align="center"><b><u>Files</u></b>
+        </br>
+    </font>
 </p>
 </div>
 <div id="file_list">
@@ -402,554 +299,4 @@ ul:empty:after {
 </div>
 <script type="text/javascript"
         src="{{ url_for('static', filename='js/common.js') }}"></script>
-<script type="text/javascript">
-var listnum = 0;
-var master_file_dict = {};
-var html_args = {{  html_args|safe  }};
-var file_id_to_name_dict = {{ file_id_to_name_dict|safe }};
-
-
-
-
-
-// click view plot when enter is pressed on keyboard
-$(document).keypress(function(e){
-		if (e.which == 13){
-				$("#comparequery").click();
-				}
-		});
-
-
-
-rownum = 1
-rowcount = -1
-
-
-var seq_types = {{  seq_types|safe  }};
-for (var i in seq_types) {
-	//if the seq type is riboseq make it checked by default
-	if (seq_types[i] == "riboseq") {
-		checked = "checked"
-	}
-	else {
-		checked = "unchecked"
-	};
-
-	// if seq type is riboseq or rnaseq set a proper display name, else just use seq_type
-	if (seq_types[i] == "riboseq") {
-		display_name = "Ribo-Seq"
-	}
-	else if (seq_types[i] == "rnaseq") {
-		display_name = "mRNA-Seq"
-	}
-	else {
-		display_name = seq_types[i]
-	}
-
-	var radio_seq_types = "<input "+checked+" type='radio' class='seq_type_radio all_checks' id='"+seq_types[i]+"' name='seq_type' value="+seq_types[i]+" /></b>   </input><label for='"+seq_types[i]+"' id='label"+seq_types[i]+"' class='radio_label'>"+display_name+"</label>";
-	var seq_types_div = document.getElementById('seq_types');
-	seq_types_div.innerHTML += radio_seq_types;
-}
-
-
-var studies_dict = {{  studies_dict|safe  }};
-var studyinfo_dict = {{  studyinfo_dict|safe  }};
-for (var key in studies_dict)  {
-		rowcount += 1;
-		if (rowcount == 6) {
-				rowcount = 0
-				rownum += 1
-				};
-		var radio_study = "<input type='radio' checked class='study_radio all_checks' id='study"+key+"' name='content_type' value=study"+key+" /></b></input><label for='study"+key+"' id='label"+key+"' class='radio_label'>"+studies_dict[key]["study_name"]+"</label>";
-		addRow(rownum, radio_study)
-
-		for (i in seq_types) {
-			var seq_type = seq_types[i]
-			var files_div = document.getElementById('files');
-			var new_show_div = document.createElement(studies_dict[key]["study_name"]);
-			new_show_div.className = 'show';
-			new_show_div.id = seq_type+"study"+key;
-			//tablehtml = "<table class='file_table' id="+key+seq_type+" align='center'></table>";
-			tablehtml = "<li id="+key+seq_type+" class='items'></li>";
-			new_show_div.innerHTML = tablehtml;
-			files_div.appendChild(new_show_div);
-		}
-		};
-		// accepted files structure, key is file_type,values are file_id's (which are themselves keys) which point to a dictionary with the following: {"study_id":row[1],"file_name":row[2],"file_description":row[3],"file_type":row[4]}
-		
-		
-		
-		
-		
-		
-var accepted_files = {{ accepted_files|safe }};
-var seq_study_dict = {};
-// populate the ribostudies and rnastudies div with file names and descriptions.
-for (var filetype in accepted_files) {
-		for (var study_id in accepted_files[filetype]) {
-		
-				var ul = document.getElementById(study_id+filetype);
-				console.log("ul is", ul);
-				Sortable.create(ul, {
-					group: "sortable-group",
-					multiDrag: true,
-					sort: false,
-					selectedClass: "highlight",
-					animation: 200
-					});
-				i=0
-				var file_names = [];
-				for (var file_id in accepted_files[filetype][study_id]) {
-					file_name = accepted_files[filetype][study_id][file_id]["file_name"]
-					file_names.push([file_name, file_id])
-					}
-				file_names = file_names.sort(function(a, b) {
-					return a[0].localeCompare(b[0]);
-				})
-				
-				var sorted_file_list1 = [];
-				var sorted_file_list2 = [];
-				var sorted_file_list3 = [];
-				
-				for (var z in file_names) {
-					var tup = file_names[z];
-					console.log("Z is",z);
-					if (z%3 == 0){
-						sorted_file_list1.push(tup[1]);
-					}
-					if (z%3 == 1){
-						sorted_file_list2.push(tup[1]);
-					}
-					if (z%3 == 2){
-						sorted_file_list3.push(tup[1]);
-					}
-					
-					}
-				var sorted_file_list = [...sorted_file_list1, ...sorted_file_list2, ...sorted_file_list3]
-				
-				
-				for (var file_id in sorted_file_list) {
-						file_id = sorted_file_list[file_id]
-						file_name = accepted_files[filetype][study_id][file_id]["file_name"];
-						file_description = accepted_files[filetype][study_id][file_id]["file_description"];
-
-						if (!(filetype in seq_study_dict)) {
-							seq_study_dict[filetype] = [];
-						};
-						if (accepted_files[filetype][study_id].length != 0) {
-							if (!(study_id in seq_study_dict[filetype])) {
-								seq_study_dict[filetype].push(study_id);
-						}
-					};
-						//var table = document.getElementById(study_id+filetype);
-						//var tr = document.createElement("tr");
-						//var td = document.createElement("td");
-						var ul = document.getElementById(study_id+filetype);
-						
-						
-						
-						//td.innerHTML = ("<td><input id='"+file_id+"' type='radio'    class='study_radio file_"+file_id+" "+filetype+"_file "+filetype+"_study"+study_id+"'  name='ribostudy' value="+file_id+"></input>    <label for='"+file_id+"' class='filetable_label'></label> <label for='"+file_id+"' class='padded_label'><b>"+file_name+"</b>:"+file_description+"</label></td>");
-						var li = document.createElement("li");
-						li.innerHTML = ("<li id="+file_id+" class='list'><b>"+file_name+"</b>:"+file_description+"</li> ");
-						ul.appendChild(li);
-
-
-																						}
-														}
-								};
-
-
-var defaulttran = "{{ default_tran|safe }}";
-document.getElementById('tran').value = defaulttran;
-
-
-
-
-
-function addItem(file_id){
-		listnum += 1
-		if (file_id == "None") {
-			var fileinput = document.querySelector('input[name=ribostudy]:checked').value;
-			}
-		else {
-			fileinput = file_id;
-			};
-		var colorinput = document.getElementById("inputcolor_riboseq");
-		if (colorinput.value in master_file_dict) {
-				master_file_dict[colorinput.value]["file_ids"].push(fileinput);
-				var group_id = 'label_'+colorinput.value
-				var group_label = document.getElementById(group_id);
-				var label_val = (group_label.value).replace(/_/g, "-");
-				master_file_dict[colorinput.value]["label"] = label_val
-				}
-		else {
-				var minread = $('input:text[name=minread]').val();
-				var maxread = $('input:text[name=maxread]').val();
-				master_file_dict[colorinput.value] = {"file_ids":[fileinput],"minread":minread, "maxread":maxread,"label":""}
-				 };
-		//console.log("color file list html", document.getElementById("color_file_list").innerHTML)
-		//for (color in master_file_dict) {
-		//	li_val = document.getElementById("label_"+color+"");
-		//	console.log("li_val",li_val);
-		//	}
-		document.getElementById("color_file_list").innerHTML = "";
-		for (color in master_file_dict) {
-				var li = document.createElement("LI");
-				var newdiv = document.createElement("div");
-				newdiv.className =  "input-color";
-				var indiv = document.createElement("div");
-				indiv.className = "color-box";
-				indiv.style.backgroundColor = ""+color+"";
-				newdiv.appendChild(indiv);
-				var file_name = file_id_to_name_dict[master_file_dict[color]["file_ids"][0]]
-				var group_id = 'label_'+color
-				if (master_file_dict[color]["file_ids"].length == 1) {
-						var minread = master_file_dict[color]["minread"];
-						var maxread = master_file_dict[color]["maxread"];
-						var group_name = "<input type='text' id="+group_id+" value='"+file_name+"_"+minread+"-"+maxread+"'></input>"
-						li.innerHTML = [group_name];
-																														 }
-				else {
-						var minread = master_file_dict[color]["minread"];
-						var maxread = master_file_dict[color]["maxread"];
-						var initial_value = [file_name+ " and "+ ((master_file_dict[color]["file_ids"].length)-1).toString() +" others"+"_"+minread+"-"+maxread];
-						var group_name = "<input type='text' id="+group_id+" value='"+initial_value+"'></input>"
-						li.innerHTML = [group_name];
-						}
-				document.getElementById("color_file_list").appendChild(li);
-				document.getElementById("color_file_list").appendChild(newdiv);
-				};
-
-		};
-
-
-
-
-$(function() {
-		$( "#dialog-2" ).dialog({
-				autoOpen: false,
-				modal: true,
-				minWidth: 800,
-				buttons: {
-				Submit: function() {//var transcript = document.getElementById("transcript_sel").value();
-								var transcript = document.querySelector('input[name=transcript_sel]:checked').value;
-								document.getElementById('tran').value = transcript;
-								$(this).dialog("close");
-								// if there is files in the file list then call the comparequery function
-
-								if (listnum >= 1) {
-										$("#comparequery").click();}
-								else {
-										return true;
-												}
-								}},
-
-				title: "Choose a transcript. . .",
-				position: {my: "center", at: "center"
-									}
-													});
-												});
-
-var url = "/comparequery"
-
-$("#loading-div-background").css({ opacity: 0.7 });
-
-$("#comparequery").click(function() {
-	$("#loading-div-background").show();
-	$("#container").hide();
-	var transcript = $('input:text[name=transcript]').val();
-	var minread = $('input:text[name=minread]').val();
-	var maxread = $('input:text[name=maxread]').val();
-	var hili_start = $('input:text[name=hili_start]').val();
-	var hili_stop = $('input:text[name=hili_stop]').val();
-
-	// var ribocoverage = $('input:checkbox[name=coverage]:checked').val();
-	var normalize = $('input:checkbox[name=normalize]:checked').val();
-	var ambiguous = $('input:checkbox[name=ambiguous]:checked').val();
-	var comp_ribocov = $('input:checkbox[name=comp_ribocov]:checked').val();
-	var organism = "{{  organism|safe  }}";
-	var transcriptome = "{{  transcriptome|safe  }}";
-
-	master_file_dict = {};
-	var group_1_file_list = document.getElementById("group_1_file_list").getElementsByTagName("li");
-	var group_1_color = document.getElementById("group1_color");
-	var group_1_label = $('input:text[name=group_1_label]').val();
-	if (group_1_file_list.length != 0) {
-		master_file_dict[group_1_color.value] = {"file_ids":[]}
-		master_file_dict[group_1_color.value]["label"] = group_1_label
-		for (var i = 0; i < group_1_file_list.length; ++i) {
-			var file_id = group_1_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_1_file_list[i].innerText)
-				master_file_dict[group_1_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_2_file_list = document.getElementById("group_2_file_list").getElementsByTagName("li");
-	var group_2_color = document.getElementById("group2_color");
-	var group_2_label = $('input:text[name=group_2_label]').val();
-	if (group_2_file_list.length != 0) {
-		master_file_dict[group_2_color.value] = {"file_ids":[]}
-		master_file_dict[group_2_color.value]["label"] = group_2_label
-		for (var i = 0; i < group_2_file_list.length; ++i) {
-			var file_id = group_2_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_2_file_list[i].innerText)
-				master_file_dict[group_2_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_3_file_list = document.getElementById("group_3_file_list").getElementsByTagName("li");
-	var group_3_color = document.getElementById("group3_color");
-	var group_3_label = $('input:text[name=group_3_label]').val();
-	if (group_3_file_list.length != 0) {
-		master_file_dict[group_3_color.value] = {"file_ids":[]}
-		master_file_dict[group_3_color.value]["label"] = group_3_label
-		for (var i = 0; i < group_3_file_list.length; ++i) {
-			var file_id = group_3_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_3_file_list[i].innerText)
-				master_file_dict[group_3_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_4_file_list = document.getElementById("group_4_file_list").getElementsByTagName("li");
-	var group_4_color = document.getElementById("group4_color");
-	var group_4_label = $('input:text[name=group_4_label]').val();
-	if (group_4_file_list.length != 0) {
-		master_file_dict[group_4_color.value] = {"file_ids":[]}
-		master_file_dict[group_4_color.value]["label"] = group_4_label
-		for (var i = 0; i < group_4_file_list.length; ++i) {
-			var file_id = group_4_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_4_file_list[i].innerText)
-				master_file_dict[group_4_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_5_file_list = document.getElementById("group_5_file_list").getElementsByTagName("li");
-	var group_5_color = document.getElementById("group5_color");
-	var group_5_label = $('input:text[name=group_5_label]').val();
-	if (group_5_file_list.length != 0) {
-		master_file_dict[group_5_color.value] = {"file_ids":[]}
-		master_file_dict[group_5_color.value]["label"] = group_5_label
-		for (var i = 0; i < group_5_file_list.length; ++i) {
-			var file_id = group_5_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_5_file_list[i].innerText)
-				master_file_dict[group_5_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_6_file_list = document.getElementById("group_6_file_list").getElementsByTagName("li");
-	var group_6_color = document.getElementById("group6_color");
-	var group_6_label = $('input:text[name=group_6_label]').val();
-	if (group_6_file_list.length != 0) {
-		master_file_dict[group_6_color.value] = {"file_ids":[]}
-		master_file_dict[group_6_color.value]["label"] = group_6_label
-		for (var i = 0; i < group_6_file_list.length; ++i) {
-			var file_id = group_6_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_6_file_list[i].innerText)
-				master_file_dict[group_6_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_7_file_list = document.getElementById("group_7_file_list").getElementsByTagName("li");
-	var group_7_color = document.getElementById("group7_color");
-	var group_7_label = $('input:text[name=group_7_label]').val();
-	if (group_7_file_list.length != 0) {
-		master_file_dict[group_7_color.value] = {"file_ids":[]}
-		master_file_dict[group_7_color.value]["label"] = group_7_label
-		for (var i = 0; i < group_7_file_list.length; ++i) {
-			var file_id = group_7_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_7_file_list[i].innerText)
-				master_file_dict[group_7_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-	var group_8_file_list = document.getElementById("group_8_file_list").getElementsByTagName("li");
-	var group_8_color = document.getElementById("group8_color");
-	var group_8_label = $('input:text[name=group_8_label]').val();
-	if (group_8_file_list.length != 0) {
-		master_file_dict[group_8_color.value] = {"file_ids":[]}
-		master_file_dict[group_8_color.value]["label"] = group_8_label
-		for (var i = 0; i < group_8_file_list.length; ++i) {
-			var file_id = group_8_file_list[i].getAttribute("id")
-			if (file_id != null) {
-				var fileinput = (group_8_file_list[i].innerText)
-				master_file_dict[group_8_color.value]["file_ids"].push(file_id);
-				var file_name = fileinput.split(":")[0]
-			}
-		}
-	}
-	
-
-	var qu = {"transcript":transcript, "minread":minread, "maxread":maxread, "ambiguous": ambiguous, "master_file_dict": master_file_dict,
-				"organism":organism, "normalize":normalize, "html_args":html_args,"hili_start":hili_start,"hili_stop":hili_stop,
-				"transcriptome":transcriptome,"ribocoverage":comp_ribocov};
-
-	if (Object.keys(master_file_dict).length == 1) {
-		loading_header.innerText = "Loading data from "+Object.keys(master_file_dict).length+" file";}
-	else {
-		loading_header.innerText = "Loading data from "+Object.keys(master_file_dict).length+" files";}
-
-
-	$.ajax({
-			type: "POST",
-			async:true,
-			contentType: "application/json; charset=utf-8",
-			url: url,
-			data: JSON.stringify(qu),
-			dataType: "html",
-			success: function(data) {
-				if (data.slice(0, 11) == "TRANSCRIPTS"){
-						var splitdata = data.split(":");
-						populate_jquery_dialog(splitdata);
-						$( "#dialog-2" ).dialog( "open" );
-						$("#loading-div-background").hide();
-						$("#container").show();
-
-						}
-				else{
-						var graph = $("#container");
-						graph.html(data);
-						$("#loading-div-background").hide();
-						$("#container").show();
-						$('html, body').animate({scrollTop: $("#container").offset().bottom}, 200);
-						document.getElementById('container').scrollIntoView();
-						}
-					},
-			
- });
-});
-
-
-
-
-
-
-
-
-
-
-
-if (html_args["minread"] != "None") {
-		document.getElementById('minread').value = html_args["minread"];
-		}
-
-if (html_args["maxread"] != "None") {
-		document.getElementById('maxread').value = html_args["maxread"];
-		}
-
-if (html_args["hili_start"] != "None") {
-	 document.getElementById('hili_start').value = html_args["hili_start"];
-	 }
-
-if (html_args["hili_stop"] != "None") {
-		document.getElementById('hili_stop').value = html_args["hili_stop"];
-		}
-
-if (html_args["ambig"] == "T") {
-		$('.ambig_check').attr('checked', true);
-		}
-else {
-		$('.ambig_check').attr('checked', false);
-		}
-
-if (html_args["cov"] == "T") {
-		$('.cov_check').attr('checked', true);
-		}
-else {
-		$('.cov_check').attr('checked', false);
-		}
-
-if (html_args["normalize"] == "T") {
-		$('.norm_check').attr('checked', true);
-		}
-else if (html_args["normalize"] == "F") {
-		$('.norm_check').attr('checked', false);
-		}
-
-
-
-//Update the options box on page load and load files in file box
-$(document).ready(function(){
-	var n = document.querySelector('input[name="content_type"]:checked').value;
-	var seq_type = document.querySelector('input[name="seq_type"]:checked').value;
-
-	for (var study_id in studies_dict) {
-		$("#label"+study_id+"").css({ opacity: 0.2 });
-	}
-	for (file_type in seq_study_dict) {
-		if (file_type == seq_type) {
-			for (var sub_study_id in seq_study_dict[file_type]) {
-				$("#label"+seq_study_dict[file_type][sub_study_id]+"").css({ opacity: 1 });
-			}
-		}
-	}
-
-	var selector = "#"+seq_type+ n; //Create a selector based on the id
-	$(".show").hide(); //Hide all the checkbox containers
-	$(selector).show(); //Show only the related container
-})
-
-
-
-var list_of_lists = ["group_1_file_list","group_2_file_list","group_3_file_list","group_4_file_list","group_5_file_list","group_6_file_list","group_7_file_list","group_8_file_list"]
-
-for (var i = 0; i < list_of_lists.length; i++) {
-	var el = document.getElementById(list_of_lists[i]);
-	console.log("El is ", el);
-	Sortable.create(el, {
-		group: "sortable-group",
-		multiDrag: true,
-		direction: 'horizontal', 
-		selectedClass: "highlight",
-		animation: 200,
-		sort: false
-	});
-};
-
-
-var group_no = 0
-var group_list = ["group_1_file_list","group_2_file_list","group_3_file_list","group_4_file_list","group_5_file_list","group_6_file_list","group_7_file_list","group_8_file_list"]
-var group_colour_list = ["group1_color","group2_color","group3_color","group4_color","group5_color","group6_color","group7_color","group8_color"]
-var group_label_list = ["group1_label","group2_label","group3_label","group4_label","group5_label","group6_label","group7_label","group8_label"]
-// INPUT ALL FILES PASSED IN HTML ARGUMENTS, also input labels if they were supplied
-for (color in html_args["user_file_dict"]) {
-	document.getElementById(group_colour_list[group_no]).value = color;
-	document.getElementById(group_label_list[group_no]).value = html_args["user_label_dict"][color];
-	var ul = document.getElementById(group_list[group_no]);
-	for (i in html_args["user_file_dict"][color]) {
-		var fileinput = html_args["user_file_dict"][color][i];
-		var file_li = document.getElementById(fileinput);
- 		ul.appendChild(file_li);
-		}
-	group_no += 1;
-}
-
-if (html_args["transcript"] != "None") {
-		document.getElementById('tran').value = html_args["transcript"];
-		// If a transcript is passed by the user then automatically produce a graph
-		$("#comparequery").click();
-		}
-
-
-</script>
 {% endblock %}
