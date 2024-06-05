@@ -1,14 +1,6 @@
 from typing import List, Tuple, Union, Dict
 import collections
-import pandas as pd
-import numpy as np
-from bokeh.plotting import figure
-from bokeh.embed import file_html
-from bokeh.resources import CDN
-from bokeh.models import (
-    ColumnDataSource,
-    HoverTool,
-)
+import polars as pl
 
 #ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
 try:
@@ -24,7 +16,6 @@ redhex = "#FF5F5B"
 greenhex = "#90E090"
 bluehex = "#9ACAFF"
 yellowhex = "#FFFF91"
-""
 
 
 def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
@@ -69,17 +60,8 @@ def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
         g_counts.append(master_dict[i]["G"])
         c_counts.append(master_dict[i]["C"])
 
-    fig, ax = plt.subplots(figsize=(13, 12))
-    #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
     ax.set_xlabel('Position (nucleotides)', fontsize=axis_label_size)
 
-    #if nuc_comp_type == "nuc_comp_per":
-    #	ax.set_ylim(0,1)
-    #	ax.set_ylabel('Percent',fontsize=axis_label_size,labelpad=50)
-    #elif nuc_comp_type == "nuc_comp_count":
-    maxheight = max(max(a_counts), max(t_counts), max(g_counts), max(c_counts))
-    ax.set_ylim(0, maxheight)
-    ax.set_ylabel('Count', fontsize=axis_label_size, labelpad=100)
     ax = plt.subplot(111)
     title_str = "{} ({})".format(title, short_code)
     ax.set_title(title_str, y=1.05, fontsize=title_size)
@@ -94,20 +76,6 @@ def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
     ax.set_facecolor(background_col)
     ax.tick_params('both', labelsize=marker_size)
     plt.grid(color="white", linewidth=2, linestyle="solid")
-    ilp = InteractiveLegendPlugin([a_line, t_line, g_line, c_line],
-                                  ["A", "T", "G", "C"],
-                                  alpha_unsel=0,
-                                  alpha_sel=1,
-                                  start_visible=True)
-    plugins.connect(fig, ilp, TopToolbar(yoffset=750, xoffset=600),
-                    DownloadProfile(returnstr=returnstr),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><a href='https://trips.ucc.ie/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as fasta file</b></button></a> </div>".format(
-        short_code, filename)
-    graph += mpld3.fig_to_html(fig)
-    return graph
 
 
 def nuc_comp_single(tran, master_dict, title, short_code, background_col,
@@ -304,8 +272,6 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
                         verticalalignment='center',
                         rotation="horizontal",
                         color="black")
-    title_str = '{} ({})'.format(gene, short_code)
-    plt.title(title_str, fontsize=title_size, y=36)
     line_collections = [allexons, cds_markers]
 
     plot_gc = True
@@ -414,15 +380,6 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
     if leg_offset < 0:
         leg_offset = 0
 
-    ilp = InteractiveLegendPlugin(line_collections,
-                                  labels,
-                                  alpha_unsel=0,
-                                  alpha_sel=0.85,
-                                  start_visible=start_visible,
-                                  fontsize=30,
-                                  xoffset=leg_offset)
-    all_start_points = {1: [], 2: [], 3: []}
-
     ax_f1.plot(all_start_points[1], [0.75] * len(all_start_points[1]),
                'o',
                color='b',
@@ -447,27 +404,6 @@ def nuc_comp_single(tran, master_dict, title, short_code, background_col,
                mew=1,
                alpha=0,
                zorder=3)
-
-    ax_f3.axes.get_yaxis().set_ticks([])
-    ax_f2.axes.get_yaxis().set_ticks([])
-    ax_f1.axes.get_yaxis().set_ticks([])
-
-    plugins.connect(fig, ilp, TopToolbar(yoffset=750, xoffset=600),
-                    DownloadProfile(returnstr=""), DownloadPNG(returnstr=tran))
-
-    ax_main.set_facecolor(background_col)
-    # This changes the size of the tick markers, works on both firefox and chrome.
-    ax_main.tick_params('both', labelsize=marker_size)
-    ax_main.xaxis.set_major_locator(plt.MaxNLocator(3))
-    ax_main.yaxis.set_major_locator(plt.MaxNLocator(3))
-    ax_main.grid(True, color="white", linewidth=30, linestyle="solid")
-    #Without this style tag the markers sizes will appear correct on browser but be original size when downloaded via png
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
-    return graph
 
 
 def gc_metagene(title: str, short_code: str, background_col: str,
@@ -693,16 +629,6 @@ def gc_metagene(title: str, short_code: str, background_col: str,
     if leg_offset < 0:
         leg_offset = 0
 
-    ilp = InteractiveLegendPlugin(line_collections,
-                                  labels,
-                                  alpha_unsel=0,
-                                  alpha_sel=0.85,
-                                  start_visible=start_visible,
-                                  fontsize=30,
-                                  xoffset=leg_offset)
-
-    plugins.connect(fig, ilp, TopToolbar(yoffset=420, xoffset=130))
-
     ax_main.set_facecolor(background_col)
     # This changes the size of the tick markers, works on both firefox and chrome.
     ax_main.tick_params('both', labelsize=marker_size)
@@ -722,13 +648,6 @@ def gc_metagene(title: str, short_code: str, background_col: str,
                  color="black",
                  ha="center")
     #hide x axis set_ticks
-    ax_main.axes.get_xaxis().set_ticks([])
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
-    return graph
 
 
 def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
@@ -795,25 +714,7 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
         'trans': tran_list4
     })
     x_num += len(gc_list4)
-    full_title = "{}% ({})".format(nucleotide, short_code)
-    y_lab = "{} %".format(nucleotide)
 
-    p = figure(plot_width=1300,
-               plot_height=1300,
-               x_axis_label="",
-               title=full_title,
-               y_axis_label=y_lab,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,save,hover,tap")
-    p.title.align = "center"
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = marker_size
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
-    p.xgrid.grid_line_color = "#cccccc"
-    p.ygrid.grid_line_color = "#cccccc"
     p.scatter('x',
               'y',
               alpha=0.2,
@@ -847,12 +748,6 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
               source=source4,
               fill_color='yellow')
     hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
-    hover.tooltips = [("GC%", "@y"), ("Count", "@x"), ("Transcript", "@trans")]
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
-        filename)
-    graph += file_html(p, CDN)
-    return graph
 
 
 def lengths_scatter(master_dict, filename, title_size, axis_label_size,
@@ -921,22 +816,6 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     full_title = "Lengths ({})".format(short_code)
     y_lab = "Length"
 
-    p = figure(plot_width=1300,
-               plot_height=1300,
-               x_axis_label="",
-               title=full_title,
-               y_axis_label=y_lab,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,save,hover,tap")
-    p.title.align = "center"
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = marker_size
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
-    p.xgrid.grid_line_color = "#cccccc"
-    p.ygrid.grid_line_color = "#cccccc"
     p.scatter('x',
               'y',
               alpha=0.2,
@@ -969,13 +848,6 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
               size=12,
               source=source4,
               fill_color='yellow')
-    hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
-    hover.tooltips = [("GC%", "@y"), ("Count", "@x"), ("Transcript", "@trans")]
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
-        filename)
-    graph += file_html(p, CDN)
-    return graph
 
 
 def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
@@ -1163,22 +1035,6 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
                 pass
     full_title = "{}% ({})".format(nucleotide, short_code)
     y_lab = '{} %'.format(nucleotide)
-    p = figure(plot_width=1300,
-               plot_height=1300,
-               tools="reset,pan,box_zoom,save,hover,tap",
-               background_fill_color="#efefef",
-               x_range=cats,
-               toolbar_location="below",
-               title=full_title,
-               y_axis_label=y_lab)
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = marker_size
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
     qmin = groups.quantile(q=0.00)
     qmax = groups.quantile(q=1.00)
     upper.gc = [
@@ -1201,16 +1057,6 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
     p.rect(cats, upper.gc, 0.2, 0.01, line_color="black")
     if not out.empty:
         p.circle(outx, outy, size=6, color="#F38630", fill_alpha=0.6)
-
-    p.xgrid.grid_line_color = None
-    p.ygrid.grid_line_color = "white"
-    p.grid.grid_line_width = 2
-    p.xaxis.major_label_text_font_size = "12pt"
-
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
-        filename)
-    graph += file_html(p, CDN)
-    return graph
 
 
 def lengths_box(master_dict, filename, box_colour, short_code, title_size,
@@ -1295,12 +1141,6 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
                background_fill_color="#efefef",
                x_range=cats,
                toolbar_location="below")
-    p.title.align = "center"
-    p.title.text_font_size = title_size
-    p.xaxis.axis_label_text_font_size = axis_label_size
-    p.xaxis.major_label_text_font_size = marker_size
-    p.yaxis.axis_label_text_font_size = axis_label_size
-    p.yaxis.major_label_text_font_size = marker_size
     # if no outliers, shrink gcs of stems to be no longer than the minimums or maximums
     qmin = groups.quantile(q=0.00)
     qmax = groups.quantile(q=1.00)
@@ -1337,16 +1177,6 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
     if not out.empty:
         p.circle(outx, outy, size=6, color="#F38630", fill_alpha=0.6)
 
-    p.xgrid.grid_line_color = None
-    p.ygrid.grid_line_color = "white"
-    p.grid.grid_line_width = 2
-    p.xaxis.major_label_text_font_size = "12pt"
-
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='https://trips.ucc.ie/short/' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='https://trips.ucc.ie/static/tmp/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(
-        filename)
-    graph += file_html(p, CDN)
-    return graph
-
 
 def gene_count(short_code, background_col, title_size, axis_label_size,
                subheading_size, marker_size, coding, noncoding):
@@ -1366,25 +1196,11 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
 
     Example:
     """
-    labels = ["", "Genes", "Transcripts", ""]
-    fig, ax = plt.subplots(figsize=(13, 8))
-    N = 4
-    bar_width = 0.35
-    bar_l = [i for i in range(N)]
-    tick_pos = [i + (bar_width / 2) for i in bar_l]
-    ind = np.arange(N)  # the x locations for the groups
-    all_reads_count = 0
     title_str = "Reads breakdown ({})".format(short_code)
-    plt.title(title_str, fontsize=title_size)
-    plt.xticks(tick_pos, labels)
 
-    ax.set_facecolor(background_col)
-    ax.tick_params('y', labelsize=marker_size)
     if len(labels) > 12:
         marker_size = int(marker_size / (len(labels) / 8))
-    ax.tick_params('x', labelsize=marker_size)
 
-    plt.grid(color="white", linewidth=2, linestyle="solid")
     totals = []
     for i in range(0, N):
         curr_total = 0
@@ -1402,7 +1218,6 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
     for i in range(0, len(noncoding)):
         per = (noncoding[i] / totals[i]) * 100
 
-    plt.ylabel('Count', fontsize=axis_label_size, labelpad=100)
     p1 = plt.bar(ind, coding, bar_width, color='#80ff80', linewidth=0)
     p2 = plt.bar(ind,
                  noncoding,
@@ -1416,23 +1231,3 @@ def gene_count(short_code, background_col, title_size, axis_label_size,
     plt.plot(0, 0, alpha=0)
     plt.legend((p2[0], p1[0]), ('Non Coding: {:,}'.format(
         sum(noncoding)), 'Coding {:,}'.format(sum(coding))))
-    for i, bar in enumerate(p8.get_children()):
-        lab1 = ""
-        per = int(round((noncoding[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Non-coding:</b> {:,}  ({}%)'.format(noncoding[i], per)
-        per = int(round((coding[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Coding:</b> {:,}  ({}%)'.format(coding[i], per)
-        tooltip1 = plugins.LineHTMLTooltip(bar,
-                                           lab1,
-                                           voffset=10,
-                                           hoffset=30,
-                                           css=line_tooltip_css)
-        plugins.connect(fig, tooltip1)
-    plugins.connect(fig, TopToolbar(yoffset=750, xoffset=600),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='https://trips.ucc.ie/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
-    return graph
