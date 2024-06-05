@@ -136,167 +136,28 @@
 </p>
 </div>
 <div id="file_list">
-</br>
-<div id="group_1_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group1_color"
-           name="favcolor"
-           value="#ff0000">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_1_label"
-           id="group1_label"
-           type="text"
-           value="Group 1">
-</input>
-<ul class="draggable_filelist"
-    id="group_1_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_2_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group2_color"
-           name="favcolor"
-           value="#0010FF">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_2_label"
-           id="group2_label"
-           type="text"
-           value="Group 2">
-</input>
-<ul class="draggable_filelist"
-    id="group_2_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_3_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group3_color"
-           name="favcolor"
-           value="#0DFF00">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_3_label"
-           id="group3_label"
-           type="text"
-           value="Group 3">
-</input>
-<ul class="draggable_filelist"
-    id="group_3_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_4_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group4_color"
-           name="favcolor"
-           value="#FFA200">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_4_label"
-           id="group4_label"
-           type="text"
-           value="Group 4">
-</input>
-<ul class="draggable_filelist"
-    id="group_4_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_5_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group5_color"
-           name="favcolor"
-           value="#BA00FF">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_5_label"
-           id="group5_label"
-           type="text"
-           value="Group 5">
-</input>
-<ul class="draggable_filelist"
-    id="group_5_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_6_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group6_color"
-           name="favcolor"
-           value="#02EDFF">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_6_label"
-           id="group6_label"
-           type="text"
-           value="Group 6">
-</input>
-<ul class="draggable_filelist"
-    id="group_6_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_7_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group7_color"
-           name="favcolor"
-           value="#F9FF12">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_7_label"
-           id="group7_label"
-           type="text"
-           value="Group 7">
-</input>
-<ul class="draggable_filelist"
-    id="group_7_file_list"
-    style="align:center">
-</ul>
-</div>
-<div id="group_8_div" class="group_div">
-    <input class="jscolor {width:250, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666', hash:true}"
-           id="group8_color"
-           name="favcolor"
-           value="#FF02DA">
-    <input style="font-weight: bold;
-                  max-width: 40%"
-           align="center"
-           name="group_8_label"
-           id="group8_label"
-           type="text"
-           value="Group 8">
-</input>
-<ul class="draggable_filelist"
-    id="group_8_file_list"
-    style="align:center">
-</ul>
-</div>
-<br />
+    <div id="group_1_div" class="group_div">
+        <input class="colorbox" id="group1_color" name="favcolor" value="#ff0000" />
+        <input style="font-weight: bold;
+                      max-width: 40%;
+                      align:center"
+               name="group_1_label"
+               id="group1_label"
+               type="text"
+               value="Group 1" />
+        <ul class="draggable_filelist"
+            id="group_1_file_list"
+            style="align:center">
+        </ul>
+    </div>
 </div>
 <div id="view_plot">
-    <button class="button centerbutton"
-            type="button"
-            onclick='changebuttonlink(gwips_info)'
-            id="comparequery">
+    <button class="button centerbutton" type="button" id="comparequery">
         <b>View Plot</b>
     </button>
 </div>
 {% include "loading.html" %}
-<div id="container"></div>
-<div id = "study_dialog" title = "Study info">
-    <table>
-    </table>
-</div>
+<div id = "study_dialog" title = "Study info"></div>
 <script type="text/javascript"
         src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock %}
