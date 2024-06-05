@@ -27,7 +27,7 @@ DEFAULT_USER_SETTINGS = {  # This should match the table columns
 }
 STARTS_CODONS = ['aug', 'cug', 'gug', 'none']
 VARIABLE_UPPER = {"tranlist": str.upper}
-BOX_COLOR = [
+BOX_COLORS = [
     '#ff0000', '#0010FF', '#0DFF00', 'FFA200', '#BA00FF', '#02EDFF', '#F9FF12',
     '#FF02DA'
 ]
