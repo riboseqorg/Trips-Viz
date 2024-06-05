@@ -108,3 +108,13 @@ input[type="text"]::placeholder {
 .slider-content {
   margin: 0 40px;
 }
+
+.colorbox {
+  width: 250;
+  height: 150;
+  position: "right";
+  border-color: #fff;
+  /*insetcolor: #fff;*/
+  background-color: #666;
+  /*hash: true;*/
+}
