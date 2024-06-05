@@ -58,7 +58,7 @@
             </div>
             <div class="col-8">
                 <input align="center"
-                       id="tran"
+                       id="transcript"
                        type="text"
                        name="transcript"
                        value="ENST00000367055" />
@@ -136,20 +136,25 @@
 </p>
 </div>
 <div id="file_list">
-    <div id="group_1_div" class="group_div">
-        <input class="colorbox" id="group1_color" name="favcolor" value="#ff0000" />
-        <input style="font-weight: bold;
-                      max-width: 40%;
-                      align:center"
-               name="group_1_label"
-               id="group1_label"
-               type="text"
-               value="Group 1" />
-        <ul class="draggable_filelist"
-            id="group_1_file_list"
-            style="align:center">
-        </ul>
-    </div>
+    {% for color in data['box_colors'] %}
+        <div id="group_{{ forloop.counter0 }}_div" class="group_div">
+            <input class="colorbox"
+                   id="group{{ forloop.counter0 }}_color"
+                   name="favcolor"
+                   value="{{ color }}" />
+            <input style="font-weight: bold;
+                          max-width: 40%;
+                          align:center"
+                   name="group_{{ forloop.counter0 }}_label"
+                   id="group{{ forloop.counter0 }}_label"
+                   type="text"
+                   value="Group {{ forloop.counter }}" />
+            <ul class="draggable_filelist"
+                id="group_{{ forloop.counter0 }}_file_list"
+                style="align:center">
+            </ul>
+        </div>
+    {% endfor %}
 </div>
 <div id="view_plot">
     <button class="button centerbutton" type="button" id="comparequery">
