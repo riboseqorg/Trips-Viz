@@ -25,8 +25,10 @@ def sqldict2table(sqldict: Dict) -> pd.DataFrame:
     return pd.DataFrame(sqldict)
 
 
-def get_user_id(username: str) -> int:
+def get_user_id(username: str|None) -> int | None:
     '''Return the user_id for a given username'''
+    if not username:
+        return None
     return sqlquery('{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME),
                     'users').filter(pl.col('username') == username)[0,
                                                                     'user_id']
