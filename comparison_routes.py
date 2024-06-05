@@ -29,64 +29,34 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     - html page
     """
     # global user_short_passed
+    data = request.data.to_dict()
 
-    organisms = get_table("organisms").filter(pl.col('organism_name') == organism).select(
-        'gwips_clade', 'gwips_organism', 'gwips_database', 'default_transcript', "organism_id"
-    )[0]
+    organisms = get_table("organisms").filter(
+        pl.col('organism_name') == organism).select('gwips_clade',
+                                                    'gwips_organism',
+                                                    'gwips_database',
+                                                    'default_transcript',
+                                                    "organism_id")[0]
 
     gwips_info = {
         "organism": organisms["gwips_organism"],
         "clade": organisms["gwips_clade"],
         "database": organisms["gwips_database"]
     }
-    studyinfo_dict = fetch_study_info(organisms["organism_id"])
-    user_file_dict = {}
-    color = 'white'  # temp color
-    if str(request.args.get('files')) != "None":
-        colors = str(request.args.get('files')).split("_")
-        for filelist in colors:
-            all_items = filelist.split(",")
-            files = []
-            for item in all_items:
-                if "#" in item:
-                    color = item
-                else:
-                    files.append(item)
-            user_file_dict[color] = files
-
-    user_label_dict = {}
-    if str(request.args.get('labels')) != "None":
-        colors = str(request.args.get('labels')).split("_")
-        for label in colors:
-            all_items = label.split(",")
-            for item in all_items:  # TODO: fix this
-                if "#" in item:
-                    color = item
-                else:
-                    label = item
-            user_label_dict[color] = label
+    studyinfo_dict = fetch_study_info(organisms[0, "organism_id"])
 
     html_args = {
         "user_file_dict": user_file_dict,
         "user_label_dict": user_label_dict,
         "transcriptome": str(transcriptome)
     }
-    html_args = {**request.data.to_dict(), **html_args}
+    data = {**data, **html_args}
+    data['box_colors'] = config.BOX_COLORS
 
     accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
-    return render_template('index_compare.html',
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           gwips_info=gwips_info,
-                           organism=organism,
-                           transcriptome=transcriptome,
-                           default_tran=organisms["default_transcript"],
-                           html_args=html_args,
-                           file_id_to_name_dict=file_id_to_name_dict,
-                           studyinfo_dict=studyinfo_dict,
-                           seq_types=seq_types)
+    return render_template('index_compare.html', data=data)
 
 
 # Creates/serves the comparison plots
@@ -109,37 +79,34 @@ def comparequery() -> str | Tuple:
     if not data["master_file_dict"]:
         return "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
     user_short_passed = False
-    tran = data['transcript'].upper().strip()
-    organism = data['organism']
-    transcriptome = data['transcriptome']
-    owner = get_table("organisms").filter((pl.col('organism_name') == organism) & (
-        pl.col('transcriptome_list') == data["transcriptome"]))[0, "owner"]
+    owner = get_table("organisms").filter(
+        (pl.col('organism_name') == data['organism'])
+        & (pl.col('transcriptome_list') == data["transcriptome"]))[0, "owner"]
 
     if owner:
         transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, data['organism'],
+            data['transcriptome'])
         if not os.path.isfile(transhelve):
-            return f"Cannot find annotation file {organism}.{transcriptome}.sqlite"
+            return f"Cannot find annotation file {data['organism']}.{data['transcriptome']}.sqlite"
     else:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, organism, transcriptome)
-    transcripts = sqlquery(transhelve, "transcripts").filter((pl.col('transcript') == data['transcriptome']) | (
-        pl.col('gene') == data['transcriptome'])).unique(subset=['transcript'])
+            config.UPLOADS_DIR, owner, data['organism'], data['transcriptome'])
+    transcripts = sqlquery(transhelve, "transcripts").filter(
+        (pl.col('transcript') == data['transcriptome'])
+        | (pl.col('gene') == data['transcriptome'])).unique(
+            subset=['transcript'])
     if transcripts.is_empty():
-        return f"ERROR! Could not find any transcript corresponding to {tran}"
-    if data.shape[0] > 1:
-        return_str = "TRANSCRIPTS"
-        for row in transcripts.iter_rows(named=True):
-            principle = "principle" if row["principle"] == 1 else ""
-            if row["cds_start"] in ["NONE", None]:
-                cdslen = "NULL"
-                threeutrlen = "NULL"
-            else:
-                cdslen = row["cds_stop"] - row["cds_start"]
-                threeutrlen = row["length"] - row["cds_stop"]
-
-            return_str += f":{row['transcript']},{row['length']},{row['cds_start']},{cdslen},{threeutrlen},{principle}"
-            return return_str
+        return f"ERROR! Could not find any transcript corresponding to {data['transcript']}"
+    if transcripts.shape[0] > 1:
+        # TODO: Add input element to select transcript
+        transcripts = transcripts.with_columns(
+            cdslen=pl.col("cds_stop") - pl.col("cds_start"),
+            threeutrlen=pl.col("length") - pl.col("cds_stop"),
+        ).select([
+            "transcript", "length", "cds_start", "cds_stop", "principle",
+            "cdslen", "threeutrlen"
+        ]).to_pandas().to_html()
 
     master_filepath_dict = {}
 
@@ -147,8 +114,8 @@ def comparequery() -> str | Tuple:
 
     for color in data["master_file_dict"]:
         files_ids = data["master_file_dict"][color]["file_ids"]
-        files_infos = files.filter(pl.col("file_id").is_in(files_ids)).unique(
-            subset=["file_id"])
+        files_infos = files.filter(
+            pl.col("file_id").is_in(files_ids)).unique(subset=["file_id"])
         file_paths = fetch_file_paths(data)
         # TODO: Continue here
 
@@ -164,23 +131,23 @@ def comparequery() -> str | Tuple:
 
         tranlen = tran_result[0]
         cds_start = tran_result[1]
-          cds_stop = tran_result[2]
-           if tran_result[3] == 1:
-                principal = "principal"
-            else:
-                principal = ""
-            if not cds_start:
-                cdslen = None
-                threeutrlen = None
-            else:
-                cdslen = cds_stop - cds_start
-                threeutrlen = tranlen - cds_stop
-            return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
+        cds_stop = tran_result[2]
+        if tran_result[3] == 1:
+            principal = "principal"
+        else:
+            principal = ""
+        if not cds_start:
+            cdslen = None
+            threeutrlen = None
+        else:
+            cdslen = cds_stop - cds_start
+            threeutrlen = tranlen - cds_stop
+        return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
 
         return return_str
     else:
-        tran = data.iloc[0].transcript
-        return_str = f"ERROR! Could not find any transcript corresponding to {tran}"
+        data['transcript'] = data.iloc[0].transcript
+        return_str = f"ERROR! Could not find any transcript corresponding to {data['transcript']}"
         return return_str
     minread = int(data['minread'])
     maxread = int(data['maxread'])
@@ -220,7 +187,7 @@ def comparequery() -> str | Tuple:
                 .format(file_id))
             result = (trips_cursor.fetchone())
             file_name = master_file_dict[color]["label"]
-            file_paths = fetch_file_paths([file_id], organism)
+            file_paths = fetch_file_paths([file_id], data['organism'])
 
             for filetype in file_paths:
                 for file_id in file_paths[filetype]:
@@ -272,7 +239,7 @@ def comparequery() -> str | Tuple:
 
     html_args = data["html_args"]
     if html_args["user_short"] == "None" or user_short_passed:
-        short_code = generate_short_code(data, organism,
+        short_code = generate_short_code(data, data['organism'],
                                          html_args["transcriptome"],
                                          "comparison")
     else:
@@ -284,7 +251,7 @@ def comparequery() -> str | Tuple:
         user_id = get_user_id(current_user.name)
         user_settings = get_table("user_settings")
         user_settings = user_settings[user_settings.user_id == user_id].iloc[0]
-    if tran:
+    if data['transcript']:
         return riboflask_compare.generate_compare_plot(data)
 
     return "ERROR! Could not find any transcript corresponding to {tran}"
