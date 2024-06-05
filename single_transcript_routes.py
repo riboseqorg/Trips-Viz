@@ -15,7 +15,7 @@ import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code, fetch_user,
-                            string2other)
+                            string2other, form_filler)
 import riboflask
 from flask_login import current_user
 import logging
@@ -44,36 +44,13 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
     Example:
     """
 
-    data = request.args.to_dict()
-    print(data, "anmol Kiran")
+    # data = request.args.to_dict()
+    data = form_filler(organism, transcriptome)
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     # Accepted_studies is a DataFrame of (study_id, study_name)
     data['studies_and_files'] = fetch_files(accepted_studies).to_pandas()
-    gwips_info = get_table("organisms").filter(
-        (pl.col('organism_id') == organism_id)
-        & (pl.col('transcriptome_list') == transcriptome)
-    )[0, [
-        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
-    ]]
-    # print(accepted_studies)
 
-    data['transcript'] = gwips_info[0, 'default_transcript']
-    data['gwips_info'] = gwips_info
     data['studyinfo_dict'] = fetch_study_info(organism_id)
-    data['organism'] = organism
-    data['transcriptome'] = transcriptome
-
-    data['user_hili_starts'] = []
-    data['user_hili_stops'] = []
-    try:
-        for item in data['user_hili'].split(","):
-            item_split = item.split("_")
-            data['user_hili_starts'].append(int(item_split[0]))
-            data['user_hili_stops'].append(int(item_split[1]))
-    except Exception:
-        pass
-    data['user_hili_starts'] = ','.join(data['user_hili_starts'])
-    data['user_hili_stops'] = ','.join(data['user_hili_stops'])
 
     consent = request.cookies.get("cookieconsent_status")
     print(data)

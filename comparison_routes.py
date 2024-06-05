@@ -6,7 +6,7 @@ import os
 import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code)
+                            fetch_file_paths, generate_short_code, form_filler)
 import riboflask_compare
 from flask_login import current_user
 from fixed_values import my_decoder
@@ -29,20 +29,10 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     - html page
     """
     # global user_short_passed
-    data = request.data.to_dict()
+    data = form_filler(organism, transcriptome)
 
-    organisms = get_table("organisms").filter(
-        pl.col('organism_name') == organism).select('gwips_clade',
-                                                    'gwips_organism',
-                                                    'gwips_database',
-                                                    'default_transcript',
-                                                    "organism_id")[0]
+    data['studyinfo_dict'] = fetch_study_info(organism_id)
 
-    gwips_info = {
-        "organism": organisms["gwips_organism"],
-        "clade": organisms["gwips_clade"],
-        "database": organisms["gwips_database"]
-    }
     studyinfo_dict = fetch_study_info(organisms[0, "organism_id"])
 
     html_args = {
@@ -108,8 +98,6 @@ def comparequery() -> str | Tuple:
             "cdslen", "threeutrlen"
         ]).to_pandas().to_html()
 
-    master_filepath_dict = {}
-
     files = get_table("files")
 
     for color in data["master_file_dict"]:
@@ -119,40 +107,6 @@ def comparequery() -> str | Tuple:
         file_paths = fetch_file_paths(data)
         # TODO: Continue here
 
-    if not transcripts.is_empty():
-        # TODO: I messed it. Check original Code here
-
-        return_str = "TRANSCRIPTS"
-        for transcript in result:
-            cursor.execute(
-                "SELECT length,cds_start,cds_stop,principal from transcripts WHERE transcript = '{}'"
-                .format(transcript[0]))
-            tran_result = cursor.fetchone()
-
-        tranlen = tran_result[0]
-        cds_start = tran_result[1]
-        cds_stop = tran_result[2]
-        if tran_result[3] == 1:
-            principal = "principal"
-        else:
-            principal = ""
-        if not cds_start:
-            cdslen = None
-            threeutrlen = None
-        else:
-            cdslen = cds_stop - cds_start
-            threeutrlen = tranlen - cds_stop
-        return_str += f":{transcript[0]},{tranlen},{cds_start},{cdslen},{threeutrlen},{principal}"
-
-        return return_str
-    else:
-        data['transcript'] = data.iloc[0].transcript
-        return_str = f"ERROR! Could not find any transcript corresponding to {data['transcript']}"
-        return return_str
-    minread = int(data['minread'])
-    maxread = int(data['maxread'])
-    hili_start = int(data['hili_start'])
-    hili_stop = int(data['hili_stop'])
     master_filepath_dict = {}
     master_file_dict = data['master_file_dict']
 
@@ -171,15 +125,6 @@ def comparequery() -> str | Tuple:
             "minread": minread,
             "maxread": maxread
         }
-        # Overwrite the default minread and maxread with the minread/maxread values that are group specific, this allows users to easily visualise
-        # how the profile of different readlenghts differs across a transcript
-        if "minread" in master_file_dict[color]:
-            master_filepath_dict[color]["minread"] = int(
-                master_file_dict[color]["minread"])
-
-        if "maxread" in master_file_dict[color]:
-            master_filepath_dict[color]["maxread"] = int(
-                master_file_dict[color]["maxread"])
 
         for file_id in master_file_dict[color]["file_ids"]:
             trips_cursor.execute(

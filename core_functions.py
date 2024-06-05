@@ -47,6 +47,35 @@ class User(UserMixin):
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
 
+def form_filler( organism, transcriptome):
+    data = request.args.to_dict()
+    data['organism'] = organism
+    data['transcriptome'] = transcriptome
+    gwips_info = get_table("organisms").filter(
+        (pl.col('organism_name') == organism)
+        & (pl.col('transcriptome_list') == transcriptome)
+    )[0, [
+        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
+    ]]
+    # print(accepted_studies)
+
+    data['transcript'] = gwips_info[0, 'default_transcript']
+    data['gwips_info'] = gwips_info
+    data['user_hili_starts'] = []
+    data['user_hili_stops'] = []
+    try:
+        for item in data['user_hili'].split(","):
+            item_split = item.split("_")
+            data['user_hili_starts'].append(int(item_split[0]))
+            data['user_hili_stops'].append(int(item_split[1]))
+    except Exception:
+        pass
+    data['user_hili_starts'] = ','.join(data['user_hili_starts'])
+    data['user_hili_stops'] = ','.join(data['user_hili_stops'])
+
+    return data
+
+
 def fetch_user() -> Tuple[str | None, bool]:
     '''
     Fetches active user from cookies if present and returns username and login status.

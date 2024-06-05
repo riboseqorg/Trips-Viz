@@ -36,39 +36,11 @@ def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
 
     """
     #global user_short_passed
+    data = form_filler(organism, transcriptome)
 
     accepted_studies = fetch_studies(organism, transcriptome)
     file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
-
-    cursor.execute(
-        "SELECT gwips_clade,gwips_organism,gwips_database,default_transcript from organisms WHERE organism_name = '{}' and transcriptome_list = '{}';"
-        .format(organism, transcriptome))
-    result = (cursor.fetchone())
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
-    gwips_info = {
-        "organism": gwips_org,
-        "clade": gwips_clade,
-        "database": gwips_db
-    }
-    default_tran = result[3]
-    studyinfo_dict = fetch_study_info(organism)
-    user_transcript = request.args.get('tran')
-    user_readscore = request.args.get('rs')
-    user_hili = request.args.get('hili')
-    user_generate_shorturl = request.args.get('genshort')
-    user_files = request.args.get('files')
-    user_minread = request.args.get('minread')
-    user_maxread = request.args.get('maxread')
-    user_dir = request.args.get('dir')
-    user_line_graph = request.args.get('lg')
-    user_ambig = request.args.get('ambig')
-    user_cov = request.args.get('cov')
-    user_nuc = request.args.get('nuc')
-    user_short = request.args.get('short')
-    user_crd = request.args.get('crd')
 
     if user_files != None:
         user_files = user_files.split(",")
@@ -101,91 +73,17 @@ def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     else:
         user_generate_shorturl = True
 
-    user_hili_starts = []
-    user_hili_stops = []
-    try:
-        for item in user_hili.split(","):
-            user_hili_starts.append(int(item.split("_")[0]))
-            user_hili_stops.append(int(item.split("_")[1]))
-    except Exception:
-        user_hili_start = None
-        user_hili_stop = None
-
-    try:
-        user_minread = int(user_minread)
-        user_maxread = int(user_maxread)
-    except Exception:
-        user_minread = None
         user_maxread = None
     advanced = 'True'
     connection.close()
     consent = request.cookies.get("cookieconsent_status")
     if consent == "deny":
-        resp = make_response(
-            render_template('index.html',
-                            gwips_info=gwips_info,
-                            gwips_clade=gwips_clade,
-                            gwips_org=gwips_org,
-                            gwips_db=gwips_db,
-                            organism=organism,
-                            transcriptome=transcriptome,
-                            default_tran=default_tran,
-                            user_transcript=user_transcript,
-                            user_readscore=user_readscore,
-                            user_hili_starts=user_hili_starts,
-                            user_hili_stops=user_hili_stops,
-                            studies_dict=accepted_studies,
-                            accepted_files=accepted_files,
-                            user_files=user_files,
-                            user_ribo_studies=user_ribo_studies,
-                            user_proteomics_studies=user_proteomics_studies,
-                            user_rna_studies=user_rna_studies,
-                            user_minread=user_minread,
-                            user_maxread=user_maxread,
-                            user_dir=user_dir,
-                            user_line_graph=user_line_graph,
-                            user_ambig=user_ambig,
-                            user_cov=user_cov,
-                            user_nuc=user_nuc,
-                            user_short=user_short,
-                            user_crd=user_crd,
-                            studyinfo_dict=studyinfo_dict,
-                            advanced=advanced,
-                            seq_types=seq_types))
+        resp = make_response(render_template('index.html', template_dict=data))
         for cookie_name in request.cookies:
             if cookie_name != "cookieconsent_status":
                 resp.delete_cookie(cookie_name)
         return resp
-    return render_template('index_genomic.html',
-                           gwips_info=gwips_info,
-                           gwips_clade=gwips_clade,
-                           gwips_org=gwips_org,
-                           gwips_db=gwips_db,
-                           organism=organism,
-                           transcriptome=transcriptome,
-                           default_tran=default_tran,
-                           user_transcript=user_transcript,
-                           user_readscore=user_readscore,
-                           user_hili_starts=user_hili_starts,
-                           user_hili_stops=user_hili_stops,
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           user_files=user_files,
-                           user_ribo_studies=user_ribo_studies,
-                           user_proteomics_studies=user_proteomics_studies,
-                           user_rna_studies=user_rna_studies,
-                           user_minread=user_minread,
-                           user_maxread=user_maxread,
-                           user_dir=user_dir,
-                           user_line_graph=user_line_graph,
-                           user_ambig=user_ambig,
-                           user_cov=user_cov,
-                           user_nuc=user_nuc,
-                           user_short=user_short,
-                           user_crd=user_crd,
-                           studyinfo_dict=studyinfo_dict,
-                           advanced=advanced,
-                           seq_types=seq_types)
+    return render_template('index_genomic.html', template_dict=data)
 
 
 # Creates and serves the plots for the single transcript plot page

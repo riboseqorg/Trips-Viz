@@ -32,41 +32,21 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     - html page
 
     """
-    print(organism, transcriptome)
+    data = form_filler(organism, transcriptome)
 
     organism_id, accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
     organisms = get_table("organisms")
 
-    result = organisms.filter(pl.col('organism_name') == organism).select(
-        'gwips_clade', 'gwips_organism', 'gwips_database',
-        'default_transcript')[0]
-
     studyinfo_dict = fetch_study_info(organism_id)
-    gwips_clade = result[0]
-    gwips_org = result[1]
-    gwips_db = result[2]
-
-    default_tran = result[3]
     # holds all values the user could possibly pass in the url
     # (keywords are after request.args.get), anything not passed
     # by user will be a string: "None"
-    html_args = request.data.to_dict()
-    html_args["transcriptome"] = transcriptome
-    return render_template('traninfo_index.html',
-                           gwips_clade=gwips_clade,
-                           gwips_org=gwips_org,
-                           gwips_db=gwips_db,
-                           transcriptome=transcriptome,
-                           organism=organism,
-                           default_tran=default_tran,
-                           current_username=fetch_user()[0],
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           html_args=html_args,
-                           studyinfo_dict=studyinfo_dict,
-                           seq_types=seq_types)
+    return render_template(
+        'traninfo_index.html',
+        template_dict=data,
+    )
 
 
 # Used to create custom metagene plots on the traninformation plot page

@@ -34,34 +34,14 @@ def diffpage(organism: str, transcriptome: str) -> str:
     Returns:
     - html page
     """
+    data = form_filler(organism, transcriptome)
 
-    organisms = get_table("organism")
-    organisms = organisms.loc[organisms.organism_name == organism, [
-        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
-    ]].iloc[0]
-
-    default_tran = organisms[3]
     studyinfo_dict = fetch_study_info(organism)
-    # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = {**{ # Send it to cokies side if possible
-        "riboseq_files_1": [],
-        "riboseq_files_2": [],
-        "rnaseq_files_1": [],
-        "rnaseq_files_2": [],
-    },**request.args.to_dict()}
 
     accepted_studies = fetch_studies(organism, transcriptome)
     _, accepted_studies, accepted_files, seq_types = fetch_files(
         accepted_studies)
-    return render_template('index_diff_draggable.html',
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           organism=organism,
-                           default_tran=default_tran,
-                           transcriptome=transcriptome,
-                           html_args=html_args,
-                           studyinfo_dict=studyinfo_dict,
-                           seq_types=seq_types)
+    return render_template('index_diff_draggable.html', template_dict=data)
 
 
 # Creates/serves the z-score plot for differential expression
