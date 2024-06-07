@@ -39,10 +39,11 @@ def compress():
                         organism_dict[org].append(filename)
 
     for key, values in organism_dict.items():
+        fd = f"{trips_annotation_dir}{key}"
+        os.chdir(fd)
         for value in values:
-            fl = f"{trips_annotation_dir}{key}/{value}"
-            print(f'Compressing {fl}')
-            os.system(f"tar -czvf {fl}.tar.gz {fl}")
+            print(f'Compressing {value}')
+            os.system(f"tar -czvf {value}.tar.gz {value}")
 
 
 if __name__ == '__main__':
