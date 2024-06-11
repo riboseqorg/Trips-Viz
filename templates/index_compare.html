@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
+    <div id="local_vars">
+        {% set studies_files = template_dict["files"] %}
+        {% set file_types = studies_files["file_type"].unique() %}
+    </div>
     <div class="page-section">
         <div id="page_heading">
             <p>
@@ -61,7 +65,7 @@
                        id="transcript"
                        type="text"
                        name="transcript"
-                       value="ENST00000367055" />
+                       value="{{ template_dict['transcript'] }}" />
             </div>
         </div>
         <div class="row">
@@ -110,6 +114,7 @@
             <p>
                 <font size="5"><b><u>Seq Types</u></b></font>
             </p>
+            {% for filetype in file_types %}{{ filetype }}{% endfor %}
         </div>
     </div>
     <div class="page-section">
@@ -117,6 +122,25 @@
             <p>
                 <font size="5"><b><u>Studies</u></b></font>
             </p>
+            {% for file_type in file_types %}
+                <div class="{{ file_type }}"
+                     style="display:{% if loop.first %}block {% else %} none {% endif %}">
+                    {% set studies = studies_files[studies_files["file_type"] == file_type][["study_id","study_name"]].drop_duplicates() %}
+                    {% for _, study_row in studies.iterrows() %}
+                        <div class="study">
+                            <input type="radio"
+                                   class="radio_input"
+                                   id="input__{{ file_type }}__{{ study_row['study_id'] }}"
+                                   name="study"
+                                   value="{{ study_row['study_id'] }}"
+                                   {% if loop.first %} checked {% else %} {% endif %}>
+                            <label for="{{ file_type }}__{{ study_row['study_id'] }}"
+                                   id="label__{{ file_type }}__{{ study_row['study_id'] }}"
+                                   class="radio_label">{{ study_row['study_name'] }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
         </div>
     </div>
     <div class="page-section">
@@ -124,6 +148,28 @@
             <p>
                 <font size="5"><b><u>Files</u></b></font>
             </p>
+            {% for file_type in file_types %}
+                <div class="{{ file_type }}">
+                    {% set file_type__filtered = studies_files[studies_files["file_type"] == file_type] %}
+                    {% set studies = file_type__filtered[["study_id","study_name"]].drop_duplicates() %}
+                    {% for _,study_row in studies.iterrows() %}
+                        <div class="{{ study_row['study_id'] }}">
+                            {% set files = file_type__filtered.loc[file_type__filtered["study_id"] == study_row["study_id"], ["file_id","file_name","file_description"]] %}
+                            {% for _,file_row in files.iterrows() %}
+                                <div class="file">
+                                    <input type="checkbox"
+                                           id="file__{{ file_row['file_id'] }}"
+                                           name="file_{{ file_type }}__{{ file_row['file_id'] }}">
+                                    <label for="file__{{ file_row['file_id'] }}"
+                                           id="file__label__{{ file_row['file_id'] }}">
+                                        {{ file_row['file_name'] }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
         </div>
     </div>
     <div id = "dialog-2" title = "Choose a transcript..."></div>
@@ -134,28 +180,31 @@
         </br>
     </font>
 </p>
+{{ template_dict }}
 </div>
 <div id="file_list">
-    {% for color in data['box_colors'] %}
-        <div id="group_{{ forloop.counter0 }}_div" class="group_div">
+    {% for color in template_dict['box_colors'] %}
+        <div id="group_{{ loop.counter0 }}_div" class="group_div">
             <input class="colorbox"
-                   id="group{{ forloop.counter0 }}_color"
+                   type="color"
+                   id="group{{ loop.counter0 }}_color"
                    name="favcolor"
                    value="{{ color }}" />
             <input style="font-weight: bold;
                           max-width: 40%;
                           align:center"
-                   name="group_{{ forloop.counter0 }}_label"
-                   id="group{{ forloop.counter0 }}_label"
+                   name="group_{{ loop.counter0 }}_label"
+                   id="group{{ loop.counter0 }}_label"
                    type="text"
-                   value="Group {{ forloop.counter }}" />
+                   value="Group {{ loop.counter }}" />
             <ul class="draggable_filelist"
-                id="group_{{ forloop.counter0 }}_file_list"
+                id="group_{{ loop.counter0 }}_file_list"
                 style="align:center">
             </ul>
         </div>
     {% endfor %}
 </div>
+{% include 'gwips.html' %}
 <div id="view_plot">
     <button class="button centerbutton" type="button" id="comparequery">
         <b>View Plot</b>

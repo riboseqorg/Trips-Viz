@@ -47,16 +47,16 @@ class User(UserMixin):
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
 
-def form_filler( organism, transcriptome):
+def form_filler(organism, transcriptome):
     data = request.args.to_dict()
     data['organism'] = organism
     data['transcriptome'] = transcriptome
     gwips_info = get_table("organisms").filter(
         (pl.col('organism_name') == organism)
-        & (pl.col('transcriptome_list') == transcriptome)
-    )[0, [
-        "gwips_clade", "gwips_organism", "gwips_database", "default_transcript"
-    ]]
+        & (pl.col('transcriptome_list') == transcriptome))[0, [
+            "gwips_clade", "gwips_organism", "gwips_database",
+            "default_transcript", "organism_id"
+        ]]
     # print(accepted_studies)
 
     data['transcript'] = gwips_info[0, 'default_transcript']
@@ -124,8 +124,7 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 
 # Given a username and an organism returns a list of relevant studies.
-def fetch_studies(organism: str,
-                  transcriptome: str) -> Tuple[int, pl.DataFrame]:
+def fetch_studies(organism_id) -> pl.DataFrame:
     '''
     Fetches studies from database using organism and transcriptome information.
 
@@ -146,10 +145,6 @@ def fetch_studies(organism: str,
     # users is name of table
 
     # Getting organism id
-    organism_id = get_table("organisms").filter(
-        (pl.col("organism_name") == organism)
-        & (pl.col("transcriptome_list") == transcriptome))[
-            0, "organism_id"]  # users is name of table
     # Getting studies
     studies = get_table("studies").filter(
         (pl.col("organism_id") == organism_id)
@@ -159,7 +154,7 @@ def fetch_studies(organism: str,
                "study_name").unique(subset=["study_id"
                                             ])  # users is name of table
     # TODO: Compare with original code and discuss which one too choose
-    return organism_id, studies
+    return studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.

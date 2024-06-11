@@ -7,11 +7,11 @@ import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code, form_filler)
-import riboflask_compare
+# import riboflask_compare
 from flask_login import current_user
 from fixed_values import my_decoder
 
-from sqlqueries_2 import get_table, sqlquery
+from sqlqueries_2 import get_table, sqlquery, get_user_id
 # Single transcript comparison page, user chooses a gene and groups of files to display
 comparison_plotpage_blueprint = Blueprint("comparisonpage",
                                           __name__,
@@ -31,22 +31,15 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     # global user_short_passed
     data = form_filler(organism, transcriptome)
 
-    data['studyinfo_dict'] = fetch_study_info(organism_id)
+    data['studyinfo_dict'] = fetch_study_info(
+        data["gwips_info"][0, "organism_id"])
 
-    studyinfo_dict = fetch_study_info(organisms[0, "organism_id"])
-
-    html_args = {
-        "user_file_dict": user_file_dict,
-        "user_label_dict": user_label_dict,
-        "transcriptome": str(transcriptome)
-    }
-    data = {**data, **html_args}
     data['box_colors'] = config.BOX_COLORS
 
-    accepted_studies = fetch_studies(organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
-    return render_template('index_compare.html', data=data)
+    accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
+    data['files'] = fetch_files(accepted_studies).to_pandas()
+    print(data['files'])
+    return render_template('index_compare.html', template_dict=data)
 
 
 # Creates/serves the comparison plots
@@ -98,21 +91,14 @@ def comparequery() -> str | Tuple:
             "cdslen", "threeutrlen"
         ]).to_pandas().to_html()
 
-    files = get_table("files")
-
     for color in data["master_file_dict"]:
         files_ids = data["master_file_dict"][color]["file_ids"]
-        files_infos = files.filter(
+        files_infos = get_table("files").filter(
             pl.col("file_id").is_in(files_ids)).unique(subset=["file_id"])
         file_paths = fetch_file_paths(data)
         # TODO: Continue here
 
     master_filepath_dict = {}
-    master_file_dict = data['master_file_dict']
-
-    if master_file_dict == {}:
-        return_str = "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
-        return return_str
 
     # This section is purely to sort by label alphabetically
     for color in master_file_dict:
@@ -184,19 +170,23 @@ def comparequery() -> str | Tuple:
 
     html_args = data["html_args"]
     if html_args["user_short"] == "None" or user_short_passed:
-        short_code = generate_short_code(data, data['organism'],
-                                         html_args["transcriptome"],
-                                         "comparison")
+        data["short_code"] = generate_short_code(data, data['organism'],
+                                                 html_args["transcriptome"],
+                                                 "comparison")
     else:
-        short_code = html_args["user_short"]
+        data["short_code"] = html_args["user_short"]
         user_short_passed = True
 
-    user_settings = config.DEFAULT_USER_SETTINGS.copy()
     if current_user.is_authenticated:
         user_id = get_user_id(current_user.name)
-        user_settings = get_table("user_settings")
-        user_settings = user_settings[user_settings.user_id == user_id].iloc[0]
-    if data['transcript']:
-        return riboflask_compare.generate_compare_plot(data)
+        data["user_settings"] = get_table("user_settings").filter(
+            pl.col("user_id") == user_id)[0]
+    else:
+        data["user_settings"] = config.DEFAULT_USER_SETTINGS.copy()
 
-    return "ERROR! Could not find any transcript corresponding to {tran}"
+    data['master_filepath_dict'] = master_filepath_dict
+    return
+    # if data['transcript']:
+    # return riboflask_compare.generate_compare_plot(data)
+
+    # return "ERROR! Could not find any transcript corresponding to {tran}"
