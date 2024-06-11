@@ -403,7 +403,7 @@ def download_file() -> Response:
     data = request.form.to_dict()
     return send_from_directory("{}/{}/{}".format(config.SCRIPT_LOC,
                                                  config.ANNOTATION_DIR,
-                                                 data['organism']),
+                                                 data['organism'] + ".tar.gz"),
                                data['assembly'],
                                as_attachment=True)
 
