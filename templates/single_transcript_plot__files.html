@@ -1,5 +1,5 @@
 <div id="local_vars">
-    {% set studies_files = template_dict["studies_and_files"] %}
+    {% set studies_files = template_dict["files"] %}
     {% set file_types = studies_files["file_type"].unique() %}
 </div>
 <div id="page_heading">
@@ -12,18 +12,20 @@
         <div class="row">
             <div class="col">Seq Types</div>
         </div>
-        <div class="row">
-            <div class="col-6">
-                <button class="button all_checks" name="uncheckall" type="button">
-                    <b>Uncheck All Files With Selected Seq-type</b>
-                </button>
+        {% if not template_dict['list'] %}
+            <div class="row">
+                <div class="col-6">
+                    <button class="button all_checks" name="uncheckall" type="button">
+                        <b>Uncheck All Files With Selected Seq-type</b>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="button all_checks" name="checkall" type="button">
+                        <b>Check All Files with Selected Seq-type</b>
+                    </button>
+                </div>
             </div>
-            <div class="col-6">
-                <button class="button all_checks" name="checkall" type="button">
-                    <b>Check All Files with Selected Seq-type</b>
-                </button>
-            </div>
-        </div>
+        {% endif %}
         <div class="row">
             {% for file_type in file_types %}
                 <div class="col-sm-6">
@@ -52,18 +54,20 @@
                 </button>
             </div>
         </div>
-        <div class="row">
-            <div class="col-6">
-                <button class="button all_checks" type="button" onclick="uncheck_all_multi()">
-                    <b>Uncheck All files in Files box</b>
-                </button>
+        {% if not template_dict['list'] %}
+            <div class="row">
+                <div class="col-6">
+                    <button class="button all_checks" type="button" onclick="uncheck_all_multi()">
+                        <b>Uncheck All files in Files box</b>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="button all_checks" type="button" onclick="check_all_multi()">
+                        <b>Check All files in Files box</b>
+                    </button>
+                </div>
             </div>
-            <div class="col-6">
-                <button class="button all_checks" type="button" onclick="check_all_multi()">
-                    <b>Check All files in Files box</b>
-                </button>
-            </div>
-        </div>
+        {% endif %}
         <div class="toggles">
             {% for file_type in file_types %}
                 <div class="{{ file_type }}"
@@ -99,11 +103,17 @@
                         {% set files = file_type__filtered.loc[file_type__filtered["study_id"] == study_row["study_id"], ["file_id","file_name","file_description"]] %}
                         {% for _,file_row in files.iterrows() %}
                             <div class="file">
-                                <input type="checkbox"
-                                       id="file__{{ file_row['file_id'] }}"
-                                       name="file_{{ file_type }}__{{ file_row['file_id'] }}">
-                                <label for="file__{{ file_row['file_id'] }}"
-                                       id="file__label__{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</label>
+                                {% if template_dict['list'] %}
+                                    <li>{{ file_row['file_name'] }}</li>
+                                {% else %}
+                                    <input type="checkbox"
+                                           id="file__{{ file_row['file_id'] }}"
+                                           name="file_{{ file_type }}__{{ file_row['file_id'] }}">
+                                    <label for="file__{{ file_row['file_id'] }}"
+                                           id="file__label__{{ file_row['file_id'] }}">
+                                        {{ file_row['file_name'] }}
+                                    </label>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
@@ -112,7 +122,8 @@
         {% endfor %}
     </div>
     {% block footer_static %}
-        <script>
+        {% if not template_dict['list'] %}
+            <script>
 		$(document).ready(function(){
 
 				var $checkboxes = $('#files input[type="checkbox"]');
@@ -125,5 +136,6 @@
 				});
 
 		});
-        </script>
+            </script>
+        {% endif %}
     {% endblock %}

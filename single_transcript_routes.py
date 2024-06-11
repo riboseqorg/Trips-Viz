@@ -46,11 +46,9 @@ def interactiveplotpage(organism: str, transcriptome: str) -> Response | Text:
 
     # data = request.args.to_dict()
     data = form_filler(organism, transcriptome)
-    organism_id, accepted_studies = fetch_studies(organism, transcriptome)
+    accepted_studies = fetch_studies(data['gwips_info'][0, 'organism_id'])
     # Accepted_studies is a DataFrame of (study_id, study_name)
-    data['studies_and_files'] = fetch_files(accepted_studies).to_pandas()
-
-    data['studyinfo_dict'] = fetch_study_info(organism_id)
+    data['files'] = fetch_files(accepted_studies).to_pandas()
 
     consent = request.cookies.get("cookieconsent_status")
     print(data)

@@ -109,69 +109,7 @@
             </div>
         </div>
     </div>
-    <div class="page-section">
-        <div id="page_heading">
-            <p>
-                <font size="5"><b><u>Seq Types</u></b></font>
-            </p>
-            {% for filetype in file_types %}{{ filetype }}{% endfor %}
-        </div>
-    </div>
-    <div class="page-section">
-        <div id="page_heading">
-            <p>
-                <font size="5"><b><u>Studies</u></b></font>
-            </p>
-            {% for file_type in file_types %}
-                <div class="{{ file_type }}"
-                     style="display:{% if loop.first %}block {% else %} none {% endif %}">
-                    {% set studies = studies_files[studies_files["file_type"] == file_type][["study_id","study_name"]].drop_duplicates() %}
-                    {% for _, study_row in studies.iterrows() %}
-                        <div class="study">
-                            <input type="radio"
-                                   class="radio_input"
-                                   id="input__{{ file_type }}__{{ study_row['study_id'] }}"
-                                   name="study"
-                                   value="{{ study_row['study_id'] }}"
-                                   {% if loop.first %} checked {% else %} {% endif %}>
-                            <label for="{{ file_type }}__{{ study_row['study_id'] }}"
-                                   id="label__{{ file_type }}__{{ study_row['study_id'] }}"
-                                   class="radio_label">{{ study_row['study_name'] }}</label>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="page-section">
-        <div id="page_heading">
-            <p>
-                <font size="5"><b><u>Files</u></b></font>
-            </p>
-            {% for file_type in file_types %}
-                <div class="{{ file_type }}">
-                    {% set file_type__filtered = studies_files[studies_files["file_type"] == file_type] %}
-                    {% set studies = file_type__filtered[["study_id","study_name"]].drop_duplicates() %}
-                    {% for _,study_row in studies.iterrows() %}
-                        <div class="{{ study_row['study_id'] }}">
-                            {% set files = file_type__filtered.loc[file_type__filtered["study_id"] == study_row["study_id"], ["file_id","file_name","file_description"]] %}
-                            {% for _,file_row in files.iterrows() %}
-                                <div class="file">
-                                    <input type="checkbox"
-                                           id="file__{{ file_row['file_id'] }}"
-                                           name="file_{{ file_type }}__{{ file_row['file_id'] }}">
-                                    <label for="file__{{ file_row['file_id'] }}"
-                                           id="file__label__{{ file_row['file_id'] }}">
-                                        {{ file_row['file_name'] }}
-                                    </label>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
+    {% include 'single_transcript_plot__files.html' %}
     <div id = "dialog-2" title = "Choose a transcript..."></div>
     <div id="files">
     </br>
