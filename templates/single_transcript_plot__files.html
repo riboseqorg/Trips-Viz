@@ -104,7 +104,7 @@
                         {% for _,file_row in files.iterrows() %}
                             <div class="file">
                                 {% if template_dict['list'] %}
-                                    <li>{{ file_row['file_name'] }}</li>
+                                    <li name="{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</li>
                                 {% else %}
                                     <input type="checkbox"
                                            id="file__{{ file_row['file_id'] }}"
@@ -136,6 +136,28 @@
 				});
 
 		});
+            </script>
+        {% else %}
+            <script>
+				$(function() {
+				  $(".file").sortable({
+					connectWith: ".file",
+					cursor: "move",
+					helper: "clone",
+					items: "> li",
+					stop: function(event, ui) {
+					  var $item = ui.item;
+					  var eventLabel = $item.text();
+					  var newDay = $item.parent().attr("id");
+					  
+					  console.log($item[0].id, eventLabel, newDay);
+
+					  // Here's where am ajax call will go
+					  
+					}
+				  }).disableSelection();
+				});
+		
             </script>
         {% endif %}
     {% endblock %}

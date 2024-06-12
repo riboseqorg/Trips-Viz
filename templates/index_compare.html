@@ -118,29 +118,34 @@
         </br>
     </font>
 </p>
-{{ template_dict }}
 </div>
 <div id="file_list">
-    {% for color in template_dict['box_colors'] %}
-        <div id="group_{{ loop.counter0 }}_div" class="group_div">
-            <input class="colorbox"
-                   type="color"
-                   id="group{{ loop.counter0 }}_color"
-                   name="favcolor"
-                   value="{{ color }}" />
-            <input style="font-weight: bold;
-                          max-width: 40%;
-                          align:center"
-                   name="group_{{ loop.counter0 }}_label"
-                   id="group{{ loop.counter0 }}_label"
-                   type="text"
-                   value="Group {{ loop.counter }}" />
-            <ul class="draggable_filelist"
-                id="group_{{ loop.counter0 }}_file_list"
-                style="align:center">
-            </ul>
-        </div>
-    {% endfor %}
+    <div class="row">
+        {% for color in template_dict['box_colors'] %}
+            <div class="col-6">
+                <div class="file">
+                    <div id="group_{{ loop.counter0 }}_div" class="group_div">
+                        <input class="colorbox"
+                               type="color"
+                               id="group{{ loop.counter0 }}_color"
+                               name="favcolor"
+                               value="{{ color }}" />
+                        <input style="font-weight: bold;
+                                      max-width: 40%;
+                                      align:center"
+                               name="group_{{ loop.counter0 }}_label"
+                               id="group{{ loop.counter0 }}_label"
+                               type="text"
+                               value="Group {{ loop.counter }}" />
+                        <ul class="draggable_filelist"
+                            id="group_{{ loop.counter0 }}_file_list"
+                            style="align:center">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% include 'gwips.html' %}
 <div id="view_plot">
