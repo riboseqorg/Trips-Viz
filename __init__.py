@@ -3,6 +3,7 @@ import os
 import time
 from datetime import date
 import polars as pl
+from json import loads
 import sys
 import sqlite3
 from sqlqueries_2 import sqlquery, get_user_id, get_table, update_table
@@ -873,11 +874,13 @@ def short(short_code):
     # First convert short code to an integer
     integer = base62_to_integer(short_code)
     url = get_table('urls').filter(pl.col('url_id') == integer)
+
     if url.is_empty():
         return "Short code not recognized."
-    url = url[0, 'url']
+    url = loads(url[0, 'url'])
+
     # add a keyword to the url to prevent generating another shortcode
-    url += "&short={}".format(short_code)
+    url += f"/{url['organism']}/{url['transcriptome']}?short={short_code}"
     return redirect(url)
 
 

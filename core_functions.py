@@ -1,7 +1,9 @@
 import string
 from typing import Dict, List, Tuple, Any
 import os
+from json import dumps
 import polars as pl
+import pandas as pd
 from flask import session, request
 from flask_login import UserMixin, current_user
 from Bio.Seq import Seq
@@ -300,8 +302,7 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame | str:
 
 
 # Builds a url and inserts it into sqlite database
-def generate_short_code(data, organism: str, transcriptome: str,
-                        plot_type: str) -> str:
+def generate_short_code(data) -> str:
     """
     Generates a short code for a plot
 
@@ -316,280 +317,23 @@ def generate_short_code(data, organism: str, transcriptome: str,
 
     Example:
     """
+    # TODO: Keep the form values to retore it in json format share it here before you plot
     # build a url so that this plot can be recreated later on
     url = "/{}/{}/{}/?".format(organism, transcriptome, plot_type)
-    # To stop the file_list argument in the url being extremely long, pass a riboseq_studies and rnaseq_studies arguments, these are study_ids of any study which
-    # has all of its riboseq or rnaseq files checked. This part of the code determines which studies fall into that category.
-    riboseq_studies = []
-    rnaseq_studies = []
-    proteomics_studies = []
-    oraganism_id = get_table("organisms").filter(
-        (pl.col("organism_name") == organism))[0, "organism_id"]
-    studies = get_table("studies").filter(
-        (pl.col("organism_id") == oraganism_id))['study_id']
-    files = get_table("files").filter((pl.col("study_id").is_in(studies)) & (
-        pl.col('file_type').is_in(['riboseq', 'rnaseq', 'proteomics'])))
-
-    if plot_type == "interactive_plot" or plot_type == "metainfo_plot" or plot_type == "orf_translation":
-        url += "files="
-        for row in result:
-            study_id = int(row[0])
-
-            # Now get all riboseq files that have this study_id, if all those ids are in file_list, add to riboseq studies and remove those files from file_list, do the same for rnaseq and proteomics
-            cursor.execute(
-                "SELECT file_id from files WHERE study_id = {} AND file_type = 'riboseq'"
-                .format(study_id))
-            result = cursor.fetchall()
-            all_present = True
-            for row in result:
-                if str(row[0]) not in data["file_list"]:
-                    all_present = False
-            if all_present:
-                riboseq_studies.append(study_id)
-                for row in result:
-                    data["file_list"].remove(str(row[0]))
-
-            cursor.execute(
-                "SELECT file_id from files WHERE study_id = {} AND file_type = 'rnaseq'"
-                .format(study_id))
-            result = cursor.fetchall()
-            all_present = True
-            # If there are no files of that type for that study then don't bother adding it to the list
-            if not result:
-                all_present = False
-            for row in result:
-                if str(row[0]) not in data["file_list"]:
-                    all_present = False
-            if all_present:
-                rnaseq_studies.append(study_id)
-                for row in result:
-                    data["file_list"].remove(str(row[0]))
-
-            cursor.execute(
-                "SELECT file_id from files WHERE study_id = {} AND file_type = 'proteomics'"
-                .format(study_id))
-            result = cursor.fetchall()
-            # If there are no files of that type for that study then don't bother adding it to the list
-            all_present = True if result else False
-            for row in result:
-                if str(row[0]) not in data["file_list"]:
-                    all_present = False
-            if all_present:
-                proteomics_studies.append(study_id)
-                for row in result:
-                    data["file_list"].remove(str(row[0]))
-
-        for filenum in data["file_list"]:
-            url += filenum + ","
-        if riboseq_studies:
-            url += "&ribo_studies="
-            for study_id in riboseq_studies:
-                url += str(study_id) + ","
-        if rnaseq_studies:
-            url += "&rna_studies="
-            for study_id in rnaseq_studies:
-                url += str(study_id) + ","
-        if proteomics_studies:
-            url += "&proteomics_studies="
-            for study_id in proteomics_studies:
-                url += str(study_id) + ","
-    if plot_type == "interactive_plot":
-        url += "&tran={}".format(data['transcript'].upper().strip())
-        url += "&minread={}".format(data['minread'])
-        url += "&maxread={}".format(data['maxread'])
-        url += "&user_dir={}".format(data["primetype"])
-        url += f"&ambig={'T' if 'ambiguous' in data else 'F'}"
-        url += f"&cov={'T' if 'ribocoverage' in data else 'F'}"
-        url += f"&nuc={'T' if 'nucseq' in data else 'F'}"
-        url += f"&lg={'T' if 'varlite' in data else 'F'}"
-        url += f"&rs={data['readscore'] if 'readscore' in data else 1}"
-        url += f"&crd={'T' if 'color_readlen_dist' in data else 'F'}"
-
-    if plot_type == "traninfo_plot":  # TODO: Hide these values some where in html
-        url += "&plot={}".format(data['plottype'])
-        # nuc_comp_single, nuc_comp_multi, lengths_plot, gene_count, codon_usage, nuc_freq_plot, orfstats
-        if data["plottype"] == "nuc_comp_single":
-            url += "&metagene_tranlist={}".format(data["metagene_tranlist"])
-        if data["plottype"] == "nuc_comp_multi":
-            url += "&gc_tranlist={}".format(data["gc_tranlist"])
-            url += "&gc_tranlist2={}".format(data["gc_tranlist2"])
-            url += "&gc_tranlist3={}".format(data["gc_tranlist3"])
-            url += "&gc_tranlist4={}".format(data["gc_tranlist4"])
-            url += "&gc_location={}".format(data["gc_location"])
-            url += "&nucleotide={}".format(data["nucleotide"])
-            url += "&plot_type={}".format(data["plot_type"])
-        if data["plottype"] == "lengths_plot":
-            url += "&gc_tranlist={}".format(data["gc_tranlist"])
-            url += "&gc_tranlist2={}".format(data["gc_tranlist2"])
-            url += "&gc_tranlist3={}".format(data["gc_tranlist3"])
-            url += "&gc_tranlist4={}".format(data["gc_tranlist4"])
-            url += "&gc_location={}".format(data["gc_location"])
-            url += "&plot_type={}".format(data["plot_type"])
-        if data["plottype"] == "codon_usage":
-            url += "&gc_tranlist={}".format(data["gc_tranlist"])
-        if data["plottype"] == "nuc_freq_plot":
-            url += "&nuc_freq_plot_anchor={}".format(
-                data["nuc_freq_plot_anchor"])
-            url += "&nuc_freq_plot_window={}".format(
-                data["nuc_freq_plot_window"])
-            url += "&nuc_freq_plot_tranlist={}".format(
-                data["nuc_freq_plot_tranlist"])
-
-    if plot_type == "metainfo_plot":
-        url += "&plot={}".format(data['plottype'])
-
-        # Nuc comp plot
-        if data["plottype"] == "nuc_comp":
-            for sc in [
-                    'nuc_comp_direction', 'nuc_comp_type', 'nuc_min_read_len',
-                    'nuc_max_read_len'
-            ]:
-                if sc in data and data[sc] != "None":
-                    url += f"&{sc}={data[sc]}"
-
-        # Heatmap plot
-        if data["plottype"] == "heatmap":
-            url += f"&hm_log={'T' if 'log_scale' in data else 'F'}"
-            url += f"&hm_rev={'T' if 'reverse_scale' in data else 'F'}"
-            for sc in [
-                    "heatmap_min_read_len", "heatmap_max_read_len",
-                    "heatmap_direction", "heatmap_metagene_type",
-                    "heatmap_start_pos", "heatmap_end_pos",
-                    "heatmap_color_palette", "heatmap_max_scale_val",
-                    "heatmap_metagene_tran_list"
-            ]:
-                if sc in data:
-                    if data[sc] != "None":
-                        url += f"&{sc}={data[sc]}"
-
-        # Triplet periodicity
-        if data["plottype"] == "trip_periodicity":
-            for sc in ["tripplet_min_read_len", "tripplet_max_read_len"]:
-                if sc in data:
-                    if data[sc] != "None":
-                        url += f"&{sc}={data[sc]}"
-
-        # mRNA readlen dist
-        if data["plottype"] == "mrna_dist_readlen":
-            for sc in ["mrna_read_len_per", "smooth_amount"]:
-                if sc in data:
-                    if data[sc] != "None":
-                        url += "&{}={}".format(sc, data[sc])
-
-        # metagene
-        if data["plottype"] == "metagene_plot":
-            for tp in [
-                    "include_first", "include_last", "exclude_first",
-                    "exclude_last", "custom_seq_list", "exclude_first_val",
-                    "exclude_last_val", "include_first_val",
-                    "include_last_val", "metagene_translist", "metagene_type",
-                    "minreadlen", "maxreadlen"
-            ]:
-                if tp in data:
-                    if data[tp] != "None":
-                        url += "&{}={}".format(tp, data[tp])
-
-        # Replicate comparison
-        if data["plottype"] == "replicate_comp":
-            if "minimum_reads" in data:
-                if data["minimum_reads"] != "None":
-                    url += "&rp_minreads={}".format(data["minimum_reads"])
-
-    if plot_type == "comparison":
-        url += "files="
-        file_string = ""
-
-        for color in data["master_file_dict"]:
-            for file_id in data["master_file_dict"][color]["file_ids"]:
-                file_string += "{},".format(file_id)
-            # Can't use # in html args so encode as %23 instead
-            file_string += "{}_".format(color.replace("#", "%23"))
-
-        # remove the trailling _ from file_string
-        file_string = file_string[:len(file_string) - 1]
-
-        label_string = ""
-        for color in data["master_file_dict"]:
-            label_string += "{},".format(
-                data["master_file_dict"][color]["label"])
-            # Can't use # in html args so encode as %23 instead
-            label_string += "{}_".format(color.replace("#", "%23"))
-
-        # remove the trailling _ from file_string
-        label_string = label_string[:len(label_string) - 1]
-
-        url += file_string
-        url += f"&labels={label_string}"
-        url += f"&transcript={data['transcript'].upper().strip()}"
-        url += f"&minread={data['minread']}"
-        url += f"&maxread={data['maxread']}"
-        url += f"&hili_start={data['hili_start']}"
-        url += f"&hili_stop={data['hili_stop']}"
-        url += f"&ambig={'T' if 'ambiguous' in data else 'F'}"
-        url += f"&cov={'T' if 'coverage' in data else 'F'}"
-        url += f"&normalize={'T' if 'normalize' in data else 'F'}"
-
-    if plot_type == "differential":
-        url += "&minzscore={}".format(data["minzscore"])
-        url += "&minread={}".format(data["minreads"])
-        url += "&region={}".format(data["region"])
-        url += "&riboseq_files_1={}".format(
-            str(data["master_file_dict"]["riboseq1"]["file_ids"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&riboseq_files_2={}".format(
-            str(data["master_file_dict"]["riboseq2"]["file_ids"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&rnaseq_files_1={}".format(
-            str(data["master_file_dict"]["rnaseq1"]["file_ids"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&rnaseq_files_2={}".format(
-            str(data["master_file_dict"]["rnaseq2"]["file_ids"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&riboseq_labels_1={}".format(
-            str(data["master_file_dict"]["riboseq1"]["file_names"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&riboseq_labels_2={}".format(
-            str(data["master_file_dict"]["riboseq2"]["file_names"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&rnaseq_labels_1={}".format(
-            str(data["master_file_dict"]["rnaseq1"]["file_names"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&rnaseq_labels_2={}".format(
-            str(data["master_file_dict"]["rnaseq2"]["file_names"]).strip(
-                "[]").replace("'", "").replace(" ", ""))
-        url += "&ambig={'T' if 'ambiguous' in data else 'F'}"
-        if "plottype" in data:
-            url += "&plottype={}".format(data["plottype"])
-        if "min_cov" in data:
-            url += "&min_cov={}".format(data["min_cov"])
-        if "gene_list" in data:
-            url += "&gene_list={}".format(data["gene_list"])
-
-    if plot_type == "orf_translation":
-
-        start_codons = [
-            st.upper() for st in config.START_CODONS if f'sc_{st}' in data
-        ]
-
-        url += "&start_codons={}".format(
-            str(start_codons).strip("[]").replace("'", ""))
-        url += "&min_cds={}&max_cds={}&min_len={}&max_len={}&min_avg={}&max_avg={}".format(
-            data["min_cds"], data["max_cds"], data["min_len"], data["max_len"],
-            data["min_avg"], data["max_avg"])
-        url += f"&tran_list={'tran_list'}"
-        for sc in [
-                'start_increase_check', 'stop_decrease_check',
-                'lowest_frame_diff_check', 'highest_frame_diff_check',
-                'ambig_check', 'saved_check'
+    key2remove = []
+    for key, value in data.items():
+        if type(value) in [
+                pl.dataframe.frame.DataFrame, pd.core.frame.DataFrame
         ]:
-            url += f"&{sc}={'T' if sc in data else 'F'}"
-
+            key2remove.append(key)
+    for key in key2remove:
+        del data[key]
     cursor.execute("SELECT MAX(url_id) from urls;")
     result = cursor.fetchone()
     # If the url table is empty result will return none
     url_id = 0 if not result[0] else int(result[0]) + 1
-    cursor.execute("INSERT INTO urls VALUES({},'{}')".format(url_id, url))
-    connection.commit()
+    cursor.execute("INSERT INTO urls VALUES({},'{}')".format(
+        url_id, dumps(data)))
     short_code = integer_to_base62(url_id)
     connection.close()
     return short_code
