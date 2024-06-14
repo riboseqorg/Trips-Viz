@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple, Union
 from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
+from sqlqueries_2 import sqlquery
 import os
 import logging
 import config
@@ -54,29 +55,6 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
                            html_args=html_args,
                            organism=organism,
                            transcriptome=transcriptome)
-
-
-def tran_to_genome(tran: str, pos: int,
-                   transcriptome_info_dict: Dict) -> str | Tuple[None, int]:
-    try:
-        traninfo = transcriptome_info_dict[tran]
-    except KeyError:
-        return None, 0  # Fix same as another file
-    exon_start = traninfo["exons"][0][0]
-    if traninfo["strand"] == "-":
-        traninfo["exons"] = traninfo["exons"][::-1]
-        exon_start = traninfo["exons"][0][1]
-    for tup in traninfo["exons"]:
-        exonlen = tup[1] - tup[0]
-        if pos > exonlen:
-            pos = (pos - exonlen) - 1
-        else:
-            break
-    if traninfo["strand"] == "+":
-        genomic_pos = (exon_start + pos) - 1
-    else:
-        genomic_pos = (exon_start - pos) + 1
-    return "{}_{}".format(traninfo["chrom"], genomic_pos)
 
 
 def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
@@ -272,6 +250,7 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
 
 def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
                   transcriptome, file_string, label_string, short_code):
+    # TODO: Write only when the number of results are more than 1000
     # logging.debug("all sorted all values", sorted_all_values)
     print("writing to file")
     returnstr = "Table|"
@@ -350,20 +329,8 @@ def find_pauses(data, user, logged_in):
     full_studies = []
 
     logging.debug("Full studies {}".format(full_studies))
-    # return str(full_studies)
-    # return str(all_study_ids)
 
-    html_args = data["html_args"]
-    returnstr = ""
-
-    min_fold_change = int(data["min_fold_change"])
-    min_read_length = int(data["min_read_length"])
-    max_read_length = int(data["max_read_length"])
-    window = int(data["window_size"])
-    min_coverage = float(data["min_coverage"]) / 100
-    nuc_output = int(data["nuc_output"])
-
-    custom_tran_list = data["custom_tran_list"]
+    min_coverage = data["min_coverage"] / 100.
 
     # feature_list.append("Inframe Count Value")
     if not html_args["user_short"]:
@@ -373,10 +340,8 @@ def find_pauses(data, user, logged_in):
         short_code = html_args["user_short"]
         user_short_passed = True
 
-    if custom_tran_list != "":
-        custom_tran_list = custom_tran_list.replace(",", " ")
-        for item in custom_tran_list.split(" "):
-            user_defined_transcripts.append(item)
+    if data['tranlist'] == "custom_trans":
+        data['custom_tran_list'] = data['custom_tran_list'].split(',')
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
 
@@ -391,22 +356,22 @@ def find_pauses(data, user, logged_in):
         sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, organism, transcriptome)
     traninfo = sqlquery(sqlfile, "transcripts")
-    #    "SELECT transcript, cds_start, cds_stop,length,gene,sequence, principle FROM transcripts;"
-    #       traninfo_dict[tran] = {
     tran_gene_dict = {}
 
     principal_transcripts = []
-    if tranlist == "prin_trans":
-        traninfo = traninfo[traninfo.principal == 1]
-    elif tranlist == "custom_trans":
-        traninfo = traninfo[traninfo.transcript.isin(user_defined_transcripts)]
-        # "SELECT transcript,gene FROM transcripts WHERE transcript IN ({});"
+    if data['tranlist'] == "prin_trans":
+        traninfo = traninfo.filter(pl.col("principal") == 1)
+    elif data['tranlist'] == "custom_trans":
+        traninfo = traninfo.filter(
+            pl.col("transcript").is_in(data['custom_tran_list']))
+    else:
+        pass
     tran_gene = traninfo[["transcript", "gene"]]
     tran_gene.gene = tran_gene.gene.apply(lambda x: x.replace(",", "_"))
 
     transcriptome_info_dict = traninfo[["transcript", "strand", "chrom"]]
-    exons = sqlquery(sqlfile, "exons")
-    exons = exons[exons.transcript.isin(traninfo.transcript)]
+    exons = sqlquery(sqlfile, "exons").filter(
+        pl.col("transcript").is_in(traninfo['transcript']))
     transcriptome_info_dict = transcriptome_info_dict.merge(exons,
                                                             on="transcript")
 
@@ -414,12 +379,10 @@ def find_pauses(data, user, logged_in):
     logging.debug("accepted orf dict built")
     # Now build a profile for every transcript in accepted_transcripts
 
-    if file_paths_dict["rnaseq"] == {}:
-        if "te_check" in data:
-            del data["te_check"]
+    if (not file_paths_dict["rnaseq"]) and ("te_check" in data):
+        del data["te_check"]
 
-    if file_paths_dict["riboseq"] == {} and file_paths_dict[
-            "proteomics"] == {}:
+    if not file_paths_dict["riboseq"] and not file_paths_dict["proteomics"]:
         return "Error no files selected"
 
     total_files = 0
