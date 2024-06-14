@@ -9,478 +9,387 @@
                value="uorf"
                name="region"
                checked>
-        Upstream open reading frame
-    </input>
-    <br>
-    <input type="radio"
-           class="ouorf"
-           id="ouorf"
-           value="ouorf"
-           name="region"
-           unchecked>
-    Overlapping upstream open reading frame
-</input>
-<br>
-<input type="radio"
-       class="extension"
-       id="extension"
-       value="extension"
-       name="region"
-       unchecked>
-N-terminal extension
-</input>
-<br>
-<input type="radio" class="cds" id="cds" value="cds" name="region" unchecked>
-Annotated coding region
-</input>
-<br>
-<input type="radio"
-       class="nested"
-       id="nested"
-       value="nested"
-       name="region"
-       unchecked>
-Nested open reading frame
-</input>
-<br>
-<input type="radio"
-       class="odorf"
-       id="odorf"
-       value="odorf"
-       name="region"
-       unchecked>
-Overlapping downstream open reading frame
-</input>
-<br>
-<input type="radio"
-       class="dorf"
-       id="dorf"
-       value="dorf"
-       name="region"
-       unchecked>
-Downstream open reading frame
-</input>
-<br>
-<input type="radio"
-       class="noncoding"
-       id="noncoding"
-       value="noncoding"
-       name="region"
-       unchecked>
-Non coding
-</input>
-<br>
-{% if current_user.name == "test" %}
-    <input type="radio"
-           class="minusone"
-           id="minusone"
-           value="minusone"
-           name="region"
-           unchecked>
-    Minus one frameshift
-</input>
-<br>
-<input type="radio"
-       class="readthrough"
-       id="readthrough"
-       value="readthrough"
-       name="region"
-       unchecked>
-Readthrough
-</input>
-<br>
-<input type="radio"
-       class="plusone"
-       id="plusone"
-       value="plusone"
-       name="region"
-       unchecked>
-Plus one frameshift
-</input>
-<br>
-{% endif %}
-<div id="choose_starts">
-    <h3>3.Filters</h3>
-    <br>
-    <table id="filters">
-        <tr>
-            <td></td>
-            <td>
-                <b>Min limit</b>
-            </td>
-            <td>
-                <b>Max limit</b>
-            </td>
-        </tr>
-        <tr>
-            <td>CDS overlap:</td>
-            <td>
-                <input id="min_cds" name="min_cds" value="0">
-            </input>
-        </td>
-        <td>
-            <input id="max_cds" name="max_cds" value="0.5">
-        </input>
-    </td>
-    <td>
-        <a class='whatsthis'
-           target='_blank'
-           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_cds_overlap'>&#9432;</a>
-    </td>
-</tr>
-<tr>
-    <td>Length:</td>
-    <td>
-        <input id="min_len" name="min_len" value="30">
-    </input>
-</td>
-<td>
-    <input id="max_len" name="max_len" value="100000">
-</input>
-</td>
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_length'>&#9432;</a>
-</td>
-</tr>
-<tr class= "hidden_element">
-    <td>Average ribosome peak:</td>
-    <td>
-        <input id="min_avg" name="min_avg" value="0">
-    </input>
-</td>
-<td>
-    <input id="max_avg" name="max_avg" value="100000">
-</input>
-</td>
-</tr>
-<!-- <input type="radio" class="nnet" id="nnet" value="nnet" name="output" unchecked>Neural Net</input></td></tr> -->
-<tr>
-    <td>Transcripts:</td>
-    <td>
+        <label for="uorf">Upstream open reading frame</label>
+        <br />
         <input type="radio"
-               id="prin_trans"
-               value="prin_trans"
-               name="tranlist"
-               checked>
-        Principal
-    </input>
-    <input type="radio"
-           id="all_trans"
-           value="all_trans"
-           name="tranlist"
-           unchecked>
-    All
-</input>
-<input type="radio"
-       id="custom_trans"
-       value="custom_trans"
-       name="tranlist"
-       unchecked>
-Custom:
-</input>
-</td>
-<td>
-    <input id="custom_tran_list" name="custom_tran_list" value="">
-</input>
-</td>
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_transcripts'>&#9432;</a>
-</td>
-</tr>
-<tr>
-    <td>Start codons:</td>
-    <td>
-        <input type="checkbox" id="AUG" value="AUG" name="sc_aug" checked>
-        AUG
-    </input>
-    <input type="checkbox" id="CUG" value="CUG" name="sc_cug" checked>
-    CUG
-</input>
-<input type="checkbox" id="GUG" value="GUG" name="sc_gug" checked>
-GUG
-</input>
-{% if current_user.name == "test" %}
-    <input type="checkbox" id="NONE" value="None" name="sc_none" unchecked>
-    None
-</input>
-{% endif %}
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_starts'>&#9432;</a>
-</td>
-</tr>
-<tr>
-    <td>Exclude saved cases</td>
-    <td>
-        <input class="class_filter_saved"
-               id="saved_check"
-               type="checkbox"
-               name="saved_check"
-               value="saved_check"
+               class="ouorf"
+               id="ouorf"
+               value="ouorf"
+               name="region"
                unchecked>
-    </input>
-</td>
-</tr>
-</td>
-{% if current_user.name == "test" %}
-    <tr>
-        <td>Use neural net</td>
-        <td>
-            <input class="class_filter_nnet"
-                   id="nnet_check"
-                   type="checkbox"
-                   name="nnet_check"
-                   value="nnet_check"
+        <label for="ouorf">Overlapping upstream open reading frame</label>
+        <br />
+        <input type="radio"
+               class="extension"
+               id="extension"
+               value="extension"
+               name="region"
+               unchecked>
+        <label for="extension">N-terminal extension</label>
+        <br />
+        <input type="radio" class="cds" id="cds" value="cds" name="region" unchecked>
+        <label for="cds">Annotated coding region</label>
+        <br />
+        <input type="radio"
+               class="nested"
+               id="nested"
+               value="nested"
+               name="region"
+               unchecked>
+        <label for="nested">Nested open reading frame</label>
+        <br />
+        <input type="radio"
+               class="odorf"
+               id="odorf"
+               value="odorf"
+               name="region"
+               unchecked>
+        <label for="odorf">Overlapping downstream open reading frame</label>
+        <br />
+        <input type="radio"
+               class="dorf"
+               id="dorf"
+               value="dorf"
+               name="region"
+               unchecked>
+        <label for="dorf">Downstream open reading frame</label>
+        <br />
+        <input type="radio"
+               class="noncoding"
+               id="noncoding"
+               value="noncoding"
+               name="region"
+               unchecked>
+        <label for="noncoding">Non-coding</label>
+        <br />
+        {% if current_user.name == "test" %}
+            <input type="radio"
+                   class="minusone"
+                   id="minusone"
+                   value="minusone"
+                   name="region"
                    unchecked>
-        </input>
-    </td>
-</tr>
-{% else %}
-<tr class= "hidden_element">
-    <td>Use neural net</td>
-    <td>
-        <input class="class_filter_nnet"
-               id="nnet_check"
-               type="checkbox"
-               name="nnet_check"
-               value="nnet_check"
-               unchecked>
-    </input>
-</td>
-</tr>
-{% endif %}
-<tr class= "hidden_element">
-    <td>Output:</td>
-    <td>
-        <input type="radio"
-               class="table"
-               id="table"
-               value="table"
-               name="output"
-               checked>
-        Table
-    </input>
-    <input type="radio"
-           class="plot"
-           id="plot"
-           value="plot"
-           name="output"
-           unchecked>
-    Scatter plot
-</input>
-</tr>
-<tr class= "hidden_element">
-    <td>Min periodicity score:</td>
-    <td>
-        <input id="minscore" name="minscore" value="0">
-    </input>
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div id="features_and_limits">
-    <h3>2.Features</h3>
-    <br>
-    <table>
-        <tr class= "hidden_element">
-            <td></td>
-            <td>
-                <b>Min limit</b>
-            </td>
-            <td>
-                <b>Max limit</b>
-            </td>
-        </tr>
-        <tr>
-            <td>Start Increase:</td>
-            <td>
-                <input class="start_increase_check"
-                       id="start_increase_check"
-                       type="checkbox"
-                       name="start_increase_check"
-                       value="start_increase_check"
-                       checked>
-            </input>
-        </td>
-        <td>
-            <a class='whatsthis'
-               target='_blank'
-               href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_start_increase'>&#9432;</a>
-        </td>
-    </tr>
-    <tr>
-        <td>Stop Decrease:</td>
-        <td>
-            <input class="stop_decrease_check"
-                   id="stop_decrease_check"
-                   type="checkbox"
-                   name="stop_decrease_check"
-                   value="stop_decrease_check"
-                   checked>
-        </input>
-    </td>
-    <td>
-        <a class='whatsthis'
-           target='_blank'
-           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_stop_decrease'>&#9432;</a>
-    </td>
-</tr>
-<tr>
-    <td>Coverage:</td>
-    <td>
-        <input class="coverage_check"
-               id="coverage_check"
-               type="checkbox"
-               name="coverage_check"
-               value="coverage_check"
-               checked>
-    </input>
-</td>
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_coverage'>&#9432;</a>
-</td>
-</tr>
-<tr>
-    <td>Frame difference (lowest):</td>
-    <td>
-        <input class="lowest_frame_diff_check"
-               id="lowest_frame_diff_check"
-               type="checkbox"
-               name="lowest_frame_diff_check"
-               value="lowest_frame_diff_check"
-               unchecked>
-    </input>
-</td>
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_fd_lowest'>&#9432;</a>
-</td>
-</tr>
-<tr>
-    <td>Frame difference (highest):</td>
-    <td>
-        <input class="highest_frame_diff_check"
-               id="highest_frame_diff_check"
-               type="checkbox"
-               name="highest_frame_diff_check"
-               value="highest_frame_diff_check"
-               checked>
-    </input>
-</td>
-<td>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_fd_highest'>&#9432;</a>
-</td>
-</tr>
-</table>
-</div>
-<div id="seq_types">
-    <p>
-        <font size="5" align="center"><b><u>Seq types</u></b></font>
-    </p>
-    <table align="center">
-        <td>
-            <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
-                <b>Uncheck All Files With Selected Seq-type</b>
-            </button>
-        </td>
-        <td>
-            <button class="button all_checks" type="button" onclick='check_all_multi()'>
-                <b>Check All Files with Selected Seq-type</b>
-            </button>
-        </td>
-        <tr id="1"></tr>
-    </table>
-</br>
-</div>
-<div id = "dialog-2" title = "Choose a label">
-    Label:
-    <input id="userlabel" name="userlabel" value="">
-</div>
-<div id = "dialog-3" title = "Dataset breakdown">
-    <div id="container2"></div>
-</div>
-<div id="studies">
-    <p>
-        <font size="5" align="center"><b><u>Studies</u></b></font>
-    </p>
-</br>
-<button class="study_button" type="button" onclick='view_study_info()'>
-    <b>View study info</b>
-</button>
-<table align="center">
-    <tr id="2">
-        <td>
-            <button class="button all_checks"
-                    type="button"
-                    onclick="uncheck_study_multi()">
-                <b>Uncheck All files in Files box</b>
-            </button>
-        </td>
-        <td>
-            <button class="button all_checks" type="button" onclick="check_study_multi()">
-                <b>Check All files in Files box</b>
-            </button>
-        </td>
-    </tr>
-</table>
-</br>
-</br>
-</div>
-<div id="files">
-</br>
-<p>
-    <font size="5" align="center"><b><u>Files</u></b>
-    </br>
-</font>
-</p>
-</div>
-<div id="buttons"></div>
-<div id="wrapper">
-    <button class="button" type="button"  id="query">
-        <b>Generate table</b>
-    </button>
-</div>
-{% include 'loading.html' %}
-<div id="container"></div>
-<div id="container2">
-    <h2 align="center">Summary Table</h2>
-    <table id="summary_table" class="prediction_table hover">
-        <thead>
-            <tr>
-                <th></th>
-                <th>Score</th>
-                <th>Entropy</th>
-                <th>Start increase</th>
-                <th>Stop decrease</th>
-                <th>Coverage</th>
-                <th>Translation efficiency</th>
-                <th></th>
-                <th></th>
+            <label for="minusone">Minus one frameshift</label>
+            <br />
+            <input type="radio"
+                   class="readthrough"
+                   id="readthrough"
+                   value="readthrough"
+                   name="region"
+                   unchecked>
+            <label for="readthrough">Readthrough</label>
+            <br />
+            <input type="radio"
+                   class="plusone"
+                   id="plusone"
+                   value="plusone"
+                   name="region"
+                   unchecked>
+            <label for="plusone">Plus one frameshift</label>
+            <br />
+        {% endif %}
+        <div id="choose_starts">
+            <h3>3.Filters</h3>
+            <br>
+            <table id="filters">
+                <tr>
+                    <td></td>
+                    <td>
+                        <b>Min limit</b>
+                    </td>
+                    <td>
+                        <b>Max limit</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>CDS overlap:</td>
+                    <td>
+                        <input id="min_cds" name="min_cds" value="0">
+                    </td>
+                    <td>
+                        <input id="max_cds" name="max_cds" value="0.5">
+                    </td>
+                    <td>
+                        <a class='whatsthis'
+                           target='_blank'
+                           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_cds_overlap'>&#9432;</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Length:</td>
+                    <td>
+                        <input id="min_len" name="min_len" value="30">
+                    </td>
+                    <td>
+                        <input id="max_len" name="max_len" value="100000">
+                    </td>
+                    <td>
+                        <a class='whatsthis'
+                           target='_blank'
+                           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_length'>&#9432;</a>
+                    </td>
+                </tr>
+                <tr class= "hidden_element">
+                    <td>Average ribosome peak:</td>
+                    <td>
+                        <input id="min_avg" name="min_avg" value="0">
+                    </td>
+                    <td>
+                        <input id="max_avg" name="max_avg" value="100000">
+                    </td>
+                </tr>
+                <!-- <input type="radio" class="nnet" id="nnet" value="nnet" name="output" unchecked>Neural Net</input></td></tr> -->
+                <tr>
+                    <td>Transcripts:</td>
+                    <td>
+                        <input type="radio"
+                               id="prin_trans"
+                               value="prin_trans"
+                               name="tranlist"
+                               checked>
+                        <label for="prin_trans">Principal</label>
+                        <input type="radio"
+                               id="all_trans"
+                               value="all_trans"
+                               name="tranlist"
+                               unchecked>
+                        <label for="all_trans">All</label>
+                        <input type="radio"
+                               id="custom_trans"
+                               value="custom_trans"
+                               name="tranlist"
+                               unchecked>
+                        <label for="custom_trans">Custom:</label>
+                    </td>
+                    <td>
+                        <input id="custom_tran_list" name="custom_tran_list" value="">
+                    </td>
+                    <td>
+                        <a class='whatsthis'
+                           target='_blank'
+                           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_transcripts'>&#9432;</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Start codons:</td>
+                    <td>
+                        <input type="checkbox" id="AUG" value="AUG" name="sc_aug" checked>
+                        <label for="AUG">AUG</label>
+                        <input type="checkbox" id="CUG" value="CUG" name="sc_cug" checked>
+                        <label for="CUG">CUG</label>
+                        <input type="checkbox" id="GUG" value="GUG" name="sc_gug" checked>
+                        <label for="GUG">GUG</label>
+                        {% if current_user.name == "test" %}
+                            <input type="checkbox" id="NONE" value="None" name="sc_none" unchecked>
+                            <label for="NONE">None</label>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class='whatsthis'
+                           target='_blank'
+                           href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_starts'>&#9432;</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Exclude saved cases</td>
+                    <td>
+                        <input class="class_filter_saved"
+                               id="saved_check"
+                               type="checkbox"
+                               name="saved_check"
+                               value="saved_check"
+                               unchecked>
+                    </td>
+                </tr>
+                {% if current_user.name == "test" %}
+                    <tr>
+                        <td>Use neural net</td>
+                        <td>
+                            <input class="class_filter_nnet"
+                                   id="nnet_check"
+                                   type="checkbox"
+                                   name="nnet_check"
+                                   value="nnet_check"
+                                   unchecked>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr class= "hidden_element">
+                        <td>Use neural net</td>
+                        <td>
+                            <input class="class_filter_nnet"
+                                   id="nnet_check"
+                                   type="checkbox"
+                                   name="nnet_check"
+                                   value="nnet_check"
+                                   unchecked>
+                        </td>
+                    </tr>
+                {% endif %}
+                <tr class= "hidden_element">
+                    <td>Output:</td>
+                    <td>
+                        <input type="radio"
+                               class="table"
+                               id="table"
+                               value="table"
+                               name="output"
+                               checked>
+                        <label for="table">Table</label>
+                        <input type="radio"
+                               class="plot"
+                               id="plot"
+                               value="plot"
+                               name="output"
+                               unchecked>
+                        <label for="plot">Scatter plot</label>
+                    </td>
+                </tr>
+                <tr class= "hidden_element">
+                    <td>Min periodicity score:</td>
+                    <td>
+                        <input id="minscore" name="minscore" value="0">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="features_and_limits">
+        <h3>2.Features</h3>
+        <br>
+        <table>
+            <tr class= "hidden_element">
+                <td></td>
+                <td>
+                    <b>Min limit</b>
+                </td>
+                <td>
+                    <b>Max limit</b>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-        </tr>
-    </tbody>
-</table>
-</div>
--->
-<br>
-<br>
-<br>
-<br>
-<a id="table_link"
-   href="{{ url_for('static', filename='robots.txt') }}"
-   download="robots.txt">Download entire table</a>
-<h2 id="tabletitle" align="center">Results Table</h2>
+            <tr>
+                <td>Start Increase:</td>
+                <td>
+                    <input class="start_increase_check"
+                           id="start_increase_check"
+                           type="checkbox"
+                           name="start_increase_check"
+                           value="start_increase_check"
+                           checked>
+                </td>
+                <td>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_start_increase'>&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Stop Decrease:</td>
+                <td>
+                    <input class="stop_decrease_check"
+                           id="stop_decrease_check"
+                           type="checkbox"
+                           name="stop_decrease_check"
+                           value="stop_decrease_check"
+                           checked>
+                </td>
+                <td>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_stop_decrease'>&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Coverage:</td>
+                <td>
+                    <input class="coverage_check"
+                           id="coverage_check"
+                           type="checkbox"
+                           name="coverage_check"
+                           value="coverage_check"
+                           checked>
+                </td>
+                <td>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_coverage'>&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Frame difference (lowest):</td>
+                <td>
+                    <input class="lowest_frame_diff_check"
+                           id="lowest_frame_diff_check"
+                           type="checkbox"
+                           name="lowest_frame_diff_check"
+                           value="lowest_frame_diff_check"
+                           unchecked>
+                </td>
+                <td>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_fd_lowest'>&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Frame difference (highest):</td>
+                <td>
+                    <input class="highest_frame_diff_check"
+                           id="highest_frame_diff_check"
+                           type="checkbox"
+                           name="highest_frame_diff_check"
+                           value="highest_frame_diff_check"
+                           checked>
+                </td>
+                <td>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_orfplot&child_acc=child_orfplot_fd_highest'>&#9432;</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id = "dialog-2" title = "Choose a label">
+        Label:
+        <input id="userlabel" name="userlabel" value="">
+    </div>
+    <div id = "dialog-3" title = "Dataset breakdown">
+        <div id="container2"></div>
+    </div>
+    {% include "single_transcript_plot__files.html" %}
+    <div id="wrapper">
+        <button class="button" type="button"  id="query">
+            <b>Generate table</b>
+        </button>
+    </div>
+    {% include 'loading.html' %}
+    <div id="container"></div>
+    <div id="container2">
+        <h2 align="center">Summary Table</h2>
+        <table id="summary_table" class="prediction_table hover">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Score</th>
+                    <th>Entropy</th>
+                    <th>Start increase</th>
+                    <th>Stop decrease</th>
+                    <th>Coverage</th>
+                    <th>Translation efficiency</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <a id="table_link"
+       href="{{ url_for('static', filename='robots.txt') }}"
+       download="robots.txt">Download entire table</a>
+    <h2 id="tabletitle" align="center">Results Table</h2>
 {% endblock %}

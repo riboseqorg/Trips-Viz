@@ -82,7 +82,7 @@ function checkpassword(password) {
                                                    name="username"
                                                    value="{{ request.form.username }}"
                                                    id="username"
-                                                   class="form-control form-control-lg"/>
+                                                   class="form-control form-control-lg" />
                                         </div>
                                         <div class="form-outline mb-4">
                                             <input type="password"
@@ -91,7 +91,7 @@ function checkpassword(password) {
                                                    placeholder="Password"
                                                    name="password"
                                                    value="{{ request.form.password }}"
-                                                   class="form-control form-control-lg"/>
+                                                   class="form-control form-control-lg" />
                                             <progress max="100" value="0" id="meter"></progress>
                                         </div>
                                         <div class="form-outline mb-4">
@@ -101,15 +101,17 @@ function checkpassword(password) {
                                                    placeholder="Re-type Password"
                                                    name="password2"
                                                    value="{{ request.form.password }}"
-                                                   class="form-control form-control-lg"/>
+                                                   class="form-control form-control-lg" />
                                         </div>
                                         {{ recaptcha }}
                                         <div class="d-flex justify-content-center">
                                             <button type="button"
-                                                    class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">Register</button>
+                                                    class="btn btn-success btn-block btn-lg gradient-custom-4 text-body">
+                                                Register
+                                            </button>
                                         </div>
                                         <p class="text-center text-muted mt-5 mb-0">
-                                            Already have an account? <a href="{{ url_for('login') }}" class="fw-bold text-body"><u>Login here</u></a>
+                                            Already have an account? <a href="{{ url_for("login") }}" class="fw-bold text-body"><u>Login here</u></a>
                                         </p>
                                     </form>
                                     {% if error %}

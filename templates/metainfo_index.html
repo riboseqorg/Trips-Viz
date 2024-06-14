@@ -16,179 +16,167 @@
                            value="readlen_dist"
                            name="plottype"
                            checked>
-                </input>
-                <label for="readlen" class='subplot_label'>Read Length Distribution</label>
-                <a class='whatsthis'
-                   target='_blank'
-                   href='/help/?parent_acc=parent_metainfo&child_acc=child_readlen_dist'>  <i class="bi bi-info-circle"></i> </a>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <input id="nuc_comp"
-                       class="study_radio nuc_comp"
-                       type="radio"
-                       value="nuc_comp"
-                       name="plottype"
-                       unchecked>
-            </input>
-            <label for="nuc_comp" class='subplot_label'>Nucleotide Composition</label>
-            <a class='whatsthis'
-               target='_blank'
-               href='/help/?parent_acc=parent_metainfo&child_acc=child_nuc_comp'>  <i class="bi bi-info-circle"></i> </a>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <input id="trip_periodicity"
-                   class="study_radio trip_periodicity"
-                   type="radio"
-                   value="trip_periodicity"
-                   name="plottype"
-                   unchecked>
-        </input>
-        <label for="trip_periodicity" class='subplot_label'>Triplet Periodicity</label>
-        <a class='whatsthis'
-           target='_blank'
-           href='/help/?parent_acc=parent_metainfo&child_acc=child_trip_periodicity'>  <i class="bi bi-info-circle"></i> </a>
-    </td>
-</tr>
-<tr>
-    <td>
-        <input id="mapped_reads_plot"
-               class="study_radio mapped_reads_plot"
-               type="radio"
-               value="mapped_reads_plot"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="mapped_reads_plot" class='subplot_label'>Reads breakdown</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_readsbreakdown'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="heatmap"
-               class="study_radio heatmap"
-               type="radio"
-               value="heatmap"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="heatmap" class='subplot_label'>Heatmap</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_heatmap'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="metagene_plot"
-               class="study_radio metagene_plot"
-               type="radio"
-               value="metagene_plot"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="metagene_plot" class='subplot_label'>Metagene Profile</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_metagene'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="replicate_comp"
-               class="study_radio replicate_comp"
-               type="radio"
-               value="replicate_comp"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="replicate_comp" class='subplot_label'>Comparison Table</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_rep_comp'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="dinuc_bias"
-               class="study_radio dinuc_bias"
-               type="radio"
-               value="dinuc_bias"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="dinuc_bias" class='subplot_label'>Dinucleotide bias</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_dinuc'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="unmapped"
-               class="study_radio unmapped"
-               type="radio"
-               value="unmapped"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="unmapped" class='subplot_label'>Most frequent unmapped reads</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_unmapped_reads'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="te"
-               class="study_radio te"
-               type="radio"
-               value="te"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="te" class="subplot_label">Counts table</label>
-    <a class='whatsthis'
-       target='_blank'
-       href='/help/?parent_acc=parent_metainfo&child_acc=child_count_table'>  <i class="bi bi-info-circle"></i> </a>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="mrna_dist"
-               class="study_radio mrna_dist"
-               type="radio"
-               value="mrna_dist"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="mrna_dist" class="subplot_label">mRNA distribution</label>
-</td>
-</tr>
-<tr>
-    <td>
-        <input id="mrna_dist_readlen"
-               class="study_radio mrna_dist_readlen"
-               type="radio"
-               value="mrna_dist_readlen"
-               name="plottype"
-               unchecked>
-    </input>
-    <label for="mrna_dist_readlen" class="subplot_label">mRNA distribution vs readlengths</label>
-</td>
-</tr>
-</table>
-</div>
-<div id="options">
-</br>
-<p>
-    <font size="5" align="center"><b><u>Options</u></b></font>
-</p>
+                    <label for="readlen" class='subplot_label'>Read Length Distribution</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_readlen_dist'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="nuc_comp"
+                           class="study_radio nuc_comp"
+                           type="radio"
+                           value="nuc_comp"
+                           name="plottype"
+                           unchecked>
+                    <label for="nuc_comp" class='subplot_label'>Nucleotide Composition</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_nuc_comp'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="trip_periodicity"
+                           class="study_radio trip_periodicity"
+                           type="radio"
+                           value="trip_periodicity"
+                           name="plottype"
+                           unchecked>
+                    <label for="trip_periodicity" class='subplot_label'>Triplet Periodicity</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_trip_periodicity'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="mapped_reads_plot"
+                           class="study_radio mapped_reads_plot"
+                           type="radio"
+                           value="mapped_reads_plot"
+                           name="plottype"
+                           unchecked>
+                    <label for="mapped_reads_plot" class='subplot_label'>Reads breakdown</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_readsbreakdown'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="heatmap"
+                           class="study_radio heatmap"
+                           type="radio"
+                           value="heatmap"
+                           name="plottype"
+                           unchecked>
+                    <label for="heatmap" class='subplot_label'>Heatmap</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_heatmap'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="metagene_plot"
+                           class="study_radio metagene_plot"
+                           type="radio"
+                           value="metagene_plot"
+                           name="plottype"
+                           unchecked>
+                    <label for="metagene_plot" class='subplot_label'>Metagene Profile</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_metagene'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="replicate_comp"
+                           class="study_radio replicate_comp"
+                           type="radio"
+                           value="replicate_comp"
+                           name="plottype"
+                           unchecked>
+                    <label for="replicate_comp" class='subplot_label'>Comparison Table</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_rep_comp'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="dinuc_bias"
+                           class="study_radio dinuc_bias"
+                           type="radio"
+                           value="dinuc_bias"
+                           name="plottype"
+                           unchecked>
+                    <label for="dinuc_bias" class='subplot_label'>Dinucleotide bias</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_dinuc'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="unmapped"
+                           class="study_radio unmapped"
+                           type="radio"
+                           value="unmapped"
+                           name="plottype"
+                           unchecked>
+                    <label for="unmapped" class='subplot_label'>Most frequent unmapped reads</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_unmapped_reads'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="te"
+                           class="study_radio te"
+                           type="radio"
+                           value="te"
+                           name="plottype"
+                           unchecked>
+                    <label for="te" class="subplot_label">Counts table</label>
+                    <a class='whatsthis'
+                       target='_blank'
+                       href='/help/?parent_acc=parent_metainfo&child_acc=child_count_table'>  <i class="bi bi-info-circle"></i> </a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="mrna_dist"
+                           class="study_radio mrna_dist"
+                           type="radio"
+                           value="mrna_dist"
+                           name="plottype"
+                           unchecked>
+                    <label for="mrna_dist" class="subplot_label">mRNA distribution</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input id="mrna_dist_readlen"
+                           class="study_radio mrna_dist_readlen"
+                           type="radio"
+                           value="mrna_dist_readlen"
+                           name="plottype"
+                           unchecked>
+                    <label for="mrna_dist_readlen" class="subplot_label">mRNA distribution vs readlengths</label>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="options">
+    </br>
+    <p>
+        <font size="5" align="center"><b><u>Options</u></b></font>
+    </p>
 </div>
 {% include "single_transcript_plot__files.html" %}
 <div id="buttons"></div>

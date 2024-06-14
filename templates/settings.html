@@ -268,178 +268,64 @@
             </table>
         </div>
         <!-- If user is logged in show a change password tab in the accordion, if not still create the tab (to prevent errors when accessing those fields in the template), but hide it -->
-        {% if current_user.is_authenticated %}
-            <h3>Change password</h3>
-            <div align="center">
-                <input type="password"
-                       placeholder="Enter new password"
-                       name="new_password"
-                       id="new_password"
-                       value="">
-                <br>
-                <input type="password"
-                       placeholder="Re-type new Password"
-                       name="new_password2"
-                       id="new_password2"
-                       value="">
-                <br>
-                <input type="password"
-                       placeholder="Current Password"
-                       name="curr_password"
-                       id="curr_password"
-                       value="">
-                <br>
-            </div>
-            <!-- End of the accordion div -->
+        <div>
+            {% if current_user.is_authenticated %}
+                <h3>Change password</h3>
+                <div align="center">
+                    <input type="password"
+                           placeholder="Enter new password"
+                           name="new_password"
+                           id="new_password"
+                           value="">
+                    <br />
+                    <input type="password"
+                           placeholder="Re-type new Password"
+                           name="new_password2"
+                           id="new_password2"
+                           value="">
+                    <br />
+                    <input type="password"
+                           placeholder="Current Password"
+                           name="curr_password"
+                           id="curr_password"
+                           value="">
+                    <br />
+                </div>
+                <!-- End of the accordion div -->
+            {% else %}
+                <!-- End the accordion div if not showing password tab, otherwise end up with a blank tab-->
+                <div class="hidden">
+                    <input type="password"
+                           class="hidden"
+                           placeholder="Enter new password"
+                           name="new_password"
+                           id="new_password"
+                           value="">
+                    <br />
+                    <input type="password"
+                           class="hidden"
+                           placeholder="Re-type new Password"
+                           name="new_password2"
+                           id="new_password2"
+                           value="">
+                    <br />
+                    <input type="password"
+                           class="hidden"
+                           placeholder="Current Password"
+                           name="curr_password"
+                           id="curr_password"
+                           value="">
+                    <br />
+                </div>
+            {% endif %}
         </div>
-    {% else %}
-        <!-- End the accordion div if not showing password tab, otherwise end up with a blank tab-->
+        <div class="wrapper">
+            <button class="button" type="button"  id="settingsquery">
+                <b>Update settings</b>
+            </button>
+        </div>
+        <div id="container"></div>
     </div>
-    <div class="hidden">
-        <input type="password"
-               class="hidden"
-               placeholder="Enter new password"
-               name="new_password"
-               id="new_password"
-               value="">
-        <br>
-        <input type="password"
-               class="hidden"
-               placeholder="Re-type new Password"
-               name="new_password2"
-               id="new_password2"
-               value="">
-        <br>
-        <input type="password"
-               class="hidden"
-               placeholder="Current Password"
-               name="curr_password"
-               id="curr_password"
-               value="">
-        <br>
-    </div>
-{% endif %}
-<div class="wrapper">
-    <button class="button" type="button"  id="settingsquery">
-        <b>Update settings</b>
-    </button>
-</div>
-<div id="container"></div>
-<script type="text/javascript"
-        src="{{ url_for('static', filename='js/common.js') }}"></script>
-<script type="text/javascript">
-$( function() {
-		$( "#accordion" ).accordion();
-		} );
-
-// If the user presses the enter key call the #query function (generates the plot)
-$(document).keypress(function(e){
-		if (e.which == 13){
-				console.log("calling javascript settings query");
-				$("#settingsquery").click();
-				}
-		});
-
-
-var url = "/settingsquery"
-var url = "/settingsquery"
-
-console.log("URL ", url);
-
-// Query function, gathers information on settings configured by the user and passes it to python for a plot to be generated
-$("#settingsquery").click(function() {
-		console.log("JJJavascript calling settings query");
-		$("#loading-div-background").show();
-		$("#container").hide();
-
-		var background_colour = $('input:text[name=back_col]').val();
-		var title_size = $('input:text[name=title_size]').val();
-		var subheading_size = $('input:text[name=subheading_size]').val();
-		var axis_label_size = $('input:text[name=axis_label_size]').val();
-		var marker_size = $('input:text[name=marker_size]').val();
-		var legend_size = $('input:text[name=legend_size]').val();
-		var ribo_linewidth = $('input:text[name=ribo_linewidth]').val();
-
-		var cds_marker_width = $('input:text[name=cds_marker_width]').val();
-		var cds_marker_colour = $('input:text[name=cds_marker_colour]').val();
-
-		var readlength_colour = $('input:text[name=rl_bar_col]').val();
-		var metagene_fiveprime_colour = $('input:text[name=mg_fiveprime_col]').val();
-		var metagene_threeprime_colour = $('input:text[name=mg_threeprime_col]').val();
-
-		var nuc_comp_a_col = $('input:text[name=nuc_comp_a_col]').val();
-		var nuc_comp_t_col = $('input:text[name=nuc_comp_t_col]').val();
-		var nuc_comp_g_col = $('input:text[name=nuc_comp_g_col]').val();
-		var nuc_comp_c_col = $('input:text[name=nuc_comp_c_col]').val();
-
-		var uag_col = $('input:text[name=uag_col]').val();
-		var uga_col = $('input:text[name=uga_col]').val();
-		var uaa_col = $('input:text[name=uaa_col]').val();
-
-		var comp_uag_col = $('input:text[name=comp_uag_col]').val();
-		var comp_uga_col = $('input:text[name=comp_uga_col]').val();
-		var comp_uaa_col = $('input:text[name=comp_uaa_col]').val();
-
-		var advanced = $('input:checkbox[name=advanced]:checked').val();
-
-
-		var new_password = document.getElementById('new_password').value
-		var new_password2 = document.getElementById('new_password2').value
-		var curr_password = document.getElementById('curr_password').value
-
-
-		var qu = {"background_colour":background_colour,
-							"title_size":title_size,
-							"subheading_size":subheading_size,
-							"axis_label_size":axis_label_size,
-							"marker_size":marker_size,
-							"legend_size":legend_size,
-							"ribo_linewidth":ribo_linewidth,
-							"readlength_colour":readlength_colour,
-							"metagene_fiveprime_colour":metagene_fiveprime_colour,
-							"metagene_threeprime_colour":metagene_threeprime_colour,
-							"nuc_comp_a_col":nuc_comp_a_col,
-							"nuc_comp_t_col":nuc_comp_t_col,
-							"nuc_comp_g_col":nuc_comp_g_col,
-							"nuc_comp_c_col":nuc_comp_c_col,
-							"uag_col":uag_col,
-							"uga_col":uga_col,
-							"uaa_col":uaa_col,
-							"comp_uag_col":comp_uag_col,
-							"comp_uga_col":comp_uga_col,
-							"comp_uaa_col":comp_uaa_col,
-							"advanced":advanced,
-							"new_password":new_password,
-							"new_password2":new_password2,
-							"curr_password":curr_password,
-							"cds_marker_width":cds_marker_width,
-							"cds_marker_colour":cds_marker_colour};
-
-
-
-		$.ajax({
-				type: "POST",
-				async:true,
-				contentType: "application/json; charset=utf-8",
-				url: url,
-				data: JSON.stringify(qu),
-				dataType: "html",
-				success: function (data) {
-						if (data.slice(0, 11) == "TRANSCRIPTS"){
-								var splitdata = data.split(":");
-								populate_jquery_dialog(splitdata);
-								$( "#dialog-2" ).dialog( "open" );
-								}
-
-						else{
-								var graph = $("#container");
-								graph.html(data);
-								$("#loading-div-background").hide();
-								$("#container").show();}
-
-						}});
-						});
-
-
-</script>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock %}

@@ -1,57 +1,34 @@
 {% extends "layout.html" %}
 {% block content %}
-<html>
-<body>
-
-<style>
-
-table, th, td {
-		 width: 100%;
-		 table-layout:fixed;
-	}
-
-
-</style>
-
-
-
-<h2 align="left">Choose a file to download</h2>
-	<table style="border: 10px black">
-		<tr><th>Group</th><th>File</th><th></th></tr>
-
-		<tr>
-
-			<form action = "/downloadquery" method = "POST" enctype = "multipart/form-data">
-				<!-- <form action = "http://143.239.109:5000/uploadquery" method = "POST" enctype = "multipart/form-data"> -->
-				<td align="center">
-					<select name="organism" id="organism_dropdown">
-						<option value="item0">--Select an Item--</option>
-					</select>
-				</td>
-
-
-				<td align="center">
-					<select name="assembly" id="size">
-						<option value="">-- select one -- </option>
-					</select>
-				</td>
-
-
-
-				<td align="center">
-					<input value="Download file" type = "submit"/>
-				</td>
-			</form>
-		</tr>
-	</table>
-
-
-
-
-
-
-	<script type="text/javascript">
-
+    <h2 align="left">Choose a file to download</h2>
+    <table style="border: 10px black">
+        <tr>
+            <th>Group</th>
+            <th>File</th>
+            <th></th>
+        </tr>
+        <tr>
+            <form action="/downloadquery" method="POST" enctype="multipart/form-data">
+                <!-- <form action="http://143.239.109:5000/uploadquery"
+       method="POST"
+       enctype="multipart/form-data"> -->
+                <td align="center">
+                    <select name="organism" id="organism_dropdown">
+                        <option value="item0">--Select an Item--</option>
+                    </select>
+                </td>
+                <td align="center">
+                    <select name="assembly" id="size">
+                        <option value="">-- select one --</option>
+                    </select>
+                </td>
+                <td align="center">
+                    <input value="Download file" type = "submit" />
+                </td>
+            </form>
+        </tr>
+    </table>
+    <script type="text/javascript">
 	var organism_dict = {{ organism_dict|safe }};
 	for (var org in organism_dict) {
 		org_dropdown = document.getElementById('organism_dropdown');
@@ -79,16 +56,6 @@ table, th, td {
 			});
 		});
 
-	</script>
-
-
-
-
-
-
-
-
-</body>
-</html>
-
+	
+    </script>
 {% endblock %}
