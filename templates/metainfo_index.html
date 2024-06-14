@@ -182,9 +182,6 @@
     <label for="mrna_dist_readlen" class="subplot_label">mRNA distribution vs readlengths</label>
 </td>
 </tr>
-<!-- <tr><td><input id="codon_usage" class="study_radio codon_usage" type="radio" value="codon_usage" name="plottype" unchecked></input><label for="codon_usage" class="subplot_label">Codon Usage</label></td></tr> -->
-<!-- <tr><td><input id="fastq_screen" class="study_radio fastq_screen" type="radio" value="fastq_screen" name="plottype" unchecked></input><label for="fastq_screen" class='subplot_label'>Fastq screen</label><a class='whatsthis'  target='_blank' href='/help/?parent_acc=parent_metainfo&child_acc=child_dinuc'>  <i class="bi bi-info-circle"></i> </a>        </td></tr> -->
-<!-- <tr><td><input id="contamination" class="study_radio contamination" type="radio" value="contamination" name="plottype" unchecked></input><label for="contamination" class="subplot_label">Contamination</label></td></tr>-->
 </table>
 </div>
 <div id="options">
@@ -193,87 +190,7 @@
     <font size="5" align="center"><b><u>Options</u></b></font>
 </p>
 </div>
-<div id="seq_types">
-    <p>
-        <font size="5" align="center"><b><u>Seq types</u></b></font>
-    </p>
-    <table align="center">
-        <tr id="1">
-            <td>
-                <button class="button all_checks" type="button" onclick='uncheck_all_multi()'>
-                    <b>Uncheck All Files With Selected Seq-type</b>
-                </button>
-            </td>
-            <td>
-                <button class="button all_checks" type="button" onclick='check_all_multi()'>
-                    <b>Check All Files with Selected Seq-type</b>
-                </button>
-            </td>
-        </tr>
-    </table>
-</br>
-</div>
-<div id="studies">
-    <p>
-        <font size="5" align="center"><b><u>Studies</u></b></font>
-    </p>
-</br>
-<div id = "dialog-2" title = "Choose a transcript..."></div>
-<div style="text-align: center;">
-    <button class="study_button" type="button" onclick='view_study_info()'>
-        <b>View study info</b>
-    </button>
-</div>
-<table align="center">
-    <tr id="2">
-        <td>
-            <button class="button all_checks"
-                    type="button"
-                    onclick="uncheck_study_multi()">
-                <b>Uncheck All files in Files box</b>
-            </button>
-        </td>
-        <td>
-            <button class="button all_checks" type="button" onclick="check_study_multi()">
-                <b>Check All files in Files box</b>
-            </button>
-        </td>
-    </tr>
-</table>
-</br>
-</br>
-<table align="center" name="studytable" id="studytable" class="studytable">
-    <tr id="tablerow1"></tr>
-    <tr id="tablerow2"></tr>
-    <tr id="tablerow3"></tr>
-    <tr id="tablerow4"></tr>
-    <tr id="tablerow5"></tr>
-    <tr id="tablerow6"></tr>
-    <tr id="tablerow7"></tr>
-    <tr id="tablerow8"></tr>
-    <tr id="tablerow9"></tr>
-    <tr id="tablerow10"></tr>
-    <tr id="tablerow11"></tr>
-    <tr id="tablerow12"></tr>
-    <tr id="tablerow13"></tr>
-    <tr id="tablerow14"></tr>
-    <tr id="tablerow15"></tr>
-    <tr id="tablerow16"></tr>
-    <tr id="tablerow17"></tr>
-    <tr id="tablerow18"></tr>
-    <tr id="tablerow19"></tr>
-</table>
-</br>
-</br>
-</div>
-<div id="files">
-</br>
-<p>
-    <font size="5" align="center"><b><u>Files</u></b>
-    </br>
-</font>
-</p>
-</div>
+{% include "single_transcript_plot__files.html" %}
 <div id="buttons"></div>
 <div id="view_plot" class="wrapper">
     <button class="button" type="button"  id="metainfoquery">
