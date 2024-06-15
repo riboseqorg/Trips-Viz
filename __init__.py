@@ -814,14 +814,6 @@ def del_query():
     return ""
 
 
-# Allows users to logout
-# @app.route("/user/logout")
-# @login_required
-# def logout():
-# logout_user()
-# return redirect(login)
-
-
 # Points to robots.txt in static folder
 @app.route('/robots.txt')
 def static_from_root():

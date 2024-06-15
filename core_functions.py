@@ -196,36 +196,6 @@ def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
     return dct
 
 
-def type_detector(dct: Dict[str, Any]) -> None:
-    '''
-    Convert string in dict collected from web page form to right types.
-    Takes only values that can be string, boolean, int and float.
-    >>> x = {'is_private': 'true', 'tpm_max': '123.4', 'rpm_max': '12345',
-    ... 'organism': 'human'}
-    >>> type_detector(x)
-    >>> x
-    {'is_private': True, 'tpm_max': 123.4, 'rpm_max': 12345, 'organism': 'human'}
-
-    Parameters:
-    - dct (Dict[str, Any]): dictionary of values
-
-    Returns:
-    - None
-    '''
-    for key, value in dct.items():
-        if value in ['true', 'false']:
-            dct[key] = True if value == 'true' else False
-        else:
-            try:
-                dct[key] = int(value)
-            except ValueError:
-                try:
-                    dct[key] = float(value)
-                except ValueError:
-                    pass
-
-    # Gets a list of all studies associated with an organism
-
 
 def fetch_study_info(organism_id: int) -> pl.DataFrame:
     '''
@@ -319,19 +289,14 @@ def generate_short_code(data) -> str:
     """
     # TODO: Keep the form values to retore it in json format share it here before you plot
     # build a url so that this plot can be recreated later on
-    url = "/{}/{}/{}/?".format(organism, transcriptome, plot_type)
     key2remove = []
     for key, value in data.items():
-        if type(value) in [
-                pl.dataframe.frame.DataFrame, pd.core.frame.DataFrame
-        ]:
+        if type(value) in [pl.DataFrame, pd.DataFrame]:
             key2remove.append(key)
     for key in key2remove:
         del data[key]
-    cursor.execute("SELECT MAX(url_id) from urls;")
-    result = cursor.fetchone()
+    url_id = get_table("urls")["url_id"].max()
     # If the url table is empty result will return none
-    url_id = 0 if not result[0] else int(result[0]) + 1
     cursor.execute("INSERT INTO urls VALUES({},'{}')".format(
         url_id, dumps(data)))
     short_code = integer_to_base62(url_id)
@@ -534,7 +499,7 @@ def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
                         continue
                 else:
                     continue
-            if readlen < minreadlen or readlen > maxreadlen:
+            if not (minreadlen <= readlen <= maxreadlen):
                 continue
             offset = 15 if readlen in offsets else offsets[readlen] + 1
 
@@ -570,11 +535,10 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
     except Exception:
         unambig_trancounts = {}
     for readlen in unambig_trancounts:
-        if readlen < minreadlen or readlen > maxreadlen:
+        if not (minreadlen <= readlen <= maxreadlen):
             continue
 
         for pos in unambig_trancounts[readlen]:
-            # Rather than add the whole count to each position, we divide by the length of the peptide first,
             # That way when we add the reduced count at each position, in total it will add up to the original count
             # and prevent a bias toward longer peptides, this allows us to count a fraction of a peptide that overlaps with an ORF
             # rather than counting an arbitrary position like the 5' end or 3' end which may fall outside the ORF in question.

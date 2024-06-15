@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Union
 from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
-from sqlqueries_2 import sqlquery
+from sqlqueries_2 import sqlquery, get_table
 import os
 import logging
 import config
@@ -318,10 +318,9 @@ def find_pauses(data, user, logged_in):
     logging.debug("pause query called")
     global user_short_passed
 
-    organism = data["organism"]
-    transcriptome = data["transcriptome"]
     print("organism, transcriptome", organism, transcriptome)
-    owner = get_owner(organism, transcriptome)
+    owner = get_table("organisms").filter(
+        pl.col("organism_name") == data["organism"])[0, "organism_owner"]
 
     file_paths_dict = fetch_file_paths(data["file_list"], organism)
     # Find out which studies have all files of a specific sequence type selected (to create aggregates)
@@ -334,8 +333,7 @@ def find_pauses(data, user, logged_in):
 
     # feature_list.append("Inframe Count Value")
     if not html_args["user_short"]:
-        short_code = generate_short_code(data, organism, data["transcriptome"],
-                                         "pause_pred")
+        short_code = generate_short_code(data)
     else:
         short_code = html_args["user_short"]
         user_short_passed = True
@@ -348,13 +346,14 @@ def find_pauses(data, user, logged_in):
     if owner == 1:
         sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
-                                                      organism, transcriptome)
+                                                      data['organism'],
+                                                      data['transcriptome'])
         if not os.path.isfile(sqlfile):
             return "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome)
+                data['organism'], data['transcriptome'])
     else:
         sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, organism, transcriptome)
+            config.UPLOADS_DIR, owner, data['organism'], data['transcriptome'])
     traninfo = sqlquery(sqlfile, "transcripts")
     tran_gene_dict = {}
 

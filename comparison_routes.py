@@ -39,7 +39,6 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
     data['files'] = fetch_files(accepted_studies).to_pandas()
     data['list'] = 1
-    print(data['files'])
     return render_template('index_compare.html', template_dict=data)
 
 

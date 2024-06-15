@@ -2,6 +2,7 @@ from typing import Dict, List
 from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
 import os
+import polars as pl
 import time
 import numpy as np
 from bisect import bisect_left
@@ -16,7 +17,7 @@ import riboflask_diff
 from flask_login import current_user
 import json
 from fixed_values import my_decoder
-from sqlqueries import get_table
+from sqlqueries_2 import get_table
 
 # Differential expression page, used to find diffentially expressed genes via z-score
 diff_plotpage_blueprint = Blueprint("diffpage",
@@ -83,10 +84,9 @@ def diffquery():
     csv_file = open(f"{config.SCRIPT_LOC}/static/tmp/{filename}", "w")
     master_file_dict = data["master_file_dict"]
     master_transcript_dict = {}
-    organism = get_table(organism)
-    owner = organism.loc[(organism.organism_name == organism) &
-                         (organism.transcriptome_list == transcriptome),
-                         "owner"].values[0]
+    owner = get_table(organism).filter(
+        (pl.col("organism_name") == organism)
+        & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
 
     if owner:
         sql_file = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
@@ -186,7 +186,7 @@ def diffquery():
     if plottype == "deseq2":
         minreads = 0
         mapped_reads_norm = False
-    if plottype == "anota2seq":
+    elif plottype == "anota2seq":
         anota2seq = True
         minreads = 0
         mapped_reads_norm = False

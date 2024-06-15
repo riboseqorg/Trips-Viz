@@ -1,12 +1,10 @@
 from typing import Dict, Tuple, Union
 from time import sleep
 import collections
-from bokeh.palettes import all_palettes
 from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
 import polars as pl
 import pandas as pd
-from pandas.core.frame import DataFrame
 
 
 # Merge two dictionaries
@@ -26,10 +24,7 @@ def merge_dicts(
 
 
 # Create dictionary of read counts at each position in a transcript
-def get_reads(
-    data,
-) -> Union[None, Tuple[Dict[int, int], Dict[int, int]], Tuple[str, Union[
-        str, Dict[str, Dict[int, int]]]], Tuple[DataFrame, DataFrame]]:
+def get_reads(data, ) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
 
     Parameters: 
@@ -159,144 +154,3 @@ def get_reads(
         mismatch_dict = mismatch_dict.filter(
             pl.sum_horizontal('A', 'T', 'G', 'C') > 0)
     return master_dict, mismatch_dict
-
-
-# Create dictionary of counts at each position, averged by readlength
-def get_readlength_breakdown(
-        data,
-        # offset_dict,
-        # subcodon, noisered, primetype, preprocess,
-        coverage: int,  # organism,
-) -> Tuple[Dict[int, str], Dict[str, Dict[int, int]]]:
-    """
-
-    Parameters:
-
-    Returns:
-
-    Example:
-    """
-    master_dict = {}
-    color_range = float(data["colorbar_maxread"] - data["colorbar_minread"])
-    color_list = all_palettes["RdYlGn"][10]
-
-    for i in range(0, data["tranlen"] + data["maxread"]):
-        master_dict[i] = {}
-        for x in range(data["minread"], data["maxread"] + 1):
-            master_dict[i][x] = 0
-    # the keys of master readlen dict are readlengths the value is a dictionary
-    # of position:count, there is also a colour key
-    colored_master_dict = {}
-    master_file_dict = {}
-    # first make a master dict consisting of all the read dicts from each filename
-    if data["filetype"] in data["user_files"]:
-        for file_id in data["user_files"][data["filetype"]]:
-            filename = data["user_files"][data["filetype"]][file_id]
-            try:
-                openshelf = SqliteDict(filename)
-                alltrandict = openshelf[data["transcript"]]
-                trandict = alltrandict["unambig"]
-                if data["read_type"] == "ambig":
-                    trandict = merge_dicts(trandict, alltrandict["ambig"])
-                master_file_dict[filename] = trandict
-                openshelf.close()
-            except KeyError:
-                pass
-
-    for filename in master_file_dict:
-        for readlen in set(master_file_dict[filename]) & range_set:
-            if "coverage" in data:
-                for pos in master_file_dict[filename][readlen]:
-                    count = master_file_dict[filename][readlen][pos]
-                    for i in range(pos, pos + (readlen + 1)):
-                        master_dict[i][readlen] += count
-            else:
-                try:
-                    openshelf = SqliteDict(filename)
-                except FileNotFoundError:
-                    continue
-                offsets = openshelf["offsets"]["fiveprime"]["offsets"]
-                offset = offsets[readlen] if readlen in offsets else 15
-                for pos in master_file_dict[filename][readlen]:
-                    count = master_file_dict[filename][readlen][pos]
-                    try:
-                        master_dict[pos + offset][readlen] += count
-                    except KeyError:
-                        pass
-    sorted_master_dict = collections.OrderedDict()
-    for key in sorted(master_dict.keys()):
-        sorted_master_dict[key] = master_dict[key]
-
-    for pos in sorted_master_dict:
-        count = sum(sorted_master_dict[pos].values())
-        tot_readlen = 0.0
-        tot_count = 0.0001
-        for readlen in sorted_master_dict[pos]:
-            tot_count += sorted_master_dict[pos][readlen]
-            tot_readlen += (sorted_master_dict[pos][readlen] * readlen)
-        avg_readlen = int(tot_readlen / tot_count)
-        if avg_readlen > data["colorbar_maxread"]:
-            avg_readlen = data["colorbar_maxread"]
-        # find where this avg readlen lies in the range of min readlen
-        # to max readlen and use that to assign a color
-
-        per = (avg_readlen - data["colorbar_minread"]) / color_range
-        final_per = int(per * 10) if per > 0.9 else 9
-        color = color_list[final_per]
-        if color not in colored_master_dict:
-            colored_master_dict[color] = collections.OrderedDict()
-            for i in range(0, data["tranlen"] + data["max_read"] + 1):
-                colored_master_dict[color][i] = 0
-        if pos not in colored_master_dict[color]:
-            colored_master_dict[color][pos] = 0
-        colored_master_dict[color][pos] += count
-    return color_list, colored_master_dict
-
-
-# Create a dictionary of mismatches at each position
-def get_seq_var(
-    user_files: Dict[str, Dict[str, str]],
-    tranlen: int,
-    #organism,
-    tran: str,
-) -> Union[str, DataFrame]:
-    """
-
-    Parameters:
-    - user_files (Dict[str, Dict[str, str]]): dictionary of user files
-    - tranlen (int): transcript length
-    - tran (str): transcript
-
-    Returns:
-
-    Example:
-    """
-    mismatch_dict = pl.DataFrame({
-        'pos': range(1, tranlen + 1),
-        'A': [0] * tranlen,
-        'T': [0] * tranlen,
-        'G': [0] * tranlen,
-        'C': [0] * tranlen
-    })
-    for filetype in ["riboseq", "rnaseq"]:
-        try:
-            for file_id, filename in user_files[filetype].items():
-                try:
-                    sqlite_db = SqliteDict(filename, autocommit=False)
-                except FileNotFoundError:
-                    return f"File not found {filename}"
-                sqlite_db_seqvar = sqlite_db[tran]["seq"]
-                for pos in sqlite_db_seqvar:
-                    #convert to one based
-                    fixed_pos = pos + 1
-                    for char in sqlite_db_seqvar[pos]:
-                        if char == "N":
-                            continue
-                        mismatch_dict.loc[fixed_pos,
-                                          char] += sqlite_db_seqvar[pos][char]
-
-                sqlite_db.close()
-        except KeyError:
-            pass
-
-    return mismatch_dict
