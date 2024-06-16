@@ -101,10 +101,12 @@
                 {% for _,study_row in studies.iterrows() %}
                     <div class="{{ study_row['study_id'] }}">
                         {% set files = file_type__filtered.loc[file_type__filtered["study_id"] == study_row["study_id"], ["file_id","file_name","file_description"]] %}
-                        {% for _,file_row in files.iterrows() %}
-                            <div class="file">
+                        <div class="file">
+                            {% for _,file_row in files.iterrows() %}
                                 {% if template_dict['list'] %}
-                                    <li name="{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</li>
+                                    {% if file_row['file_id'] not in template_dict['do_not_include'] %}
+                                        <li name="{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</li>
+                                    {% endif %}
                                 {% else %}
                                     <input type="checkbox"
                                            id="file__{{ file_row['file_id'] }}"
@@ -114,8 +116,8 @@
                                         {{ file_row['file_name'] }}
                                     </label>
                                 {% endif %}
-                            </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
                     </div>
                 {% endfor %}
             </div>

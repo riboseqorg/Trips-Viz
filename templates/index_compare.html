@@ -4,157 +4,166 @@
         {% set studies_files = template_dict["files"] %}
         {% set file_types = studies_files["file_type"].unique() %}
     </div>
-    <div class="page-section">
-        <div id="page_heading">
-            <p>
-                <font size="5"><b><u>General Settings</u></b></font>
-            </p>
-        </div>
-    </div>
-    <div class="page-section">
-        <div class="row">
-            <div class="col-4">
-                <input id="ambig_check"
-                       type="checkbox"
-                       name="ambig"
-                       {% if ambig=="T" %} checked {% else %}  {% endif %} />
-            </div>
-            <div class="col-8">
-                <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
+    <form id="form">
+        <div class="page-section">
+            <div id="page_heading">
+                <p>
+                    <font size="5"><b><u>General Settings</u></b></font>
+                </p>
             </div>
         </div>
-        <div class="row">
-            <div class="col-4">
-                <input id="normalize"
-                       type="checkbox"
-                       name="normalize"
-                       {% if normalize=="T" %} checked {% else %}  {% endif %} />
-            </div>
-            <div class="col-8">
-                <label for='normalize' class='padded_label'>Normalize by mapped reads</label>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <input id="comp_ribocov"
-                       type="checkbox"
-                       name="comp_ribocov"
-                       {% if comp_ribocov=="T" %} checked {% else %}  {% endif %} />
-            </div>
-            <div class="col-8">
-                <label for='normalize' class='padded_label'>Ribo-Seq coverage</label>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <b>Gene/Transcript: </b><a class="whatsthis"
-   target="_blank"
-   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_gene">&#9432;</a>
-            </div>
-            <div class="col-8">
-                <input align="center"
-                       id="transcript"
-                       type="text"
-                       name="transcript"
-                       value="{{ template_dict['transcript'] }}" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <b>Min Read: </b><a class="whatsthis"
-   target="_blank"
-   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_minread">&#9432;</a>
-            </div>
-            <div class="col-8">
-                <input type="text" id="minread" name="minread" value="25" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <b>Max Read: </b><a class="whatsthis"
-   target="_blank"
-   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_maxread">&#9432;</a>
-            </div>
-            <div class="col-8">
-                <input type="text" id="maxread" name="maxread" value="150" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <b>Highlight start: </b><a class="whatsthis"
-   target="_blank"
-   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
-            </div>
-            <div class="col-8">
-                <input type="text" id="hili_start" name="hili_start" value="0" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-4">
-                <b>Highlight stop: </b><a class="whatsthis"
-   target="_blank"
-   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
-            </div>
-            <div class="col-8">
-                <input type="text" id="hili_stop" name="hili_stop" value="0" />
-            </div>
-        </div>
-    </div>
-    {% include 'single_transcript_plot__files.html' %}
-    <div id = "dialog-2" title = "Choose a transcript..."></div>
-    <div id="files">
-    </br>
-    <p>
-        <font size="5" align="center"><b><u>Files</u></b>
-        </br>
-    </font>
-</p>
-</div>
-<div id="file_list">
-    <div class="row">
-        {% for color in template_dict['box_colors'] %}
-            <div class="col-6">
-                <div class="file">
-                    <div id="group_{{ loop.counter0 }}_div" class="group_div">
-                        <input class="colorbox"
-                               type="color"
-                               id="group{{ loop.counter0 }}_color"
-                               name="favcolor"
-                               value="{{ color }}" />
-                        <input style="font-weight: bold;
-                                      max-width: 40%;
-                                      align:center"
-                               name="group_{{ loop.counter0 }}_label"
-                               id="group{{ loop.counter0 }}_label"
-                               type="text"
-                               value="Group {{ loop.counter }}" />
-                        <ul class="draggable_filelist"
-                            id="group_{{ loop.counter0 }}_file_list"
-                            style="align:center">
-                        </ul>
-                    </div>
+        <div class="page-section">
+            <div class="row">
+                <div class="col-4">
+                    <input id="ambig_check"
+                           type="checkbox"
+                           name="ambig"
+                           {% if ambig=="T" %} checked {% else %}  {% endif %} />
+                </div>
+                <div class="col-8">
+                    <label for='ambig_check' class='padded_label'>Allow ambiguously mapped reads</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_single_gene&child_acc=child_ambig">&#9432;</a>
                 </div>
             </div>
-        {% endfor %}
+            <div class="row">
+                <div class="col-4">
+                    <input id="normalize"
+                           type="checkbox"
+                           name="normalize"
+                           {% if normalize=="T" %} checked {% else %}  {% endif %} />
+                </div>
+                <div class="col-8">
+                    <label for='normalize' class='padded_label'>Normalize by mapped reads</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <input id="comp_ribocov"
+                           type="checkbox"
+                           name="comp_ribocov"
+                           {% if comp_ribocov=="T" %} checked {% else %}  {% endif %} />
+                </div>
+                <div class="col-8">
+                    <label for='normalize' class='padded_label'>Ribo-Seq coverage</label>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_comparison&child_acc=child_comp_norm">&#9432;</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Gene/Transcript: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_gene">&#9432;</a>
+                </div>
+                <div class="col-8">
+                    <input align="center"
+                           id="transcript"
+                           type="text"
+                           name="transcript"
+                           value="{{ template_dict['transcript'] }}" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Min Read: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_minread">&#9432;</a>
+                </div>
+                <div class="col-8">
+                    <input type="text" id="minread" name="minread" value="25" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Max Read: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_maxread">&#9432;</a>
+                </div>
+                <div class="col-8">
+                    <input type="text" id="maxread" name="maxread" value="150" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight start: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-8">
+                    <input type="text" id="hili_start" name="hili_start" value="0" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <b>Highlight stop: </b><a class="whatsthis"
+   target="_blank"
+   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
+                </div>
+                <div class="col-8">
+                    <input type="text" id="hili_stop" name="hili_stop" value="0" />
+                </div>
+            </div>
+        </div>
+        {% include 'single_transcript_plot__files.html' %}
+        <div id = "dialog-2" title = "Choose a transcript..."></div>
+        <div id="files">
+            <br />
+            <p>
+                <font size="5" align="center"><b><u>Files</u></b>
+                    <br />
+                </font>
+            </p>
+        </div>
+        <div id="file_list">
+            <div class="row">
+                {% for color in template_dict['box_colors'] %}
+                    <div class="col-6">
+                        <div id="group_{{ loop.index0 }}_div" class="group_div">
+                            <input class="colorbox"
+                                   type="color"
+                                   id="group{{ loop.index0 }}_color"
+                                   name="favcolor"
+                                   value="{{ color }}" />
+                            <input style="font-weight: bold;
+                                          max-width: 40%;
+                                          align:center"
+                                   name="group_{{ loop.index0 }}_label"
+                                   id="group{{ loop.index0 }}_label"
+                                   type="text"
+                                   value="Group {{ loop.index }}" />
+                            <div class="draggable_filelist"
+                                 id="group_{{ loop.index0 }}_file_list"
+                                 style="align:center">
+                                <ul class="file ui-sortable2" name="group_{{ loop.index0 }}_file_list">
+                                    {% if 'short' in template_dict %}
+                                        {% set files = file_type__filtered.loc[file_type__filtered["file_id"] == template_dict["group_{{ loop.index0 }}_file_list"], ["file_id","file_name","file_description"]] %}
+                                        {% for _,file_row in files.iterrows() %}
+                                            <li name="{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</li>
+                                        {% endfor %}
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+    {% include 'gwips.html' %}
+    <div id="view_plot">
+        <button class="button centerbutton" type="button" id="comparequery">
+            <b>View Plot</b>
+        </button>
     </div>
-</div>
-{% include 'gwips.html' %}
-<div id="view_plot">
-    <button class="button centerbutton" type="button" id="comparequery">
-        <b>View Plot</b>
-    </button>
-</div>
-{% include "loading.html" %}
-<div id = "study_dialog" title = "Study info"></div>
-<script type="text/javascript"
-        src="{{ url_for('static', filename='js/common.js') }}"></script>
+    {% include "loading.html" %}
+    {% include 'plot.html' %}
+    <div id = "study_dialog" title = "Study info"></div>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock %}
