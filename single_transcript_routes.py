@@ -69,7 +69,7 @@ single_transcript_query_blueprint = Blueprint("query",
                                               template_folder="templates")
 
 
-@single_transcript_query_blueprint.route('/query', methods=['POST', "GET"])
+@single_transcript_query_blueprint.route('/query', methods=['POST'])
 def query():  #TODO: add return type
     """
     jquery route for single transcript plot.

@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, make_response
+from typing import Text
+from flask import Blueprint, render_template, request, make_response, Response
 from flask import current_app as app
 import sqlite3
 import os
 import config
-from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user
+from core_functions import fetch_studies, fetch_files, fetch_study_info, fetch_file_paths, generate_short_code, fetch_user, form_filler
 import riboflask
 from flask_login import current_user
 import logging
@@ -21,7 +22,8 @@ single_transcript_plotpage_genomic_blueprint = Blueprint(
 
 @single_transcript_plotpage_genomic_blueprint.route(
     '/<organism>/<transcriptome>/interactive_plot_genomic/')
-def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
+def interactiveplotpage_genomic(organism: str,
+                                transcriptome: str) -> Response | Text:
     """
     Interactive plot page.
 
@@ -38,9 +40,8 @@ def interactiveplotpage_genomic(organism: str, transcriptome: str) -> str:
     #global user_short_passed
     data = form_filler(organism, transcriptome)
 
-    accepted_studies = fetch_studies(organism, transcriptome)
-    file_id_to_name_dict, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
+    accepted_studies = fetch_studies(data['gwips_info'][0, 'organism_id'])
+    data['files'] = fetch_files(accepted_studies).to_pandas()
 
     if user_files != None:
         user_files = user_files.split(",")

@@ -16,17 +16,6 @@ matplotlib.use("agg")
 
 
 def generate_plot(data, settings) -> str:
-    seq_rules = {
-        "proteomics": {
-            "frame_breakdown": 1
-        },
-        "conservation": {
-            "frame_breakdown": 1
-        },
-        "tcpseq": {
-            "frame_breakdown": 0
-        }
-    }
 
     if ("line" not in data) and ("ribocoverage" in data):
         # TODO: Convert this into notification
@@ -152,12 +141,3 @@ def generate_plot(data, settings) -> str:
 
     print(all_rna_reads, rna_seqvar_dict, "Anmol Kiran You are here")
     return plt.to_json()
-    # self.update_state(state='PROGRESS',meta={'current': 100, 'total': 100,'status': "Fetching Ribo-Seq Reads"})
-    # TODO: Add a variable of RiboSeq
-    # all_subcodon_reads, ribo_seqvar_dict = get_reads(data)
-    # print(all_subcodon_reads, ribo_seqvar_dict)
-
-    # seq_var_dict = fixed_values.merge_dicts(ribo_seqvar_dict, rna_seqvar_dict)
-    # rnamax = all_rna_reads['count'].max()
-    # subcodonmax = all_subcodon_reads['count'].max()
-    # y_max = max(1, rnamax, subcodonmax) * 1.1
