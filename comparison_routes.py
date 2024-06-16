@@ -3,10 +3,12 @@ from flask import Blueprint, render_template, request, jsonify
 from flask import current_app as app
 from sqlitedict import SqliteDict
 import os
+from json import loads
 import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code, form_filler)
+                            fetch_file_paths, generate_short_code, form_filler,
+                            string2other)
 # import riboflask_compare
 from flask_login import current_user
 from fixed_values import my_decoder
@@ -58,10 +60,13 @@ def comparequery() -> str | Tuple:
     - html page
     """
     # global user_short_passed
-    data = request.data.to_dict()
-    if not data["master_file_dict"]:
+    data = loads(list(request.form.to_dict().keys())[0])
+    print(data)
+    data = string2other(data)
+
+    print(data)
+    if not data["groups"]:
         return "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
-    user_short_passed = False
     owner = get_table("organisms").filter(
         (pl.col('organism_name') == data['organism'])
         & (pl.col('transcriptome_list') == data["transcriptome"]))[0, "owner"]
@@ -90,6 +95,18 @@ def comparequery() -> str | Tuple:
             "transcript", "length", "cds_start", "cds_stop", "principle",
             "cdslen", "threeutrlen"
         ]).to_pandas().to_html()
+
+    files = get_table("files").filter(
+        pl.col("file_id").is_in(data['file_ids'])).with_columns(
+            pl.struct('*').map_elements(lambda x: "{}/{}/{}/{}/{}/{}".format(
+                config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'],
+                data['organism'], x['study_name'], x['file_name']) if x[
+                    'owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data[
+                        'study'], x['file_name'])).alias('path'))
+
+    for group in data["groups"]:
+        file_paths = files.filter(pl.col("file_id").is_in(data[group]))['path']
+        pass
 
     for color in data["master_file_dict"]:
         files_ids = data["master_file_dict"][color]["file_ids"]
@@ -162,20 +179,6 @@ def comparequery() -> str | Tuple:
                                 }), 200, {
                                     'Location': ""
                                 }
-                    master_filepath_dict[color]["filepaths"].append(filepath)
-                    master_filepath_dict[color]["file_ids"].append(file_id)
-                    master_filepath_dict[color]["file_names"].append(file_name)
-                    master_filepath_dict[color]["file_descs"].append(result[1])
-                    master_filepath_dict[color]["file_type"] = result[2]
-
-    html_args = data["html_args"]
-    if html_args["user_short"] == "None" or user_short_passed:
-        data["short_code"] = generate_short_code(data, data['organism'],
-                                                 html_args["transcriptome"],
-                                                 "comparison")
-    else:
-        data["short_code"] = html_args["user_short"]
-        user_short_passed = True
 
     if current_user.is_authenticated:
         user_id = get_user_id(current_user.name)
@@ -186,7 +189,3 @@ def comparequery() -> str | Tuple:
 
     data['master_filepath_dict'] = master_filepath_dict
     return
-    # if data['transcript']:
-    # return riboflask_compare.generate_compare_plot(data)
-
-    # return "ERROR! Could not find any transcript corresponding to {tran}"

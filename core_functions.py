@@ -190,11 +190,20 @@ def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
     - None
     '''
+    groups = []
+    all_file_ids = []
     for key, value in dct.items():
         if key in config.VARIABLE_CONVERSION:
             dct[key] = config.VARIABLE_CONVERSION[key](value)
-    return dct
+        if key.endswith("_file_list"):
 
+            file_ids = list(map(int, value))
+            all_file_ids.extend(file_ids)
+            dct[key] = file_ids
+            groups.append(key)
+    dct['groups'] = groups
+    dct['all_file_ids'] = all_file_ids
+    return dct
 
 
 def fetch_study_info(organism_id: int) -> pl.DataFrame:

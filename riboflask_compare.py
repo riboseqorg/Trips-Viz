@@ -7,46 +7,10 @@ import config
 
 def generate_compare_plot(
     data,
-    tran: str,
-    ambig: str,
-    master_filepath_dict: dict,
-    ribocoverage: bool,
-    normalize: bool,
-    short_code: str,
-    comp_uag_col: str,
-    comp_uga_col: str,
-    comp_uaa_col: str,
-    axis_label_size: int,
-    cds_marker_size: int,
-    cds_marker_colour: int,
-    legend_size: int,
 ) -> str | dict:
     """
 
     Parameters:
-    - tran (str): transcript
-    - ambig (str): ambiguity
-    - master_filepath_dict (dict): master filepath dictionary
-    - ribocoverage (bool): ribocoverage
-    - organism (str): organism
-    - normalize (bool): normalize
-    - short_code (str): short code
-    - background_col (str): background color
-    - hili_start (str): hili start
-    - hili_stop (str): hili stop
-    - comp_uag_col (str): comp uag color
-    - comp_uga_col (str): comp uga color
-    - comp_uaa_col (str): comp uaa color
-    - title_size (int): title size
-    - subheading_size (int): subheading size
-    - axis_label_size (int): axis label size
-    - marker_size (int): marker size
-    - cds_marker_size (int): cds marker size
-    - cds_marker_colour (int): cds marker colour
-    - legend_size (int): legend size
-    - transcriptome (str): transcriptome
-
-    Returns:
 
     Example:
     """
@@ -54,7 +18,7 @@ def generate_compare_plot(
     line_collections = []
     all_stops = ["TAG", "TAA", "TGA"]
     returnstr = "Position,"
-    y_max = 0 if normalize else 50
+    y_max = 0 if data['normalize'] else 50
     owner = get_table("organisms").filter(
         (pl.col("organism_name") == data['organism'])
         & (pl.col("transcriptome_list") == data['transcriptome']))[0, 'owner']
@@ -94,7 +58,7 @@ def generate_compare_plot(
                 "TAA": [0]
             }
         }
-    for start in all_starts:
+    for start in all_starts: zy
         rem = start % 3
         rem = rem if rem else 3
         start_stop_dict[rem]["starts"].append(start - 1)
@@ -104,34 +68,34 @@ def generate_compare_plot(
             rem = rem if rem else 3
             start_stop_dict[rem]["stops"][stop].append(stop_pos - 1)
 
-    label = 'Read count' if 'normalised' not in data else 'Normalized read count'
+    label = 'Read count' if 'normalize' not in data else 'Normalized read count'
 
     # if normalize is true work out the factors for each colour
-    if normalize:
+    if data['normalize']:
         all_mapped_reads = []
-        for color in master_filepath_dict:
+        for color in data['master_filepath_dict']:
             all_mapped_reads.append(
-                master_filepath_dict[color]["mapped_reads"]
+                data['master_filepath_dict'][color]["mapped_reads"]
             )  # NOTE: if 'mapped reads would be fixed it would faster'
-        for color in master_filepath_dict:
-            master_filepath_dict[color]["factor"] = (
+        for color in data['master_filepath_dict']:
+            data['master_filepath_dict'][color]["factor"] = (
                 min(all_mapped_reads) * 1. /
-                master_filepath_dict[color]["mapped_reads"])
+                data['master_filepath_dict'][color]["mapped_reads"])
 
     # So items can be plotted alphabetically
     unsorted_list = []
-    for color in master_filepath_dict:
+    for color in data['master_filepath_dict']:
         input_list = [
-            color, master_filepath_dict[color]["file_names"],
-            master_filepath_dict[color]["file_descs"],
-            master_filepath_dict[color]["file_ids"],
-            master_filepath_dict[color]["filepaths"],
-            master_filepath_dict[color]["file_type"],
-            master_filepath_dict[color]["minread"],
-            master_filepath_dict[color]["maxread"]
+            color, data['master_filepath_dict'][color]["file_names"],
+            data['master_filepath_dict'][color]["file_descs"],
+            data['master_filepath_dict'][color]["file_ids"],
+            data['master_filepath_dict'][color]["filepaths"],
+            data['master_filepath_dict'][color]["file_type"],
+            data['master_filepath_dict'][color]["minread"],
+            data['master_filepath_dict'][color]["maxread"]
         ]
-        if "factor" in master_filepath_dict[color]:
-            input_list.append(master_filepath_dict[color]["factor"])
+        if "factor" in data['master_filepath_dict'][color]:
+            input_list.append(data['master_filepath_dict'][color]["factor"])
         unsorted_list.append(input_list)
 
     sorted_list = sorted(unsorted_list, key=lambda x: x[1][0])
@@ -143,16 +107,16 @@ def generate_compare_plot(
             file_paths["riboseq"][item[3][i]] = item[4][i]
         file_names = item[1][0]
         if item[5] == "riboseq":
-            filename_reads, _ = get_reads(ambig, item[6], item[7], tran,
-                                          file_paths, tranlen, ribocoverage,
+            filename_reads, _ = get_reads(data['ambigious'], item[6], item[7], data['transcript'],
+                                          file_paths, tranlen, data['ribocoverage'],
                                           data['organism'], False, False,
                                           "fiveprime", "riboseq", 1)
         else:
-            filename_reads, _ = get_reads(ambig, item[6], item[7], tran,
+            filename_reads, _ = get_reads(data['ambigious'], item[6], item[7], data['transcript'],
                                           file_paths, tranlen, True,
                                           data['organism'], False, False,
                                           "fiveprime", "riboseq", 1)
-        if not normalize:
+        if not data['normalize']:
             try:
                 max_val = max(filename_reads.values()) * 1.1
                 if max_val > y_max:
@@ -214,48 +178,26 @@ def generate_compare_plot(
     # draw cds end
 
     cds_markers = ax_main.plot((cds_start, cds_start), (0, y_max * 0.97),
-                               color=cds_marker_colour,
+                               color=data['cds_marker_colour'],
                                linestyle='solid',
-                               linewidth=cds_marker_size)
+                               linewidth=data['cds_marker_size'])
     cds_markers += ax_main.plot((cds_stop + 1, cds_stop + 1),
                                 (0, y_max * 0.97),
-                                color=cds_marker_colour,
+                                color=data['cds_marker_colour'],
                                 linestyle='solid',
-                                linewidth=cds_marker_size)
+                                linewidth=data['cds_marker_size'])
 
     for axis, frame in ((ax_f1, 1), (ax_f2, 2), (ax_f6, 3)):
         color = color_dict['frames'][frame - 1]
         axis.set_xlim(0, tranlen)
         starts = [(item, 1) for item in start_stop_dict[frame]['starts']]
-        axis.broken_barh(starts, (0.5, 1),
-                         color='white',
-                         zorder=5,
-                         linewidth=2)
-        axis.broken_barh(uag_stops, (0, 1),
-                         color=comp_uag_col,
-                         zorder=2,
-                         linewidth=2)
-        axis.broken_barh(uaa_stops, (0, 1),
-                         color=comp_uaa_col,
-                         zorder=2,
-                         linewidth=2)
-        axis.broken_barh(uga_stops, (0, 1),
-                         color=comp_uga_col,
-                         zorder=2,
-                         linewidth=2)
-        axis.set_ylabel('{}'.format(frame),
-                        rotation='horizontal',
-                        labelpad=10,
-                        verticalalignment='center')
-    title_str = '{} ({})'.format(gene, short_code)
+    title_str = '{} ({})'.format(gene, data['short'])
 
-    hili = ax_main.fill_between([data['hili_start'], data['hili_stop']], [y_max, y_max],
-                                zorder=0,
-                                alpha=0.75,
-                                color="#fffbaf")
+                                alpha = 0.75,
+                                color = "#fffbaf")
     line_collections.append(hili)
 
-    leg_offset = (legend_size - 17) * 5
+    leg_offset = (data["legend_size"] - 17) * 5
     if leg_offset < 0:
         leg_offset = 0
     leg_offset += 230
