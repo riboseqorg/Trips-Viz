@@ -12,6 +12,11 @@
                 </p>
             </div>
         </div>
+        <div class='hidden'>
+            <!--Hidden Parameters-->
+            {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+            <input name="override" value="{{ override }}" />
+        </div>
         <div class="page-section">
             <div class="row">
                 <div class="col-4">
