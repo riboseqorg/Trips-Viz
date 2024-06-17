@@ -3,7 +3,7 @@ import os
 import time
 from datetime import date
 import polars as pl
-from json import loads
+from json import loads, dumps
 import sys
 import sqlite3
 from sqlqueries_2 import sqlquery, get_user_id, get_table, update_table
@@ -905,10 +905,15 @@ def homepage2() -> str:
             'organism_name', 'transcriptome_list').unique().to_pandas()
     organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
         list).reset_index()
+    json_dict = {}
+    for _, row in organisms.iterrows():
+        json_dict[row.organism_name] = row.transcriptome_list
 
     # Create species list
 
-    return render_template('landing2.html', organisms=organisms, message="")
+    return render_template('landing2.html',
+                           organisms=dumps(json_dict),
+                           message="")
 
 
 # Updates the settings for a specific user

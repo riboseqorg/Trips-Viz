@@ -1,9 +1,4 @@
 {% extends "layout.html" %}
-{% block header_static %}
-    <!--swiper js-->
-    <link href="https://cdn.jsdelivr.net/npm/swiper@10.1.0/swiper-bundle.min.css"
-          rel="stylesheet">
-{% endblock %}
 {% block content %}
     {% if message %}
         <div style="background-color:#85beff;
@@ -15,129 +10,64 @@
     {% endif %}
     <div id="about">
         <div class="page-section">
-            <img align="center" width="5%" alt="Trips-viz" src="/static/trips.svg">
-        </img>
-        is a transcriptome browser designed to visualize Ribosome profiling and RNA-seq data at the level of a single gene/transcript isoform as opposed to at <a target="_blank" href="http://gwips.ucc.ie">the genome level</a>.
-        Trips-viz also provides you the ability to vizualize data from a gene under different conditions, get meta-information at an individual dataset level such as read length distribution or triplet periodicity, and provides the ability
-        to find differentially expressed or translated genes. For more information on any of these plots and general information on Trips-viz you can view the <a href="/help">help pages</a>, or see this brief
-        <a href='/help/?parent_acc=parent_walkthrough'>walkthrough</a> of some of the main features. To see the latest updates on Trips-Viz or to get information on the number of
-        organisms and studies currently provided in Trips-Viz, you can view the <a href="/stats">statistics and updates page</a>. To get started click on an organism below.Trips-Viz is free and open to all users with no login requirement
-        and is licensed under the <a href='/license.txt'>MIT License</a>.
-    </div>
-</div>
-{% set plots = {
-    "Single transcript plot": "single_transcript_plot",
-    "Single transcript comparison plot": "comparison",
-    "Meta-Information": "metainfo_plot",
-    "Differential plot": "differential",
-    "Transcriptome info": "traninfo_plot",
-    "Translated ORF detection": "orf_translation",
-    "PausePred": "pause_detection"
-} %}
-{% for organism in organisms %}
-    {% if loop.index == 1 %}
-        <div class="row d-flex justify-content-center">
-        {% elif loop.index % 5  == 0 %}
-            <!--TODO:Fix this-->
-        </div>
-        <div class="row d-flex justify-content-center">{% elif loop.last %}</div>
-    {% endif %}
-{% endfor %}
-<!--NOTE: Slider-->
-<div class="slider-container swiper">
-    <div class="slider-content">
-        <div class="card-wrapper swiper-wrapper">
-            {% for _, row in organisms.iterrows() %}
-                <button class="species card swiper-slide"
-                        type="button"
-                        style="width: 175px;
-                               height: 175px">
-                    <img src="/static/images/species/{{ row.organism_name }}.png"
-                         class="card-img-bottom"
-                         height="175px"
-                         width="175px">
-                    <div class="card-body card-img-overlay text-white">
-                        <p class="card-text">
-                            <small>{{ row.organism_name }}</small>
-                            {% for assembly in row.transcriptome_list %}{{ assembly }}{% endfor %}
-                        </p>
-                    </div>
-                </button>
-            {% endfor %}
+            <img align="center" width="5%" alt="Trips-viz" src="/static/trips.svg" />
+            is a transcriptome browser designed to visualize Ribosome profiling and RNA-seq data at the level of a single gene/transcript isoform as opposed to at <a target="_blank" href="http://gwips.ucc.ie">the genome level</a>.
+            Trips-viz also provides you the ability to vizualize data from a gene under different conditions, get meta-information at an individual dataset level such as read length distribution or triplet periodicity, and provides the ability
+            to find differentially expressed or translated genes. For more information on any of these plots and general information on Trips-viz you can view the <a href="/help">help pages</a>, or see this brief
+            <a href='/help/?parent_acc=parent_walkthrough'>walkthrough</a> of some of the main features. To see the latest updates on Trips-Viz or to get information on the number of
+            organisms and studies currently provided in Trips-Viz, you can view the <a href="/stats">statistics and updates page</a>. To get started click on an organism below.Trips-Viz is free and open to all users with no login requirement
+            and is licensed under the <a href='/license.txt'>MIT License</a>.
         </div>
     </div>
-</div>
-<!--Slider End-->
-<div class="row d-flex justify-content-center">
-    {% for _, row in organisms.iterrows() %}
-        <div class="col-lg-2 col-md-6">
-            <button class="species card" type="button" style="width: 175px;height: 175px">
-                <img src="/static/images/species/{{ row.organism_name }}.png"
-                     class="card-img-bottom"
-                     height="175px"
-                     width="175px">
-                <div class="card-body card-img-overlay text-white">
-                    <p class="card-text">
-                        <small>{{ row.organism_name }}</small>
-                        {% for assembly in row.transcriptome_list %}
-                            <div class="dropdown">
-                                <button class="btn btn-primary dropdown-toggle"
-                                        type="button"
-                                        id="dropdownMenuButton"
-                                        data-mdb-toggle="dropdown"
-                                        aria-expanded="false">{{ assembly }}</button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    {{ plots }}
-                                    {% for key, value in plots.items() %}
-                                        <li>
-                                            <a class="dropdown-item" href="#">{{ key }}</a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <a>{{ assembly }}</a>
-                        {% endfor %}
-                    </p>
-                </div>
-            </button>
-        </div>
-    {% endfor %}
-</div>
-{% for _, row in organisms.iterrows() %}
-    {% for assembly in row.transcriptome_list %}
-        {% for key, value in plots.items() %}
-            <a class="dropdown-item"
-               href="/{{ row.organism_name }}/{{ assembly }}/{{ value }}/">{{ row.organism_name }} {{ assembly }} {{ key }}</a>
-        {% endfor %}
-    {% endfor %}
-{% endfor %}
-<p>
-    Trips-Viz is supported by Science Foundation Ireland and is a <a href="https://riboseq.org/">RiboSeq.org</a> and Elixir Resource.
-    <img src="/static/SFI_logo.jpg" alt="SFI logo" height=100>
-    <img src="/static/elixir-logo.png" height=100>
-</p>
-</body>
-</html>
+    {% set plots = {
+        "Single transcript plot": "single_transcript_plot",
+        "Single transcript comparison plot": "comparison",
+        "Meta-Information": "metainfo_plot",
+        "Differential plot": "differential",
+        "Transcriptome info": "traninfo_plot",
+        "Translated ORF detection": "orf_translation",
+        "PausePred": "pause_detection"
+    } %}
+    <p>
+        Trips-Viz is supported by Science Foundation Ireland and is a <a href="https://riboseq.org/">RiboSeq.org</a> and Elixir Resource.
+        <img src="/static/SFI_logo.jpg" alt="SFI logo" height=100>
+        <img src="/static/elixir-logo.png" height=100>
+    </p>
+    <select id="organism"></select>
+    <select id="transcriptome"></select>
+    <select id="plot">
+        {% for key, val in plots.items() %}<option value="{{ val }}">{{ key }}</option>{% endfor %}
+    </select>
+    <a href="" type="button" id="button" class="button">Submit</a>
 {% endblock %}
 {% block footer_static %}
     <!--Swiper js-->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10.1.0/swiper-bundle.min.js"></script>
     <script>
-			var swiper = new Swiper(".slider-content", {
-				slidesPerView: 3,
-				spaceBetween: 30,
-		slidePerGroup:5,
-		loop:true,
-		pagination: {
-			el: ".swiper-pagination",
-			clickable: true,
-		},
-		navigation: {
-			nextEl: ".swiper-button-next",
-			prevEl: ".swiper-button-prev",
-		},
-				
-			});
+	const json_json = {{organisms|safe}};
+	let first =1;
+	for (const [key, values] of Object.entries(json_json)) {
+		$("#organism").append($("<option></option>").attr("value", key).text(key));
+
+		if (first == 1) {
+			first = 0;
+			for (const value of values) {
+				$("#transcriptome").append($("<option></option>").attr("value", value).text(value));
+				console.log(`${key}: ${value}:${first}`); 
+			}
+		}
+	}
+	$("#select1").change(function() {
+		$("#select2").empty();
+		for (const value of json_json[this.value]) {
+			$("#select2").append($("<option></option>").attr("value", value).text(value));
+		}
+
+	});
+	$('#button').click(function() {
+		$("#button").attr("href", "/" + $("#organism").val() + "/" + $("#transcriptome").val() + "/"+ $("#plot").val());
+
 		
+	})
+
     </script>
 {% endblock %}
