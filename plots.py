@@ -7,11 +7,12 @@ from altair.vegalite.v5.api import Chart
 class VegaPlot:
     """Plotting class for VegaLite."""
 
-    def __init__(self, table: pl.DataFrame):
+    def __init__(self, table: pl.DataFrame, colors: alt.Scale):
         # , color_col: str,
         # params: Dict[str, Any]) -> None:
         self.table = table
         self.chart = alt.Chart(self.table)
+        self.colors = colors
 
         # self.color = alt.condition(alt.selection,
         # alt.Color(f'{color_col}:N', legend=None),
@@ -24,7 +25,7 @@ class VegaPlot:
         # Predefides
         self.size = 12
 
-    def _plot(self, x_col: str, y_col: str, labels: str = False) -> Chart:
+    def _plot(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""
         return self.chart.encode(
             x=alt.X(
@@ -34,8 +35,8 @@ class VegaPlot:
                 # scale=alt.Scale(domain=[0, 500])
             ),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
-            color="frame:N",
-        ).interactive(bind_y=False).properties(width=800, height=300)
+            color=alt.Color('frame:N', scale=self.colors)).interactive(
+                bind_y=False).properties(width=800, height=300)
 
     def line(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""

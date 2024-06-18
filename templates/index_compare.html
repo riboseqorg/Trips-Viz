@@ -69,9 +69,10 @@
                 <div class="col-8">
                     <input align="center"
                            id="transcript"
+                           onKeyup="this.value = this.value.toUpperCase()"
                            type="text"
                            name="transcript"
-                           value="{{ template_dict['transcript'] }}" />
+                           value="{{ template_dict['transcript'].upper() }}" />
                 </div>
             </div>
             <div class="row">
@@ -133,21 +134,21 @@
                             <input class="colorbox"
                                    type="color"
                                    id="group{{ loop.index0 }}_color"
-                                   name="favcolor"
+                                   name="group{{ loop.index0 }}_color"
                                    value="{{ color }}" />
                             <input style="font-weight: bold;
                                           max-width: 40%;
                                           align:center"
-                                   name="group_{{ loop.index0 }}_label"
+                                   name="group{{ loop.index0 }}_label"
                                    id="group{{ loop.index0 }}_label"
                                    type="text"
                                    value="Group {{ loop.index }}" />
                             <div class="draggable_filelist"
                                  id="group_{{ loop.index0 }}_file_list"
                                  style="align:center">
-                                <ul class="file ui-sortable2" name="group_{{ loop.index0 }}_file_list">
+                                <ul class="file ui-sortable2" name="group{{ loop.index0 }}_file_list">
                                     {% if 'short' in template_dict %}
-                                        {% set files = file_type__filtered.loc[file_type__filtered["file_id"] == template_dict["group_{{ loop.index0 }}_file_list"], ["file_id","file_name","file_description"]] %}
+                                        {% set files = file_type__filtered.loc[file_type__filtered["file_id"] == template_dict["group{{ loop.index0 }}_file_list"], ["file_id","file_name","file_description"]] %}
                                         {% for _,file_row in files.iterrows() %}
                                             <li name="{{ file_row['file_id'] }}">{{ file_row['file_name'] }}</li>
                                         {% endfor %}

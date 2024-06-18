@@ -1,5 +1,6 @@
 from typing import Tuple
 from plots import VegaPlot
+import altair as alt
 from flask import Blueprint, render_template, request, jsonify
 from flask import current_app as app
 from sqlitedict import SqliteDict
@@ -145,17 +146,24 @@ def comparequery() -> str | Tuple:
 
     files = fetch_file_paths(data)
     plots_list = []
+    labels = []
+    colors = []
 
     for group in data["groups"]:
         file_paths = files.filter(pl.col("file_id").is_in(data[group]))
         data['file_paths_dict'] = file_paths
-        group_name = group.split("_")[:2] + ['label']
-        print(group_name)
-        group_name = data["_".join(group_name)]
+        group_core = group.split("_")[0]
+        group_label = group_core + '_label'
+        group_color = group_core + '_color'
+        labels.append(data[group_label])
+        colors.append(data[group_color])
+        group_name = data[group_label]
         reads_count = get_reads(data)[0].with_columns(frame=pl.lit(group_name))
+        plots_list.append(reads_count)
+    plots_list = pl.concat(plots_list)
 
-        plt = VegaPlot(reads_count)
-        plots_list.append(plt.line("pos", "count"))
+    # plt = VegaPlot(reads_count)
+    # plots_list.append(plt.line("pos", "count"))
 
     if current_user.is_authenticated:
         user_id = get_user_id(current_user.name)
@@ -164,7 +172,9 @@ def comparequery() -> str | Tuple:
     else:
         data["user_settings"] = config.DEFAULT_USER_SETTINGS.copy()
 
-    plot_json = plots_list[0]
-    for plot in plots_list[1:]:
-        plot_json = plot_json + plot
-    return plot_json.to_json()
+    # plot_json = plots_list[0]
+
+    colors = alt.Scale(domain=labels, range=colors)
+    # for plot in plots_list[1:]:
+    # plot_json = plot_json + plot
+    return VegaPlot(plots_list, colors).line("pos", "count").to_json()
