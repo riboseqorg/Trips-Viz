@@ -58,7 +58,7 @@ def generate_compare_plot(
                 "TAA": [0]
             }
         }
-    for start in all_starts: zy
+    for start in all_starts: 
         rem = start % 3
         rem = rem if rem else 3
         start_stop_dict[rem]["starts"].append(start - 1)

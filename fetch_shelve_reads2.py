@@ -24,7 +24,7 @@ def merge_dicts(
 
 
 # Create dictionary of read counts at each position in a transcript
-def get_reads(data, ) -> Tuple[pl.DataFrame, pl.DataFrame]:
+def get_reads(data ) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
 
     Parameters: 

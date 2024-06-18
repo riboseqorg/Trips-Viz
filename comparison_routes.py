@@ -1,9 +1,11 @@
 from typing import Tuple
+from plots import VegaPlot
 from flask import Blueprint, render_template, request, jsonify
 from flask import current_app as app
 from sqlitedict import SqliteDict
 import os
 from json import loads
+from fetch_shelve_reads2 import get_reads
 import polars as pl
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
@@ -44,6 +46,47 @@ def comparisonpage(organism: str, transcriptome: str) -> str:
     return render_template('index_compare.html', template_dict=data)
 
 
+def anmol(filepath_list, normalize):
+    total_reads = 0
+    for filepath in filepath_list:
+        try:
+            sqlite_db = SqliteDict(f"{filepath}",
+                                   autocommit=False,
+                                   decode=my_decoder)
+        except FileNotFoundError:
+            return_str = "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
+            if app.debug:
+                return return_str, "NO_CELERY", {'Location': None}
+            else:
+                return jsonify({
+                    'current': 100,
+                    'total': 100,
+                    'status': 'return_str',
+                    'result': return_str
+                }), 200, {
+                    'Location': ""
+                }
+    if "noncoding_counts" in sqlite_db and "coding_counts" in sqlite_db:
+        total_reads += sqlite_db["noncoding_counts"] + sqlite_db[
+            "coding_counts"]
+    else:
+        if normalize:
+            return_str = "One or more selected files is missing values for 'coding_counts' and 'non_coding_counts' so cannot normalize with these files, please report this to tripsvizsite@gmail.com or via the contact page."
+            if app.debug:
+                return return_str, "NO_CELERY", {'Location': None}
+            else:
+                return jsonify({
+                    'current': 100,
+                    'total': 100,
+                    'status': 'return_str',
+                    'result': return_str
+                }), 200, {
+                    'Location': ""
+                }
+
+    pass
+
+
 # Creates/serves the comparison plots
 comparisonquery_blueprint = Blueprint("comparequery",
                                       __name__,
@@ -63,8 +106,10 @@ def comparequery() -> str | Tuple:
     data = loads(list(request.form.to_dict().keys())[0])
     print(data)
     data = string2other(data)
-
+    data['primetype'] = "fiveprime"  # NOTE: This is default for here
+    data["readscore"] = 1  # NOTE: This is default for here
     print(data)
+
     if not data["groups"]:
         return "Error: No files in the File list box. To add files to the file list box click on a study in the studies section above. This will populate the Ribo-seq and RNA-Seq sections with a list of files. Click on one of the files and then press the  Add button in the studies section. This will add the file to the File list box. Selecting another file and clicking Add again will add the new file to the same group in the File list. Alternatively to add a new group simply change the selected colour (by clicking on the coloured box in the studies section) and then click the Add file button."
     owner = get_table("organisms").filter(
@@ -80,10 +125,12 @@ def comparequery() -> str | Tuple:
     else:
         transhelve = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data['organism'], data['transcriptome'])
-    transcripts = sqlquery(transhelve, "transcripts").filter(
-        (pl.col('transcript') == data['transcriptome'])
-        | (pl.col('gene') == data['transcriptome'])).unique(
-            subset=['transcript'])
+    transcripts = sqlquery(
+        transhelve,
+        "transcripts").filter((pl.col('transcript') == data['transcript'])
+                              | (pl.col('gene') == data['transcript'])).unique(
+                                  subset=['transcript'])
+    print(transcripts, 'yyyy')
     if transcripts.is_empty():
         return f"ERROR! Could not find any transcript corresponding to {data['transcript']}"
     if transcripts.shape[0] > 1:
@@ -96,89 +143,19 @@ def comparequery() -> str | Tuple:
             "cdslen", "threeutrlen"
         ]).to_pandas().to_html()
 
-    files = get_table("files").filter(
-        pl.col("file_id").is_in(data['file_ids'])).with_columns(
-            pl.struct('*').map_elements(lambda x: "{}/{}/{}/{}/{}/{}".format(
-                config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'],
-                data['organism'], x['study_name'], x['file_name']) if x[
-                    'owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data[
-                        'study'], x['file_name'])).alias('path'))
+    files = fetch_file_paths(data)
+    plots_list = []
 
     for group in data["groups"]:
-        file_paths = files.filter(pl.col("file_id").is_in(data[group]))['path']
-        pass
+        file_paths = files.filter(pl.col("file_id").is_in(data[group]))
+        data['file_paths_dict'] = file_paths
+        group_name = group.split("_")[:2] + ['label']
+        print(group_name)
+        group_name = data["_".join(group_name)]
+        reads_count = get_reads(data)[0].with_columns(frame=pl.lit(group_name))
 
-    for color in data["master_file_dict"]:
-        files_ids = data["master_file_dict"][color]["file_ids"]
-        files_infos = get_table("files").filter(
-            pl.col("file_id").is_in(files_ids)).unique(subset=["file_id"])
-        file_paths = fetch_file_paths(data)
-        # TODO: Continue here
-
-    master_filepath_dict = {}
-
-    # This section is purely to sort by label alphabetically
-    for color in master_file_dict:
-        master_filepath_dict[color] = {
-            "filepaths": [],
-            "file_ids": [],
-            "file_names": [],
-            "file_descs": [],
-            "mapped_reads": 0,
-            "minread": minread,
-            "maxread": maxread
-        }
-
-        for file_id in master_file_dict[color]["file_ids"]:
-            trips_cursor.execute(
-                "SELECT file_name,file_description,file_type from files WHERE file_id = {};"
-                .format(file_id))
-            result = (trips_cursor.fetchone())
-            file_name = master_file_dict[color]["label"]
-            file_paths = fetch_file_paths([file_id], data['organism'])
-
-            for filetype in file_paths:
-                for file_id in file_paths[filetype]:
-                    filepath = file_paths[filetype][file_id]
-                    if os.path.isfile(filepath):
-                        sqlite_db = SqliteDict(f"{filepath}",
-                                               autocommit=False,
-                                               decode=my_decoder)
-                    else:
-                        return_str = "File not found, please report this to tripsvizsite@gmail.com or via the contact page."
-                        if app.debug:
-                            return return_str, "NO_CELERY", {'Location': None}
-                        else:
-                            return jsonify({
-                                'current': 100,
-                                'total': 100,
-                                'status': 'return_str',
-                                'result': return_str
-                            }), 200, {
-                                'Location': ""
-                            }
-
-                    if "noncoding_counts" in sqlite_db and "coding_counts" in sqlite_db:
-                        master_filepath_dict[color]["mapped_reads"] += float(
-                            sqlite_db["noncoding_counts"])
-                        master_filepath_dict[color]["mapped_reads"] += float(
-                            sqlite_db["coding_counts"])
-                    else:
-                        if "normalize" in data:
-                            return_str = "One or more selected files is missing values for 'coding_counts' and 'non_coding_counts' so cannot normalize with these files, please report this to tripsvizsite@gmail.com or via the contact page."
-                            if app.debug:
-                                return return_str, "NO_CELERY", {
-                                    'Location': None
-                                }
-                            else:
-                                return jsonify({
-                                    'current': 100,
-                                    'total': 100,
-                                    'status': 'return_str',
-                                    'result': return_str
-                                }), 200, {
-                                    'Location': ""
-                                }
+        plt = VegaPlot(reads_count)
+        plots_list.append(plt.line("pos", "count"))
 
     if current_user.is_authenticated:
         user_id = get_user_id(current_user.name)
@@ -187,5 +164,7 @@ def comparequery() -> str | Tuple:
     else:
         data["user_settings"] = config.DEFAULT_USER_SETTINGS.copy()
 
-    data['master_filepath_dict'] = master_filepath_dict
-    return
+    plot_json = plots_list[0]
+    for plot in plots_list[1:]:
+        plot_json = plot_json + plot
+    return plot_json.to_json()
