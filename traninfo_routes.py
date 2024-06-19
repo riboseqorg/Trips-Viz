@@ -5,7 +5,7 @@ import time
 import config
 import pandas as pd
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            generate_short_code, fetch_user)
+                            form_filler, generate_short_code, fetch_user)
 import traninfo_plots
 from flask_login import current_user
 import json
@@ -34,12 +34,6 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     """
     data = form_filler(organism, transcriptome)
 
-    organism_id, accepted_studies = fetch_studies(organism, transcriptome)
-    _, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
-    organisms = get_table("organisms")
-
-    studyinfo_dict = fetch_study_info(organism_id)
     # holds all values the user could possibly pass in the url
     # (keywords are after request.args.get), anything not passed
     # by user will be a string: "None"

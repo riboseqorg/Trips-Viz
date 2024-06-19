@@ -110,7 +110,6 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
 def metainfo_plotpage(organism: str, transcriptome: str):
     # global user_short_passed
 
-    user = fetch_user()[0]
     data = form_filler(organism, transcriptome)
     accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
     data['files'] = fetch_files(accepted_studies).to_pandas()

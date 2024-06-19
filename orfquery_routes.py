@@ -7,7 +7,7 @@ import time
 import logging
 import config
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code,
+                            fetch_file_paths, generate_short_code, form_filler,
                             build_profile, build_proteomics_profile, nuc_to_aa,
                             fetch_user)
 import json
@@ -34,73 +34,10 @@ translated_orf_blueprint = Blueprint("orf_translationpage",
 @translated_orf_blueprint.route('/<organism>/<transcriptome>/orf_translation/')
 def orf_translationpage(organism: str, transcriptome: str) -> str:
     # ip = request.environ['REMOTE_ADDR']
-    organism = str(organism)
-    user = fetch_user()[0]
-    accepted_studies = fetch_studies(organism, transcriptome)
-    _, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
-    advanced = False
-
-    # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = {
-        "user_short": str(request.args.get('short')),
-        "start_codons": str(request.args.get('start_codons')),
-        "min_start_inc": str(request.args.get('min_start_inc')),
-        "max_start_inc": str(request.args.get('max_start_inc')),
-        "min_stop_dec": str(request.args.get('min_stop_dec')),
-        "max_stop_dec": str(request.args.get('max_stop_dec')),
-        # "min_cds_rat":str(request.args.get('min_cds_rat')),
-        # "max_cds_rat":str(request.args.get('max_cds_rat')),
-        "min_lfd": str(request.args.get('min_lfd')),
-        "max_lfd": str(request.args.get('max_lfd')),
-        "min_hfd": str(request.args.get('min_hfd')),
-        "max_hfd": str(request.args.get('max_hfd')),
-        "min_cds": str(request.args.get('min_cds')),
-        "max_cds": str(request.args.get('max_cds')),
-        "min_len": str(request.args.get('min_len')),
-        "max_len": str(request.args.get('max_len')),
-        "min_avg": str(request.args.get('min_avg')),
-        "max_avg": str(request.args.get('max_avg')),
-        "tran_list": str(request.args.get('tran_list')),
-        "ambig": str(request.args.get('ambig')),
-        "sic": str(request.args.get('sic')),
-        "sdc": str(request.args.get('sdc')),
-        "crc": str(request.args.get('crc')),
-        "lfdc": str(request.args.get('lfdc')),
-        "hfdc": str(request.args.get('hfdc')),
-        "saved_check": str(request.args.get('saved_check')),
-    }
-
-    for var in ['files', 'ribo_studies', 'rna_studies']:
-
-        var_value = request.args.get('files')
-        html_args[f"user_{var}"] = var_value.split(",") if var_value else []
-
-    html_args["start_codons"] = [
-        "#" + str(x).strip(" ") for x in html_args["start_codons"].split(",")
-    ] if html_args["start_codons"] else []
-
-    # If ever need to use other seq types than these modify fetch_files to return a proper list
-    seq_types = ["riboseq", "proteomics"]
-    # If seq type not riboseq remove it from accepted files as orf translation is only appicable to riboseq
-    del_types = []
-    for seq_type in accepted_files:
-        if seq_type not in seq_types:
-            del_types.append(seq_type)
-    for seq_type in del_types:
-        del accepted_files[seq_type]
-    studyinfo_dict = fetch_study_info(organism)
-    return render_template('orf_translation.html',
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           user=user,
-                           organism=organism,
-                           default_tran="",
-                           transcriptome=transcriptome,
-                           advanced=advanced,
-                           seq_types=seq_types,
-                           studyinfo_dict=studyinfo_dict,
-                           html_args=html_args)
+    data = form_filler(organism, transcriptome)
+    accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
+    data["files"] = fetch_files(accepted_studies).to_pandas()
+    return render_template('orf_translation.html', template_dict=data)
 
 
 def tran_to_genome(
