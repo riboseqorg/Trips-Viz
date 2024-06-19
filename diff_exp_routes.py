@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
 import os
 import polars as pl
+from json import loads
 import time
 import numpy as np
 from bisect import bisect_left
@@ -11,8 +12,8 @@ from math import log
 import config
 import subprocess
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code,
-                            calculate_coverages)
+                            fetch_file_paths, generate_short_code, form_filler,
+                            string2other, calculate_coverages)
 import riboflask_diff
 from flask_login import current_user
 import json
@@ -36,12 +37,12 @@ def diffpage(organism: str, transcriptome: str) -> str:
     - html page
     """
     data = form_filler(organism, transcriptome)
+    data['studyinfo_dict'] = fetch_study_info(
+        data["gwips_info"][0, "organism_id"])
 
-    studyinfo_dict = fetch_study_info(organism)
-
-    accepted_studies = fetch_studies(organism, transcriptome)
-    _, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
+    accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
+    data['files'] = fetch_files(accepted_studies).to_pandas()
+    data['list'] = 1
     return render_template('index_diff_draggable.html', template_dict=data)
 
 
@@ -59,61 +60,53 @@ def diffquery():
     Returns:
     - html page
     """
-    # global user_short_passed
-    user_short_passed = True
-    data = json.loads(request.data)
-    plottype = data["plottype"]
-
-    genetype = data["genetype"]
-    region = data["region"]  # can be all, cds,fiveprime, or threeprime
-    if genetype != "coding" and region != "all":
+    data = loads(list(request.form.to_dict().keys())[0])
+    data = string2other(data)
+    if data["genetype"] != "coding" and data["region"] != "all":
         return (
             "If gene type is not set to 'coding' then region has to be set to 'all'"
         )
-    html_args = data["html_args"]
-    organism = data["organism"]
-    transcriptome = data["transcriptome"]
-    gene_list = data["gene_list"]
+    data['gene_list'] = data['gene_list'].split(",")
+    data['transcript_list'] = data['transcript_list'].split(",")
     minreads = float(data["minreads"])
-    transcript_list = ((data["transcript_list"].strip(" ")).replace(
-        " ", ",")).split(",")
     min_cov = float(data["min_cov"]) if (data["min_cov"] != "undefined") else 0
     if min_cov > 1:
         return "Minimum coverage should be a value between 0 and 1"
-    filename = f"{organism}_differential_translation_{time.time()}.csv"
+    filename = f"{data['organism']}_differential_translation_{time.time()}.csv"
     csv_file = open(f"{config.SCRIPT_LOC}/static/tmp/{filename}", "w")
     master_file_dict = data["master_file_dict"]
     master_transcript_dict = {}
-    owner = get_table(organism).filter(
-        (pl.col("organism_name") == organism)
-        & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
+    owner = get_table('organisms').filter(
+        (pl.col("organism_name") == data["organism"])
+        & (pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
 
     if owner:
         sql_file = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                        config.ANNOTATION_DIR,
-                                                       organism, transcriptome)
+                                                       data["organism"],
+                                                       data["transcriptome"])
         if not os.path.isfile(sql_file):
             return "Cannot find annotation file {}.{}.sqlite".format(
-                organism, transcriptome)
+                data["organism"], data["transcriptome"])
     else:
         sql_file = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, organism, transcriptome)
+            config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
     transcriptome = get_table(
-        transcriptome)  # TODO: Need to change the function
+        "transcriptome")  # TODO: Need to change the function
 
-    if transcript_list == ['']:
-        transcriptome = transcriptome[transcriptome.principal == 1]
+    if not data["transcript_list"]:
+        transcriptome = transcriptome.filter(pl.col("principal") == 1)
 
-        if genetype == "coding":
-            transcriptome = transcriptome[transcriptome.tran_type.isin(
-                ['coding', 1])]
+        if data["genetype"] == "coding":
+            transcriptome = transcriptome.filter(
+                pl.col("tran_type").is_in("coding", 1))
         else:
-            transcriptome = transcriptome[transcriptome.tran_type.isin(
-                ['noncoding', 0])]
+            transcriptome = transcriptome.filter(
+                pl.col("tran_type").is_in("noncoding", 0))
     else:
-        transcriptome = transcriptome[transcriptome.transcript.isin(
-            transcript_list)]
-    result = transcriptome  #.to_dict('records')
+        transcriptome = transcriptome.filter(
+            pl.col("transcript").is_in(data["transcript_list"]))
+    result = transcriptome  # .to_dict('records')
     traninfo_dict = {}
     for row in result:
         traninfo_dict[row[0]] = {
@@ -178,10 +171,6 @@ def diffquery():
     anota2seq = False
 
     minzscore = float(data["minzscore"])
-    if "mapped_reads_norm" in data:
-        mapped_reads_norm = True
-    else:
-        mapped_reads_norm = False
     # DESeq2 requires all genes be included
     if plottype == "deseq2":
         minreads = 0
@@ -192,11 +181,6 @@ def diffquery():
         mapped_reads_norm = False
     else:
         anota2seq = False
-
-    if "ambiguous" in data:
-        ambiguous = True
-    else:
-        ambiguous = False
 
     if len(master_file_dict["riboseq1"]["file_ids"]) == 0 and len(
             master_file_dict["riboseq2"]["file_ids"]) == 0 and len(
@@ -311,7 +295,7 @@ def diffquery():
     sample_data = []
     counts = []
 
-    if plottype == "deltate":
+    if data['plottype'] == "deltate":
         deltate_folder = "DELTATE_{}".format(str(time.time()))
         os.mkdir("{}/static/tmp/{}".format(config.SCRIPT_LOC, deltate_folder))
         deltate_sample_filename = "{}/static/tmp/{}/DELTATE_sample_info.csv".format(
@@ -414,7 +398,7 @@ def diffquery():
                         shell=True)
         return deltate_folder
 
-    if plottype == "deseq2":
+    if data['plottype'] == "deseq2":
         if no_groups <= 1:
             return prepare_return_str(
                 "At least two replicates are required when using DESeq2")

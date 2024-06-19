@@ -7,7 +7,7 @@ from altair.vegalite.v5.api import Chart
 class VegaPlot:
     """Plotting class for VegaLite."""
 
-    def __init__(self, table: pl.DataFrame, colors: alt.Scale):
+    def __init__(self, table: pl.DataFrame, colors: alt.Scale | None = None):
         # , color_col: str,
         # params: Dict[str, Any]) -> None:
         self.table = table
@@ -49,6 +49,7 @@ class VegaPlot:
     def vline(self, x_col: str, last=False) -> Chart:
         """Vertical line."""
         # area = self.chart.mark_area()
+        print(self.table)
 
         vline = self.chart.encode(
             x=alt.X(f'{x_col}:Q',
@@ -62,7 +63,8 @@ class VegaPlot:
             # titleAlign="right",
             # titleBaseline="middle",
             # )),
-            color='type:N',
+            color=alt.Color('type:N', scale=alt.Scale(domain=['start','stop'],  ))
+
         )
         return vline.mark_rule(fill='firebrick').properties(width=800,
                                                             height=10)

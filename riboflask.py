@@ -1,4 +1,5 @@
 import config
+import altair as alt
 import os
 import numpy as np
 import polars as pl
@@ -111,6 +112,7 @@ def generate_plot(data, settings) -> str:
         [start_stop_dataframe, start_dataframe, stop_dataframe])
     start_stop = start_stop_dataframe.with_columns(
         pl.col("type").apply(lambda x: x if x == 'start' else 'stop'))
+    print(start_stop, "hello!!")
 
     # TODO: add avarible of rnaseq
 
@@ -118,7 +120,8 @@ def generate_plot(data, settings) -> str:
         data
     )  # TODO: keep rna_Seqvar_dict and ribo_seq_var_dict meltated to compine them
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
-    plt = VegaPlot(all_rna_reads)
+    colors = alt.Scale(domain=[1, 2, 3], range=config.BOX_COLORS[:3])
+    plt = VegaPlot(all_rna_reads, colors)
     if 'line' in data:
         plot = plt.line("pos", "count")
     else:
@@ -136,7 +139,8 @@ def generate_plot(data, settings) -> str:
             'pos': range(len(seq)),
             'y': [0] * len(seq)
         }).with_columns(frame=pl.col('pos') % 3 + 1)
-        start_stop_plot.append(VegaPlot(seq_frames.to_pandas()).seq_plot())
+        start_stop_plot.append(
+            VegaPlot(seq_frames.to_pandas(), colors).seq_plot())
     plt = plt.vact_plot_json([plot] + start_stop_plot)
 
     print(all_rna_reads, rna_seqvar_dict, "Anmol Kiran You are here")

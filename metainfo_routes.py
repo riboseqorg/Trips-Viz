@@ -8,15 +8,9 @@ import fixed_values
 from fixed_values import my_decoder
 import re
 import config
-from core_functions import (
-    fetch_studies,
-    fetch_files,
-    fetch_study_info,
-    fetch_file_paths,
-    generate_short_code,
-    build_profile,
-    fetch_user,
-)
+from core_functions import (fetch_studies, fetch_files, fetch_study_info,
+                            fetch_file_paths, generate_short_code,
+                            build_profile, fetch_user, form_filler)
 from flask_login import current_user
 import subprocess
 import json
@@ -116,37 +110,12 @@ metainfo_plotpage_blueprint = Blueprint("metainfo_plotpage",
 def metainfo_plotpage(organism: str, transcriptome: str):
     # global user_short_passed
 
-    user, _ = fetch_user()
-    accepted_studies = fetch_studies(organism, transcriptome)
-    _, accepted_studies, accepted_files, seq_types = fetch_files(
-        accepted_studies)
+    user = fetch_user()[0]
+    data = form_filler(organism, transcriptome)
+    accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
+    data['files'] = fetch_files(accepted_studies).to_pandas()
 
-    organisms = get_table("organisms")
-
-    studyinfo_dict = fetch_study_info(organism)
-
-    # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = request.data.to_dict()
-    html_args['transcriptome'] = transcriptome
-    for arg in ["files", "ribo_studies", "rna_studies"]:
-        arg_value = request.args.get(arg)
-        if arg_value:
-            html_args[arg] = arg_value.split(",")
-        else:
-            html_args[arg] = []
-    # print"html args", html_args
-
-    return render_template(
-        "metainfo_index.html",
-        transcriptome=transcriptome,
-        organism=organism,
-        user=user,
-        studies_dict=accepted_studies,
-        accepted_files=accepted_files,
-        html_args=html_args,
-        studyinfo_dict=studyinfo_dict,
-        seq_types=seq_types,
-    )
+    return render_template("metainfo_index.html", template_dict=data)
 
 
 # Used to create custom metagene plots on the metainformation plot page
