@@ -1,0 +1,374 @@
+<div class='hidden'>
+    <div class="col-6">
+        <div id="nuc_comp_single">
+            <div class="row">
+                <div class="col-6">
+                    Transcript:
+                    <input type="text"
+                           id="metagene_tranlist"
+                           name="metagene_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+        </div>
+        <div id="nuc_comp_multi">
+            <div class="row">
+                <div class="col-6">
+                    <b>Plot type:</b>
+                    <input type="radio"
+                           class="scatter"
+                           value="scatter"
+                           name="plot_type"
+                           checked="" />
+                    Scatter
+                    <input type="radio" class="box" value="box" name="plot_type" checked="" />
+                    Box plot
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Region:</b>
+                    <input type="radio" class="all" value="all" name="gc_location" checked="" />
+                    All
+                    <input type="radio" class="five" value="five" name="gc_location" checked="" />
+                    5'
+                    <input type="radio" class="cds" value="cds" name="gc_location" checked="" />
+                    CDS
+                    <input class="three"
+                           type="radio"
+                           value="three"
+                           name="gc_location"
+                           unchecked="" />
+                    3'
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Nucleotide:</b>
+                    <input type="radio" class="A" value="A" name="nucleotide" checked="" />
+                    A
+                    <input type="radio" class="T" value="T" name="nucleotide" checked="" />
+                    T
+                    <input type="radio" class="G" value="G" name="nucleotide" checked="" />
+                    G
+                    <input class="C" type="radio" value="C" name="nucleotide" unchecked="" />
+                    C
+                    <input type="radio" class="GC" value="GC" name="nucleotide" checked="" />
+                    GC
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list: </b>
+                    <input type="text"
+                           id="gc_tranlist"
+                           name="gc_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 2: </b>
+                    <input type="text" id="gc_tranlist2" name="gc_tranlist2" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 3: </b>
+                    <input type="text" id="gc_tranlist3" name="gc_tranlist3" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 4: </b>
+                    <input type="text" id="gc_tranlist4" name="gc_tranlist4" value="" />
+                </div>
+            </div>
+        </div>
+        <div id="lengths_plot">
+            <div class="row">
+                <div class="col-6">
+                    <b>Plot type:</b>
+                    <input type="radio"
+                           class="scatter"
+                           value="scatter"
+                           name="plot_type"
+                           checked="" />
+                    Scatter
+                    <input type="radio" class="box" value="box" name="plot_type" checked="" />
+                    Box plot
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Region:</b>
+                    <input type="radio" class="all" value="all" name="gc_location" checked="" />
+                    All
+                    <input type="radio" class="five" value="five" name="gc_location" checked="" />
+                    5'
+                    <input type="radio" class="cds" value="cds" name="gc_location" checked="" />
+                    CDS
+                    <input class="three"
+                           type="radio"
+                           value="three"
+                           name="gc_location"
+                           unchecked="" />
+                    3'
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <input type="checkbox"
+                           class="exons"
+                           value="exons"
+                           name="exons"
+                           display="none"
+                           visibility="hidden"
+                           unchecked="" />
+                    Use exon count instead of length
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list: </b>
+                    <input type="text"
+                           id="gc_tranlist"
+                           name="gc_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 2: </b>
+                    <input type="text" id="gc_tranlist2" name="gc_tranlist2" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 3: </b>
+                    <input type="text" id="gc_tranlist3" name="gc_tranlist3" value="" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list 4: </b>
+                    <input type="text" id="gc_tranlist4" name="gc_tranlist4" value="" />
+                </div>
+            </div>
+        </div>
+        <div id="gene_count"></div>
+        <div id="codon_usage">
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list: </b>
+                    <input type="text"
+                           id="gc_tranlist"
+                           name="gc_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+        </div>
+        <div id="nuc_freq_plot">
+            <div class="row">
+                <div class="col-6">
+                    <input type="radio"
+                           class="tss"
+                           value="tss"
+                           name="nuc_freq_plot_anchor"
+                           checked="" />
+                    TSS
+                    <input type="radio"
+                           class="cds_start"
+                           value="cds_start"
+                           name="nuc_freq_plot_anchor"
+                           checked="" />
+                    CDS start
+                    <input type="radio"
+                           class="cds_stop"
+                           value="cds_stop"
+                           name="nuc_freq_plot_anchor"
+                           checked="" />
+                    CDS stop
+                    <input class="tts"
+                           type="radio"
+                           value="tts"
+                           name="nuc_freq_plot_anchor"
+                           unchecked="" />
+                    TTS
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    Include +/-
+                    <input type="text"
+                           id="nuc_freq_plot_window"
+                           name="nuc_freq_plot_window"
+                           value="10" />
+                    nucleotides.
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list: </b>
+                    <input type="text"
+                           id="nuc_freq_plot_tranlist"
+                           name="nuc_freq_plot_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+        </div>
+        <div id="orfstats">
+            <div id="options">
+                <br />
+                <p>
+                    <font size="5" align="center"><b><u>Options</u></b></font>
+                </p>
+                <table align="center">
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="checkbox"
+                                   class="principal"
+                                   value="principal"
+                                   name="principal"
+                                   checked="" />
+                            Select principal isoforms only
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <b> ORF type: </b>
+                            <input type="radio" class="uorf" value="uorf" name="orftype" checked="" />
+                            uORF
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio" class="ouorf" value="ouorf" name="orftype" unchecked="" />
+                            ouORF
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio"
+                                   class="extension"
+                                   value="extension"
+                                   name="orftype"
+                                   unchecked="" />
+                            N-terminal extension
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio" class="cds" value="cds" name="orftype" unchecked="" />
+                            CDS
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio"
+                                   class="nested"
+                                   value="nested"
+                                   name="orftype"
+                                   unchecked="" />
+                            Nested
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio" class="odorf" value="odorf" name="orftype" unchecked="" />
+                            oDORF
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio" class="dorf" value="dorf" name="orftype" unchecked="" />
+                            dORF
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="radio"
+                                   class="noncoding"
+                                   value="noncoding"
+                                   name="orftype"
+                                   unchecked="" />
+                            noncoding
+                        </div>
+                    </div>
+                </table>
+            </div>
+        </div>
+        <div id="fetch_seq">
+            <div class="row">
+                <div class="col-6">
+                    <b>Region:</b>
+                    <input type="radio" class="all" value="all" name="gc_location" unchecked="" />
+                    All
+                    <input type="radio"
+                           class="five"
+                           value="five"
+                           name="gc_location"
+                           unchecked="" />
+                    5'
+                    <input type="radio"
+                           class="start"
+                           value="start"
+                           name="gc_location"
+                           unchecked="" />
+                    Start codon
+                    <input type="radio" class="cds" value="cds" name="gc_location" checked="" />
+                    CDS
+                    <input type="radio"
+                           class="stop"
+                           value="stop"
+                           name="gc_location"
+                           unchecked="" />
+                    Stop codon
+                    <input type="radio"
+                           class="three"
+                           value="three"
+                           name="gc_location"
+                           unchecked="" />
+                    3'
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <b>Transcript list: </b>
+                    <input type="text"
+                           id="gc_tranlist"
+                           name="gc_tranlist"
+                           value="ENST00000558401" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    Include first
+                    <input type="text" id="include_first_val" name="include_first_val" value="0" />
+                    nucleotides.
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    Include last
+                    <input type="text" id="include_last_val" name="include_last_val" value="0" />
+                    nucleotides.
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    Exclude first
+                    <input type="text" id="exclude_first_val" name="exclude_first_val" value="0" />
+                    nucleotides.
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    Exclude last
+                    <input type="text" id="exclude_last_val" name="exclude_last_val" value="0" />
+                    nucleotides.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
