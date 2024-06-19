@@ -1,0 +1,621 @@
+<div class="hidden">
+    <!--Read length distribution option-->
+    <div id="readlen_dist">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="readlen_ambig"
+                               value="readlen_ambig"
+                               name="readlen_ambig"
+                               checked="">
+                        Allow ambiguous reads
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Transcript list (optional):
+                        <input type="text" id="metagene_tranlist" name="metagene_tranlist" value="">
+                    </td>
+                </tr>
+                <tr>
+                    <td>mRNA region (optional):</td>
+                    <td>
+                        <input type="radio"
+                               class="whole_gene"
+                               value="whole_gene"
+                               name="custom_search_region"
+                               checked="">
+                        Whole Gene
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="five_leader"
+                               value="five_leader"
+                               name="custom_search_region"
+                               unchecked="">
+                        5' Leader (5' UTR)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="cds"
+                               value="cds"
+                               name="custom_search_region"
+                               unchecked="">
+                        CDS
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="three_trailer"
+                               value="three_trailer"
+                               name="custom_search_region"
+                               unchecked="">
+                        3' trailer (3' UTR)
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Nucleotide composition option-->
+    <div id="nuc_comp">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="nuc_comp_five"
+                               value="nuc_comp_five"
+                               name="nuc_comp_direction"
+                               checked="">
+                        5'
+                        <input class="nuc_comp_three"
+                               type="radio"
+                               value="nuc_comp_three"
+                               name="nuc_comp_direction"
+                               unchecked="">
+                        3'
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="nuc_comp_per"
+                               value="nuc_comp_per"
+                               name="nuc_comp_type"
+                               checked="">
+                        Percentage
+                        <input type="radio"
+                               class="nuc_comp_count"
+                               value="nuc_comp_count"
+                               name="nuc_comp_type"
+                               unchecked="">
+                        Absolute						count
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Min readlen: </b>
+                        <input type="text" id="nuc_minreadlen" name="nuc_minreadlen" value="25">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Max readlen: </b>
+                        <input type="text" id="nuc_maxreadlen" name="nuc_maxreadlen" value="35">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="mapped"
+                               value="mapped"
+                               name="nuccomp_reads"
+                               checked="">
+                        All mapped reads
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="unmapped"
+                               value="unmapped"
+                               name="nuccomp_reads"
+                               unchecked="">
+                        All unmapped reads
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="inframe"
+                               value="inframe"
+                               name="nuccomp_reads"
+                               unchecked="">
+                        CDS inframe only
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="offrame"
+                               value="offrame"
+                               name="nuccomp_reads"
+                               unchecked="">
+                        CDS out of frame only
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Triplet periodicity option-->
+    <div id="trip_periodicity">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <b>Min readlen: </b>
+                        <input type="text" id="trip_minreadlen" name="trip_minreadlen" value="25">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Max readlen: </b>
+                        <input type="text" id="trip_maxreadlen" name="trip_maxreadlen" value="35">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Read breakdown option-->
+    <div id="mapped_reads_plot">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="breakdown_per"
+                               value="breakdown_per"
+                               name="breakdown_per"
+                               checked="">
+                        Display as percentage
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Heatmap option-->
+    <div id="heatmap">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <b>Direction </b>
+                        <input type="radio"
+                               class="heatmap_fiveprime"
+                               value="fiveprime"
+                               name="heatmap_direction"
+                               checked="">
+                        5 prime
+                        <input type="radio"
+                               class="heatmap_threeprime"
+                               value="threeprime"
+                               name="heatmap_direction"
+                               unchecked="">
+                        3 prime
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="heatmap_log"
+                               value="heatmap_log_scale"
+                               name="log_scale"
+                               unchecked="">
+                        Log scale
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="heatmap_reverse"
+                               value="reverse_scale"
+                               name="reverse_scale"
+                               unchecked="">
+                        Reverse color scale
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="heatmap_start"
+                               value="metagene_start"
+                               name="heatmap_metagene_type"
+                               checked="">
+                        Heatmap start codon
+                        <input type="radio"
+                               class="heatmap_stop"
+                               value="metagene_stop"
+                               name="heatmap_metagene_type"
+                               unchecked="">
+                        Heatmap stop codon
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Min readlen: </b>
+                        <input type="text"
+                               id="heatmap_minreadlen"
+                               name="heatmap_minreadlen"
+                               value="15">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Max readlen: </b>
+                        <input type="text"
+                               id="heatmap_maxreadlen"
+                               name="heatmap_maxreadlen"
+                               value="100">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Start position: </b>
+                        <input type="text"
+                               id="heatmap_startpos"
+                               name="heatmap_startpos"
+                               value="-150">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>End position: </b>
+                        <input type="text" id="heatmap_endpos" name="heatmap_endpos" value="150">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Max scale value: </b>
+                        <input type="text" id="maxscaleval" name="maxscaleval" value="None">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Color palette: </b>
+                        <input type="radio"
+                               value="gist_rainbow"
+                               class="gist_rainbow"
+                               name="color_palette"
+                               checked="">
+                        Rainbow
+                        <input type="radio"
+                               id="heatmap_colour"
+                               value="Inferno"
+                               class="Inferno"
+                               name="color_palette"
+                               unchecked="">
+                        Inferno
+                        <input type="radio"
+                               value="Viridis"
+                               class="Viridis"
+                               name="color_palette"
+                               unchecked="">
+                        Viridis
+                        <input type="radio"
+                               value="Spectral"
+                               class="Spectral"
+                               name="color_palette"
+                               unchecked="">
+                        Spectral
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Transcript list (optional): </b>
+                        <input type="text" id="metagene_tranlist" name="metagene_tranlist" value="">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Metagene profile -->
+    <div id="metagene_plot">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="metagene_five"
+                               value="metagene_five"
+                               name="metagene_end"
+                               checked="">
+                        Include 5' ends
+                        <input type="radio"
+                               class="metagene_three"
+                               value="metagene_three"
+                               name="metagene_end"
+                               unchecked="">
+                        Include 3' ends
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="metagene_offsets"
+                               value="metagene_offsets"
+                               name="metagene_offsets"
+                               checked="">
+                        Apply offsets
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="metagene_aggregate"
+                               value="metagene_aggregate"
+                               name="metagene_aggregate"
+                               checked="">
+                        Aggregate
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="metagene_normalise"
+                               value="metagene_normalise"
+                               name="metagene_normalise"
+                               checked="">
+                        Normalise
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="" 'minreadlen'="">
+                            <b>Min readlen: </b>
+                            <input type="text" id="metagene_minreadlen" name="minreadlen" value="25">
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="" 'maxreadlen'="">
+                            <b>Max readlen: </b>
+                            <input type="text" id="metagene_maxreadlen" name="maxreadlen" value="35">
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Transcript list:
+                        <input type="text" id="metagene_tranlist" name="metagene_tranlist" value="">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Center around:</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="metagene_class"
+                               id="metagene_start"
+                               value="metagene_start"
+                               name="metagene_type"
+                               checked="">
+                        Metagene start codon
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="metagene_class"
+                               id="metagene_stop"
+                               value="metagene_stop"
+                               name="metagene_type"
+                               unchecked="">
+                        Metagene stop codon
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio"
+                               class="metagene_class"
+                               id="metagene_custom"
+                               value="metagene_custom"
+                               name="metagene_type"
+                               unchecked="">
+                        Custom Sequence list
+                        <input type="text" id="custom_seq_list" name="custom_seq_list" value="">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Comparison Table options-->
+    <div id="replicate_comp">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <b>Minimum reads: </b>
+                        <input type="text" id="replicate_minreads" name="minimum_reads" value="1">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Correlation type:</b>
+                        <input type="radio"
+                               class="spearman"
+                               value="spearman"
+                               name="corr_type"
+                               checked="">
+                        Spearman
+                        <input type="radio"
+                               class="spearman"
+                               value="pearson"
+                               name="corr_type"
+                               checked="">
+                        Pearson
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Normalise:</b>
+                        <input type="checkbox"
+                               class="normalise"
+                               value="normalise"
+                               name="normalise"
+                               checked="">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--Dinucleotide options: has no options-->
+    <div id="dinuc_bias"></div>
+    <!--Most Frequent unmapped reads options: has no options-->
+    <div id="unmapped"></div>
+    <!--Counts table options-->
+    <div id="te">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <b>Minimum reads: </b>
+                        <input type="text" id="te_minreads" name="te_minimum_reads" value="0">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Transcript list</b>
+                        <input type="text" id="te_tranlist" name="te_tranlist" value="">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Region: </b>
+                        <input class="all" type="radio" value="all" name="region" checked="">
+                        All
+                        <input class="cds" type="radio" value="cds" name="region" checked="">
+                        CDS
+                        <input class="fiveprime"
+                               type="radio"
+                               value="fiveprime"
+                               name="region"
+                               unchecked="">
+                        5'
+                        <input class="threeprime"
+                               type="radio"
+                               value="threeprime"
+                               name="region"
+                               unchecked="">
+                        3'
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="count_agg"
+                               value="count_agg"
+                               name="count_agg"
+                               checked="">
+                        Aggregate Counts
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Count type: </b>
+                        <input class="raw" type="radio" value="raw" name="count_type" checked="">
+                        Raw
+                        <input class="rpkm" type="radio" value="rpkm" name="count_type" unchecked="">
+                        RPKM
+                        <input class="tpm" type="radio" value="tpm" name="count_type" unchecked="">
+                        TPM
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--mRNA Distribution options-->
+    <div id="mrna_dist">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_per"
+                               value="mrna_dist_per"
+                               name="mrna_dist_per"
+                               unchecked="">
+                        Percentage
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_start"
+                               value="md_start"
+                               name="md_start"
+                               checked="">
+                        Include Start Codons
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_stop"
+                               value="md_stop"
+                               name="md_stop"
+                               checked="">
+                        Include Stop Codons
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!--mRNA Distribution vs Read Length options-->
+    <div id="mrna_dist_readlen">
+        <table align="center">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_per"
+                               value="mrna_dist_per"
+                               name="mrna_dist_per"
+                               unchecked="">
+                        Percentage
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_start"
+                               value="md_start"
+                               name="md_start"
+                               checked="">
+                        Include Start Codons
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="md_stop"
+                               value="md_stop"
+                               name="md_stop"
+                               checked="">
+                        Include Stop Codons
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
