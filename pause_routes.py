@@ -7,7 +7,7 @@ import logging
 import config
 import subprocess
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code,
+                            fetch_file_paths, generate_short_code, form_filler,
                             build_profile, build_proteomics_profile,
                             fetch_user, fetch_filename_file_id)
 from fixed_values import my_decoder
@@ -22,39 +22,10 @@ pause_detection_blueprint = Blueprint("pause_detection_page",
 @pause_detection_blueprint.route(
     '/<organism>/<transcriptome>/pause_detection/')
 def pause_detection_page(organism: str, transcriptome: str) -> str:
-    # ip = request.environ['REMOTE_ADDR']
-    organism_id, accepted_studies = fetch_studies(organism, transcriptome)
-    files = fetch_files(accepted_studies)
-    advanced = False
-
-    # holds all values the user could possibly pass in the url (keywords are after request.args.get), anything not passed by user will be a string: "None"
-    html_args = request.args.to_dict()
-    print(html_args, "Anmol Kiran")
-
-    user_files = request.args.get('files')
-    try:
-        user_files = user_files.split(",")
-        html_args["files"] = [str(x) for x in html_args["files"].split(",")]
-    except KeyError:
-        html_args["files"] = []
-
-    # If ever need to use other seq types than these modify fetch_files to return a proper list
-    seq_types = {"riboseq", "proteomics"}
-    # If seq type not riboseq remove it from accepted files as orf translation is only appicable to riboseq
-    for seq_type in set(accepted_files) - seq_types:
-        del accepted_files[seq_type]
-    studyinfo_dict = fetch_study_info(organism)
-    return render_template('pause_detection.html',
-                           studies_dict=accepted_studies,
-                           accepted_files=accepted_files,
-                           user=fetch_user()[0],
-                           default_tran="",
-                           advanced=advanced,
-                           seq_types=seq_types,
-                           studyinfo_dict=studyinfo_dict,
-                           html_args=html_args,
-                           organism=organism,
-                           transcriptome=transcriptome)
+    data = form_filler(organism, transcriptome)
+    accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
+    data['files'] = fetch_files(accepted_studies).to_pandas()
+    return render_template('pause_detection.html', template_dict=data)
 
 
 def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
@@ -316,7 +287,6 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
 
 def find_pauses(data, user, logged_in):
     logging.debug("pause query called")
-    global user_short_passed
 
     print("organism, transcriptome", organism, transcriptome)
     owner = get_table("organisms").filter(
