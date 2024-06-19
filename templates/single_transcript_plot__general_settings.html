@@ -12,7 +12,7 @@
 <div class='hidden'>
     <!--Hidden Parameters-->
     {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
-		<input name="override" value="{{override}}" />
+    <input name="override" value="{{ override }}" />
 </div>
 <!--{{ template_dict }}-->
 <div class="page-section">
@@ -26,6 +26,7 @@
                 </div>
                 <div class="col-4">
                     <input id="transcript"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
                            class="upper"
                            name="transcript"
                            type="text"
@@ -40,6 +41,7 @@
                 </div>
                 <div class="col-4">
                     <input id="readscore"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
                            type="number"
                            min="0"
                            max="100"
@@ -93,7 +95,11 @@
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
                 </div>
                 <div class="col-4">
-                    <input type="text" id="hili_start" name="hili_start" value="0" />
+                    <input type="text"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
+                           id="hili_stop"
+                           name="hili_stop"
+                           value="0" />
                 </div>
             </div>
             <div class="row">
@@ -103,7 +109,11 @@
    href="/help/?parent_acc=parent_comparison&child_acc=child_comp_hili">&#9432;</a>
                 </div>
                 <div class="col-4">
-                    <input type="text" id="hili_stop" name="hili_stop" value="0" />
+                    <input type="text"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
+                           id="hili_stop"
+                           name="hili_stop"
+                           value="0" />
                 </div>
             </div>
             <div class="row">
@@ -153,11 +163,7 @@
             </div>
             <div class="row">
                 <div class="col-4">
-                    <input class="pcr_check"
-                           id="pcr_check"
-                           type="checkbox"
-                           name="pcr"
-										/>
+                    <input class="pcr_check" id="pcr_check" type="checkbox" name="pcr" />
                 </div>
                 <div class="col-8">
                     <label for='pcr_check' class='padded_label'>Allow PCR duplicates</label>
@@ -182,7 +188,7 @@
                        href="/help/?parent_acc=parent_single_gene&child_acc=child_ribocov">&#9432;</a>
                 </div>
             </div>
-<div class="row">
+            <div class="row">
                 <div class="col-4">
                     <input class="nuc_check"
                            id="nuc_check"

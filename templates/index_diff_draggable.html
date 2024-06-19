@@ -79,185 +79,202 @@
             <tr>
                 <td>
                     <b>Minimum no. of reads: </b>
-                    <input type="text" id="minread" name="minread" value="0">
-                </input>
-            </td>
-            <td>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432;</a>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <b>Min z-score (+/-)/ Max padj (%): </b>
-                <input type="text" id="minzscore" name="minzscore" value="4">
-            </input>
-        </td>
-        <td>
-            <a class="whatsthis"
-               target="_blank"
-               href="/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;</a>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <b>Region: </b>
-            <!--TODO: Remove values and select checked-->
-            <input class="all" id="all2" type="radio" value="all" name="region" checked>
-            <label for="all2">All</label>
-            <input class="cds" id="cds" type="radio" value="cds" name="region" checked>
-            <label for="cds">CDS</label>
-            <input class="fiveprime"
-                   type="radio"
-                   id="fiveprime"
-                   value="fiveprime"
-                   name="region"
-                   unchecked>
-            <label for="fiveprime">5'</label>
-            <input class="threeprime"
-                   type="radio"
-                   id="threeprime"
-                   value="threeprime"
-                   name="region"
-                   unchecked>
-            <label for="threeprime">3'</label>
-        </td>
-        <td>
-            <a class="whatsthis"
-               target="_blank"
-               href="/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;</a>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <b>Normalise by mapped reads: </b>
-            <input type='checkbox'
-                   value='mapped_reads_norm'
-                   name='mapped_reads_norm'
-                   checked>
-        </td>
-        <td>
-            <a class="whatsthis"
-               target="_blank"
-               href="/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;</a>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <b>Allow ambiguously mapped reads: </b>
-            <input id="ambiguous"
-                   class="ambig_check"
-                   type="checkbox"
-                   name="ambiguous"
-                   value="ambiguous"
-                   unchecked>
-            <td>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;</a>
-            </td>
-        </tr>
-    </td>
-    {% if current_user.name == "master" %}
-        <tr>
-            <td>
-                <input type='checkbox'
-                       id="store_de_results"
-                       value='store_de_results'
-                       name='store_de_results'
-                       unchecked>
-                <label for="store_de_results">Store results</label>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <input type="text" id="cond_desc" name="cond_desc" value="">
-            </td>
-        </tr>
-    {% endif %}
-    <tr>
-        <td>
-            <b>Highlight gene List: </b>
-            <input type="text" id="gene_list" name="gene_list" value="">
-        </td>
-        <td>
-            <a class="whatsthis"
-               target="_blank"
-               href="/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432;</a>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <b>Transcript List: </b>
-            <input type="text" id="transcript_list" name="transcript_list" value="">
-            <td>
-                <a class="whatsthis"
-                   target="_blank"
-                   href="/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432;</a>
-            </td>
-        </td>
-    </tr>
-    <tr class= "hidden_element">
-        <td>
-            <b>Minimum coverage: </b>
-            <input type="text" id="min_cov" name="min_cov" value="0">
-        </td>
-    </tr>
-</table>
-</div>
-{% include "single_transcript_plot__files.html" %}
-<div id="riboseq_file_list_1" class="center">
-    <p>
-        <font size="5"><b><u>Ribo-Seq files Condition 1</u></b>
-        </br>
-    </font>
-</p>
-<ul class="draggable_filelist" id="ribo_file_list_1">
-</ul>
-</ul>
-</div>
-<div id="riboseq_file_list_2">
-    <p>
-        <font size="5" text-align="center"><b><u>Ribo-Seq files Condition 2</u></b>
-        </br>
-    </font>
-</p>
-<ul class="draggable_filelist" id="ribo_file_list_2">
-</ul>
-</ul>
-</div>
-<div id="rnaseq_file_list_1">
-    <p>
-        <font size="5" text-align="center"><b><u>RNA-Seq files Condition 1</u></b>
-        </br>
-    </font>
-</p>
-<ul class="draggable_filelist" id="rna_file_list_1">
-</ul>
-</ul>
-</div>
-<div id="rnaseq_file_list_2">
-    <p>
-        <font size="5" text-align="center"><b><u>RNA-Seq files Condition 2</u></b>
-        </br>
-    </font>
-</p>
-<ul class="draggable_filelist" id="rna_file_list_2">
-</ul>
-</ul>
-</div>
-<div id="view_plot" class="wrapper">
-    <button class="button" type="button"  id="diffquery">
-        <b>View Plot</b>
-    </button>
-</div>
-{% include "loading.html" %}
-<div id="container"></div>
-<div id = "study_dialog" title = "Study info">
-    <table>
-    </table>
-</div>
-<script type="text/javascript"
-        src="{{ url_for('static', filename='js/common.js') }}"></script>
+                    <input type="number" id="minread" name="minread" value="0" min="0" />
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_diff&child_acc=child_minreads">&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Min z-score (+/-)/ Max padj (%): </b>
+                    <input type="number"
+                           id="minzscore"
+                           name="minzscore"
+                           value="4"
+                           min="0"
+                           max="100" />
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_diff&child_acc=child_minz">&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Region: </b>
+                    <!--TODO: Remove values and select checked-->
+                    <input class="all" id="all2" type="radio" value="all" name="region" checked>
+                    <label for="all2">All</label>
+                    <input class="cds" id="cds" type="radio" value="cds" name="region" checked>
+                    <label for="cds">CDS</label>
+                    <input class="fiveprime"
+                           type="radio"
+                           id="fiveprime"
+                           value="fiveprime"
+                           name="region"
+                           unchecked>
+                    <label for="fiveprime">5'</label>
+                    <input class="threeprime"
+                           type="radio"
+                           id="threeprime"
+                           value="threeprime"
+                           name="region"
+                           unchecked>
+                    <label for="threeprime">3'</label>
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_diff&child_acc=child_region">&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Normalise by mapped reads: </b>
+                    <input type='checkbox'
+                           value='mapped_reads_norm'
+                           name='mapped_reads_norm'
+                           checked>
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_diff&child_acc=child_norm">&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Allow ambiguously mapped reads: </b>
+                    <input id="ambiguous"
+                           class="ambig_check"
+                           type="checkbox"
+                           name="ambiguous"
+                           value="ambiguous"
+                           unchecked>
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_comparison&child_acc=child_comp_ambig">&#9432;</a>
+                </td>
+            </tr>
+            {% if current_user.name == "master" %}
+                <tr>
+                    <td>
+                        <input type='checkbox'
+                               id="store_de_results"
+                               value='store_de_results'
+                               name='store_de_results'
+                               unchecked>
+                        <label for="store_de_results">Store results</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="text" id="cond_desc" name="cond_desc" value="">
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td>
+                    <b>Highlight gene List: </b>
+                    <input type="text"
+                           id="gene_list"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
+                           name="gene_list"
+                           value="">
+                </td>
+                <td>
+                    <a class="whatsthis"
+                       target="_blank"
+                       href="/help/?parent_acc=parent_diff&child_acc=child_hili_genes">&#9432;</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Transcript List: </b>
+                    <input type="text"
+                           id="transcript_list"
+                           onKeyup="this.value = this.value.replace(/ /g, '')"
+                           name="transcript_list"
+                           value="">
+                    <td>
+                        <a class="whatsthis"
+                           target="_blank"
+                           href="/help/?parent_acc=parent_diff&child_acc=child_transcript_list">&#9432;</a>
+                    </td>
+                </td>
+            </tr>
+            <tr class= "hidden_element">
+                <td>
+                    <b>Minimum coverage: </b>
+                    <input type="text" id="min_cov" name="min_cov" value="0">
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% include "single_transcript_plot__files.html" %}
+    <div class="row">
+        <div class="col-6">
+            <p>
+                <font size="5"><b><u>Ribo-Seq files Condition 1</u></b>
+                    <br />
+                </font>
+            </p>
+            <div class="draggable_filelist" style="align:center">
+                <ul class="file ui-sortable2" id="ribo_file_list_1">
+                </ul>
+            </div>
+        </div>
+        <div class="col-6">
+            <p>
+                <font size="5" text-align="center"><b><u>Ribo-Seq files Condition 2</u></b>
+                    <br />
+                </font>
+            </p>
+            <div class="draggable_filelist" style="align:center">
+                <ul class="file ui-sortable2" id="ribo_file_list_2">
+                </ul>
+            </div>
+        </div>
+        <div class="col-6">
+            <p>
+                <font size="5" text-align="center"><b><u>RNA-Seq files Condition 1</u></b>
+                    <br />
+                </font>
+            </p>
+            <div class="draggable_filelist" style="align:center">
+                <ul class="file ui-sortable2" id="rna_file_list_1">
+                </ul>
+            </div>
+        </div>
+        <div class="col-6">
+            <p>
+                <font size="5" text-align="center"><b><u>RNA-Seq files Condition 2</u></b>
+                    <br />
+                </font>
+            </p>
+            <div class="draggable_filelist" style="align:center">
+                <ul class="file ui-sortable2" id="rna_file_list_2">
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="view_plot" class="wrapper">
+        <button class="button" type="button"  id="diffquery">
+            <b>View Plot</b>
+        </button>
+    </div>
+    {% include "loading.html" %}
+    <div id="container"></div>
+    <div id = "study_dialog" title = "Study info">
+        <table>
+        </table>
+    </div>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock %}
