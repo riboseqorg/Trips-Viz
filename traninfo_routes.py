@@ -61,17 +61,46 @@ def traninfoquery() -> str:
     - html page
     """
     # global user_short_passed
-    user_short_passed = True
-    data = request.data.to_dict()
-    plottype = data["plottype"]
-    for key in data:
-        if key in config.VARIABLE_CONVERSION:
-            data[key] = config.VARIABLE_CONVERSION[key](data[key])
-        if 'gc_tranlist' in key:
-            data[key] = data[key].upper()
+    data = request.form.to_dict()
+    print(data)
+    # Nucleotide composition (single transcript)
+    if data["plottype"] == "nuc_comp_single":
+        data['metagene_tranlist'] = data['metagene_tranlist'].strip(',').split(
+            ",")
+        owner = get_table("organisms").filter(
+            (pl.col("organism_name") == data["organism"])
+            & (pl.col("transcriptome_list") == data["transcriptome"]))[0,
+                                                                       "owner"]
 
-    metagene_tranlist = (data["metagene_tranlist"].strip(" ")).replace(
-        " ", ",")
+        if owner == 1:
+            transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
+                data["transcriptome"]))
+        else:
+            transhelve = (
+                "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+                    config.UPLOADS_DIR, owner, data["organism"],
+                    data["transcriptome"]))
+        if len(data["metagene_tranlist"]) == 1:
+            data['traninfo'] = sqlquery(transhelve, "transcripts").filter(
+                pl.col("transcript") == data["metagene_tranlist"])[0]
+            return traninfo_plots.nuc_comp_single(data)
+        else:
+
+            transcripts = sqlquery(transhelve, "transcipts")
+            if metagene_tranlist:
+                transcripts = transcripts.filter(
+                    pl.col("transcript").is_in(metagene_tranlist))
+            else:
+                transcripts = transcripts.filter((pl.col("principal") == True)
+                                                 & (pl.col("tran_type")))
+            title = "GC metagene of {} genes".format(len(traninfo))
+            return traninfo_plots.gc_metagene(title, short_code,
+                                              config.DEFAULT_USER_SETTING,
+                                              traninfo)
+
+    data["metagene_tranlist"] = (
+        data["metagene_tranlist"].strip(",")).split(",")
 
     nuc_freq_plot_tranlist = data['nuc_freq_plot_tranlist']
 
@@ -138,8 +167,6 @@ def traninfoquery() -> str:
                     gc_location)
             transcripts["cds_start"] -= 1
 
-            # gc_location,exclude_first_val,exclude_last_val,include_first_val,include_last_val,gc_tranlist
-            # keep track of transcript that have been written to file to avoid duplicates
         if data["gc_location"] == "five":
             transcripts = transcripts.with_column(
                 # Fix the filter
@@ -268,71 +295,7 @@ def traninfoquery() -> str:
                                             config.DEFAULT_USER_SETTING,
                                             filename)
 
-    # Nucleotide composition (single transcript)
-    if plottype == "nuc_comp_single":
-        master_dict = {}
-        metagene_tranlist = metagene_tranlist.split(",")
-        if len(metagene_tranlist) == 1:
-            tran = metagene_tranlist[0]
-            owner = get_table("organisms").filter(
-                (pl.col("organism_name") == organism)
-                & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
-
-            if owner == 1:
-                transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                    transcriptome))
-            else:
-                transhelve = (
-                    "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                        config.UPLOADS_DIR, owner, organism, transcriptome))
-            result = sqlquery(transhelve, "transcript")[0]
-            traninfo = {
-                "transcript": result[0],
-                "gene": result[1],
-                "length": result[2],
-                "cds_start": result[3],
-                "cds_stop": result[4],
-                "seq": result[5],
-                "strand": result[6],
-                "stop_list": result[7].split(","),
-                "start_list": result[8].split(","),
-                "exon_junctions": result[9].split(","),
-                "tran_type": result[10],
-                "principal": result[11]
-            }
-
-            title = tran
-            return traninfo_plots.nuc_comp_single(tran, master_dict, title,
-                                                  short_code,
-                                                  config.DEFAULT_USER_SETTING,
-                                                  traninfo)
-        else:
-            owner = get_table("organisms").filter(
-                (pl.col("organism_name") == organism)
-                & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
-
-            if owner == 1:
-                transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                    transcriptome))
-            else:
-                transhelve = (
-                    "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                        config.UPLOADS_DIR, owner, organism, transcriptome))
-            transcripts = sqlquery(transhelve, "transcipts")
-            if metagene_tranlist:
-                transcripts = transcripts.filter(
-                    pl.col("transcript").is_in(metagene_tranlist))
-            else:
-                transcripts = transcripts.filter((pl.col("principal") == True)
-                                                 & (pl.col("tran_type")))
-            title = "GC metagene of {} genes".format(len(traninfo))
-            return traninfo_plots.gc_metagene(title, short_code,
-                                              config.DEFAULT_USER_SETTING,
-                                              traninfo)
-
-    elif plottype == "orfstats":
+    if plottype == "orfstats":
         filename = organism + "_orfstats_" + str(time.time()) + ".csv"
         table_str = filename + "?~"
         tmp_te_file = open(

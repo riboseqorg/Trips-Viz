@@ -40,3 +40,17 @@ $("#comparequery").click(() => {
     // alert(data);
   });
 });
+
+$("#traninfoquery").click(() => {
+  const formJson = $("#form")
+    .serializeArray()
+    .reduce((json, { name, value }) => {
+      json[name] = value;
+      return json;
+    }, {});
+  //console.log(JSON.stringify(formJson));
+  $.post("/traninfoquery", formJson, (data) => {
+    parse(data, "plot");
+    // alert(data);
+  });
+});
