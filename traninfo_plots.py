@@ -1,4 +1,7 @@
 from typing import List, Tuple, Union, Dict
+import config
+import altair as alt
+from plots import VegaPlot
 import collections
 import polars as pl
 import polars.selectors as cs
@@ -105,7 +108,8 @@ def nuc_comp_single(data: dict):
     window_size = 60
     nucleotide_content = []
     t_counts = [0, 0, 0, 0]
-    for nuc in data[:window_size]:
+    seq = data[0, 'sequence']
+    for nuc in seq[:window_size]:
         if nuc == "A":
             t_counts[0] += 1
         elif nuc == "C":
@@ -114,11 +118,10 @@ def nuc_comp_single(data: dict):
             t_counts[2] += 1
         elif nuc == "T":
             t_counts[3] += 1
-    nucleotide_content.append(np.array(t_counts))
-    for i in range(step_size, len(data) - (window_size), step_size):
+    nucleotide_content.append(t_counts.copy())
+    for i in range(step_size, data[0, "length"] - (window_size), step_size):
         # TODO: optimise this
-        for nuc in data[i:i + step_size]:
-            nuc = data[i + step]
+        for nuc in seq[i:i + step_size]:
             if nuc == "A":
                 t_counts[0] -= 1
             elif nuc == "C":
@@ -127,7 +130,7 @@ def nuc_comp_single(data: dict):
                 t_counts[2] -= 1
             elif nuc == "T":
                 t_counts[3] -= 1
-        for nuc in data[i + window_size - step_size:i + window_size]:
+        for nuc in seq[i + window_size - step_size:i + window_size]:
             if nuc == "A":
                 t_counts[0] += 1
             elif nuc == "C":
@@ -136,19 +139,23 @@ def nuc_comp_single(data: dict):
                 t_counts[2] += 1
             elif nuc == "T":
                 t_counts[3] += 1
-        nucleotide_content.append(t_counts)
+        nucleotide_content.append(t_counts.copy())
     nucleotide_content = pl.DataFrame(
-        nucleotide_content, columns=["A", "C", "G", "T"]).with_columns(
-            pl.struct([
-                "C", "G"
-            ]).apply(lambda x: x['C'] + x['G']).alias('GC')).with_columns(
-                pl.all() * 100 /
-                window_size  # 100 in the max based on old code
-            ).with_columns(
-                pos=pl.arange(0, len(seq) -
-                              window_size, step_size, eager=True) +
-                (window_size / 2)).melt(id_vars="pos",
-                                        value_vars=cs.numeric()).collect()
+        nucleotide_content, schema=[
+            "A", "C", "G", "T"
+        ]).with_columns((pl.col("G") + pl.col("C")).alias("GC")).with_columns(
+            pl.all() * 100 / window_size  # 100 in the max based on old code
+        ).with_columns(
+            pos=pl.arange(0, len(seq) - window_size, step_size, eager=True) +
+            (window_size / 2)).melt(id_vars="pos",
+                                    value_vars=["A", "C", "G", "T", "GC"],
+                                    variable_name="frame",
+                                    value_name="count")  #.collect()
+    colors = alt.Scale(domain=["A", "C", "G", "T", "GC"],
+                       range=config.BOX_COLORS[:4])
+    plot = VegaPlot(nucleotide_content, colors)
+    return plot.line("pos", "count").to_json()
+    print(nucleotide_content)
 
     plot_mfe = True
     if plot_mfe and vienna_rna:

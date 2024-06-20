@@ -63,35 +63,34 @@ def traninfoquery() -> str:
     # global user_short_passed
     data = request.form.to_dict()
     print(data)
-    # Nucleotide composition (single transcript)
-    if data["plottype"] == "nuc_comp_single":
+    if data["plottype"] not in ["gene_count"]:
         data['metagene_tranlist'] = data['metagene_tranlist'].strip(',').split(
             ",")
-        owner = get_table("organisms").filter(
-            (pl.col("organism_name") == data["organism"])
-            & (pl.col("transcriptome_list") == data["transcriptome"]))[0,
-                                                                       "owner"]
+    owner = get_table("organisms").filter(
+        (pl.col("organism_name") == data["organism"])
+        & (pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
 
-        if owner == 1:
-            transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
-                data["transcriptome"]))
-        else:
-            transhelve = (
-                "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                    config.UPLOADS_DIR, owner, data["organism"],
-                    data["transcriptome"]))
+    if owner == 1:
+        transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
+            data["transcriptome"]))
+    else:
+        transhelve = ("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, data["organism"],
+            data["transcriptome"]))
+
+    transcripts = sqlquery(transhelve, "transcripts")
+    # Nucleotide composition (single transcript)
+    if data["plottype"] == "nuc_comp_single":
+        transcripts = transcripts.filter(
+            pl.col("transcript").is_in(data["metagene_tranlist"]))
+
         if len(data["metagene_tranlist"]) == 1:
-            data['traninfo'] = sqlquery(transhelve, "transcripts").filter(
-                pl.col("transcript") == data["metagene_tranlist"])[0]
-            return traninfo_plots.nuc_comp_single(data)
+            return traninfo_plots.nuc_comp_single(transcripts)
         else:
 
-            transcripts = sqlquery(transhelve, "transcipts")
-            if metagene_tranlist:
-                transcripts = transcripts.filter(
-                    pl.col("transcript").is_in(metagene_tranlist))
-            else:
+            if transcripts.shape[0] == 0:
+                # TODO: Correct the bottom code
                 transcripts = transcripts.filter((pl.col("principal") == True)
                                                  & (pl.col("tran_type")))
             title = "GC metagene of {} genes".format(len(traninfo))
@@ -99,10 +98,7 @@ def traninfoquery() -> str:
                                               config.DEFAULT_USER_SETTING,
                                               traninfo)
 
-    data["metagene_tranlist"] = (
-        data["metagene_tranlist"].strip(",")).split(",")
-
-    nuc_freq_plot_tranlist = data['nuc_freq_plot_tranlist']
+    data["metagene_tranlist"] = data["metagene_tranlist"].strip(",").split(",")
 
     try:
         data["maxscaleval"] = int(data["maxscaleval"])
@@ -208,7 +204,6 @@ def traninfoquery() -> str:
 
         return table_str
     if plottype == "nuc_freq_plot":
-        splitlist = (nuc_freq_plot_tranlist.replace(" ", ",")).split(",")
         filename = "Sequences_{}.fa".format(time.time())
         outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                        "w")
@@ -978,20 +973,8 @@ def traninfoquery() -> str:
                                                   str(marker_size) + "pt",
                                                   short_code)
 
-    elif plottype == "gene_count":
-        organisms = get_table("organisms")
-        owner = organisms.loc[organisms.organism_name == organism
-                              & organisms.transcriptome_list == transcriptome,
-                              "owner"].values[0]
+    elif data["plottype"] == "gene_count":
 
-        if owner == 1:
-            transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)
-        else:
-            transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome)
-        transcripts = sqlquery(transhelve, "transcripts")
         all_transcripts = transcripts.shape[0]
         coding_transcripts = transcripts[transcripts.tran_type].shape[0]
         all_genes = len(transcripts.gene.unique())
