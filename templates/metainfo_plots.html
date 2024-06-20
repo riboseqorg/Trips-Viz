@@ -5,6 +5,11 @@
     </p>
     <br />
     <br />
+    <div class="hidden">
+        <!--Hidden Parameters-->
+        {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+        <input name="override" value="{{ override }}" />
+    </div>
     <table align="center" class="plot_table" id="plottype_table">
         <tr>
             <td>
@@ -133,7 +138,7 @@
 {% block footer_static %}
     <script type="text/javascript">
   $('input[name="plottype"]').change(function () {
-    	$('#options_container').html($('#'+this.value).html());
+    $("#options_container").html($("#" + this.value).html());
     //var value = this.value;
     // alert(value);
   });
