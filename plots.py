@@ -29,7 +29,7 @@ class VegaPlot:
         """Line plot."""
         return self.chart.encode(
             x=alt.X(
-                f'{x_col}:Q',
+                f'{x_col}',
                 axis=alt.Axis(tickSize=0, labels=False),
                 title=None,
                 # scale=alt.Scale(domain=[0, 500])
@@ -63,9 +63,8 @@ class VegaPlot:
             # titleAlign="right",
             # titleBaseline="middle",
             # )),
-            color=alt.Color('type:N', scale=alt.Scale(domain=['start','stop'],  ))
-
-        )
+            color=alt.Color('type:N',
+                            scale=alt.Scale(domain=['start', 'stop'], )))
         return vline.mark_rule(fill='firebrick').properties(width=800,
                                                             height=10)
 

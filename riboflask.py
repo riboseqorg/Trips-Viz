@@ -123,9 +123,9 @@ def generate_plot(data, settings) -> str:
     colors = alt.Scale(domain=[1, 2, 3], range=config.BOX_COLORS[:3])
     plt = VegaPlot(all_rna_reads, colors)
     if 'line' in data:
-        plot = plt.line("pos", "count")
+        plot = plt.line("pos:Q", "count")
     else:
-        plot = plt.bar("pos", "count")
+        plot = plt.bar("pos:Q", "count")
     frame_3 = 0 if 'show_nuc' in data else 3
     start_stop_plot = []
     for frame in [1, 2, 3]:
