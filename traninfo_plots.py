@@ -140,7 +140,7 @@ def nuc_comp_single(data: dict):
             elif nuc == "T":
                 t_counts[3] += 1
         nucleotide_content.append(t_counts.copy())
-    nucleotide_content = pl.DataFrame(
+    nucleotide_content = pl.LazyFrame(
         nucleotide_content, schema=[
             "A", "C", "G", "T"
         ]).with_columns((pl.col("G") + pl.col("C")).alias("GC")).with_columns(
@@ -150,7 +150,7 @@ def nuc_comp_single(data: dict):
             (window_size / 2)).melt(id_vars="pos",
                                     value_vars=["A", "C", "G", "T", "GC"],
                                     variable_name="frame",
-                                    value_name="count")  #.collect()
+                                    value_name="count").collect()
     colors = alt.Scale(domain=["A", "C", "G", "T", "GC"],
                        range=config.BOX_COLORS[:4])
     plot = VegaPlot(nucleotide_content, colors)
@@ -940,58 +940,3 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
     p.rect(cats, upper.lengths, 0.2, 0.01, line_color="black")
     if not out.empty:
         p.circle(outx, outy, size=6, color="#F38630", fill_alpha=0.6)
-
-
-def gene_count(short_code, background_col, title_size, axis_label_size,
-               subheading_size, marker_size, coding, noncoding):
-    """
-
-    Parameters:
-    - short_code (str): short code
-    - background_col (str): background color
-    - title_size (int): title size
-    - axis_label_size (int): axis label size
-    - subheading_size (int): subheading size
-    - marker_size (int): marker size
-    - coding (List[int]): coding
-    - noncoding (List[int]): noncoding
-
-    Returns:
-
-    Example:
-    """
-    title_str = "Reads breakdown ({})".format(short_code)
-
-    if len(labels) > 12:
-        marker_size = int(marker_size / (len(labels) / 8))
-
-    totals = []
-    for i in range(0, N):
-        curr_total = 0
-        curr_total += coding[i]
-        curr_total += noncoding[i]
-        if curr_total > 0:
-            all_reads_count += curr_total
-            totals.append(float(curr_total))
-        else:
-            totals.append(1)
-
-    for i in range(0, len(coding)):
-        per = (coding[i] / totals[i]) * 100
-
-    for i in range(0, len(noncoding)):
-        per = (noncoding[i] / totals[i]) * 100
-
-    p1 = plt.bar(ind, coding, bar_width, color='#80ff80', linewidth=0)
-    p2 = plt.bar(ind,
-                 noncoding,
-                 bar_width,
-                 color='#ff7275',
-                 bottom=coding,
-                 linewidth=0)
-    p8 = plt.bar(ind, totals, bar_width, color='#5e0003', linewidth=0, alpha=0)
-
-    #Dummy plot point so we can add total reads to the legend
-    plt.plot(0, 0, alpha=0)
-    plt.legend((p2[0], p1[0]), ('Non Coding: {:,}'.format(
-        sum(noncoding)), 'Coding {:,}'.format(sum(coding))))

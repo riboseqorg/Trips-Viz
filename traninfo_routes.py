@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request
 import sqlite3
+from plots import VegaPlot
 import os
 import time
 import config
@@ -62,7 +63,7 @@ def traninfoquery() -> str:
     """
     # global user_short_passed
     data = request.form.to_dict()
-    print(data)
+    print(data, "Anmol")
     if data["plottype"] not in ["gene_count"]:
         data['metagene_tranlist'] = data['metagene_tranlist'].strip(',').split(
             ",")
@@ -97,6 +98,21 @@ def traninfoquery() -> str:
             return traninfo_plots.gc_metagene(title, short_code,
                                               config.DEFAULT_USER_SETTING,
                                               traninfo)
+    if data["plottype"] == "gene_count":
+        gene_count = transcripts.unique("gene").groupby(
+            "tran_type").count().with_columns(pl.lit("gene").alias("pos"))
+        transcript_count = transcripts.unique("gene").groupby(
+            "tran_type").count().with_columns(
+                pl.lit("transcript").alias("pos"))
+        mapper = {0: "noncoding", 1: "coding"}
+
+        gene_count = gene_count.vstack(transcript_count).with_columns(
+            pl.col("tran_type").map_dict(mapper)).rename(
+                {"tran_type": "frame"})
+        plot = VegaPlot(gene_count)
+        print(gene_count)
+        # TODO: fix this for categorical values
+        return plot.bar("pos", "count").to_json()
 
     data["metagene_tranlist"] = data["metagene_tranlist"].strip(",").split(",")
 
@@ -657,60 +673,23 @@ def traninfoquery() -> str:
                                                str(marker_size) + "pt",
                                                short_code)
 
-    elif plottype == "codon_usage":
+    if data["plottype"] == "codon_usage":
         aa_dict = fixed_values.codon_aa_full.copy()
         filename = organism + "_codon_usage_" + str(time.time()) + ".csv"
         cu_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                        "w")
-        cursor.execute(
-            "SELECT owner FROM organisms WHERE organism_name = '{}' and"
-            " transcriptome_list = '{}';".format(organism, transcriptome))
-        owner = (cursor.fetchone())[0]
-        if owner == 1:
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
-            transhelve = sqlite3.connect(
-                "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                    config.UPLOADS_DIR, owner, organism, transcriptome))
-
-        traninfo_cursor = transhelve.cursor()
-        codon_dict = {}
-        if gc_tranlist != "":
-            splitlist = (gc_tranlist.replace(" ", ",")).split(",")
-            strlist = str(splitlist).strip("[]")
-            traninfo_cursor.execute(
-                "SELECT transcript,sequence,cds_start,cds_stop from"
-                " transcripts WHERE transcript IN ({});".format(
-                    strlist.upper()))
-        else:
-            traninfo_cursor.execute(
-                "SELECT transcript,sequence,cds_start,cds_stop from"
-                " transcripts WHERE principal = 1 and tran_type = 1;")
-        result = traninfo_cursor.fetchall()
-        total_trans = 0
-        total_length = 0
-        for row in result:
-            tran = row[0]
-            seq = row[1]
-            total_trans += 1
-            if not row[2] or not row[3]:
-                return "Enter coding transcripts only, {} is noncoding".format(
-                    row[0])
-            start_pos = int(row[2]) - 1
-            end_pos = int(row[3]) + 2
-            total_length += (end_pos - start_pos) + 1
-            for i in range(start_pos, end_pos, 3):
-                try:
-                    codon = seq[i:i + 3]
-                except Exception:
-                    pass
-                if len(codon) != 3:
-                    continue
-                if codon not in codon_dict:
-                    codon_dict[codon] = 0
-                codon_dict[codon] += 1
+        # if gc_tranlist != "":
+        # splitlist = (gc_tranlist.replace(" ", ",")).split(",")
+        # strlist = str(splitlist).strip("[]")
+        # traninfo_cursor.execute(
+        # "SELECT transcript,sequence,cds_start,cds_stop from"
+        # " transcripts WHERE transcript IN ({});".format(
+        # strlist.upper()))
+        # else:
+        # traninfo_cursor.execute(
+        # "SELECT transcript,sequence,cds_start,cds_stop from"
+        # " transcripts WHERE principal = 1 and tran_type = 1;")
+        # TODO: add warning for non coding
         cu_file.write("Total_transcripts,{}\n".format(total_trans))
         cu_file.write("Total_length_(nts),{}\n".format(total_length))
         for codon in sorted(codon_dict.keys()):
@@ -723,72 +702,58 @@ def traninfoquery() -> str:
                                         str(marker_size) + "pt", filename)
     # This is the lengths plot
     elif plottype == "lengths_plot":
-        cursor.execute(
-            "SELECT owner FROM organisms WHERE organism_name = '{}' and"
-            " transcriptome_list = '{}';".format(organism, transcriptome))
-        owner = (cursor.fetchone())[0]
-        if owner == 1:
-            transhelve = sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome))
-        else:
-            transhelve = sqlite3.connect(
-                "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                    config.UPLOADS_DIR, owner, organism, transcriptome))
 
-        trancursor = transhelve.cursor()
-
-        if plot_type == "box":
-            master_dict = {
-                1: {
-                    "trans": [],
-                    "lengths": []
-                },
-                2: {
-                    "trans": [],
-                    "lengths": []
-                },
-                3: {
-                    "trans": [],
-                    "lengths": []
-                },
-                4: {
-                    "trans": [],
-                    "lengths": []
-                }
+        master_dict = {
+            1: {
+                "trans": [],
+                "lengths": []
+            },
+            2: {
+                "trans": [],
+                "lengths": []
+            },
+            3: {
+                "trans": [],
+                "lengths": []
+            },
+            4: {
+                "trans": [],
+                "lengths": []
             }
-            gc_dict = {}
-            if gc_tranlist != "":
-                splitlist = (gc_tranlist.replace(" ", ",")).split(",")
+        }
+        gc_dict = {}
+        if gc_tranlist != "":
+            splitlist = (gc_tranlist.replace(" ", ",")).split(",")
 
-                if gc_tranlist2 != "":
-                    splitlist2 = (gc_tranlist2.replace(" ", ",")).split(",")
-                    for item in splitlist2:
-                        splitlist.append(item)
-                if gc_tranlist3 != "":
-                    splitlist3 = (gc_tranlist3.replace(" ", ",")).split(",")
-                    for item in splitlist3:
-                        splitlist.append(item)
-                if gc_tranlist4 != "":
-                    splitlist4 = (gc_tranlist4.replace(" ", ",")).split(",")
-                    for item in splitlist4:
-                        splitlist.append(item)
-                strlist = str(splitlist).strip("[]")
+            if gc_tranlist2 != "":
+                splitlist2 = (gc_tranlist2.replace(" ", ",")).split(",")
+                for item in splitlist2:
+                    splitlist.append(item)
+            if gc_tranlist3 != "":
+                splitlist3 = (gc_tranlist3.replace(" ", ",")).split(",")
+                for item in splitlist3:
+                    splitlist.append(item)
+            if gc_tranlist4 != "":
+                splitlist4 = (gc_tranlist4.replace(" ", ",")).split(",")
+                for item in splitlist4:
+                    splitlist.append(item)
+            strlist = str(splitlist).strip("[]")
+            trancursor.execute(
+                "SELECT transcript,length,cds_start,cds_stop,"
+                "exon_junctions from transcripts WHERE transcript IN ({});".
+                format(strlist.upper()))
+        else:
+            if gc_location == "all":
                 trancursor.execute(
                     "SELECT transcript,length,cds_start,cds_stop,"
-                    "exon_junctions from transcripts WHERE transcript IN ({});"
-                    .format(strlist.upper()))
+                    "exon_junctions from transcripts WHERE principal = 1;")
             else:
-                if gc_location == "all":
-                    trancursor.execute(
-                        "SELECT transcript,length,cds_start,cds_stop,"
-                        "exon_junctions from transcripts WHERE principal = 1;")
-                else:
-                    trancursor.execute(
-                        "SELECT transcript,length,cds_start,cds_stop,"
-                        "exon_junctions from transcripts WHERE principal = 1"
-                        " and tran_type = 1;")
-            result = trancursor.fetchall()
+                trancursor.execute(
+                    "SELECT transcript,length,cds_start,cds_stop,"
+                    "exon_junctions from transcripts WHERE principal = 1"
+                    " and tran_type = 1;")
+        result = trancursor.fetchall()
+        if plot_type == "box":
             if result == []:
                 return "Could not find any info on given transcript list"
             for row in result:
@@ -870,55 +835,7 @@ def traninfoquery() -> str:
                                               str(marker_size) + "pt",
                                               str(axis_label_size) + "pt")
         elif plot_type == "scatter":
-            master_dict = {
-                1: {
-                    "trans": [],
-                    "lengths": []
-                },
-                2: {
-                    "trans": [],
-                    "lengths": []
-                },
-                3: {
-                    "trans": [],
-                    "lengths": []
-                },
-                4: {
-                    "trans": [],
-                    "lengths": []
-                }
-            }
-            gc_dict = {}
-            if gc_tranlist != "":
-                splitlist = (gc_tranlist.replace(" ", ",")).split(",")
 
-                if gc_tranlist2 != "":
-                    splitlist2 = (gc_tranlist2.replace(" ", ",")).split(",")
-                    for item in splitlist2:
-                        splitlist.append(item)
-                if gc_tranlist3 != "":
-                    splitlist3 = (gc_tranlist3.replace(" ", ",")).split(",")
-                    for item in splitlist3:
-                        splitlist.append(item)
-                if gc_tranlist4 != "":
-                    splitlist4 = (gc_tranlist4.replace(" ", ",")).split(",")
-                    for item in splitlist4:
-                        splitlist.append(item)
-                strlist = str(splitlist).strip("[]")
-                trancursor.execute(
-                    "SELECT transcript,length,cds_start,cds_stop from"
-                    " transcripts WHERE transcript IN ({});".format(
-                        strlist.upper()))
-            else:
-                if gc_location == "all":
-                    trancursor.execute(
-                        "SELECT transcript,length,cds_start,cds_stop from"
-                        " transcripts WHERE principal = 1;")
-                else:
-                    trancursor.execute(
-                        "SELECT transcript,length,cds_start,cds_stop from"
-                        " transcripts WHERE principal = 1 and tran_type = 1;")
-            result = trancursor.fetchall()
             for row in result:
                 tran = row[0]
                 tranlen = int(row[1])
@@ -973,24 +890,7 @@ def traninfoquery() -> str:
                                                   str(marker_size) + "pt",
                                                   short_code)
 
-    elif data["plottype"] == "gene_count":
-
-        all_transcripts = transcripts.shape[0]
-        coding_transcripts = transcripts[transcripts.tran_type].shape[0]
-        all_genes = len(transcripts.gene.unique())
-        coding_genes = len(
-            transcripts[transcripts.gene_type == 1].gene.unique())
-        coding = [1, coding_genes, coding_transcripts, 1]
-        noncoding = [
-            1, all_genes - coding_genes, all_transcripts - coding_transcripts,
-            1
-        ]
-        return traninfo_plots.gene_count(short_code, background_col,
-                                         title_size, axis_label_size,
-                                         subheading_size, marker_size, coding,
-                                         noncoding)
-
-    else:
+    if 1:
         if (plottype.strip(" ").replace("\n", "")) not in ["replicate_comp"]:
             print("Unknown plottype", plottype)
     return "Error, unknown plot type selected: {}".format(plottype)
