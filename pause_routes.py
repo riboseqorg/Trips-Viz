@@ -9,7 +9,7 @@ import subprocess
 from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code, form_filler,
                             build_profile, build_proteomics_profile,
-                            fetch_user, fetch_filename_file_id)
+                            fetch_user)
 from fixed_values import my_decoder
 import polars as pl
 
@@ -37,8 +37,8 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
     label_string = "&labels="
     seq_types = ["riboseq", "proteomics"]
     color_list = [
-        "%23ff0000", "%232bff00", "%230004ff", "%23ffa200", "%23c800ff",
-        "%23000000", "%23969696", "%23fa00f2"
+        "#ff0000", "#2bff00", "#0004ff", "#ffa200", "#c800ff",
+        "#000000", "#969696", "#fa00f2"
     ]
     color_ind = 0
     profile_dict = {}
@@ -229,11 +229,11 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
     all_filepaths = tmp_filepath
 
     for file_id in file_output_dict:
-        file_name = fetch_filename_file_id(file_id)
+        file_name = get_table("files").filter(pl.col("file_id") == file_id)[0,
         logging.debug(file_name)
-        filepath = "{}/static/tmp/{}_pauses.csv".format(
+        filepath= "{}/static/tmp/{}_pauses.csv".format(
             config.SCRIPT_LOC, file_name)
-        outfile = open(filepath, "w")
+        outfile= open(filepath, "w")
         all_filepaths += " {}".format(filepath)
         for line in file_output_dict[file_id]:
             outfile.write("{},{},{},{},{},{},{},{},{}\n".format(
@@ -241,30 +241,30 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
                 line[7], line[8]))
         outfile.close()
 
-    tmp_result_file = open(tmp_filepath, "w")
+    tmp_result_file= open(tmp_filepath, "w")
     print("tmp filepath", tmp_filepath)
     tmp_result_file.write(
         "Gene,Tran,Position,Region, Coverage,Pause Score,Upstream_sequence, Downstream_sequence,Count,Link\n"
     )
-    tup_count = 0
+    tup_count= 0
 
     # logging.debug("writing to file",len(sorted_all_values))
     for tup in sorted_all_values:
         # logging.debug("tup", tup)
-        gene = tup[0]
-        transcript = tup[1]
-        position = tup[2]
-        pause_score = round(tup[3], 2)
-        upstream_seq = tup[4]
-        downstream_seq = tup[5]
-        cov = tup[6]
-        count = round(tup[7], 2)
-        region = tup[8]
+        gene= tup[0]
+        transcript= tup[1]
+        position= tup[2]
+        pause_score= round(tup[3], 2)
+        upstream_seq= tup[4]
+        downstream_seq= tup[5]
+        cov= tup[6]
+        count= round(tup[7], 2)
+        region= tup[8]
 
-        comparison_url = "/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
+        comparison_url= "/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
             organism, transcriptome, file_string, label_string, transcript,
             position - 15, position + 15)
-        ebc_link = '<a href="{}" target="_blank_" >View</a>'.format(
+        ebc_link= '<a href="{}" target="_blank_" >View</a>'.format(
             comparison_url)
 
         tmp_result_file.write("{},{},{},{},{},{},{},{},{},{}\n".format(
@@ -289,32 +289,32 @@ def find_pauses(data, user, logged_in):
     logging.debug("pause query called")
 
     print("organism, transcriptome", organism, transcriptome)
-    owner = get_table("organisms").filter(
+    owner= get_table("organisms").filter(
         pl.col("organism_name") == data["organism"])[0, "organism_owner"]
 
-    file_paths_dict = fetch_file_paths(data["file_list"], organism)
+    file_paths_dict= fetch_file_paths(data["file_list"], organism)
     # Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
-    full_studies = []
+    full_studies= []
 
     logging.debug("Full studies {}".format(full_studies))
 
-    min_coverage = data["min_coverage"] / 100.
+    min_coverage= data["min_coverage"] / 100.
 
     # feature_list.append("Inframe Count Value")
     if not html_args["user_short"]:
-        short_code = generate_short_code(data)
+        short_code= generate_short_code(data)
     else:
-        short_code = html_args["user_short"]
-        user_short_passed = True
+        short_code= html_args["user_short"]
+        user_short_passed= True
 
     if data['tranlist'] == "custom_trans":
-        data['custom_tran_list'] = data['custom_tran_list'].split(',')
+        data['custom_tran_list']= data['custom_tran_list'].split(',')
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
 
     if owner == 1:
-        sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
+        sqlfile= "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
                                                       data['organism'],
                                                       data['transcriptome'])
@@ -322,26 +322,26 @@ def find_pauses(data, user, logged_in):
             return "Cannot find annotation file {}.{}.sqlite".format(
                 data['organism'], data['transcriptome'])
     else:
-        sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+        sqlfile= "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data['organism'], data['transcriptome'])
-    traninfo = sqlquery(sqlfile, "transcripts")
-    tran_gene_dict = {}
+    traninfo= sqlquery(sqlfile, "transcripts")
+    tran_gene_dict= {}
 
-    principal_transcripts = []
+    principal_transcripts= []
     if data['tranlist'] == "prin_trans":
-        traninfo = traninfo.filter(pl.col("principal") == 1)
+        traninfo= traninfo.filter(pl.col("principal") == 1)
     elif data['tranlist'] == "custom_trans":
-        traninfo = traninfo.filter(
+        traninfo= traninfo.filter(
             pl.col("transcript").is_in(data['custom_tran_list']))
     else:
         pass
-    tran_gene = traninfo[["transcript", "gene"]]
-    tran_gene.gene = tran_gene.gene.apply(lambda x: x.replace(",", "_"))
+    tran_gene= traninfo[["transcript", "gene"]]
+    tran_gene.gene= tran_gene.gene.apply(lambda x: x.replace(",", "_"))
 
-    transcriptome_info_dict = traninfo[["transcript", "strand", "chrom"]]
-    exons = sqlquery(sqlfile, "exons").filter(
+    transcriptome_info_dict= traninfo[["transcript", "strand", "chrom"]]
+    exons= sqlquery(sqlfile, "exons").filter(
         pl.col("transcript").is_in(traninfo['transcript']))
-    transcriptome_info_dict = transcriptome_info_dict.merge(exons,
+    transcriptome_info_dict= transcriptome_info_dict.merge(exons,
                                                             on="transcript")
 
     # logging.debug("accepted orf dict", accepted_orf_dict)
@@ -354,8 +354,8 @@ def find_pauses(data, user, logged_in):
     if not file_paths_dict["riboseq"] and not file_paths_dict["proteomics"]:
         return "Error no files selected"
 
-    total_files = 0
-    selected_seq_types = []
+    total_files= 0
+    selected_seq_types= []
     if "riboseq" in file_paths_dict:
         total_files += len(file_paths_dict["riboseq"])
         if "riboseq" not in selected_seq_types:
@@ -365,18 +365,18 @@ def find_pauses(data, user, logged_in):
         if "proteomics" not in selected_seq_types:
             selected_seq_types.append("proteomics")
 
-    profile_dict, file_string, label_string = create_profiles(
+    profile_dict, file_string, label_string= create_profiles(
         file_paths_dict, principal_transcripts, total_files, min_read_length,
         max_read_length)
-    sorted_all_values, file_output_dict = extract_values(
+    sorted_all_values, file_output_dict= extract_values(
         traninfo_dict, data, tran_gene_dict, selected_seq_types, profile_dict,
         min_fold_change, window, min_coverage, nuc_output)
     if sorted_all_values:
         return "No results, try making filters less restrictive"
 
     # TODO change extension to csv if only one file
-    filename = short_code + ".zip"
-    returnstr = write_to_file(sorted_all_values, file_output_dict,
+    filename= short_code + ".zip"
+    returnstr= write_to_file(sorted_all_values, file_output_dict,
                               sequence_dict, organism, transcriptome,
                               file_string, label_string, short_code)
 
@@ -399,14 +399,14 @@ def find_pauses(data, user, logged_in):
 
 
 # Returns a table with ranked orf scores
-pausequery_blueprint = Blueprint("pausequery",
+pausequery_blueprint= Blueprint("pausequery",
                                  __name__,
                                  template_folder="templates")
 
 
-@pausequery_blueprint.route('/pausequery', methods=['POST'])
+@ pausequery_blueprint.route('/pausequery', methods=['POST'])
 def pausequery():
 
-    data = request.args.to_dict()
-    user, logged_in = fetch_user()
+    data= request.args.to_dict()
+    user, logged_in= fetch_user()
     return find_pauses(data, user, logged_in)

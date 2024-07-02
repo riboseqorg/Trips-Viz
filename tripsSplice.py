@@ -429,35 +429,6 @@ def genomic_orf_coordinate_ranges(
     return genomic_orf_structures
 
 
-def genomic_junction_positions(
-    # gene,
-    # sqlite_path_organism,
-    # supported_transcripts,
-    exons: Dict[str, List[Tuple[int, int]]],
-    # filter=True
-) -> Dict[str, List[Tuple[int, int]]]:
-    """
-    Class for extracting information from the trips splice database.
-
-    Parameters:
-
-    Returns:
-
-    """
-    genomic_junctions = {}
-    for transcript in exons:
-        if transcript not in genomic_junctions:
-            genomic_junctions[transcript] = []
-
-        number_of_exons = len(exons[transcript])
-        for index, _ in enumerate(exons[transcript]):
-            if index < number_of_exons - 1:
-                genomic_junctions[transcript].append(
-                    (exons[transcript][index][1],
-                     exons[transcript][index + 1][0]))
-    return genomic_junctions
-
-
 def genomic_junction_scores(
     # gene_name,
     sqlite_path_organism: str,

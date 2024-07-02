@@ -9,7 +9,6 @@ from sqlitedict import SqliteDict
 from tripsCount import count_read_supporting_regions_per_transcript
 from tripsSplice import (
     genomic_exon_coordinate_ranges,
-    genomic_junction_positions,
     genomic_junction_scores,
     get_protein_coding_transcript_ids,
     get_reads_per_genomic_location,
@@ -71,75 +70,6 @@ def region_coverage(
             coverage_region_transcript[transcript][item[0]] = coverage
 
     return coverage_region_transcript
-
-
-def coverage_junction_transcript(
-    junction_scores: Dict[str, Dict[str,
-                                    float]]) -> Dict[str, Dict[str, float]]:
-    # function to calculate the normalised coverage of junction features. returns a nested dict.
-    # 60 = 30 + 30 which is the sum of two riboseq read lengths.
-    coverage_junction = {}
-    for transcript in junction_scores:
-        if transcript not in coverage_junction:
-            coverage_junction[transcript] = {}
-        for junction in junction_scores[transcript]:
-            coverage = float(junction_scores[transcript][junction]) / float(60)
-            coverage_junction[transcript][junction] = coverage
-
-    return coverage_junction
-
-
-def average_unique_coverage(
-        unique_shared_exons: Dict[str, Dict[str, Dict[str, int]]],
-        unique_shared_junctions: Dict[str, Dict[str, Dict[str, int]]],
-        coverage_junction: Dict[str, Dict[str, float]],
-        coverage_exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
-    # Return the average coverage of all unique features. Sum of coverages over number of unique features
-
-    average_features = {}
-
-    for transcript in unique_shared_exons:
-        sum = 0
-        count = 0
-        for item in unique_shared_exons[transcript]['unique']:
-            sum += coverage_exons[transcript][item]
-            count += 1
-
-        for junction in unique_shared_junctions[transcript]['unique']:
-            sum += coverage_junction[transcript][junction]
-            count += 1
-
-        if transcript not in average_features:
-            if unique_shared_exons[transcript][
-                    'unique'] == [] and unique_shared_junctions[transcript][
-                        'unique'] == []:
-                average_features[transcript] = 0
-            else:
-                average_features[transcript] = float(sum) / float(count)
-
-    return average_features
-
-
-def all_feature_average(
-        coverage_junction: Dict[str, Dict[str, float]],
-        coverage_exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
-    # Average of the coverage of all features. Sum of coverages over number of features
-    average_features = {}
-
-    for transcript in coverage_exons:
-        sum = 0
-        count = 0
-        for exon in coverage_exons[transcript]:
-            sum += coverage_exons[transcript][exon]
-            count += 1
-
-        for junction in coverage_junction[transcript]:
-            sum += coverage_junction[transcript][junction]
-            count += 1
-
-        if transcript not in average_features:
-            average_features[transcript] = float(sum) / float(count)
-    return average_features
 
 
 def cORF_ratio(average_unique: Dict[str, float],
@@ -304,7 +234,17 @@ def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
              exons: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     # Main function for implementing method. Executes above functions and determines if all features are shared
     # Returms OPM values from ORFs_per_million function
-    junctions = genomic_junction_positions(exons)
+    junctions = {}
+    for transcript in exons:
+        if transcript not in junctions:
+            junctions[transcript] = []
+
+        number_of_exons = len(exons[transcript])
+        for index, _ in enumerate(exons[transcript]):
+            if index < number_of_exons - 1:
+                junctions[transcript].append((exons[transcript][index][1],
+                                              exons[transcript][index + 1][0]))
+
     junction_scores = genomic_junction_scores(sqlite_path_organism,
                                               sqlite_path_reads, supported,
                                               junctions)
@@ -313,21 +253,38 @@ def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
     coverage_exons = region_coverage(exons, counts)
 
     unique_shared_junctions = classify_regions_shared_unique(junctions)
-    coverage_junctions = coverage_junction_transcript(junction_scores)
+    coverage_junction = {}
+    for transcript in junction_scores:
+        if transcript not in coverage_junction:
+            coverage_junction[transcript] = {}
+        for junction in junction_scores[transcript]:
+            coverage = junction_scores[transcript][junction] / 60.
+            coverage_junction[transcript][junction] = coverage
 
-    average_unique = average_unique_coverage(unique_shared_exons,
-                                             unique_shared_junctions,
-                                             coverage_junctions,
-                                             coverage_exons)
-    average_all = all_feature_average(coverage_junctions, coverage_exons)
+    average_all = {}
+    average_unique = {}
+
+    for transcript in coverage_exons:
+        total = (sum(coverage_exons[transcript].values()) +
+                 sum(coverage_junction[transcript].values()))
+        count = len(coverage_exons[transcript]) + len(
+            coverage_junction[transcript])
+        if count:
+            average = total * 1. / count
+            average_all[transcript] = average
+            if transcript in unique_shared_exons:
+                average_unique[transcript] = average
+        else:
+            average_all[transcript] = 0
+            if transcript in unique_shared_exons:
+                average_unique[transcript] = 0
 
     cORF = cORF_ratio(average_unique, average_all)
 
     all_shared = True
     for transcript in supported:
-        if unique_shared_junctions[transcript][
-                "unique"] == [] and unique_shared_exons[transcript][
-                    "unique"] == []:
+        if (not unique_shared_junctions[transcript]["unique"]
+                and not unique_shared_exons[transcript]["unique"]):
             cORF[transcript] = adjusted_coverage_for_non_unique_orfs(
                 transcript, coverage_exons, coverage_junctions, average_all)
         else:
@@ -346,6 +303,7 @@ def orfQuant(sqlite_path_organism: str, sqlite_path_reads: str,
     # }).drop_duplicates("counts")
 
     adjusted_a_sites = aORF(cORF, counts)
+
     orf_lengths = lORF(supported, sqlite_path_organism)
 
     orfs_per_million = ORFs_per_million(adjusted_a_sites, orf_lengths)

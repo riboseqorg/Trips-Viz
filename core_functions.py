@@ -539,24 +539,22 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
     minreadlen = 15
     maxreadlen = 150
     profile = {}
-    try:
+    if "unambig" in trancounts:
         unambig_trancounts = trancounts["unambig"]
-    except Exception:
-        unambig_trancounts = {}
-    for readlen in unambig_trancounts:
-        if not (minreadlen <= readlen <= maxreadlen):
-            continue
+        for readlen in unambig_trancounts:
+            if not (minreadlen <= readlen <= maxreadlen):
+                continue
 
-        for pos in unambig_trancounts[readlen]:
-            # That way when we add the reduced count at each position, in total it will add up to the original count
-            # and prevent a bias toward longer peptides, this allows us to count a fraction of a peptide that overlaps with an ORF
-            # rather than counting an arbitrary position like the 5' end or 3' end which may fall outside the ORF in question.
-            count = unambig_trancounts[readlen][pos] / float(readlen / 3)
-            for x in range(pos, pos + readlen, 3):
-                try:
-                    profile[x] += count
-                except Exception:
-                    profile[x] = count
+            for pos in unambig_trancounts[readlen]:
+                # That way when we add the reduced count at each position, in total it will add up to the original count
+                # and prevent a bias toward longer peptides, this allows us to count a fraction of a peptide that overlaps with an ORF
+                # rather than counting an arbitrary position like the 5' end or 3' end which may fall outside the ORF in question.
+                count = unambig_trancounts[readlen][pos] / float(readlen / 3)
+                for x in range(pos, pos + readlen, 3):
+                    try:
+                        profile[x] += count
+                    except Exception:
+                        profile[x] = count
     return profile
 
 
@@ -572,5 +570,5 @@ def fetch_filename_file_id(file_id: int) -> str:
 
     Example:
     '''
-    files = get_table("files")
-    return files.loc[files["file_id"] == file_id, 'file_name'].values[0]
+    return get_table("files").filter(pl.col("file_id") == file_id)[0,
+                                                                   "file_name"]
