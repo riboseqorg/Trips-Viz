@@ -1,6 +1,7 @@
 from typing import Dict, Tuple, List, Union
 from flask import Blueprint, render_template, request
 import sqlite3
+import polars as pl
 from sqlitedict import SqliteDict
 import os
 import time
@@ -10,6 +11,7 @@ from core_functions import (fetch_studies, fetch_files, fetch_study_info,
                             fetch_file_paths, generate_short_code, form_filler,
                             build_profile, build_proteomics_profile, nuc_to_aa,
                             fetch_user)
+from sqlqueries_2 import get_table, get_user_id
 import json
 import pandas as pd
 from flask_login import current_user
@@ -941,22 +943,16 @@ def write_to_file(sorted_all_values, filename, sequence_dict, organism,
 
 def find_orfs(data, user, logged_in):
     logging.debug("orfquery called")
-    global user_short_passed
-    organisms = get_table("organisms")
-    owner = organisms.loc[(
-        organisms["organism_name"] == data["organism"]
-        & organisms["transcriptome_list"] == data["transcriptome"]),
-                          "owner"].values[0]
+    owner = get_table("organisms").filter(
+        (pl.col("organism_name") == data["organism"])
+        & (pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
     # TODO: Check transcriptome list option
 
     start_time = time.time()
 
-    minscore = float(data["minscore"])
-    output = data["output"]
-    # break progress down into 4 subsections, aggregating data, building orf dict, creating profiles, and extracting features
     prog_count = 0
     if "nnet_check" in data:
-        output = "nnet"
+        data["output"] = "nnet"
     else:
         pass
 
@@ -971,7 +967,7 @@ def find_orfs(data, user, logged_in):
 
     aggregate_dict = {}
     full_studies = []
-    if minscore == 0:
+    if data["minscore"] == 0:
         for seq_type in file_paths_dict:
             all_file_ids = list(file_paths_dict[seq_type].keys())
             all_study_ids = files.loc[(files["file_id"].isin(all_file_ids)
@@ -1040,35 +1036,12 @@ def find_orfs(data, user, logged_in):
 
     # Used to extract columns from csv for neural neural_net
     feature_list = ["Type"]
-    if "sc_aug" in data:
-        start_codons.append("ATG")
-    if "sc_cug" in data:
-        start_codons.append("CTG")
-    if "sc_gug" in data:
-        start_codons.append("GTG")
-    if "sc_none" in data:
-        start_codons.append("any")
-    # start_codons.append("any")
+    for s_codon in ["aug", "cug", "gug", "none"]:
+        if 'sc' + s_codon in data:
+            start_codons.append(s_codon.upper())
     logging.debug("start codons {}".format(start_codons))
-    # min_start_increase = float(data["min_start_increase"])
-    # max_start_increase = float(data["max_start_increase"])
 
-    # min_stop_decrease = float(data["min_stop_decrease"])
-    # max_stop_decrease = float(data["max_stop_decrease"])
-
-    # min_coverage = float(data["min_coverage"])
-    # max_coverage = float(data["max_coverage"])
-
-    # min_lowest_frame_diff = float(data["min_lowest_frame_diff"])
-    # max_lowest_frame_diff = float(data["max_lowest_frame_diff"])
-
-    # min_highest_frame_diff = float(data["min_highest_frame_diff"])
-    # max_highest_frame_diff = float(data["max_highest_frame_diff"])
-
-    min_cds = float(data["min_cds"])
-    max_cds = float(data["max_cds"])
     all_cases = False
-    min_len = int(data["min_len"])
     if data["max_len"] == "all_cases":
         all_cases = True
         max_len = 10000
@@ -1091,9 +1064,7 @@ def find_orfs(data, user, logged_in):
         cons_score = ""
     user_defined_transcripts = []
     # tran_list is a radio button, user can choose between principal, all or a custom list
-    tranlist = data["tran_list"]
     # custom_tran_list is the actual comma seperated list of transcripts that user would enter should they choose the custom option in tranlist
-    custom_tran_list = data["custom_tran_list"]
 
     ambig = True if "ambig_check" in data else False
 
@@ -1101,26 +1072,11 @@ def find_orfs(data, user, logged_in):
 
     if "saved_check" in data:
         if current_user.is_authenticated:
-            user_name = current_user.name
-            cursor.execute(
-                "SELECT user_id from users WHERE username = '{}';".format(
-                    user_name))
-            result = (cursor.fetchone())
-            user_id = result[0]
-            connection = sqlite3.connect('{}/{}'.format(
-                config.SCRIPT_LOC, config.DATABASE_NAME))
-            cursor = connection.cursor()
-            # if filter previously saved cases is turned on, then we query the sqlite database here and remove hits from transcript_list
-            cursor.execute(
-                "SELECT tran,stop FROM users_saved_cases WHERE user_id = '{}' and organism = '{}';"
-                .format(user_id, organism))
-            result = cursor.fetchall()
-            for tran in result:
-                if str(tran[0]) not in filtered_transcripts:
-                    filtered_transcripts[str(tran[0])] = []
-                filtered_transcripts[str(tran[0])].append(int(tran[1]))
-            cursor.close()
-            connection.close()
+            user_id = get_user_id(current_user.name)
+            user_saved_cases = get_table('users_saved_cases').filter(
+                (pl.col('user_id') == user_id)
+                & (pl.col('organism') == organism))[["tran", "stop"]]
+            "SELECT tran,stop FROM users_saved_cases WHERE user_id = '{}' and organism = '{}';"
 
     if "start_increase_check" in data:
         feature_list.append("Start value")
@@ -1188,140 +1144,65 @@ def find_orfs(data, user, logged_in):
         logging.debug("File does not exists {}/static/tmp/{}".format(
             config.SCRIPT_LOC, filename))
 
-    if custom_tran_list != "":
-        custom_tran_list = custom_tran_list.replace(",", " ")
-        for item in custom_tran_list.split(" "):
+    if data["custom_tran_list"]:
+        data["custom_tran_list"] = data["custom_tran_list"].split(",")
+        for item in data["custom_tran_list"]:
             user_defined_transcripts.append(item)
 
-    if accepted_orftypes == []:
-        return_str = "Error no ORF type selected"
-        return returnstr
+    if not accepted_orftypes:
+        return "Error no ORF type selected"
     tran_gene_dict = {}
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
     accepted_orf_dict = {}
 
-    if start_codons == []:
-        returnstr = "Error no start codon types selected"
-        return returnstr
+    if not start_codons:
+        return "Error no start codon types selected"
 
-    if owner == 1:
-        if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)):
-            traninfo_connection = sqlite3.connect(
-                "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
-                                                    config.ANNOTATION_DIR,
-                                                    organism, transcriptome))
-        else:
-            returnstr = "Cannot find annotation file {}.{}.sqlite".format(
+    if owner:
+        sqlite_path = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
+        if not os.path.isfile(sqlite_path):
+            return "Cannot find annotation file {}.{}.sqlite".format(
                 organism, transcriptome)
-            return returnstr
     else:
-        traninfo_connection = sqlite3.connect(
-            "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome))
-
-    # traninfo_connection = sqlite3.connect("/home/DATA/www/tripsviz/tripsviz/trips_annotations/{0}/{0}.{1}.sqlite".format(organism,transcriptome))
-    traninfo_cursor = traninfo_connection.cursor()
+        sqlite_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, organism, transcriptome)
+    transcripts = sqlquery(sqlite_path, "transcripts")
+    principle_transcripts = transcripts.filter(
+        pl.col("transcript").is_in(principal_transcripts))
 
     traninfo_dict = {}
-    if output == "nnet":
-        traninfo_cursor.execute(
-            "SELECT transcript, cds_start, cds_stop,length,gene,sequence FROM transcripts"
-        )
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            tran = str(row[0])
-            try:
-                cds_start = int(row[1])
-                cds_stop = int(row[2])
-            except Exception:
-                cds_start = row[1]
-                cds_stop = row[2]
-            length = int(row[3])
-            gene = str(row[4])
-            seq = str(row[5])
-            traninfo_dict[tran] = {
-                "cds_start": cds_start,
-                "cds_stop": cds_stop,
-                "length": length,
-                "gene": gene,
-                "coding_regions": [],
-                "seq": seq
-            }
+    if data["output"] == "nnet":
+        pass
 
     principal_transcripts = []
-    if tranlist == "prin_trans":
-        traninfo_cursor.execute(
-            "SELECT transcript,gene FROM transcripts WHERE principal = 1;")
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            principal_transcripts.append(str(row[0]))
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
-    elif tranlist == "all_trans":
-        traninfo_cursor.execute("SELECT transcript,gene FROM transcripts;")
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            principal_transcripts.append(str(row[0]))
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
-    elif tranlist == "custom_trans":
-        principal_transcripts = user_defined_transcripts
-        traninfo_cursor.execute(
-            "SELECT transcript,gene FROM transcripts WHERE transcript IN ({});"
-            .format(str(principal_transcripts).strip("[]")))
-        result = traninfo_cursor.fetchall()
-        for row in result:
-            tran_gene_dict[row[0]] = row[1].replace(",", "_")
+    if data["tran_list"] == "prin_trans":
+        transcripts = transcripts.filter(pl.col("principal") == 1)
+    elif data["tran_list"] == "all_trans":
+        pass
+    elif data["tran_list"] == "custom_trans":
+        transcripts = transcripts.filter(
+            pl.col("transcript").is_in(data["custom_tran_list"]))
 
-    transcriptome_info_dict = {}
-    traninfo_cursor.execute(
-        "SELECT transcript,strand,chrom from transcripts WHERE transcript IN ({});"
-        .format(str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        transcriptome_info_dict[str(row[0])] = {
-            "strand": row[1],
-            "chrom": row[2],
-            "exons": []
-        }
-    traninfo_cursor.execute(
-        "SELECT * from exons WHERE transcript IN ({});".format(
-            str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        transcriptome_info_dict[str(row[0])]["exons"].append((row[1], row[2]))
+    exons = sqlquery(sqlite_path, "exons").filter(
+        pl.col("transcript").is_in(principal_transcripts)).join(
+            principle_transcripts, on="transcript")
+
     logging.debug("building transcriptom info dict")
-    sequence_dict = {}
-    traninfo_cursor.execute(
-        "SELECT transcript,sequence FROM transcripts WHERE transcript IN ({})".
-        format(str(principal_transcripts).strip("[]")))
-    result = traninfo_cursor.fetchall()
-    for row in result:
-        sequence_dict[row[0]] = row[1]
-    # logging.debug("sequence dict keys",sequence_dict.keys())
     # Holds a list of all transcripts in accepted_orf_dict
     accepted_transcript_list = []
     for table_name in accepted_orftypes:
         # logging.debug("table_name", table_name)
         # logging.debug("start codons", start_codons)
+        table = sqlquery(sqlite_path, table_name).filter(
+            (pl.col("cds_coverage") >= data["min_cds"]) & (pl.col("cds_coverage") <= data["max_cds"]) & (pl.col("length") >= data["min_len"]) & (pl.col("length") <= data["max_len"]) & (pl.col("transcript"").is_in(principle_transcript))
+        )
         if "any" in start_codons:
             logging.debug("selecting any start")
-            traninfo_cursor.execute(
-                "SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});"
-                .format(table_name, min_cds, max_cds, min_len, max_len,
-                        str(principal_transcripts).strip("[]")))
+            pass
         else:
             logging.debug("selecting aug,cug,gug")
-            # logging.debug("SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE start_codon IN ({}) AND cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});".format(table_name, str(start_codons).strip("[]"),min_cds,max_cds,min_len, max_len, str(principal_transcripts).strip("[]")))
-            traninfo_cursor.execute(
-                "SELECT transcript,start_codon,length,cds_coverage,start,stop  FROM {} WHERE start_codon IN ({}) AND cds_coverage >= {} AND cds_coverage <= {} AND length >= {} AND length <= {} AND transcript IN ({});"
-                .format(table_name,
-                        str(start_codons).strip("[]"), min_cds, max_cds,
-                        min_len, max_len,
-                        str(principal_transcripts).strip("[]")))
-        result = traninfo_cursor.fetchall()
-        total_trans = float(len(result))
-        traninfo_connection.close()
+            table = table.filter(pl.col("start_codon").is_in(start_codons))
         logging.debug("for row in result")
         rows = 0
         for row in result:
@@ -1338,7 +1219,7 @@ def find_orfs(data, user, logged_in):
             # Orfs with multiple potential starts will be grouped by start codon (so only one potential start is reported)
             # If the user has selected all transcripts then instead group by the genomic stop codon co-ordinates (so only one ORF will be reported,
             # even if it occurs on multiple transcript isoforms)
-            if tranlist != "all_trans2":
+            if data["tran_list"] != "all_trans2":
                 stop = row[5]
                 locus = transcript
             else:
@@ -1373,10 +1254,9 @@ def find_orfs(data, user, logged_in):
         if "te_check" in data:
             del data["te_check"]
 
-    if file_paths_dict["riboseq"] == {} and file_paths_dict[
-            "proteomics"] == {}:
-        returnstr = "Error no files selected"
-        return returnstr
+    if not file_paths_dict["riboseq"] and not file_paths_dict[
+            "proteomics"]:
+        return "Error no files selected"
 
     total_files = 0
     selected_seq_types = []
@@ -1390,7 +1270,7 @@ def find_orfs(data, user, logged_in):
             selected_seq_types.append("proteomics")
 
     total_trans = len(accepted_transcript_list)
-    if output == "nnet":
+    if data["output"] == "nnet":
         for transcript in traninfo_dict:
             if transcript not in accepted_transcript_list:
                 accepted_transcript_list.append(transcript)
@@ -1398,26 +1278,26 @@ def find_orfs(data, user, logged_in):
 
     profile_dict, file_string = create_profiles(file_paths_dict,
                                                 accepted_transcript_list,
-                                                ambig, total_files, minscore)
+                                                ambig, total_files,
+                                                data["minscore"])
 
-    logging.debug("profile dict built")
-
-    logging.debug("extracting values")
-    if output != "nnet":
+    logging.debug("profile dict built\nextracting values")
+    if data["output"] != "nnet":
         sorted_all_values = extract_values(accepted_orf_dict, data,
                                            tran_gene_dict, selected_seq_types,
                                            profile_dict, all_cases)
-        if sorted_all_values == None:
-            return ("No results, try making filters less restrictive")
+        if not sorted_all_values:
+            return "No results, try making filters less restrictive"
     else:
-        create_training_set(profile_dict, traninfo_dict, short_code, min_len)
+        create_training_set(profile_dict, traninfo_dict, short_code,
+                            data["min_len"])
         create_test_set(profile_dict, accepted_orf_dict, traninfo_dict,
-                        short_code, min_len, sequence_dict, region)
+                        short_code, data["min_len"], sequence_dict, region)
         returnstr = neural_net(
             short_code, ["type", "coverage", "median_diff", "first_diff"],
             organism, transcriptome, file_string)
 
-    if output != "nnet":
+    if data["output"] != "nnet":
         logging.debug("Writing to file")
     returnstr = write_to_file(sorted_all_values, filename, sequence_dict,
                               organism, transcriptome, file_string)

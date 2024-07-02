@@ -27,7 +27,7 @@ class VegaPlot:
 
     def _plot(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""
-        selection = alt.selection_multi(fields=['frame'], bind='legend')
+        selection = alt.selection_point(fields=['frame'], bind='legend')
         return self.chart.encode(
             x=alt.X(
                 f'{x_col}',
@@ -36,10 +36,12 @@ class VegaPlot:
                 # scale=alt.Scale(domain=[0, 500])
             ),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
-            color=alt.Color('frame:N', scale=self.colors),
+            color=alt.condition(
+                alt.Color('frame:N', scale=self.colors, legend=None),
+                alt.value(1), alt.value(0.5)),
             opacity=alt.condition(
                 selection, alt.value(1),
-                alt.value(0.5))).add_selection(selection).transform_filter(
+                alt.value(0.5))  ).add_selection().transform_filter(
                     selection).interactive(bind_y=False).properties(width=800,
                                                                     height=300)
 

@@ -14,7 +14,7 @@ from sqlalchemy import insert, delete, update
 
 
 def sqlquery(sqlfilepath: str, tablename: str) -> DataFrame:
-    print(sqlfilepath, tablename)
+    # print(sqlfilepath, tablename)
     return pl.read_database_uri(f"SELECT * FROM {tablename}",
                                 f"sqlite://{sqlfilepath}",
                                 engine="adbc")
@@ -25,7 +25,7 @@ def sqldict2table(sqldict: Dict) -> pd.DataFrame:
     return pd.DataFrame(sqldict)
 
 
-def get_user_id(username: str|None) -> int | None:
+def get_user_id(username: str | None) -> int | None:
     '''Return the user_id for a given username'''
     if not username:
         return None
