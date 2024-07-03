@@ -5,9 +5,6 @@ import os
 import operator
 from sqlitedict import SqliteDict
 from math import log
-import mpld3
-from mpld3 import plugins
-import pandas as pd
 import numpy as np
 from scipy.stats.stats import spearmanr, pearsonr
 import matplotlib.cm as cm
@@ -168,21 +165,7 @@ def mismatch_pos(
            linewidth=0,
            align="center")
     ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    ax.set_ylabel('Count', labelpad=100, fontsize=axis_label_size)
-    ax.set_xlabel('Position', fontsize=axis_label_size)
-    ax.set_xlim(-1, max(master_dict.keys()) + 1)
-    #ax.xaxis.set_major_locator(plt.MaxNLocator(3))
-    #ax.yaxis.set_major_locator(plt.MaxNLocator(3))
-    #plt.rc('axes', linewidth=40,edgecolor="green")
     plt.grid(color="white", linewidth=2, linestyle="solid")
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -280,25 +263,7 @@ def nuc_comp(
                      label=labels,
                      color=c_col,
                      linewidth=6)
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    ilp = InteractiveLegendPlugin([a_line, t_line, g_line, c_line],
-                                  ["A", "T", "G", "C"],
-                                  alpha_unsel=0,
-                                  alpha_sel=1,
-                                  start_visible=True,
-                                  fontsize=legend_size)
-    plugins.connect(fig, ilp, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadProfile(returnstr=returnstr),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
     graph += mpld3.fig_to_html(fig)
-    #return graph
-    return graph
 
 
 def mrna_dist_readlen(
@@ -393,24 +358,6 @@ def mrna_dist_readlen(
                                  color='#ff77d4',
                                  linewidth=4)
     #total_line = ax.plot(mrna_dist_dict["total"].keys(), mrna_dist_dict["total"].values(),label=labels, color='grey', linewidth=4)
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    ilp = InteractiveLegendPlugin([
-        five_leader_line, start_codon_line, cds_line, stop_codon_line,
-        three_trailer_line
-    ],
-                                  labels,
-                                  alpha_unsel=0,
-                                  alpha_sel=1,
-                                  start_visible=True)
-    plugins.connect(fig, ilp, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadProfile(returnstr=returnstr),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
 
@@ -451,26 +398,11 @@ def dinuc_bias(
             color='#9ACAFF',
             linewidth=4,
             edgecolor='#9ACAFF')
-    plt.ylabel('Count (x 10 {})'.format(factor),
-               fontsize=axis_label_size,
-               labelpad=100)
-    plt.xlabel('Dinculeotide', fontsize=axis_label_size, labelpad=-10)
-    title_str = "Dinucleotide composition ({})".format(short_code)
-    plt.title(title_str, fontsize=title_size)
-    plt.xticks(tick_pos, master_count_dict.keys())
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
 
 
-def calc_meta_factor(inlist: List[float]) -> Tuple[List[float], int]:
+def calc_meta_factor(inlist: np.ndarray) -> Tuple[np.ndarray, int]:
     """
 
     Parameters:
@@ -481,20 +413,19 @@ def calc_meta_factor(inlist: List[float]) -> Tuple[List[float], int]:
     Example:
 
     """
-    maxval = max(inlist)
+    maxval = inlist.max()
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
     zeroes_string = "0" * zeroes
-    factor = int("1" + zeroes_string)
-    for i in range(0, len(inlist)):
-        inlist[i] = float(inlist[i]) / factor
+    factor = float("1" + zeroes_string)
+    inlist /= factor
     return inlist, zeroes
 
 
 def metagene_plot(
-    readlen_list: List[int],
-    fiveprime_list: List[int],
-    threeprime_list: List[int],
+    readlen_list: np.ndarray,
+    fiveprime_list: np.ndarray,
+    threeprime_list: np.ndarray,
     metagene_type: str,
     title: str,
     minreadlen: int,
@@ -553,8 +484,6 @@ def metagene_plot(
             for count in threeprime_list:
                 returnstr += "{},{}\n".format(start_pos, count)
                 start_pos += 1
-        #if metagene_five == True and metagene_three == True:
-        #	leg = ax.legend((rects1[0], rects2[0]), ('5 prime', '3 prime'),fontsize="26")
         if metagene_end == "metagene_five":
             leg = ax.legend((rects1), ['5 prime'], fontsize="26")
         elif metagene_end == "metagene_three":
@@ -600,20 +529,11 @@ def metagene_plot(
             file_ind += 1
             line_collections.append(plotcounts)
             labels.append(file_id + labelend)
-        ilp = InteractiveLegendPlugin(line_collections,
-                                      labels,
-                                      alpha_unsel=0,
-                                      alpha_sel=0.85,
-                                      start_visible=True,
-                                      fontsize=19,
-                                      xoffset=200)
         for i in range(-600, 600):
             if i in return_dict:
                 returnstr += "{},{}\n".format(i, return_dict[i])
             else:
                 returnstr += "{},0\n".format(i)
-    #ilp = InteractiveLegendPlugin([rects1,rects2], ["5'","3'"], alpha_unsel=0,alpha_sel=0.75)
-    # add some text for labels, title and axes ticks
     if metagene_aggregate:
         ax.set_ylabel('Count x (10 x{})'.format(factor),
                       labelpad=25,
@@ -642,11 +562,6 @@ def metagene_plot(
         plugins.connect(fig, ilp, TopToolbar(yoffset=-22, xoffset=-300),
                         DownloadPNG(returnstr=title_str),
                         DownloadProfile(returnstr=returnstr))
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
     graph += mpld3.fig_to_html(fig)
     return graph
 
