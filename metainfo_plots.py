@@ -26,7 +26,7 @@ yellowhex = "#FFFF91"
 # Define some CSS to control our custom labels
 
 
-def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
+def calc_factor(maxval) -> Tuple[Dict[str, float], int]:
     """
 
     Parameters:
@@ -37,14 +37,11 @@ def calc_factor(master_dict: Dict[str, float]) -> Tuple[Dict[str, float], int]:
     Example:
 
     """
-    maxval = max(master_dict.values())
     string_maxval = str(maxval)
     zeroes = len(string_maxval) - 1
     zeroes_string = "0" * zeroes
     factor = int("1" + zeroes_string)
-    for key in master_dict:
-        master_dict[key] = float(master_dict[key]) / factor
-    return master_dict, zeroes
+    return factor, zeroes
 
 
 def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
@@ -69,50 +66,14 @@ def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
     Example:
 
     """
-    master_dict, factor = calc_factor(master_dict)
-    returnstr = "Readlen,Count\n"
-    for key in master_dict:
-        returnstr += "{},{}\n".format(key, master_dict[key])
-    fig, ax = plt.subplots(figsize=(13, 8))
-    #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
-    ax.set_xlabel('Read Length', fontsize="26")
-    ax.set_ylabel('Count', fontsize="26", labelpad=50)
-    if master_dict.values():
-        ax.set_ylim(0, max(master_dict.values()) * 1.25)
-    else:
-        ax.set_ylim(0, 1)
-    width = 0.90
-    #plot it
-    ax = plt.subplot(111)
-    title_str = "{} ({})".format(title, short_code)
-    ax.set_title(title_str, y=1.05, fontsize=title_size)
-    #logging.warn("Width is ", width)
-    read_length_list = [int(i) for i in master_dict.keys()]
+    factor, factor = calc_factor(master_dict["count"].max())
+    master_dict = master_dict.with_columns(pl.col("count") / factor)
     ax.bar(read_length_list,
            master_dict.values(),
            width,
            color=readlength_col,
            linewidth=0,
            align="center")
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    #ax.set_ylabel('Count', labelpad=100,fontsize=axis_label_size)
-    ax.set_ylabel('Count (x10 {})'.format(factor),
-                  labelpad=100,
-                  fontsize=axis_label_size)
-    ax.set_xlabel('Readlength', labelpad=-15, fontsize=axis_label_size)
-    #ax.xaxis.set_major_locator(plt.MaxNLocator(3))
-    #ax.yaxis.set_major_locator(plt.MaxNLocator(3))
-    #plt.rc('axes', linewidth=40,edgecolor="green")
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadProfile(returnstr=returnstr),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
