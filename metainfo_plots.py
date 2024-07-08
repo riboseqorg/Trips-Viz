@@ -1,20 +1,13 @@
 from typing import Dict, List, Tuple
 
-from matplotlib import pyplot as plt
 import os
 import operator
 from sqlitedict import SqliteDict
 from math import log
 import numpy as np
 from scipy.stats.stats import spearmanr, pearsonr
-import matplotlib.cm as cm
-from bokeh.plotting import figure, output_file
-from bokeh.embed import file_html
-from bokeh.resources import CDN
-from bokeh.palettes import all_palettes
 import fixed_values
 from fixed_values import my_decoder
-from bokeh.models import (TapTool, OpenURL, Range1d, Label, LogTicker,
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
 
@@ -105,10 +98,6 @@ def mismatch_pos(
     Example:
     """
 
-    fig, ax = plt.subplots(figsize=(13, 8))
-    #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
-    ax.set_xlabel('Read Length', fontsize="26")
-    ax.set_ylabel('Count', fontsize="26", labelpad=50)
 
     if master_dict.values():
         ax.set_ylim(0, max(master_dict.values()) * 1.25)
@@ -116,17 +105,12 @@ def mismatch_pos(
         ax.set_ylim(0, 1)
     width = 0.90
     #plot it
-    ax = plt.subplot(111)
-    title_str = "{} ({})".format(title, short_code)
-    ax.set_title(title_str, y=1.05, fontsize=title_size)
     ax.bar(master_dict.keys(),
            master_dict.values(),
            width,
            color=readlength_col,
            linewidth=0,
            align="center")
-    ax.set_facecolor(background_col)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
     return graph
 
 
@@ -180,12 +164,6 @@ def nuc_comp(
         returnstr += "{},{:.2f},{:.2f},{:.2f},{:.2f}\n".format(
             i, master_dict["A"][i], master_dict["T"][i], master_dict["G"][i],
             master_dict["C"][i])
-    fig, ax = plt.subplots(figsize=(13, 8))
-    ax = plt.subplot(111)
-    #rects1 = ax.bar([20,21,22,23,24,25,26,27,28], [100,200,100,200,100,200,100,200,100], 0.1, color='r',align='center')
-    ax.set_xlabel('Position (nucleotides)',
-                  labelpad=-10,
-                  fontsize=axis_label_size)
     if nuc_comp_type == "nuc_comp_per":
         ax.set_ylim(0, 100)
         ax.set_ylabel('Percent %', fontsize=axis_label_size, labelpad=50)
@@ -194,8 +172,6 @@ def nuc_comp(
                         max(master_dict["T"].values()),
                         max(master_dict["G"].values()),
                         max(master_dict["C"].values()))
-        ax.set_ylim(0, maxheight)
-        ax.set_ylabel('Count', fontsize=axis_label_size, labelpad=0)
     if nuc_comp_direction == "nuc_comp_five":
         ax.set_xlim(0, maxreadlen)
     elif nuc_comp_direction == "nuc_comp_three":
@@ -203,7 +179,6 @@ def nuc_comp(
     #plot it
 
     title_str = "{} ({})".format(title, short_code)
-    ax.set_title(title_str, y=1.05, fontsize=title_size)
     a_line = ax.plot(master_dict["A"].keys(),
                      master_dict["A"].values(),
                      label=labels,
@@ -224,7 +199,8 @@ def nuc_comp(
                      label=labels,
                      color=c_col,
                      linewidth=6)
-    graph += mpld3.fig_to_html(fig)
+
+    return graph
 
 
 def mrna_dist_readlen(
@@ -325,11 +301,6 @@ def mrna_dist_readlen(
 
 def dinuc_bias(
     master_count_dict: Dict[str, int],
-    short_code: str,
-    background_col: str,
-    title_size: int,
-    axis_label_size: int,  # subheading_size, 
-    marker_size: int,
 ) -> str:
     """
     
@@ -346,8 +317,9 @@ def dinuc_bias(
     Example:
 
     """
-    master_count_dict, factor = calc_factor(master_count_dict)
-    fig, ax = plt.subplots(figsize=(13, 8))
+    factor, zeros = calc_factor(master_count_dict["count"].max())
+    master_count_dic = master_count_dict.with_columns(
+        pl.col("count") / factor)
     N = 16
     bar_width = 0.35
     bar_l = [i for i in range(16)]
@@ -359,7 +331,6 @@ def dinuc_bias(
             color='#9ACAFF',
             linewidth=4,
             edgecolor='#9ACAFF')
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -514,16 +485,6 @@ def metagene_plot(
     ax.tick_params('both', labelsize=marker_size)
     plt.xlim(minreadlen, maxreadlen)
 
-    ax.set_facecolor(background_col)
-    if metagene_aggregate:
-        plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                        DownloadPNG(returnstr=title_str),
-                        DownloadProfile(returnstr=returnstr))
-    else:
-        plugins.connect(fig, ilp, TopToolbar(yoffset=-22, xoffset=-300),
-                        DownloadPNG(returnstr=title_str),
-                        DownloadProfile(returnstr=returnstr))
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -577,9 +538,6 @@ def trip_periodicity_plot(read_dict: Dict[str, Dict[int, float]], title: str,
                       columns=['frame1', 'frame2', 'frame3', 'readlengths'])
     pos = list(range(len(df['frame1'])))
     width = 0.25
-    fig, ax = plt.subplots(figsize=(13, 8))
-
-    plt.plot(0, 0, alpha=0, label="score")
     # Create a bar with frame1 data in position pos,
     plt.bar(pos,
             df['frame1'],
@@ -629,24 +587,8 @@ def trip_periodicity_plot(read_dict: Dict[str, Dict[int, float]], title: str,
     ])
 
     # Adding the legend and showing the plot
-    leg = plt.legend([
-        "Score: {}".format(trip_periodicity_score), 'Frame 1', 'Frame 2',
-        'Frame 3'
-    ],
-                     loc='upper right',
-                     fontsize=legend_size)
     leg.get_frame().set_edgecolor('#D2D2EB')
     ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadPNG(returnstr=title_str),
-                    DownloadProfile(returnstr=returnstr))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -675,18 +617,9 @@ def mapped_reads_plot(
     ind = np.arange(N)  # the x locations for the groups
     all_reads_count = 0
     title_str = "Reads breakdown ({})".format(short_code)
-    plt.title(title_str, fontsize=title_size)
-    plt.xticks(tick_pos, labels)
-    #plt.yticks(np.arange(0, 81, 10))
-    #plt.legend((p1[0], p2[0], p3[0],p4[0],p5[0],p6[0]), ('Cutadapt removed', 'rRNA removed', 'Unmapped', 'Ambiguous','Mapped noncoding', 'Mapped coding'))
-
-    ax.set_facecolor(background_col)
-    ax.tick_params('y', labelsize=marker_size)
     if len(labels) > 12:
         marker_size = int(marker_size / (len(labels) / 8))
-    ax.tick_params('x', labelsize=marker_size)
 
-    plt.grid(color="white", linewidth=2, linestyle="solid")
     totals = []
     for i in range(0, len(unmapped)):
         curr_total = 0
@@ -880,53 +813,6 @@ def mapped_reads_plot(
                      alpha=0)
     #Dummy plot point so we can add total reads to the legend
     total_reads_plot = plt.plot(0, 0, alpha=0)
-    plt.legend(
-        (p7[0], p6[0], p5[0], p4[0], p3[0], p2[0], p1[0], total_reads_plot[0]),
-        ('PCR Duplicates: {:,}'.format(sum(pcr_duplicates)),
-         'Mapped coding: {:,}'.format(sum(mapped_coding)),
-         'Mapped noncoding: {:,}'.format(sum(mapped_noncoding)),
-         'Ambiguous: {:,}'.format(sum(ambiguous)), 'Unmapped: {:,}'.format(
-             sum(unmapped)), 'rRNA removed: {:,}'.format(sum(rrna_removed)),
-         'Cutadapt removed {:,}'.format(sum(cutadapt_removed)),
-         'Total reads: {:,}'.format(all_reads_count)),
-        fontsize=legend_size / 3)
-
-    for i, bar in enumerate(p8.get_children()):
-        per = int(round((pcr_duplicates[i] / totals[i]) * 100, 0))
-        lab1 = '<div class="tooltip"><span class="tooltiptext">'
-        lab1 += '<b>Filename:</b> {}<br><br><b>Pcr duplicates:</b> {:,}  ({}%)'.format(
-            labels[i], pcr_duplicates[i], per)
-        per = int(round((mapped_coding[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Mapped coding:</b> {:,}  ({}%)'.format(
-            mapped_coding[i], per)
-        per = int(round((mapped_noncoding[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Mapped noncoding:</b> {:,}  ({}%)'.format(
-            mapped_noncoding[i], per)
-        per = int(round((ambiguous[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Ambiguous:</b> {:,}  ({}%)'.format(ambiguous[i], per)
-        per = int(round((unmapped[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Unmapped:</b> {:,}  ({}%)'.format(unmapped[i], per)
-        per = int(round((rrna_removed[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>rRNA removed:</b> {:,}  ({}%)'.format(
-            rrna_removed[i], per)
-        per = int(round((cutadapt_removed[i] / totals[i]) * 100, 0))
-        lab1 += '<br><b>Cutadapt_removed:</b> {:,}  ({}%)'.format(
-            cutadapt_removed[i], per)
-        #lab1 = (str(lab1).to_html())
-        tooltip1 = plugins.LineHTMLTooltip(bar,
-                                           lab1,
-                                           voffset=10,
-                                           hoffset=30,
-                                           css=line_tooltip_css)
-        plugins.connect(fig, tooltip1)
-
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -989,24 +875,6 @@ def single_tran_de(single_tran_de_transcript: str,
     full_title = "ORF TPMs ({})"
     x_lab = ''
     y_lab = 'TPM'
-    p = figure(plot_width=1300,
-               plot_height=750,
-               x_axis_label=x_lab,
-               y_axis_label=y_lab,
-               title=full_title,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,hover,tap",
-               logo=None)
-    p.title.align = "center"
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
-
-    hover = p.select(dict(type=HoverTool))
-    hover.tooltips = [("Ratio", "@y"), ("Max count", "@x"),
-                      ("File name", "@labels"),
-                      ("Range 1 count", "@range1counts"),
-                      ("Mapped reads", "@mapped_reads"),
-                      ("Description", "@file_descs"), ("Study", "@study")]
     source = ColumnDataSource({
         'x': xvals,
         'y': yvals,
@@ -1018,10 +886,6 @@ def single_tran_de(single_tran_de_transcript: str,
         "study": study_names
     })
     p.scatter('x', 'y', source=source, alpha=1, color="grey", size=9)
-    output_file("scatter10k.html",
-                title="Single transcript differential translation")
-    hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
 
     #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,%23ff1f00_228,%233BFF00_231,%23ffffff_232,%23000000_&transcript=YLR162W&normalize=F&cov=T&ambig=F&minread=25&maxread=100
     #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,228,229,%23ff1f00_230,%233BFF00&transcript=YDR003W&normalize=T&cov=T&ambig=T&minread=18&maxread=45
@@ -1033,17 +897,7 @@ def single_tran_de(single_tran_de_transcript: str,
     #if file_string:
     #	file_string = file_string[:len(file_string)-1]
 
-    url = "/{}/{}/interactive_plot/?files=@file_id&tran={}&ambig=F&minread=25&maxread=150".format(
-        organism, transcriptome, single_tran_de_transcript)
 
-    taptool = p.select(type=TapTool)
-    taptool.callback = OpenURL(url=url)
-
-    #TODO FIX HARDCODED TMP FILE LINK
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
-    #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
-
-    graph = file_html(p, CDN)
     return graph
 
 
@@ -1071,24 +925,6 @@ def tran_corr(tran_corr_transcript1: str, tran_corr_transcript2: str,
     x_lab = '{} count (log2)'.format(tran_corr_transcript1)
     y_lab = '{} count (log2)'.format(tran_corr_transcript2)
 
-    p = figure(plot_width=2000,
-               plot_height=1000,
-               x_axis_label=x_lab,
-               y_axis_label=y_lab,
-               title=full_title,
-               toolbar_location="below",
-               tools="reset,pan,box_zoom,hover,tap",
-               logo=None)
-    p.title.align = "center"
-
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
-
-    hover = p.select(dict(type=HoverTool))
-    hover.tooltips = [("Ratio", "@y"), ("Max count", "@x"),
-                      ("File name", "@labels"),
-                      ("Range 1 count", "@range1counts"),
-                      ("Range 2 count", "@range2counts")]
     source = ColumnDataSource({
         'x': xvals,
         'y': yvals,
@@ -1100,8 +936,6 @@ def tran_corr(tran_corr_transcript1: str, tran_corr_transcript2: str,
     p.scatter('x', 'y', source=source, alpha=1, color="grey", size=12)
     output_file("scatter10k.html",
                 title="Single transcript differential translation")
-    hover = p.select(dict(type=HoverTool))
-    hover.mode = 'mouse'
 
     #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,%23ff1f00_228,%233BFF00_231,%23ffffff_232,%23000000_&transcript=YLR162W&normalize=F&cov=T&ambig=F&minread=25&maxread=100
     #/saccharomyces_cerevisiae/Gencode_v24/comparison/?files=227,228,229,%23ff1f00_230,%233BFF00&transcript=YDR003W&normalize=T&cov=T&ambig=T&minread=18&maxread=45
@@ -1117,13 +951,11 @@ def tran_corr(tran_corr_transcript1: str, tran_corr_transcript2: str,
         organism, transcriptome, tran_corr_transcript1)
 
     taptool = p.select(type=TapTool)
-    taptool.callback = OpenURL(url=url)
 
     #TODO FIX HARDCODED TMP FILE LINK
     #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br><a href='/static/tmp/{1}' target='_blank' ><button class='button centerbutton' type='submit'><b>Download results as csv file</b></button></a> </div>".format(short_code,filename)
     #graph = "<div style='padding-left: 55px;padding-top: 22px;'><a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a><br> </div>".format(short_code)
 
-    graph = file_html(p, CDN)
     return graph
 
 
@@ -1141,7 +973,6 @@ def explore_offsets(
 ) -> str:
     width = 0.25
     pos = list(range(len(f0_counts)))
-    fig, ax = plt.subplots(figsize=(13, 8))
     N = len(f0_counts)
     bar_width = 0.35
     bar_l = [i for i in range(len(f0_counts))]
@@ -1165,14 +996,6 @@ def explore_offsets(
                      color=redhex,
                      bottom=f0_counts[i],
                      linewidth=0)
-    plt.ylabel('Count', fontsize=axis_label_size, labelpad=100)
-    title_str = "Frame breakdown ({})".format(short_code)
-    plt.title(title_str, fontsize=title_size)
-    plt.xticks(tick_pos, labels)
-    plt.legend((p2[0], p1[0]), ('CDS: out of frame', 'CDS: in frame'))
-    ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
     totals = []
     for i in range(0, len(f0_counts)):
         curr_total = 0
@@ -1183,29 +1006,6 @@ def explore_offsets(
             totals.append(float(curr_total))
         else:
             totals.append(1)
-    for i, bar in enumerate(p1.get_children()):
-        per = int(round((f0_counts[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar, label="Frame 0: {:,}  ({}%)".format(f0_counts[i], per))
-        plugins.connect(fig, tooltip1)
-    for i, bar in enumerate(p2.get_children()):
-        per = int(round((f1_counts[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar, label="Frame 1: {:,}  ({}%)".format(f1_counts[i], per))
-        plugins.connect(fig, tooltip1)
-    for i, bar in enumerate(p3.get_children()):
-        per = int(round((f2_counts[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar, label="Frame 2: {:,}  ({}%)".format(f2_counts[i], per))
-        plugins.connect(fig, tooltip1)
-
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
 
 
@@ -1380,19 +1180,6 @@ def heatplot(min_readlen: int, max_readlen: int, min_pos: int, max_pos: int,
                'field': 'counts',
                "transform": color_mapper
            },
-           line_color=None)
-    color_bar = ColorBar(color_mapper=color_mapper,
-                         ticker=LogTicker(),
-                         title="Counts",
-                         border_line_color=None,
-                         location=(0, 0))
-    p.add_layout(color_bar, 'right')
-    output_file("scatter10k.html", title="Heatmap ({})".format(short_code))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += file_html(p, CDN)
     return graph
 
 
@@ -1441,18 +1228,6 @@ def rust_dwell(codon_count_dict: Dict[str, int], short_code: str,
         toolbar_location="below",
         tools="reset,pan,box_zoom,hover",
         logo=None)  #,y_range=Range1d(bounds=(0, max_rust_ratio)))
-    p.y_range = Range1d(0, max_rust_ratio)
-    p.x_range = Range1d(0, 23)
-    p.xaxis.visible = False
-    p.title.align = "center"
-    p.title.text_font_size = "24pt"
-    p.xaxis.axis_label_text_font_size = "22pt"
-    p.xaxis.major_label_text_font_size = "17pt"
-    p.yaxis.axis_label_text_font_size = "22pt"
-    p.yaxis.major_label_text_font_size = "17pt"
-    p.background_fill_color = background_col
-    p.xgrid.grid_line_color = "white"
-    p.ygrid.grid_line_color = "white"
     x_vals = []
     y_vals = []
     codons = []
@@ -1481,16 +1256,6 @@ def rust_dwell(codon_count_dict: Dict[str, int], short_code: str,
     source = ColumnDataSource({'x': x_vals, 'y': y_vals, 'codons': codons})
     p.scatter('x', 'y', source=source, color="grey", size=16)
     p.y_range = Range1d(-10, max(y_vals) * 1.1)
-    hover = p.select(dict(type=HoverTool))
-    hover.tooltips = [("Rust ratio", "@y"), ("Codon", "@codons")]
-    output_file(
-        "scatter10k.html",
-        title="RUST: Relative codon dwell times ({})".format(short_code))
-    graph = "<style>.mpld3-xaxis {{font-size: {0}px;}} .mpld3-yaxis {{font-size: {0}px;}}</style>".format(
-        marker_size)
-    graph += "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += file_html(p, CDN)
     return graph
 
 
@@ -1529,7 +1294,6 @@ def mrna_dist(
 ) -> str:
     if not mrna_dist_per:
         mrna_dist_dict, factor = calc_mrnadist_factor(mrna_dist_dict)
-    fig, ax = plt.subplots(figsize=(13, 8))
     returnstr = "Sample, 5' leader, Start codon, CDS, Stop codon, 3' trailer\n"
 
     #Add two because we plot two empty bars at the beginning and end for aesthethics
@@ -1716,27 +1480,6 @@ def mrna_dist(
         xlabel_size = marker_size / (len(labels) / 5.0)
 
     plt.xticks(tick_pos, labels, fontsize=xlabel_size)
-    if md_start and md_stop:
-        plt.legend((p5[0], p4[0], p3[0], p2[0], p1[0]),
-                   ('Three trailers', 'Stop codons', 'Cds', 'Start codons',
-                    'Five leaders'),
-                   fontsize=legend_size)
-    elif md_start and not md_stop:
-        plt.legend((p5[0], p3[0], p2[0], p1[0]),
-                   ('Three trailers', 'Cds', 'Start codons', 'Five leaders'),
-                   fontsize=legend_size)
-    elif not md_start and md_stop:
-        plt.legend((p5[0], p4[0], p3[0], p1[0]),
-                   ('Three trailers', 'Stop codons', 'Cds', 'Five leaders'),
-                   fontsize=legend_size)
-    else:
-        plt.legend((p5[0], p3[0], p1[0]),
-                   ('Three trailers', 'Cds', 'Five leaders'),
-                   fontsize=legend_size)
-
-    ax.set_facecolor(background_col)
-    ax.tick_params('y', labelsize=marker_size)
-    plt.grid(color="white", linewidth=2, linestyle="solid")
 
     totals = []
     for i in range(0, len(cds)):
@@ -1751,43 +1494,4 @@ def mrna_dist(
         else:
             totals.append(1)
 
-    for i, bar in enumerate(p1.get_children()):
-        per = int(round((five_leaders[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar, label="5' leaders: {:,}  ({}%)".format(five_leaders[i], per))
-        plugins.connect(fig, tooltip1)
-
-    for i, bar in enumerate(p2.get_children()):
-        per = int(round((start_codons[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar,
-            label="Start codons: {:,}  ({}%)".format(start_codons[i], per))
-        plugins.connect(fig, tooltip1)
-
-    for i, bar in enumerate(p3.get_children()):
-        per = int(round((cds[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(bar,
-                                            label="Cds: {:,}  ({}%)".format(
-                                                cds[i], per))
-        plugins.connect(fig, tooltip1)
-
-    for i, bar in enumerate(p4.get_children()):
-        per = int(round((stop_codons[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar, label="Stop codons: {:,}  ({}%)".format(stop_codons[i], per))
-        plugins.connect(fig, tooltip1)
-
-    for i, bar in enumerate(p5.get_children()):
-        per = int(round((three_trailers[i] / totals[i]) * 100, 0))
-        tooltip1 = plugins.LineLabelTooltip(
-            bar,
-            label="3' trailers: {:,}  ({}%)".format(three_trailers[i], per))
-        plugins.connect(fig, tooltip1)
-
-    plugins.connect(fig, TopToolbar(yoffset=-22, xoffset=-300),
-                    DownloadProfile(returnstr=returnstr),
-                    DownloadPNG(returnstr=title_str))
-    graph = "<div style='padding-left: 55px;padding-top: 22px;'> <a href='/short/{0}' target='_blank' ><button class='button centerbutton' type='submit'><b>Direct link to this plot</b></button></a> </div>".format(
-        short_code)
-    graph += mpld3.fig_to_html(fig)
     return graph
