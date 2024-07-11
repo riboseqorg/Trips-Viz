@@ -439,17 +439,17 @@ def metainfoquery():
         short_code = html_args["user_short"]
         user_short_passed = True
 
+    owner = get_table("organism").filter((pl.col("organism_name") == data["organism"]) & (
+        pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
+    sqlfile = "{0}transcriptomes/{1}/{2}/{2}_{3}.sqlite".format(
+        config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
+    if owner:
+        sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"], data["transcriptome"])
+        if not os.path.isfile(sqlfile):
+            return ("Cannot find annotation file {}.{}.sqlite".format(data["organism"], data["transcriptome"]))
+    transcripts = sqlquery(sqlfile, "transcripts")
     if data["plottype"] == "te":
-        owner = get_table("organism").filter((pl.col("organism_name") == data["organism"]) & (
-            pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
-        sqlfile = "{0}transcriptomes/{1}/{2}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
-        if owner:
-            sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"], data["transcriptome"])
-            if not os.path.isfile(sqlfile):
-                return ("Cannot find annotation file {}.{}.sqlite".format(data["organism"], data["transcriptome"]))
-        transcripts = sqlquery(sqlfile, "transcripts")
 
         if te_tranlist == "" or te_tranlist == ['']:
             te_tranlist = None
@@ -494,20 +494,11 @@ def metainfoquery():
 
         return metainfo_plots.te_table(table_str)
 
-    elif plottype == "mrna_dist":
+    elif data["plottype"] == "mrna_dist":
         longest_tran_list = []
         cds_dict = {}
-        owner = get_table("organism").filter((pl.col("organism_name") == data["organism"]) & (
-            pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
-        if owner:
-            sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
-            if not os.path.isfile(sqlfile):
-                return ("Cannot find annotation file {}.{}.sqlite".format(data["organism"], data["transcriptome"]))
-        else:
-            sqlfile = ("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-			    config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]))
-        transcripts = sqlquery(sqlfile, "transcripts").filter(
+
+        transcripts = transcripts.filter(
             pl.col("principal") & pl.col("tran_type"))
         # "SELECT transcript,cds_start,cds_stop from transcripts where principal = 1 and tran_type = 1;")
         mrna_dist_dict = {}
@@ -568,27 +559,19 @@ def metainfoquery():
 
         return metainfo_plots.mrna_dist(mrna_dist_dict, short_code, background_col, title_size, axis_label_size, subheading_size, marker_size, mrna_dist_per, md_start, md_stop, legend_size)
 
-    if plottype == "mrna_dist_readlen":
+    if data["plottype"] == "mrna_dist_readlen":
         minreadlen = 15
         maxreadlen = 100
-        owner = get_table("organism").filter((pl.col("organism_name") == data["organism"]) & (
-            pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
         if owner == 1:
             traninfo_dict = SqliteDict("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-			    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome), autocommit=False)
+			    config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"], data["transcriptome"]), autocommit=False)
         else:
             traninfo_dict = SqliteDict("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-			    config.UPLOADS_DIR, owner, organism, transcriptome), autocommit=False)
+			    config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]), autocommit=False)
         longest_tran_list = []
         cds_dict = {}
-        sqlfile = ("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-			    config.UPLOADS_DIR, owner, organism, transcriptome))
-        if owner:
-            sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
-            if not os.path.isfile(sqlfile):
-                return ("Cannot find annotation file {}.{}.sqlite".format(organism, transcriptome))
-        transcripts = sqlquery(sqlfile, "transcripts").filter(
+
+        transcripts = transcripts.filter(
             pl.col("principal") & pl.col("tran_type"))
         for row in transcripts:
             longest_tran_list.append(str(row[0]))
@@ -641,12 +624,12 @@ def metainfoquery():
 					for transcript in longest_tran_list:
 						try:
 							transcript_dict = sqlite_db[transcript]["unambig"]
-						except:
+						except KeyError:
 							continue
 						try:
 							cds_start = cds_dict[transcript]["cds_start"]
 							cds_stop = cds_dict[transcript]["cds_stop"]
-						except:
+						except KeyError:
 							continue
 						for readlen in range(minreadlen, maxreadlen+1):
 							if readlen not in mrna_dist_dict["5_leader"]:
@@ -707,16 +690,7 @@ def metainfoquery():
 		return metainfo_plots.mrna_dist_readlen(mrna_dist_dict, mrna_readlen_per, short_code, background_col, title_size, axis_label_size, subheading_size, marker_size, legend_size)
 
 	if data["plottype"] == "replicate_comp":
-        owner = get_table("organism").filter((pl.col("organism_name") == data["organism"]) & (pl.col("transcriptome_list") == data["transcriptome"]))[0,"owner"]
-        sqlfile = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-			    config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
-		if owner == 1:
-            sqlfile = "{0}/{1}/{2}/{2}_{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"], data["transcriptome"])
-			if not os.path.isfile(sqlfile):
-				return ("Cannot find annotation file {}.{}.sqlite".format(organism, transcriptome))
-        transcripts = sqlquery(sqlfile, "transcripts")
-		prin_tran_list=[]
+        prin_tran_list=[]
 		for row in result:
 			if row[1] == 1:
 				prin_tran_list.append(row[0])
@@ -871,7 +845,7 @@ def metainfoquery():
 
         return metainfo_plots.nuc_comp(master_dict, nuc_maxreadlen, title, nuc_comp_type, nuc_comp_direction, short_code, background_col, a_col, t_col, g_col, c_col, title_size, axis_label_size, subheading_size, marker_size, legend_size)
 
-    elif plottype == "dinuc_bias":
+    elif data["plottype"] == "dinuc_bias":
         master_count_dict=collections.OrderedDict([("AA", 0), ("AT", 0), ("AG", 0), ("AC", 0),
 													 ("TA", 0), ("TT", 0), ("TG", 0), ("TC", 0),
 													 ("GA", 0), ("GT", 0), ("GG", 0), ("GC", 0),
@@ -892,19 +866,8 @@ def metainfoquery():
 
         else:
             return ("No fastq_screen file available for this dataset")
-    elif plottype == "metagene_plot":
-        owner=get_table(organism).filter((pl.col("organism_name") == organism) & (
-            pl.col("transcriptome_list") == transcriptome))[0, "owner"]
-
-        if owner == 1:
-            sqlpath="{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)
-            if not os.path.isfile(sqlpath):
-                return ("Cannot find annotation file {}.{}.sqlite".format(organism, transcriptome))
-        else:
-			sqlpath="{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.v2.sqlite".format(
-			    config.UPLOADS_DIR, owner, organism, transcriptome)
-
+    elif data["plottype"] == "metagene_plot":
+        
         minpos=-300
         maxpos=300
         pos_list=[]
@@ -1057,7 +1020,7 @@ def metainfoquery():
 
 		return metainfo_plots.metagene_plot(pos_list, fiveprime_counts, threeprime_counts, metagene_type, title, minpos, maxpos, short_code, background_col, metagene_fiveprime_col, metagene_threeprime_col, title_size, axis_label_size, subheading_size, marker_size, metagene_end, metagene_aggregate)
 
-    elif plottype == "trip_periodicity":
+    elif data["plottype"] == "trip_periodicity":
 		read_dict={"readlengths": [],
 					 "frame1": [],
 					 "frame2": [],
@@ -1078,18 +1041,7 @@ def metainfoquery():
 				else:
 					return ("File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
 				if "trip_periodicity" not in sqlite_db or redo_periodicity == True:
-					cursor.execute("SELECT owner FROM organisms WHERE organism_name = '{}' and transcriptome_list = '{}';".format(
-					    organism, transcriptome))
-					owner=(cursor.fetchone())[0]
-					if owner == 1:
-						if os.path.isfile("{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome)):
-							transhelve=sqlite3.connect("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-							    config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome))
-						else:
-							return ("Cannot find annotation file {}.{}.sqlite".format(organism, transcriptome))
-					else:
-						transhelve=sqlite3.connect("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-						    config.UPLOADS_DIR, owner, organism, transcriptome))
+					
 					redo_periodicity_plots(transhelve, filepath)
 					# return "No triplet periodicity data for this file, please report this to tripsvizsite@gmail.com or via the contact page."
 				trip_periodicity_dict=sqlite_db["trip_periodicity"]
@@ -1181,13 +1133,7 @@ def metainfoquery():
 
 
 	elif data["plottype"] == "heatmap":
-        owner = get_owner(data["organism"], data["transcriptome"])
-        sqlpath ="{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-			    config.UPLOADS_DIR, owner, data["organims"], data["transcriptome"]) 
-		if owner == 1:
-            sqlpath ="{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"], data["transcriptome"]) 
-			if not os.path.isfile(sqlpath):
-				return ("Cannot find annotation file {}.{}.sqlite".format(organism, transcriptome))
+        
 		min_readlen=heatmap_minreadlen
 		max_readlen=heatmap_maxreadlen
 		min_pos=heatmap_startpos
@@ -1268,12 +1214,11 @@ def metainfoquery():
 
 
 	else:
-		if plottype not in ["replicate_comp"]:
-			print("unknown plot type", plottype)
-		if (plottype.strip(" ").replace("\n", "")) not in ["replicate_comp"]:
-			print("unknown plot type", plottype)
-	connection.close()
-	return ("Error, unknown plot type selected: {}".format(plottype))
+		if data["plottype"] not in ["replicate_comp"]:
+			print("unknown plot type", data["plottype"])
+		if (data["plottype"].strip(" ").replace("\n", "")) not in ["replicate_comp"]:
+			print("unknown plot type", data["plottype"])
+	return ("Error, unknown plot type selected: {}".format(data["plottype"]))
 
 
 # Groups together counts from different filepaths for the metainformation counts table
