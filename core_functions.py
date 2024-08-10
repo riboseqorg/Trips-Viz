@@ -1,4 +1,5 @@
 import string
+from flask import flash
 from typing import Dict, List, Tuple, Any
 import os
 from json import dumps
@@ -47,6 +48,99 @@ class User(UserMixin):
 
     def __repr__(self) -> str:
         return "%d/%s/%s" % (self.id, self.name, self.password)
+
+
+def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
+    dfs = []  # Allow empty dict
+    if len(keys) == 2:  # For gene and triplet periodicity use two keys
+        try:
+            tdict = sqldict[keys[0]][keys[1]]
+        except KeyError:
+            return pl.DataFrame()
+        if keys[1] in ["fiveprime",
+                       "threeprime"]:  # NOTE: keys[0]=="trip_periodity"
+            for read_len, periodicity in tdict.items():
+                dfs.append(
+                    pl.DataFrame(periodicity).with_columns(read_len=read_len))
+
+            if dfs:
+                dfs = pl.concat(dfs)
+            else:
+                dfs = pl.DataFrame()
+
+        elif keys[1] == 'seq':
+            for pos, nuc_dist in tdict:
+                dfs.append(pl.DataFrame(nuc_dist).with_columns(pos=pos))
+
+            if dfs:
+                dfs = pl.concat(dfs)
+            else:
+                dfs = pl.DataFrame()
+        elif keys[1] in ["ambig", "unambig"]:
+            for read_len, pos_count in tdict:
+                dfs.append(
+                    pl.DataFrame({
+                        "pos": pos_count.keys(),
+                        "count": pos_count.values()
+                    }).with_columns(read_len=read_len))
+
+            if dfs:
+                dfs = pl.concat(dfs)
+            else:
+                dfs = pl.DataFrame()
+
+        # TODO: Need to check the configuration of "mismatches"
+
+        else:
+            dfs = pl.DataFrame()
+    elif keys[0] in [
+            "unambiguous_all_totals", "unambiguous_cds_totals",
+            "unambiguous_fiveprime_totals", "unambiguous_threeprime_totals"
+    ]:
+        pl.DataFrame({
+            'gene': sqldict[keys[0]].keys(),
+            'count': sqldict[keys[0]].values()
+        })
+    elif keys[0] == "totals":
+        for key2 in sqldict[keys[0]]:  # key2 = gene
+            # print(sqlite_db[key][key2])
+            tdf = pl.DataFrame(
+                [[key2] + sqldict[keys[0]][key2]],
+                schema=["gene", "fiveprime", "CDS",
+                        "threeprime"])  #.with_columns(gene=key2)
+            # print(tdf, key2)
+            dfs.append(tdf)
+        dfs = pl.concat(dfs)
+    elif keys[0] == "read_lengths":
+        dfs = pl.DataFrame({
+            'read_len': sqldict[keys[0]].keys(),
+            'count': sqldict[keys[0]].values()
+        })
+    elif keys[0] == "dinuc_counts":
+        for read_len, dinuc_count in sqldict[keys[0]].items():
+            dfs.append(
+                pl.DataFrame(dinuc_count).with_columns(read_len=read_len))
+        if dfs:
+            dfs = pl.concat(dfs)
+        else:
+            dfs = pl.DataFrame()
+    elif keys[0] in ["nuc_counts", "threeprime_nuc_counts"]:
+        for read_len, nuc_counts in sqldict[keys[0]].items():
+            for pos, nuc_count in nuc_counts.items():
+
+                dfs.append(
+                    pl.DataFrame(nuc_count).with_columns(pos=pos,
+                                                         read_len=read_len))
+        if dfs:
+            dfs = pl.concat(dfs)
+        else:
+            dfs = pl.DataFrame()
+
+    else:
+
+        dfs = pl.DataFrame()
+
+    return dfs
 
 
 def form_filler(organism, transcriptome):
@@ -240,7 +334,7 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
 
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
-def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame | str:
+def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
     '''
 
     Parameters:
@@ -274,7 +368,7 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame | str:
 
     if file_not_found:
         # TODO: Fix the resturn accorind to original as it mught be used by js
-        return f"File(s) not found: {','.join(file_not_found)}"
+        flash(f"File(s) not found: {','.join(file_not_found)}")
 
     # logging.debug("fetch_file_paths closing connection")
     return files
