@@ -1,46 +1,45 @@
-from typing import Union, Any
-import os
-import time
-from datetime import date
-import polars as pl
-from json import loads, dumps
-import sys
-import sqlite3
-from sqlqueries_2 import sqlquery, get_user_id, get_table, update_table
+import json
 # import riboflask_datasets
 import logging
-from flask import (Flask, get_flashed_messages, render_template, request,
-                   send_from_directory, flash, redirect, url_for)
-from flask import Response
-from flask_xcaptcha import XCaptcha
-
-from flask_login import (LoginManager, login_required, login_user, logout_user,
-                         current_user)
-from flask_mail import Mail
-from werkzeug.security import generate_password_hash, check_password_hash
-import config
-from werkzeug.utils import secure_filename
-from sqlitedict import SqliteDict
+import os
+# , taskstatus_blueprint
+# from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
+import re
 import smtplib
-import json
-from core_functions import fetch_file_paths, base62_to_integer, User, fetch_user
-from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery_blueprint
-from comparison_routes import comparison_plotpage_blueprint, comparisonquery_blueprint
-from single_transcript_routes import (single_transcript_plotpage_blueprint,
-                                      single_transcript_query_blueprint)
+import sqlite3
+import sys
+import time
+from datetime import date
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from json import dumps, loads
+from typing import Any, Union
 
+import polars as pl
+from flask import (Flask, Response, flash, get_flashed_messages, redirect,
+                   render_template, request, send_from_directory, url_for)
+from flask_login import (LoginManager, current_user, login_required,
+                         login_user, logout_user)
+from flask_mail import Mail
+from flask_xcaptcha import XCaptcha
+from sqlitedict import SqliteDict
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+
+import config
+from comparison_routes import comparequery, comparison_plotpage_blueprint
+from core_functions import (User, base62_to_integer, fetch_file_paths,
+                            fetch_user, string2other)
+from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
+from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery
+from pause_routes import pause_detection_blueprint, pausequery
+from single_transcript_routes import (query_plot,
+                                      single_transcript_plotpage_blueprint)
 from single_transcript_routes_genomic import (
     single_transcript_plotpage_genomic_blueprint,
     single_transcript_query_genomic_blueprint)
-from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
-from pause_routes import pause_detection_blueprint, pausequery_blueprint
-from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery_blueprint
-# , taskstatus_blueprint
-from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
-import re
-
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from sqlqueries_2 import get_table, get_user_id, sqlquery, update_table
+from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery
 
 root_logger = logging.getLogger()
 # lhStdout = root_logger.handlers[0]
@@ -68,23 +67,19 @@ logging.debug('This will get logged to a file')
 
 user_short_passed = False
 
-app.register_blueprint(metainfo_plotpage_blueprint)
-app.register_blueprint(metainfoquery_blueprint)
+# app.register_blueprint(metainfo_plotpage_blueprint)
 app.register_blueprint(single_transcript_plotpage_blueprint)
-app.register_blueprint(single_transcript_query_blueprint)
 app.register_blueprint(single_transcript_plotpage_genomic_blueprint)
 app.register_blueprint(single_transcript_query_genomic_blueprint)
 app.register_blueprint(comparison_plotpage_blueprint)
-app.register_blueprint(comparisonquery_blueprint)
 app.register_blueprint(diff_plotpage_blueprint)
 app.register_blueprint(diffquery_blueprint)
-app.register_blueprint(translated_orf_blueprint)
-app.register_blueprint(orfquery_blueprint)
+# app.register_blueprint(translated_orf_blueprint)
+# app.register_blueprint(orfquery_blueprint)
 app.register_blueprint(pause_detection_blueprint)
-app.register_blueprint(pausequery_blueprint)
+# app.register_blueprint(pausequery_blueprint)
 # app.register_blueprint(taskstatus_blueprint)
-app.register_blueprint(traninfo_plotpage_blueprint)
-app.register_blueprint(traninfoquery_blueprint)
+# app.register_blueprint(traninfo_plotpage_blueprint)
 app.config.from_pyfile('config.py')
 
 xcaptcha = XCaptcha(app=app)
@@ -1362,6 +1357,25 @@ def dataset_breakdown(organism, transcriptome):
     # control_colors, study_colors,
     # cell_line_colors, transcript,
     # start, stop)
+
+
+@app.route('/query', methods=['POST']) 
+def query()->str: 
+    data = request.form.to_dict()
+    to_return = ""
+    query  = string2other(loads(data["query"]))
+    if data["pathname"] == "single_transcript_plot": 
+        to_return = query_plot(query)
+    elif data["pathname"] == "pause_detection": 
+        to_return = pausequery(query)
+    elif data["pathname"] == "comparison": 
+        to_return = comparequery(query)
+    elif data["pathname"] == "traninfo_plotpage": 
+        to_return = traninfoquery(query)
+    elif data["pathname"] == "metainfo_plot": 
+        to_return = metainfoquery(query)
+    return to_return  
+
 
 
 if __name__ == '__main__':

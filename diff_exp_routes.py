@@ -135,7 +135,7 @@ def diffquery():
 
     riboseq1_filepaths = {}
     file_paths_dict = fetch_file_paths(
-        master_file_dict["riboseq1"]["file_ids"], organism)
+        master_file_dict["riboseq1"]["file_ids"], data["organism"])
     for seq_type in file_paths_dict:
         for file_id in file_paths_dict[seq_type]:
             riboseq1_filepaths[file_id] = file_paths_dict[seq_type][file_id]

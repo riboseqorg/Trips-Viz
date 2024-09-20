@@ -1,23 +1,23 @@
-from typing import Dict, List, Union
-from flask import Blueprint, render_template, request
-from sqlitedict import SqliteDict
 import collections
-
-import os
-import time
-import fixed_values
-from sqlqueries_2 import sqlquery, get_table, get_user_id
-from fixed_values import my_decoder
-import re  # TODO: replace it with re2
-import config
-from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code,
-                            build_profile, fetch_user, form_filler)
-from flask_login import current_user
-import subprocess
 import json
+import os
+import re  # TODO: replace it with re2
+import subprocess
+import time
+from typing import Dict, List, Union
+
 import polars as pl
-from sqlqueries_2 import sqlquery, get_table, get_user_id, table2dict
+from flask import Blueprint, render_template, request
+from flask_login import current_user
+from sqlitedict import SqliteDict
+
+import config
+import fixed_values
+from core_functions import (build_profile, fetch_file_paths, fetch_files,
+                            fetch_studies, fetch_study_info, fetch_user,
+                            form_filler, generate_short_code)
+from fixed_values import my_decoder
+from sqlqueries_2 import get_table, get_user_id, sqlquery, table2dict
 
 
 def get_nuc_comp_reads(sqlite_db: SqliteDict,
@@ -308,17 +308,10 @@ def redo_periodicity_plots(file_path: str) -> None:
     master_read_dict.commit()
 
 
-metainfoquery_blueprint = Blueprint("metainfoquery",
-                                    __name__,
-                                    template_folder="templates")
-
-
-@metainfoquery_blueprint.route("/metainfoquery", methods=["POST"])
-def metainfoquery():
+def metainfoquery(data) -> str | Tuple:
     # global user_short_passed
     gene_dict = {}
 
-    data = json.loads(request.data)
     if not data["file_list"]:
         return "No files selected"
     file_paths = fetch_file_paths(data)

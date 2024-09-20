@@ -1,14 +1,16 @@
-from typing import Dict, List, Tuple, Union, Any, Hashable  # , Unknown
-from typing_extensions import Literal
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy import create_engine, Table, MetaData  # , insert
-import config
+from typing import Any, Dict, Hashable, List, Tuple, Union  # , Unknown
+
+import pandas as pd
 import polars as pl
 from polars.dataframe.frame import DataFrame
-import pandas as pd
+from sqlalchemy import (MetaData, Table, create_engine, delete,  # , insert
+                        insert, update)
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
 from sqlalchemy.orm.query import Query
-from sqlalchemy import insert, delete, update
+from typing_extensions import Literal
+
+import config
 
 # from sqlalchemy.dialects.sqlite import insert, delete, update
 
@@ -59,14 +61,15 @@ def table2dict(table: pd.DataFrame, keys: List[str]) -> Dict[str, Any]:
 
 
 def update_table(table: str,
-                 task: Literal['insert', 'update', 'delete'] = 'insert',
                  values: Dict[str, Any] = {},
-                 where: Dict[str, Any] = {}) -> None:
+                 where: Dict[str, Any] = {}, 
+                 task: Literal['insert', 'update', 'delete'] = 'insert'
+                 ) -> None:
     '''
     Update a table with the given data. 
-    >>> update_table('users', "update",{'user_id': 1},  {'user_id': 2}) 
-    >>> update_table('users', "delete",{},  {'user_id': 2}) 
-    >>> update_table('users', "insert",  {'user_id': 2}) 
+    >>> update_table('users',{'user_id': 1},  {'user_id': 2}, "update") 
+    >>> update_table('users',{},  {'user_id': 2}, "delete") 
+    >>> update_table('users',  {'user_id': 2}, "insert") 
 
 
     '''

@@ -1,18 +1,20 @@
-from flask import Blueprint, render_template, request
-import sqlite3
-from plots import VegaPlot
-import os
-import time
-import config
-import pandas as pd
-from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            form_filler, generate_short_code, fetch_user)
-import traninfo_plots
-from flask_login import current_user
 import json
-import fixed_values
+import os
+import sqlite3
+import time
+
+import pandas as pd
 import polars as pl
-from sqlqueries_2 import get_table, sqlquery, get_user_id, table2dict
+from flask import Blueprint, render_template, request
+from flask_login import current_user
+
+import config
+import fixed_values
+import traninfo_plots
+from core_functions import (fetch_files, fetch_studies, fetch_study_info,
+                            fetch_user, form_filler, generate_short_code)
+from plots import VegaPlot
+from sqlqueries_2 import get_table, get_user_id, sqlquery, table2dict
 
 traninfo_plotpage_blueprint = Blueprint("traninfo_plotpage",
                                         __name__,
@@ -46,13 +48,9 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
 
 # Used to create custom metagene plots on the traninformation plot page
 
-traninfoquery_blueprint = Blueprint("traninfoquery",
-                                    __name__,
-                                    template_folder="templates")
 
 
-@traninfoquery_blueprint.route('/traninfoquery', methods=['POST'])
-def traninfoquery() -> str:
+def traninfoquery(data) -> str:
     """
     Transcript information query
 
@@ -62,7 +60,6 @@ def traninfoquery() -> str:
     - html page
     """
     # global user_short_passed
-    data = request.form.to_dict()
     print(data, "Anmol")
     if data["plottype"] not in ["gene_count"]:
         data['metagene_tranlist'] = data['metagene_tranlist'].strip(',').split(
@@ -144,7 +141,7 @@ def traninfoquery() -> str:
                                                  "traninfo_plot")
     else:
         user_short_passed = True
-    if plottype == "fetch_seq":
+    if data["plottype"] == "fetch_seq":
         filename = organism + "_sequences_" + str(time.time()) + ".fa"
         table_str = filename + "?~"
         splitlist = (data["gc_tranlist"].replace(" ", ",")).split(",")
@@ -203,14 +200,14 @@ def traninfoquery() -> str:
         ]) == 0 or (gc_location in ["start", "stop"]):
             subseq = seq
         else:
-            if include_first_val != 0:
+            if not include_first_val:
                 subseq += seq[:include_first_val]
-            if include_last_val != 0:
+            if not include_last_val:
                 subseq += seq[(include_last_val * -1):]
-            if exclude_first_val != 0:
+            if not exclude_first_val:
                 seqlen = len(seq)
                 subseq += seq[(seqlen - exclude_first_val) * -1:]
-            if exclude_last_val != 0:
+            if not exclude_last_val:
                 seqlen = len(seq)
                 subseq += seq[:(seqlen - exclude_last_val)]
         tmp_fa_file.write(">{}_{}\n{}\n".format(gene, tran, subseq))
@@ -219,7 +216,7 @@ def traninfoquery() -> str:
         table_str = "FA?~" + str(total_rows) + "?~" + table_str
 
         return table_str
-    if plottype == "nuc_freq_plot":
+    if data["plottype"] == "nuc_freq_plot":
         filename = "Sequences_{}.fa".format(time.time())
         outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                        "w")
@@ -306,7 +303,7 @@ def traninfoquery() -> str:
                                             config.DEFAULT_USER_SETTING,
                                             filename)
 
-    if plottype == "orfstats":
+    if data["plottype"] == "orfstats":
         filename = organism + "_orfstats_" + str(time.time()) + ".csv"
         table_str = filename + "?~"
         tmp_te_file = open(
@@ -364,7 +361,7 @@ def traninfoquery() -> str:
         return table_str
 
     # Nucleotide composition (multiple transcripts)
-    elif plottype == "nuc_comp_multi":
+    elif data["plottype"] == "nuc_comp_multi":
         owner = get_table("organisms").filyer(
             (pl.col("organism_name") == organism)
             & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
@@ -380,7 +377,7 @@ def traninfoquery() -> str:
         outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
                        "w")
 
-        if plot_type == "scatter":
+        if data["plottype"] == "scatter":
             master_dict = {
                 1: {
                     "trans": [],
@@ -508,7 +505,7 @@ def traninfoquery() -> str:
                                                    str(axis_label_size) + "pt",
                                                    str(marker_size) + "pt",
                                                    nucleotide, short_code)
-        elif plot_type == "box":
+        elif data["plottype"] == "box":
             transcripts = sqlquery(transhelve, "transcripts")
             master_dict = {
                 1: {
@@ -701,7 +698,7 @@ def traninfoquery() -> str:
                                         str(axis_label_size) + "pt",
                                         str(marker_size) + "pt", filename)
     # This is the lengths plot
-    elif plottype == "lengths_plot":
+    elif data["plottype"] == "lengths_plot":
 
         master_dict = {
             1: {
@@ -753,7 +750,7 @@ def traninfoquery() -> str:
                     "exon_junctions from transcripts WHERE principal = 1"
                     " and tran_type = 1;")
         result = trancursor.fetchall()
-        if plot_type == "box":
+        if data["plottype"] == "box":
             if result == []:
                 return "Could not find any info on given transcript list"
             for row in result:
@@ -834,7 +831,7 @@ def traninfoquery() -> str:
                                               str(title_size) + "pt",
                                               str(marker_size) + "pt",
                                               str(axis_label_size) + "pt")
-        elif plot_type == "scatter":
+        elif data["plottype"] == "scatter":
 
             for row in result:
                 tran = row[0]
@@ -891,6 +888,7 @@ def traninfoquery() -> str:
                                                   short_code)
 
     if 1:
-        if (plottype.strip(" ").replace("\n", "")) not in ["replicate_comp"]:
-            print("Unknown plottype", plottype)
-    return "Error, unknown plot type selected: {}".format(plottype)
+        if (data["plottype"].strip(" ").replace("\n",
+                                                "")) not in ["replicate_comp"]:
+            print("Unknown plottype", data["plottype"])
+    return "Error, unknown plot type selected: {}".format(data["plottype"])

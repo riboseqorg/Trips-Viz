@@ -1,17 +1,19 @@
+import logging
+import os
+import subprocess
 from typing import Dict, List, Tuple, Union
+
+import polars as pl
 from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
-from sqlqueries_2 import sqlquery, get_table
-import os
-import logging
+
 import config
-import subprocess
-from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code, form_filler,
-                            build_profile, build_proteomics_profile,
-                            fetch_user)
+from core_functions import (build_profile, build_proteomics_profile,
+                            fetch_file_paths, fetch_files, fetch_studies,
+                            fetch_study_info, fetch_user, form_filler,
+                            generate_short_code)
 from fixed_values import my_decoder
-import polars as pl
+from sqlqueries_2 import get_table
 
 # This page is used to detect pauses
 pause_detection_blueprint = Blueprint("pause_detection_page",
@@ -229,7 +231,7 @@ def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
     all_filepaths = tmp_filepath
 
     for file_id in file_output_dict:
-        file_name = get_table("files").filter(pl.col("file_id") == file_id)[0,
+        file_name = get_table("files").filter(pl.col("file_id") == file_id)[0,'file_name']
         logging.debug(file_name)
         filepath= "{}/static/tmp/{}_pauses.csv".format(
             config.SCRIPT_LOC, file_name)
@@ -333,8 +335,7 @@ def find_pauses(data, user, logged_in):
     elif data['tranlist'] == "custom_trans":
         traninfo= traninfo.filter(
             pl.col("transcript").is_in(data['custom_tran_list']))
-    else:
-        pass
+
     tran_gene= traninfo[["transcript", "gene"]]
     tran_gene.gene= tran_gene.gene.apply(lambda x: x.replace(",", "_"))
 
@@ -398,15 +399,8 @@ def find_pauses(data, user, logged_in):
     return returnstr
 
 
-# Returns a table with ranked orf scores
-pausequery_blueprint= Blueprint("pausequery",
-                                 __name__,
-                                 template_folder="templates")
+def pausequery(data):
 
-
-@ pausequery_blueprint.route('/pausequery', methods=['POST'])
-def pausequery():
-
-    data= request.args.to_dict()
     user, logged_in= fetch_user()
+    print(data, user, logged_in)
     return find_pauses(data, user, logged_in)

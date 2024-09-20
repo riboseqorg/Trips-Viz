@@ -1,5 +1,6 @@
 from typing import Dict, Tuple, Union
 from time import sleep
+from core_functions import dict2df
 import collections
 from fixed_values import merge_dicts
 from sqlitedict import SqliteDict
@@ -24,7 +25,7 @@ def merge_dicts(
 
 
 # Create dictionary of read counts at each position in a transcript
-def get_reads(data ) -> Tuple[pl.DataFrame, pl.DataFrame]:
+def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
 
     Parameters: 
@@ -40,85 +41,73 @@ def get_reads(data ) -> Tuple[pl.DataFrame, pl.DataFrame]:
 
     # first make a master dict consisting of all the read dicts from each filename
     offset_dict = {}
-    print(data)
     for fl in data['file_paths_dict']['path']:
         try:
             sqlite_db = SqliteDict(fl, autocommit=False)
         except FileNotFoundError:
             return pd.DataFrame(), pd.DataFrame()
         try:
-            all_offsets = sqlite_db["offsets"][data["primetype"]]["offsets"]
-            all_offsets = pl.DataFrame({
-                'read_len': all_offsets.keys(),
-                'offset': all_offsets.values()
-            })
-            scores = sqlite_db["offsets"][data["primetype"]]["read_scores"]
-            scores = pl.DataFrame({
-                'read_len': scores.keys(),
-                'read_score': scores.values()
-            })
-            all_offsets_n_scores = all_offsets.join(
-                scores, on='read_len', how='outer',
-                coalesce=True).with_columns([
-                    pl.col('offset').fill_null(15),
-                    pl.col('read_score').fill_null(1)
-                ])
+            all_offsets_n_scores = dict2df(sqlite_db,
+                                           ["offsets", data["offsite"]])
 
         except KeyError:
             read_length = list(range(data["minread"], data["maxread"] + 1))
             range_len = data["maxread"] - data["minread"] + 1
             all_offsets_n_scores = pl.DataFrame({
                 'read_len': read_length,
-                'offset': [15] * range_len,
-                'read_score': [1] * range_len
+                'offsets': [15] * range_len,
+                'read_scores': [1] * range_len
             })
         offset_dict[fl] = all_offsets_n_scores.filter(
-            pl.col('read_score') >= data["readscore"])
+            pl.col('read_scores') >= data["readscore"])
 
         if "mismatch" in data:
             try:
-                sqlite_db_seqvar = sqlite_db[data['transcript']]["seq"]
-                print(sqlite_db_seqvar)
-                sleep(10)
-
-                for pos in sqlite_db_seqvar:
-                    for nuc, count in sqlite_db_seqvar[pos]:
-                        # convert to one based
-                        mismatch_dict.append([pos + 1, nuc, count])
+                mismatch_dict = dict2df(sqlite_db,
+                                        [data['transcript'], "seq"
+                                         ]).with_columns(pos=pl.col('pos') + 1)
 
             except Exception:
                 pass
 
         try:
             alltrandict = sqlite_db[data['transcript']]
-            unambig_tran_dict = alltrandict["unambig"]
-            ambig_tran_dict = alltrandict["ambig"] if ("ambig"
-                                                       in alltrandict) else {}
+            tdf = [dict2df(sqlite_db, [data['transcript'], "unambig"])]
+            if ("ambig" in alltrandict):
+                print("hellow ambig")
+                tdf.append(dict2df(sqlite_db, [data['transcript'], "ambig"]))
             # TODO: Change merge_dicts to take a list of dicts instead of two
-            trandict = merge_dicts(unambig_tran_dict, ambig_tran_dict)
+            # NOTE: pcr not found in databases, explore for other data
             if "pcr" in data:  # TODO: Convert this value as ambig and unambig
                 if "unambig_pcr" in alltrandict:
-                    trandict = merge_dicts(trandict,
-                                           alltrandict["unambig_pcr"])
+                    tdf.append(
+                        dict2df(sqlite_db,
+                                [data['transcript'], "unambig_pcr"]))
                 if ("ambig" in data) and "ambig_pcr" in alltrandict:
-                    trandict = merge_dicts(trandict, alltrandict["ambig_pcr"])
+                    tdf.append(
+                        dict2df(sqlite_db, [data['transcript'], "ambig_pcr"]))
+            print(
+                "tdfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                fl, tdf)
 
-            master_file_dict[fl] = trandict
+            master_file_dict[fl] = pl.concat(tdf, how="diagonal_relaxed")
         except Exception:
             pass
     range_set = set(range(data["minread"], data["maxread"] + 1))
     if "subcodon" not in data:
-        for filename in master_file_dict:
-            for readlen in set(master_file_dict[filename]) & range_set:
-                for pos in master_file_dict[filename][readlen]:
-                    count = master_file_dict[filename][readlen][pos]
-                    if "coverage" in data:
-                        for i in range(pos, pos + (readlen + 1)):
-                            master_dict.append([i, count])
-                        # use this so line graph does not have 'ramps'
-                    else:
-                        offset = pos + 15
-                        master_dict.append([offset + 1, count])
+        master_file_dict_values = pl.concat(master_file_dict.values()).filter(
+            pl.col("read_len").is_in(range_set)).select(
+                'pos', 'count').groupby('pos').sum()
+        print(master_file_dict_values, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+        data["coverage"] = True  # For testing purpose only
+        if "coverage" in data:
+
+            # TODO: Simply the coverage value
+            master_file_dict_values = master_file_dict_values.with_columns(
+                pos=pl.col("pos") + 15)
+        else:
+            master_file_dict_values = master_file_dict_values.with_columns(
+                pos=pl.col("pos") + 16)
 
     master_dict_sub = []
     if ("subcodon" in data) and ("coverage" not in data):
@@ -139,18 +128,18 @@ def get_reads(data ) -> Tuple[pl.DataFrame, pl.DataFrame]:
                         offset_pos = pos + offset
                         master_dict_sub.append([offset_pos, count])
 
-    master_dict = pl.DataFrame(master_dict, schema=["pos", "count"])
-    master_dict_sub = pl.DataFrame(master_dict_sub,
-                                   schema=["pos", "count"]).filter(
-                                       pl.col('pos').is_in(master_dict['pos']))
-    master_dict = pl.concat([master_dict,
-                             master_dict_sub]).group_by('pos').agg(
-                                 pl.col('count').sum()).sort("count")
-    del master_dict_sub
-
-    mismatch_dict = pl.DataFrame(mismatch_dict, schema=["pos", "nuc", "count"])
-    if 'mismatch' in data:
-
-        mismatch_dict = mismatch_dict.filter(
-            pl.sum_horizontal('A', 'T', 'G', 'C') > 0)
-    return master_dict, mismatch_dict
+    # master_dict = pl.DataFrame(master_dict, schema=["pos", "count"])
+    # master_dict_sub = pl.DataFrame(master_dict_sub,
+    #                                schema=["pos", "count"]).filter(
+    #                                    pl.col('pos').is_in(master_dict['pos']))
+    # master_dict = pl.concat([master_dict,
+    #                          master_dict_sub]).group_by('pos').agg(
+    #                              pl.col('count').sum()).sort("count")
+    # del master_dict_sub
+    #
+    # mismatch_dict = pl.DataFrame(mismatch_dict, schema=["pos", "nuc", "count"])
+    # if 'mismatch' in data:
+    #
+    #     mismatch_dict = mismatch_dict.filter(
+    #         pl.sum_horizontal('A', 'T', 'G', 'C') > 0)
+    return master_file_dict_values, mismatch_dict

@@ -3,6 +3,8 @@ import altair as alt
 import polars as pl
 from altair.vegalite.v5.api import Chart
 
+alt.data_transformers.disable_max_rows()  # For genes longer than 5000 nucs
+
 
 class VegaPlot:
     """Plotting class for VegaLite."""
@@ -24,6 +26,7 @@ class VegaPlot:
 
         # Predefides
         self.size = 12
+        print(self.table)
 
     def _plot(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""
@@ -36,14 +39,14 @@ class VegaPlot:
                 # scale=alt.Scale(domain=[0, 500])
             ),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
-            color=alt.condition(
-                alt.Color('frame:N', scale=self.colors, legend=None),
-                alt.value(1), alt.value(0.5)),
-            opacity=alt.condition(
-                selection, alt.value(1),
-                alt.value(0.5))  ).add_selection().transform_filter(
-                    selection).interactive(bind_y=False).properties(width=800,
-                                                                    height=300)
+            color=alt.Color('frame:N', scale=self.colors, legend=None)
+            # color=alt.condition(
+            #     alt.Color('frame:N', scale=self.colors, legend=None),
+            #     alt.value(1), alt.value(0.5))
+        )
+        # .add_selection().transform_filter(
+        #             selection).interactive(bind_y=False).properties(width=800,
+        #                                                             height=300)
 
     def line(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""

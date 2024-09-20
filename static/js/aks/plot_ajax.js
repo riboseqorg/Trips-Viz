@@ -5,20 +5,6 @@ $("#query").click(() => {
       json[name] = value;
       return json;
     }, {});
-  //  console.log(JSON.stringify(formJson));
-  $.post("/query", formJson, (data) => {
-    parse(data, "plot");
-    // alert(data);
-  });
-});
-
-$("#comparequery").click(() => {
-  const formJson = $("#form")
-    .serializeArray()
-    .reduce((json, { name, value }) => {
-      json[name] = value;
-      return json;
-    }, {});
   $("#form")
     .find("ul.file")
     .each(function () {
@@ -33,23 +19,13 @@ $("#comparequery").click(() => {
         formJson[list_name] = lst;
       }
     });
+  const formJson2 = {};
+  formJson2["query"] = JSON.stringify(formJson);
 
-  console.log(JSON.stringify(formJson));
-  $.post("/comparequery", JSON.stringify(formJson), (data) => {
-    parse(data, "plot");
-    // alert(data);
-  });
-});
-
-$("#traninfoquery").click(() => {
-  const formJson = $("#form")
-    .serializeArray()
-    .reduce((json, { name, value }) => {
-      json[name] = value;
-      return json;
-    }, {});
-  //console.log(JSON.stringify(formJson));
-  $.post("/traninfoquery", formJson, (data) => {
+  const pathname = $(location).attr("pathname").split("/");
+  formJson2["pathname"] = pathname[pathname.length - 2];
+  //  console.log(JSON.stringify(formJson2));
+  $.post("/query", formJson2, (data) => {
     parse(data, "plot");
     // alert(data);
   });

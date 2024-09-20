@@ -1,17 +1,18 @@
-import string
-from flask import flash
-from typing import Dict, List, Tuple, Any
-import os
-from json import dumps
-import polars as pl
-import pandas as pd
-from flask import session, request
-from flask_login import UserMixin, current_user
-from Bio.Seq import Seq
-from sqlqueries_2 import sqlquery, table2dict, get_table, update_table
-import uuid
-import config
 import logging
+import os
+import string
+import uuid
+from json import dumps
+from typing import Any, Dict, List, Tuple
+
+import pandas as pd
+import polars as pl
+from Bio.Seq import Seq
+from flask import flash, request, session
+from flask_login import UserMixin, current_user
+
+import config
+from sqlqueries_2 import get_table, sqlquery, table2dict, update_table
 
 
 # User model
@@ -50,7 +51,7 @@ class User(UserMixin):
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
 
-def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
+def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
     dfs = []  # Allow empty dict
     if len(keys) == 2:  # For gene and triplet periodicity use two keys
         try:
@@ -59,14 +60,32 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
             return pl.DataFrame()
         if keys[1] in ["fiveprime",
                        "threeprime"]:  # NOTE: keys[0]=="trip_periodity"
-            for read_len, periodicity in tdict.items():
-                dfs.append(
-                    pl.DataFrame(periodicity).with_columns(read_len=read_len))
+            if keys[0] == "trip_periodicity":
+                for read_len, periodicity in tdict.items():
+                    dfs.append(
+                        pl.DataFrame(periodicity).with_columns(
+                            read_len=read_len))
 
-            if dfs:
-                dfs = pl.concat(dfs)
-            else:
-                dfs = pl.DataFrame()
+                if dfs:
+                    dfs = pl.concat(dfs)
+                else:
+                    dfs = pl.DataFrame()
+            elif keys[0] == "offsets":
+                print("mmmmmmmmmmmmmmmmmmmmm", tdict)
+                df = pl.DataFrame({
+                    "read_lens": tdict["read_scores"].keys(),
+                    "read_scores": tdict["read_scores"].values()
+                }).join(pl.DataFrame({
+                    "read_lens": tdict["offsets"].keys(),
+                    "offsets": tdict["offsets"].values()
+                }),
+                        on="read_lens",
+                        how="outer_coalesce").with_columns([
+                            pl.col('offsets').fill_null(15),
+                            pl.col('read_scores').fill_null(1)
+                        ])
+                print("zzzzzzzzzzzzzzzz", df)
+                return df
 
         elif keys[1] == 'seq':
             for pos, nuc_dist in tdict:
@@ -77,7 +96,7 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
             else:
                 dfs = pl.DataFrame()
         elif keys[1] in ["ambig", "unambig"]:
-            for read_len, pos_count in tdict:
+            for read_len, pos_count in tdict.items():
                 dfs.append(
                     pl.DataFrame({
                         "pos": pos_count.keys(),
@@ -107,7 +126,7 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
             tdf = pl.DataFrame(
                 [[key2] + sqldict[keys[0]][key2]],
                 schema=["gene", "fiveprime", "CDS",
-                        "threeprime"])  #.with_columns(gene=key2)
+                        "threeprime"])  # .with_columns(gene=key2)
             # print(tdf, key2)
             dfs.append(tdf)
         dfs = pl.concat(dfs)
@@ -144,7 +163,7 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame:
 
 
 def form_filler(organism, transcriptome):
-    data = request.args.to_dict()
+    data: Dict[str, Any] = request.args.to_dict()
     data['organism'] = organism
     data['transcriptome'] = transcriptome
     gwips_info = get_table("organisms").filter(
@@ -286,6 +305,7 @@ def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
     '''
     groups = []
     file_ids = []
+    print(dct,"Kiran")
     for key, value in dct.items():
         if key in config.VARIABLE_CONVERSION:
             dct[key] = config.VARIABLE_CONVERSION[key](value)
@@ -398,12 +418,11 @@ def generate_short_code(data) -> str:
             key2remove.append(key)
     for key in key2remove:
         del data[key]
-    url_id = get_table("urls")["url_id"].max()
+    url_id:int = get_table("urls")["url_id"].max() + 1
+
     # If the url table is empty result will return none
-    cursor.execute("INSERT INTO urls VALUES({},'{}')".format(
-        url_id, dumps(data)))
+    update_table("urls",{'url_id':url_id, 'url':dumps(data)})
     short_code = integer_to_base62(url_id)
-    connection.close()
     return short_code
 
 

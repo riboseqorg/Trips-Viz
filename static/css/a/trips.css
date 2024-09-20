@@ -22,7 +22,9 @@ input[type="text"]::placeholder {
   /* Firefox, Chrome, Opera */
   text-align: top left;
 }
-
+.upper {
+  text-transform: uppercase;
+}
 #accordion h3 {
   /*Change values accoridngly*/
   text-align: left;
@@ -235,20 +237,25 @@ span {
   -webkit-columns: 3;
   -moz-columns: 3;
   min-height: 150px;
-  border: 1px solid #dbdbdb;
+  border: 1px solid #00dbdb;
   text-align: center;
   border-radius: 20px;
   padding: 10px;
 }
 
 .draggable_filelist {
-  list-style-type: none;
+  /*list-style-type: none;*/
   margin: 2px;
   padding: 10px;
   cursor: pointer;
   border: 1px solid #dbdbdb;
   border-radius: 20px;
   min-height: 150px;
+  text-align: center;
+}
+.ui-sortable2 {
+  width: 99%;
+  height: 100%;
   text-align: center;
 }
 

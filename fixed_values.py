@@ -154,7 +154,6 @@ def merge_dicts(dict1: Dict[str, Dict[int, int]],
     return dict1
 
 
-
 def codon_usage(codon_dict: Dict[str, int], short_code: str, title_size: int,
                 axis_label_size: int, marker_size: int, filename: str) -> None:
     """

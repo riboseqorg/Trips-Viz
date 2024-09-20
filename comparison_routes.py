@@ -1,22 +1,25 @@
-from typing import Tuple
-from plots import VegaPlot
-import altair as alt
-from flask import Blueprint, render_template, request, jsonify
-from flask import current_app as app
-from sqlitedict import SqliteDict
 import os
 from json import loads
-from fetch_shelve_reads2 import get_reads
+from typing import Tuple
+
+import altair as alt
 import polars as pl
-import config
-from core_functions import (fetch_studies, fetch_files, fetch_study_info,
-                            fetch_file_paths, generate_short_code, form_filler,
-                            string2other)
+from flask import Blueprint
+from flask import current_app as app
+from flask import jsonify, render_template, request
 # import riboflask_compare
 from flask_login import current_user
-from fixed_values import my_decoder
+from sqlitedict import SqliteDict
 
-from sqlqueries_2 import get_table, sqlquery, get_user_id
+import config
+from core_functions import (fetch_file_paths, fetch_files, fetch_studies,
+                            fetch_study_info, form_filler, generate_short_code,
+                            string2other)
+from fetch_shelve_reads2 import get_reads
+from fixed_values import my_decoder
+from plots import VegaPlot
+from sqlqueries_2 import get_table, get_user_id, sqlquery
+
 # Single transcript comparison page, user chooses a gene and groups of files to display
 comparison_plotpage_blueprint = Blueprint("comparisonpage",
                                           __name__,
@@ -89,13 +92,8 @@ def anmol(filepath_list, normalize):
 
 
 # Creates/serves the comparison plots
-comparisonquery_blueprint = Blueprint("comparequery",
-                                      __name__,
-                                      template_folder="templates")
 
-
-@comparisonquery_blueprint.route('/comparequery', methods=['POST'])
-def comparequery() -> str | Tuple:
+def comparequery(data) -> str | Tuple:
     """
     Parameters:
     - None
@@ -104,9 +102,7 @@ def comparequery() -> str | Tuple:
     - html page
     """
     # global user_short_passed
-    data = loads(list(request.form.to_dict().keys())[0])
-    print(data)
-    data = string2other(data)
+    print(data,"Anmol")
     data['primetype'] = "fiveprime"  # NOTE: This is default for here
     data["readscore"] = 1  # NOTE: This is default for here
     print(data)

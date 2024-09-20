@@ -36,7 +36,6 @@ def generate_plot(data, settings) -> str:
         for nuc in "ATGC":
             labels_visibility[f"Mismatches {nuc}"] = False
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
-    frame_orfs = {1: [], 2: [], 3: []}
     if data['owner'] == 1:
         sqlpath = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
                                                       config.ANNOTATION_DIR,
@@ -86,6 +85,7 @@ def generate_plot(data, settings) -> str:
         'pos':
         traninfo['start_list']
     })
+    # TODO: refine start stops
     stop_dataframe = []
     orf_dataframe = []
     for i in range(len(seq)):
