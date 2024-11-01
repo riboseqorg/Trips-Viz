@@ -308,7 +308,7 @@ def redo_periodicity_plots(file_path: str) -> None:
     master_read_dict.commit()
 
 
-def metainfoquery(data) -> str | Tuple:
+def metainfoquery(data) -> str | tuple:
     # global user_short_passed
     gene_dict = {}
 
@@ -499,12 +499,12 @@ def metainfoquery(data) -> str | Tuple:
                 for transcript in longest_tran_list:
                     try:
                         transcript_dict = sqlite_db[transcript]["unambig"]
-                    except:
+                    except KeyError:
                         continue
                     try:
                         cds_start = cds_dict[transcript]["cds_start"]
                         cds_stop = cds_dict[transcript]["cds_stop"]
-                    except:
+                    except KeyError:
                         continue
                     for readlen in transcript_dict:
                         for five_pos in transcript_dict[readlen]:
@@ -617,18 +617,18 @@ def metainfoquery(data) -> str | Tuple:
                             if three_pos <= cds_start+3:
                                 mrna_dist_dict["5_leader"][readlen] += transcript_dict[readlen][five_pos]
                                 file_specific_mrna_dist_dict["5_leader"][readlen] += transcript_dict[readlen][five_pos]
-                        elif five_pos <= cds_start-4 and three_pos >= cds_start+4:
-                            mrna_dist_dict["start_codon"][readlen] += transcript_dict[readlen][five_pos]
-                            file_specific_mrna_dist_dict["start_codon"][readlen] += transcript_dict[readlen][five_pos]
-                        elif five_pos >= cds_start-3 and three_pos <= cds_stop-2:
-                    mrna_dist_dict["cds"][readlen] += transcript_dict[readlen][five_pos]
-                    file_specific_mrna_dist_dict["cds"][readlen] += transcript_dict[readlen][five_pos]
-                    elif five_pos <= cds_stop-9 and three_pos >= cds_stop-1:
-                    mrna_dist_dict["stop_codon"][readlen] += transcript_dict[readlen][five_pos]
-                    file_specific_mrna_dist_dict["stop_codon"][readlen] += transcript_dict[readlen][five_pos]
-                    elif five_pos >= cds_stop-9:
-                    mrna_dist_dict["3_trailer"][readlen] += transcript_dict[readlen][five_pos]
-                    file_specific_mrna_dist_dict["3_trailer"][readlen] += transcript_dict[readlen][five_pos]
+                            elif five_pos <= cds_start-4 and three_pos >= cds_start+4:
+                                mrna_dist_dict["start_codon"][readlen] += transcript_dict[readlen][five_pos]
+                                file_specific_mrna_dist_dict["start_codon"][readlen] += transcript_dict[readlen][five_pos]
+                            elif five_pos >= cds_start-3 and three_pos <= cds_stop-2:
+                                mrna_dist_dict["cds"][readlen] += transcript_dict[readlen][five_pos]
+                                file_specific_mrna_dist_dict["cds"][readlen] += transcript_dict[readlen][five_pos]
+                            elif five_pos <= cds_stop-9 and three_pos >= cds_stop-1:
+                                mrna_dist_dict["stop_codon"][readlen] += transcript_dict[readlen][five_pos]
+                                file_specific_mrna_dist_dict["stop_codon"][readlen] += transcript_dict[readlen][five_pos]
+                            elif five_pos >= cds_stop-9:
+                                mrna_dist_dict["3_trailer"][readlen] += transcript_dict[readlen][five_pos]
+                                file_specific_mrna_dist_dict["3_trailer"][readlen] += transcript_dict[readlen][five_pos]
                     sqlite_db["mrna_dist_readlen_dict"] = file_specific_mrna_dist_dict
                     sqlite_db.commit()
                     sqlite_db.close()
@@ -825,6 +825,7 @@ def metainfoquery(data) -> str | Tuple:
                                                      ("GA", 0), ("GT",
                                                                  0), ("GG", 0), ("GC", 0),
                                                      ("CA", 0), ("CT", 0), ("CG", 0), ("CC", 0)])
+        master_count_dict = []
         for filetype in file_paths_dict:
             for file_id in file_paths_dict[filetype]:
                 filepath = file_paths_dict[filetype][file_id]
@@ -833,9 +834,11 @@ def metainfoquery(data) -> str | Tuple:
                 else:
                     return ("File not found: {}, please report this to tripsvizsite@gmail.com or via the contact page.".format(filepath))
                 dinuc_counts = sqlite_db["dinuc_counts"]
+                # TODO: put dinuc count as list instead of dict
                 for readlen in dinuc_counts:
-                    for dinuc in dinuc_counts[readlen]:
-                        master_count_dict[dinuc] += dinuc_counts[readlen][dinuc]
+                    
+                    for dinuc,count in dinuc_counts[readlen].items():
+                        master_count_dict.append([dinuc, count]) 
 
             return metainfo_plots.dinuc_bias(master_count_dict, short_code, background_col, title_size, axis_label_size, subheading_size, marker_size)
 

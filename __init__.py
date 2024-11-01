@@ -1,7 +1,9 @@
 import json
+
 # import riboflask_datasets
 import logging
 import os
+
 # , taskstatus_blueprint
 # from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
 import re
@@ -16,10 +18,24 @@ from json import dumps, loads
 from typing import Any, Union
 
 import polars as pl
-from flask import (Flask, Response, flash, get_flashed_messages, redirect,
-                   render_template, request, send_from_directory, url_for)
-from flask_login import (LoginManager, current_user, login_required,
-                         login_user, logout_user)
+from flask import (
+    Flask,
+    Response,
+    flash,
+    get_flashed_messages,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 from flask_mail import Mail
 from flask_xcaptcha import XCaptcha
 from sqlitedict import SqliteDict
@@ -28,16 +44,21 @@ from werkzeug.utils import secure_filename
 
 import config
 from comparison_routes import comparequery, comparison_plotpage_blueprint
-from core_functions import (User, base62_to_integer, fetch_file_paths,
-                            fetch_user, string2other)
+from core_functions import (
+    User,
+    base62_to_integer,
+    fetch_file_paths,
+    fetch_user,
+    string2other,
+)
 from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery
-from pause_routes import pause_detection_blueprint, pausequery
-from single_transcript_routes import (query_plot,
-                                      single_transcript_plotpage_blueprint)
+from pause_routes import pause_detection_blueprint, find_pauses
+from single_transcript_routes import query_plot, single_transcript_plotpage_blueprint
 from single_transcript_routes_genomic import (
     single_transcript_plotpage_genomic_blueprint,
-    single_transcript_query_genomic_blueprint)
+    single_transcript_query_genomic_blueprint,
+)
 from sqlqueries_2 import get_table, get_user_id, sqlquery, update_table
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery
 
@@ -46,8 +67,7 @@ root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
 root_logger.propagate = False
 
-log_format = logging.Formatter(
-    "%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+log_format = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
 
 today = date.today()
 file_handler = logging.FileHandler(config.LOG_FILE + str(today))
@@ -61,9 +81,9 @@ root_logger.addHandler(file_handler)
 # root_logger.removeHandler(lhStdout)
 
 # logging.basicConfig(filename=config.LOG_FILE,level=logging.DEBUG,format='%(asctime)s %(levelname)-8s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder="static")
 
-logging.debug('This will get logged to a file')
+logging.debug("This will get logged to a file")
 
 user_short_passed = False
 
@@ -80,33 +100,34 @@ app.register_blueprint(pause_detection_blueprint)
 # app.register_blueprint(pausequery_blueprint)
 # app.register_blueprint(taskstatus_blueprint)
 # app.register_blueprint(traninfo_plotpage_blueprint)
-app.config.from_pyfile('config.py')
+app.config.from_pyfile("config.py")
 
 xcaptcha = XCaptcha(app=app)
 
-app.config['UPLOAD_FOLDER'] = '/static/tmp'
-app.config['SECURITY_PASSWORD_SALT'] = config.PASSWORD_SALT
-app.config['SECRET_KEY'] = config.FLASK_SECRET_KEY
+app.config["UPLOAD_FOLDER"] = "/static/tmp"
+app.config["SECURITY_PASSWORD_SALT"] = config.PASSWORD_SALT
+app.config["SECRET_KEY"] = config.FLASK_SECRET_KEY
 
 # Modify security messages so people can't tell which users have already signed up.
-app.config['SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED'] = ((
-    "Thank you. Confirmation instructions have been sent to %(email)s."),
-                                                       "error")
-app.config['USER_DOES_NOT_EXIST'] = (("Invalid credentials"), "error")
-app.config['INVALID_PASSWORD'] = (("Invalid credentials"), "error")
+app.config["SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED"] = (
+    ("Thank you. Confirmation instructions have been sent to %(email)s."),
+    "error",
+)
+app.config["USER_DOES_NOT_EXIST"] = (("Invalid credentials"), "error")
+app.config["INVALID_PASSWORD"] = (("Invalid credentials"), "error")
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = 'ribopipe@gmail.com'
-app.config['MAIL_PASSWORD'] = config.EMAIL_PASS
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USERNAME"] = "ribopipe@gmail.com"
+app.config["MAIL_PASSWORD"] = config.EMAIL_PASS
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USE_SSL"] = False
 
 mail = Mail(app)
 
 
 def sanitize_get_request(request: Any | None) -> Any | None:
-    '''
+    """
     take a get request and remove any XSS attempts
 
     Parameters:
@@ -115,7 +136,7 @@ def sanitize_get_request(request: Any | None) -> Any | None:
     Returns:
     - Any | None
 
-    '''
+    """
     if isinstance(request, str):
         request = re.sub("<.*>", "", request)
 
@@ -137,13 +158,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 login_manager.login_message = None
-login_manager.session_protection = 'basic'
+login_manager.session_protection = "basic"
 
 
 # Provides statistics on trips such as number of organisms, number of files, number of studies etc and lists updates.
-@app.route('/stats/')
+@app.route("/stats/")
 def statisticspage() -> str:
-    '''
+    """
     Display statistics
 
     Parameters:
@@ -152,46 +173,47 @@ def statisticspage() -> str:
 
     Example:
 
-    '''
+    """
 
     def rename_organism(organism: str) -> str:
-        '''
+        """
         Rename the organism name to the short name
 
         Parameters:
         - organism (str): name of the organism
 
         Returns:
-        - str: 
+        - str:
 
         Example:
 
-        '''
-        if '_' in organism:
-            orgt = organism.split('_')
+        """
+        if "_" in organism:
+            orgt = organism.split("_")
             organism = f"{orgt[0][0]}.{orgt[1]}"
         return organism.capitalize()
 
-    organisms = get_table('organisms').filter(
-        pl.col('private') == 0).with_columns(
-            pl.col('organism_name').apply(rename_organism))[[
-                'organism_id', 'organism_name'
-            ]]
+    organisms = (
+        get_table("organisms")
+        .filter(pl.col("private") == 0)
+        .with_columns(pl.col("organism_name").apply(rename_organism))[
+            ["organism_id", "organism_name"]
+        ]
+    )
 
     no_organisms = organisms.shape[0]
 
-    files = get_table('files').with_columns(
-        pl.col('file_type').apply(lambda x: f"{x.capitalize()} files"))[[
-            'organism_id', 'file_type'
-        ]]
-    file_type_counts = files.group_by('file_type').len().rename(
-        {'len': 'Count'})
+    files = get_table("files").with_columns(
+        pl.col("file_type").apply(lambda x: f"{x.capitalize()} files")
+    )[["organism_id", "file_type"]]
+    file_type_counts = files.group_by("file_type").len().rename({"len": "Count"})
     # RiboSEq and Rna seq file counts
-    org_files_count = organisms.join(files, on='organism_id').group_by(
-        'organism_name', 'file_type').len().rename({
-            'len': 'Count',
-            'organism_name': 'Organism'
-        })
+    org_files_count = (
+        organisms.join(files, on="organism_id")
+        .group_by("organism_name", "file_type")
+        .len()
+        .rename({"len": "Count", "organism_name": "Organism"})
+    )
 
     # NOTE: Till here
 
@@ -200,28 +222,30 @@ def statisticspage() -> str:
     org_breakdown_graph = stats_plots.org_breakdown_plot(org_files_count)
 
     # Create the graph which breaks down studies published per year
-    public_studies = get_table('studies').filter(
-        (pl.col('private') == 0) & (pl.col('paper_year').is_not_null()))
+    public_studies = get_table("studies").filter(
+        (pl.col("private") == 0) & (pl.col("paper_year").is_not_null())
+    )
 
     no_studies = public_studies.shape[0]
-    year_dist = public_studies.group_by("paper_year").len().rename(
-        {'len': 'Count'})
+    year_dist = public_studies.group_by("paper_year").len().rename({"len": "Count"})
 
     year_plot = stats_plots.year_dist(year_dist)
-    updates = get_table('updates').sort('date', descending=True)._repr_html_()
+    updates = get_table("updates").sort("date", descending=True)._repr_html_()
 
-    return render_template('statistics.html',
-                           no_organisms=no_organisms,
-                           no_studies=no_studies,
-                           riboseq_files=riboseq_files,
-                           rnaseq_files=rnaseq_files,
-                           org_breakdown_graph=org_breakdown_graph,
-                           year_plot=year_plot,
-                           news_string=updates)
+    return render_template(
+        "statistics.html",
+        no_organisms=no_organisms,
+        no_studies=no_studies,
+        riboseq_files=riboseq_files,
+        rnaseq_files=rnaseq_files,
+        org_breakdown_graph=org_breakdown_graph,
+        year_plot=year_plot,
+        news_string=updates,
+    )
 
 
 # Contact page
-@app.route('/contactus/', methods=["GET", "POST"])
+@app.route("/contactus/", methods=["GET", "POST"])
 def contactus() -> str | Response:
     """
     Contact page
@@ -237,14 +261,19 @@ def contactus() -> str | Response:
             fromaddr = "ribopipe@gmail.com"
             toaddr = "tripsvizsite@gmail.com"
             msg = MIMEMultipart()
-            msg['From'] = fromaddr
-            msg['To'] = toaddr
-            msg['Subject'] = request.form['subject']
+            msg["From"] = fromaddr
+            msg["To"] = toaddr
+            msg["Subject"] = request.form["subject"]
             msg.attach(
-                MIMEText("Name: {}\nEmail: {}\nMessage: {}".format(
-                    request.form['name'], request.form['email'],
-                    request.form['message'])))
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+                MIMEText(
+                    "Name: {}\nEmail: {}\nMessage: {}".format(
+                        request.form["name"],
+                        request.form["email"],
+                        request.form["message"],
+                    )
+                )
+            )
+            server = smtplib.SMTP("smtp.gmail.com", 587)
             server.starttls()
             server.login(fromaddr, config.EMAIL_PASS)
             text = msg.as_string()
@@ -253,9 +282,9 @@ def contactus() -> str | Response:
             flash("Message sent successfully")
         else:
             flash("Recaptcha failed")
-            return redirect(url_for('contactus'))
+            return redirect(url_for("contactus"))
 
-    return render_template('contact.html')
+    return render_template("contact.html")
 
 
 # This is the page where users create a new login.
@@ -273,59 +302,61 @@ def create() -> str | Response:
     if current_user.is_authenticated:
         return redirect("/")
     error = None
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        password2 = request.form['password2']
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        password2 = request.form["password2"]
         if xcaptcha.verify():
             username_dict = {}
             logging.debug("Connecting to trips.sqlite")
 
             # Added by anmol
-            users = get_table('users')
-            max_user_id = users['user_id'].max()
-            users = users[['username', 'password']]
-            username_dict = users.set_index('username').to_dict()['password']
+            users = get_table("users")
+            max_user_id = users["user_id"].max()
+            users = users[["username", "password"]]
+            username_dict = users.set_index("username").to_dict()["password"]
 
             logging.debug("Closing trips.sqlite connection")
 
             if username in username_dict:
                 error = "Error: {} is already registered".format(username)
-                return render_template('create.html', error=error)
+                return render_template("create.html", error=error)
             if password == "":
                 error = "Password cannot be empty"
-                return render_template('create.html', error=error)
+                return render_template("create.html", error=error)
             if password != password2:  # TODO: Add JS to test
                 error = "Passwords do not match"
-                return render_template('create.html', error=error)
+                return render_template("create.html", error=error)
             hashed_pass = generate_password_hash(password)
             user_id = max_user_id + 1
             # Add -1 to study access list, causes problems when adding study id's later if we don't
             # Last value is temp_user, set to 0 because this is not a temporary user (temporary users identified by uuid in session cookie only, no username or pw)
             # TODO: create code for updating tabel
             update_table(
-                'users', {
-                    'user_id': user_id,
-                    'username': username,
-                    'password': hashed_pass,
-                    'f1': '-1',
-                    'f2': '',
-                    'f3': 0,
-                    'f4': 0
-                }, 'insert')  # TODO: Need to check what are f-fields
-            update_table('user_settings', config.DEFAULT_USER_SETTINGS,
-                         'insert')
+                "users",
+                {
+                    "user_id": user_id,
+                    "username": username,
+                    "password": hashed_pass,
+                    "f1": "-1",
+                    "f2": "",
+                    "f3": 0,
+                    "f4": 0,
+                },
+                "insert",
+            )  # TODO: Need to check what are f-fields
+            update_table("user_settings", config.DEFAULT_USER_SETTINGS, "insert")
             logging.debug("Closing trips.sqlite connection")
             return redirect("/")
         else:
-            error = 'Invalid Captcha. Please try again.'
-            return render_template('create.html', error=error)
+            error = "Invalid Captcha. Please try again."
+            return render_template("create.html", error=error)
     else:
-        return render_template('create.html', error=error)
+        return render_template("create.html", error=error)
 
 
 # Allows users to change some global settings such as plot background colour, title size, tick label size, etc.
-@app.route('/settings/')
+@app.route("/settings/")
 # @login_required
 def settingspage() -> Response:
     """
@@ -337,20 +368,21 @@ def settingspage() -> Response:
     if not user:
         return redirect(
             url_for(
-                'homepage',
-                message=
-                "To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
-            ))
+                "homepage",
+                message="To use the settings page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies.",
+            )
+        )
     # get user_id
     user_id = get_user_id(user)
-    user_settings = get_table('user_settings').filter(
-        pl.col('user_id') == user_id).to_dicts()[0]
+    user_settings = (
+        get_table("user_settings").filter(pl.col("user_id") == user_id).to_dicts()[0]
+    )
 
-    return render_template('settings.html', user_settings=user_settings)
+    return render_template("settings.html", user_settings=user_settings)
 
 
 # Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
-@app.route('/downloads/')
+@app.route("/downloads/")
 def downloadspage() -> str:
     """
     Allows users to download fasta files, as well as scripts needed to produce their own sqlite files
@@ -358,54 +390,54 @@ def downloadspage() -> str:
 
     organism_dict = {
         "Scripts": [
-            "bam_to_sqlite.py", "tsv_to_sqlite.py",
+            "bam_to_sqlite.py",
+            "tsv_to_sqlite.py",
             "create_annotation_sqlite.py",
-            "create_transcriptomic_to_genomic_sqlite.py"
+            "create_transcriptomic_to_genomic_sqlite.py",
         ]
     }
     try:
         user = current_user.name
     except Exception:
         user = None
-    dbpath = '{}/{}'.format(config.SCRIPT_LOC, config.DATABASE_NAME)
-    organisms = sqlquery(
-        dbpath, 'organisms').filter(pl.col('private') == 0)['organism_name']
+    dbpath = "{}/{}".format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    organisms = sqlquery(dbpath, "organisms").filter(pl.col("private") == 0)[
+        "organism_name"
+    ]
 
     for organism in organisms:
         organism_dict[organism] = []
-    trips_annotation_dir = "{}/{}/".format(config.SCRIPT_LOC,
-                                           config.ANNOTATION_DIR)
+    trips_annotation_dir = "{}/{}/".format(config.SCRIPT_LOC, config.ANNOTATION_DIR)
     for org in set(os.listdir(trips_annotation_dir)) & set(organisms):
         for filename in os.listdir(trips_annotation_dir + "/" + org):
             ext = os.path.splitext(filename)[-1]
-            if (ext in [
-                    "fa", "gtf"
-            ]) or (ext == "sqlite" and
-                   ("transcriptomic" in filename or org in filename)):
+            if (ext in ["fa", "gtf"]) or (
+                ext == "sqlite" and ("transcriptomic" in filename or org in filename)
+            ):
                 organism_dict[org].append(filename)
 
-    return render_template('downloads.html',
-                           user=user,
-                           organism_dict=organism_dict)
+    return render_template("downloads.html", user=user, organism_dict=organism_dict)
 
 
 # Called when user downloads something from the downloads page
-@app.route('/downloadquery', methods=['POST'])
+@app.route("/downloadquery", methods=["POST"])
 def download_file() -> Response:
     """
     Called when user downloads something from the downloads page
 
     """
     data = request.form.to_dict()
-    return send_from_directory("{}/{}/{}".format(config.SCRIPT_LOC,
-                                                 config.ANNOTATION_DIR,
-                                                 data['organism'] + ".tar.gz"),
-                               data['assembly'],
-                               as_attachment=True)
+    return send_from_directory(
+        "{}/{}/{}".format(
+            config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"] + ".tar.gz"
+        ),
+        data["assembly"],
+        as_attachment=True,
+    )
 
 
 # Allows users to upload their own sqlite files and transcriptomes.
-@app.route('/uploads/')
+@app.route("/uploads/")
 # @login_required
 def uploadspage() -> str:
     """
@@ -417,94 +449,111 @@ def uploadspage() -> str:
     if not user:
         return redirect(
             url_for(
-                'homepage',
-                message=
-                "To use the uploads page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies."
-            ))
+                "homepage",
+                message="To use the uploads page you either need to be logged in or allow cookies. Click the cookie policy link at the top left of the page to allow cookies.",
+            )
+        )
     if not logged_in:
         flash(
             "You are not logged in, uploaded data will only be kept for a period of one day."
         )
 
     user_id = get_user_id(user)
-    organisms = get_table('organisms').filter((pl.col('private') == 0)
-                                              & (pl.col('owner') == user_id))
-    organisms_t = organisms[[
-        "organism_name", "transcriptome_list", "organism_id"
-    ]]
+    organisms = get_table("organisms").filter(
+        (pl.col("private") == 0) & (pl.col("owner") == user_id)
+    )
+    organisms_t = organisms[["organism_name", "transcriptome_list", "organism_id"]]
 
     organism_dict = table_to_dict(
-        organisms_t)  # key: organism name, value: transcriptome_list
+        organisms_t
+    )  # key: organism name, value: transcriptome_list
     org_id_dict = table_to_dict(
-        organisms_t)  # key: organism_id, value: [organism, transcriptome]
+        organisms_t
+    )  # key: organism_id, value: [organism, transcriptome]
     # -- Selected one
-    organism_access = get_table('organism_access')
-    organism_ids = organism_access.filter(
-        pl.col('user_id') == user_id).select("organism_id")
+    organism_access = get_table("organism_access")
+    organism_ids = organism_access.filter(pl.col("user_id") == user_id).select(
+        "organism_id"
+    )
     organisms_t = organisms.filter(pl.col("organism_id").is_in(organism_ids))
     organism_dict = {**organism_dict, **table_to_dict(organisms_t)}
     org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
-    study_dict = get_table('studies').filter(
-        pl.col('owner') == user_id).select('study_id', 'study_name',
-                                           'organism_id')
+    study_dict = (
+        get_table("studies")
+        .filter(pl.col("owner") == user_id)
+        .select("study_id", "study_name", "organism_id")
+    )
 
     organisms_t = organisms.filter(
-        pl.col("organism_id").is_in(
-            set(study_dict["organism_id"]) - set(org_id_dict)))
+        pl.col("organism_id").is_in(set(study_dict["organism_id"]) - set(org_id_dict))
+    )
     org_id_dict = {**org_id_dict, **table_to_dict(organisms_t)}
 
     study_dict[int(row[0])] = [  # TODO: Study dict format
-        row[1].replace("_{}".format(user_id), "", 1), org_id_dict[row[2]][0],
-        org_id_dict[row[2]][1], []
+        row[1].replace("_{}".format(user_id), "", 1),
+        org_id_dict[row[2]][0],
+        org_id_dict[row[2]][1],
+        [],
     ]
 
     transcriptome_dict = organism_access.filter(pl.col("user_id") == user_id)
     transcriptome_dict = table_to_dict(
         transcriptome_dict
     )  # key: organism_id, value: [organism_name, transcriptome_list]
-    study_access = get_table('study_access').filter(
-        pl.col("study_id").is_in(study_dict))
-    users = get_table('users').filter(
-        pl.col("user_id").is_in(study_access["user_id"]))
+    study_access = get_table("study_access").filter(
+        pl.col("study_id").is_in(study_dict)
+    )
+    users = get_table("users").filter(pl.col("user_id").is_in(study_access["user_id"]))
     users = set(users["username"]) - set(study_dict.keys())
     # NOTE : Till here
 
     for study_id in study_dict:
-        study_access = get_table('study_access')
+        study_access = get_table("study_access")
         user_ids = study_access[study_access.study_id == study_id].user_id
-        users = get_table('users')
+        users = get_table("users")
         user_names = users[users.user_id.isin(user_ids)].username
         user_names = set(user_names) - set(study_dict[study_id][3])
         study_dict[study_id][3] += list(user_names)
-    files = get_table('files').filter(pl.col('owner') == user_id)
+    files = get_table("files").filter(pl.col("owner") == user_id)
     # [file_name,study_id,file_id,file_description]
-    studies = get_table('studies').with_columns(
-        pl.col('study_name').apply(
-            lambda x: x.replace("_{}".format(user_id), "", 1))).join(
-                files, on='study_id')
+    studies = (
+        get_table("studies")
+        .with_columns(
+            pl.col("study_name").apply(
+                lambda x: x.replace("_{}".format(user_id), "", 1)
+            )
+        )
+        .join(files, on="study_id")
+    )
 
     # key: file_name, value: [study_name,file_id,file_description]
     file_dict = {}
     for row in studies.iter_rows(named=True):  # TODO: Table 2 dict
-        file_dict[row['file_name']] = [
-            row['study_name'], row['file_id'], row['file_description']
+        file_dict[row["file_name"]] = [
+            row["study_name"],
+            row["file_id"],
+            row["file_description"],
         ]
-    seq_dict = get_table('seq_rules')
+    seq_dict = get_table("seq_rules")
     seq_dict = table_to_dict(
         seq_dict.filter(seq_dict.user_id == user_id).select(
-            'seq_name', 'frame_breakdown'))
-    return render_template('uploads.html',
-                           user=user,
-                           organism_dict=organism_dict,
-                           study_dict=study_dict,
-                           transcriptome_dict=transcriptome_dict,
-                           file_dict=file_dict,
-                           seq_dict=seq_dict)
+            "seq_name", "frame_breakdown"
+        )
+    )
+    return render_template(
+        "uploads.html",
+        user=user,
+        organism_dict=organism_dict,
+        study_dict=study_dict,
+        transcriptome_dict=transcriptome_dict,
+        file_dict=file_dict,
+        seq_dict=seq_dict,
+    )
 
 
 # Called when user uploads something on the uploads page
-@app.route('/uploadquery', methods=['POST'])
+@app.route("/uploadquery", methods=["POST"])
 # @login_required
 def upload_file() -> Response:
     """
@@ -522,32 +571,37 @@ def upload_file() -> Response:
         return redirect("/uploads/")
     if user != "public":
         foldername = "{}_{}".format(
-            request.form["foldername"].replace(" ", "_"), user_id)
+            request.form["foldername"].replace(" ", "_"), user_id
+        )
     else:
         foldername = "{}".format(request.form["foldername"].replace(" ", "_"))
     organism = request.form["organism"]
     assembly = request.form["assembly"]
     filetype_radio = request.form["filetype"]
-    filetype = (request.form["seq_type"]).lower().strip(
-    ) if filetype_radio == "other" else filetype_radio
+    filetype = (
+        (request.form["seq_type"]).lower().strip()
+        if filetype_radio == "other"
+        else filetype_radio
+    )
 
     # if this filetype is new for this user insert a new entry into seq_rules table
     if filetype not in ["riboseq", "rnaseq"]:
-        seq_rule = get_table('seq_rules').filter(
-            (pl.col('user_id') == user_id) & (pl.col('seq_name') == filetype))
+        seq_rule = get_table("seq_rules").filter(
+            (pl.col("user_id") == user_id) & (pl.col("seq_name") == filetype)
+        )
 
         if seq_rule.is_empty():
-            update_table('seq_rules', {
-                'user_id': user_id,
-                'seq_name': filetype,
-                'f1': 0
-            }, 'insert')  # TODO: What is f1
+            update_table(
+                "seq_rules",
+                {"user_id": user_id, "seq_name": filetype, "f1": 0},
+                "insert",
+            )  # TODO: What is f1
 
-    if not os.path.isdir("{}/uploads/{}".format(config.SCRIPT_LOC,
-                                                foldername)):
+    if not os.path.isdir("{}/uploads/{}".format(config.SCRIPT_LOC, foldername)):
         os.makedirs("{}/uploads/{}".format(config.SCRIPT_LOC, foldername))
-    upload_file_path = "{}/uploads/{}/{}".format(config.SCRIPT_LOC, foldername,
-                                                 filename)
+    upload_file_path = "{}/uploads/{}/{}".format(
+        config.SCRIPT_LOC, foldername, filename
+    )
     with open(upload_file_path, "wb") as fout:
         while True:
             chunk = f.stream.read(1024)
@@ -555,24 +609,31 @@ def upload_file() -> Response:
                 break
             fout.write(chunk)
 
-    sqlite_db = SqliteDict("{}/uploads/{}/{}".format(config.SCRIPT_LOC,
-                                                     foldername, filename))
+    sqlite_db = SqliteDict(
+        "{}/uploads/{}/{}".format(config.SCRIPT_LOC, foldername, filename)
+    )
     try:
         file_description = sqlite_db["description"]
     except Exception:
         file_description = None
     sqlite_db.close()
     # get file id
-    max_file_id = get_table('files').file_id.max()
+    max_file_id = get_table("files").file_id.max()
     new_file_id = max_file_id + 1
-    organism_id = get_table('organisms')
-    organism_id = organism_id.loc[organism_id.organism_name == organism
-                                  & organism_id.transcriptome_list == assembly,
-                                  'organism_id'].values[0]
-    studies = get_table('studies')
-    studies = studies.loc[studies.organism_id == organism_id,
-                          studies.owner == user_id,
-                          studies.study_name == foldername, "study_id"]
+    organism_id = get_table("organisms")
+    organism_id = organism_id.loc[
+        organism_id.organism_name
+        == organism & organism_id.transcriptome_list
+        == assembly,
+        "organism_id",
+    ].values[0]
+    studies = get_table("studies")
+    studies = studies.loc[
+        studies.organism_id == organism_id,
+        studies.owner == user_id,
+        studies.study_name == foldername,
+        "study_id",
+    ]
 
     if not studies.empty:
         study_id = studies.values[0]
@@ -582,30 +643,70 @@ def upload_file() -> Response:
         study_id = int(result[0]) + 1
         if user != "public":
             cursor.execute(
-                "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
-                .format(study_id, organism_id, foldername, 'NULL', 'NULL',
-                        'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
-                        1, user_id))
+                "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})".format(
+                    study_id,
+                    organism_id,
+                    foldername,
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    1,
+                    user_id,
+                )
+            )
         else:
             cursor.execute(
-                "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})"
-                .format(study_id, organism_id, foldername, 'NULL', 'NULL',
-                        'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
-                        0, user_id))
-        cursor.execute("INSERT INTO study_access VALUES({},{});".format(
-            study_id, user_id))
+                "INSERT INTO studies VALUES({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}',{},{})".format(
+                    study_id,
+                    organism_id,
+                    foldername,
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    "NULL",
+                    0,
+                    user_id,
+                )
+            )
+        cursor.execute(
+            "INSERT INTO study_access VALUES({},{});".format(study_id, user_id)
+        )
     cursor.execute(
-        "INSERT INTO files VALUES({},{},{},'{}','{}','{}',{},{},{},'{}')".
-        format(new_file_id, organism_id, study_id, filename, file_description,
-               filetype, user_id, 0, 0, ""))
+        "INSERT INTO files VALUES({},{},{},'{}','{}','{}',{},{},{},'{}')".format(
+            new_file_id,
+            organism_id,
+            study_id,
+            filename,
+            file_description,
+            filetype,
+            user_id,
+            0,
+            0,
+            "",
+        )
+    )
     # If user is not logged in only keep file for a set period of time
     if not logged_in:
         curr_time = time.time()
         # The time to keep the file in seconds, currently set to one day
         keep_time = 60 * 60 * 24
         deletion_time = curr_time + keep_time
-        cursor.execute("INSERT INTO deletions VALUES({},'{}',{})".format(
-            new_file_id, upload_file_path, deletion_time))
+        cursor.execute(
+            "INSERT INTO deletions VALUES({},'{}',{})".format(
+                new_file_id, upload_file_path, deletion_time
+            )
+        )
     connection.commit()
     flash("File uploaded successfully")
     connection.close()
@@ -613,20 +714,20 @@ def upload_file() -> Response:
 
 
 # Called when a user uploads a custom transcriptome
-@app.route('/uploadtranscriptome', methods=['GET', 'POST'])
+@app.route("/uploadtranscriptome", methods=["GET", "POST"])
 # @login_required
 def upload_transcriptome() -> Union[str, Response, None]:
     """Upload transcriptomes"""
     user, logged_in = fetch_user()
     user_id = get_user_id(user)
-    if request.method == 'POST':
+    if request.method == "POST":
         organism = (request.form["organism"]).lower().strip().replace(" ", "_")
         assembly = (request.form["assembly"]).lower().strip().replace(" ", "_")
-        default_tran = (request.form["default_tran"]).lower().strip().replace(
-            " ", "_")
+        default_tran = (request.form["default_tran"]).lower().strip().replace(" ", "_")
         uploaded_annotation = request.files.getlist("anno_file")
         fold_path = "{}/uploads/transcriptomes/{}/{}/{}".format(
-            config.SCRIPT_LOC, user_id, organism, assembly)
+            config.SCRIPT_LOC, user_id, organism, assembly
+        )
         if not os.path.isdir(fold_path):
             os.makedirs(fold_path, exist_ok=True)
         for f in uploaded_annotation:
@@ -635,18 +736,21 @@ def upload_transcriptome() -> Union[str, Response, None]:
             if ext != "sqlite":
                 return """Error: Expecting extension sqlite but got extension {}. The file generated by the create_annotation_sqlite.py script should be uploaded here.
 						This script can be gotten on the downloads page, by selecting the Scripts group.""".format(
-                    ext)
+                    ext
+                )
             # Instead of using filename of the uploaded file we rename it to organism_assembly.sqlite, to keep things consistent
             filename = "{}_{}.sqlite".format(organism, assembly)
             full_path = "{}/{}".format(fold_path, filename)
             f.save(full_path)
-            max_org_id = get_table('organisms').organism_id.max() + 1
+            max_org_id = get_table("organisms").organism_id.max() + 1
             cursor.execute(
-                "INSERT INTO organisms VALUES({},'{}','{}','NULL','NULL','NULL','NULL','{}',1,{})"
-                .format(max_org_id, organism, assembly, default_tran.upper(),
-                        user_id))
-            cursor.execute("INSERT INTO organism_access VALUES ({},{})".format(
-                max_org_id, user_id))
+                "INSERT INTO organisms VALUES({},'{}','{}','NULL','NULL','NULL','NULL','{}',1,{})".format(
+                    max_org_id, organism, assembly, default_tran.upper(), user_id
+                )
+            )
+            cursor.execute(
+                "INSERT INTO organism_access VALUES ({},{})".format(max_org_id, user_id)
+            )
             if not logged_in:
                 # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
                 curr_time = time.time()
@@ -655,7 +759,9 @@ def upload_transcriptome() -> Union[str, Response, None]:
                 deletion_time = curr_time + keep_time
                 cursor.execute(
                     "INSERT INTO org_deletions VALUES({},'{}',{})".format(
-                        max_org_id, full_path, deletion_time))
+                        max_org_id, full_path, deletion_time
+                    )
+                )
             connection.commit()
             connection.close()
         flash("File uploaded successfully")
@@ -666,9 +772,11 @@ def upload_transcriptome() -> Union[str, Response, None]:
 @app.errorhandler(500)
 def handle_bad_request(e: Exception) -> str:
     """Handle bad request"""
-    return_str = 'ERROR: ' + str(
-        e
-    ) + " please report this to tripsvizsite@gmail.com or via the contact page. "
+    return_str = (
+        "ERROR: "
+        + str(e)
+        + " please report this to tripsvizsite@gmail.com or via the contact page. "
+    )
     return return_str
 
 
@@ -680,27 +788,29 @@ def login() -> Union[str, Response]:
     if current_user.is_authenticated:
         return redirect("/")
     error = None
-    if request.method == 'POST':
-        username = request.form['username'].strip(
-        )  # TODO: relace this with jquery.Trim on user side
-        password = request.form['password'].strip()
+    if request.method == "POST":
+        username = request.form[
+            "username"
+        ].strip()  # TODO: relace this with jquery.Trim on user side
+        password = request.form["password"].strip()
         if xcaptcha.verify() or username == "developer":
-            users = get_table('users')
+            users = get_table("users")
             try:
                 if check_password_hash(
-                        users.loc[users.username == username,
-                                  "password"].values[0], password):
+                    users.loc[users.username == username, "password"].values[0],
+                    password,
+                ):
                     login_user(User(username))
-                    nxt = sanitize_get_request(request.args.get('next'))
+                    nxt = sanitize_get_request(request.args.get("next"))
                     if not nxt or ("<function login" in nxt):
                         nxt = "/"
                     return redirect(nxt)
-                error = 'Either username or password incorrect. Please try again.'
+                error = "Either username or password incorrect. Please try again."
             except Exception as _:
-                error = 'Either username or password incorrect. Please try again.'
+                error = "Either username or password incorrect. Please try again."
         else:
-            error = 'Invalid Captcha. Please try again.'
-    return render_template('login.html', error=error)
+            error = "Invalid Captcha. Please try again."
+    return render_template("login.html", error=error)
 
 
 # Allows users to logout
@@ -709,7 +819,7 @@ def login() -> Union[str, Response]:
 def logout() -> Response:
     """Logout page"""
     logout_user()
-    return redirect(url_for('/'))
+    return redirect(url_for("/"))
 
 
 # callback to reload the user object
@@ -720,24 +830,31 @@ def load_user(userid):
 
 
 # Called when user presses the save button on the orf_translation page.
-@app.route('/anno_query', methods=['POST'])
+@app.route("/anno_query", methods=["POST"])
 def anno_query() -> str:
     """Called when user presses the save button on the orf_translation page"""
     data = json.loads(request.data)
     user = fetch_user()[0]
     data["user_id"] = get_user_id(user)
     for key in [
-            'START_CODON', 'CDS_OVERLAP', 'START_SCORE', 'STOP_SCORE',
-            'ENTROPY', 'TE', 'COVERAGE', 'CDS_RATIO', 'FILE_LIST'
+        "START_CODON",
+        "CDS_OVERLAP",
+        "START_SCORE",
+        "STOP_SCORE",
+        "ENTROPY",
+        "TE",
+        "COVERAGE",
+        "CDS_RATIO",
+        "FILE_LIST",
     ]:
         data[key.lower()] = key
-    update_table('users_saved_cases', 'insert', data)
+    update_table("users_saved_cases", "insert", data)
 
     return ""
 
 
 # This page shows the saved ORFs specific to the signed in user
-@app.route('/saved/')
+@app.route("/saved/")
 def saved():
     """This page shows the saved ORFs specific to the signed in user"""
 
@@ -748,24 +865,27 @@ def saved():
         flash(
             "To use the Saved ORFs page you either need to be logged in or allow cookies."
         )
-        return redirect(url_for('/'))
+        return redirect(url_for("/"))
 
     user_id = -1
     if user and logged_in:
         flash("You are logged in as {}".format(user))
         user_id = get_user_id(user)
-    organism_access_list = get_table('organism_access').filter(
-        pl.col('user_id') == user_id)['organism_id']
-    organism_list = get_table('organisms').filter((pl.col('private') == 0) | (
-        pl.col('organism_id').is_in(organism_access_list)))[
-            'organism_id']  # TODO: Come back here to correct
-    return render_template('user_saved_cases.html',
-                           advanced=advanced,
-                           organism_list=organism_list)
+    organism_access_list = get_table("organism_access").filter(
+        pl.col("user_id") == user_id
+    )["organism_id"]
+    organism_list = get_table("organisms").filter(
+        (pl.col("private") == 0) | (pl.col("organism_id").is_in(organism_access_list))
+    )[
+        "organism_id"
+    ]  # TODO: Come back here to correct
+    return render_template(
+        "user_saved_cases.html", advanced=advanced, organism_list=organism_list
+    )
 
 
 # Retrieves saved ORFs
-@app.route('/savedquery', methods=['POST'])
+@app.route("/savedquery", methods=["POST"])
 def savedquery():
     """"""
     data = json.loads(request.data)
@@ -775,27 +895,28 @@ def savedquery():
     # get user_id
     user_id = get_user_id(user)
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
-    user_saved_cases = get_table('users_saved_cases').filter(
-        pl.col('user_id') == user_id)
-    if organism != 'Select an Organism':
-        user_saved_cases = user_saved_cases.filter(
-            pl.col('organism') == organism)
+    user_saved_cases = get_table("users_saved_cases").filter(
+        pl.col("user_id") == user_id
+    )
+    if organism != "Select an Organism":
+        user_saved_cases = user_saved_cases.filter(pl.col("organism") == organism)
         if label:
             label_list = label.strip().split(",")
             user_saved_cases = user_saved_cases.filter(
-                pl.col('label').is_in(label_list))
+                pl.col("label").is_in(label_list)
+            )
 
     user_saved_cases = user_saved_cases.head(1000)
     returnstr = user_saved_cases.apply(
-        lambda x:
-        f"{x['gene']},{x['transcript']},{x['start']},{x['stop']},{x['length']},{x['score']},{x['label']},{x['start_codon']},{x['trips_link']}",
-        axis=1).values
+        lambda x: f"{x['gene']},{x['transcript']},{x['start']},{x['stop']},{x['length']},{x['score']},{x['label']},{x['start_codon']},{x['trips_link']}",
+        axis=1,
+    ).values
     returnstr = ".,/".join(returnstr)
     return returnstr
 
 
 # Allows users to delete previously saved cases
-@app.route('/del_query', methods=['POST'])
+@app.route("/del_query", methods=["POST"])
 def del_query():
     """Delete previously saved cases"""
     data = json.loads(request.data)
@@ -805,66 +926,62 @@ def del_query():
         return "Error user not signed in"
     user_id = get_user_id(user)
     data["user_id"] = user_id
-    update_table('users_saved_cases', 'delete', {}, data)
+    update_table("users_saved_cases", "delete", {}, data)
     return ""
 
 
 # Points to robots.txt in static folder
-@app.route('/robots.txt')
+@app.route("/robots.txt")
 def static_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
 
 
 # Points to license.txt in static folder
-@app.route('/license.txt')
+@app.route("/license.txt")
 def static_license_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
 
 
 # This is the help page, linked from various other pages to explain terms on that page.
-@app.route('/help/')
+@app.route("/help/")
 def helppage():
-    parent_acc = sanitize_get_request(request.args.get('parent_acc'))
-    child_acc = sanitize_get_request(request.args.get('child_acc'))
+    parent_acc = sanitize_get_request(request.args.get("parent_acc"))
+    child_acc = sanitize_get_request(request.args.get("child_acc"))
     logging.debug(type(parent_acc))
     logging.debug(child_acc)
-    return render_template('help.html',
-                           parent_acc=parent_acc,
-                           child_acc=child_acc)
+    return render_template("help.html", parent_acc=parent_acc, child_acc=child_acc)
 
 
 # This is the help page, linked from various other pages to explain terms on that page.
-@app.route('/shared/<folder>')
+@app.route("/shared/<folder>")
 def sharepage(folder):
     filelist = []
-    for filename in os.listdir("{}/shared/{}".format(config.SCRIPT_LOC,
-                                                     folder)):
+    for filename in os.listdir("{}/shared/{}".format(config.SCRIPT_LOC, folder)):
         if filename.endswith(".html"):
             filelist.append(filename.replace(".html", ""))
     filelist = sorted(filelist)
-    return render_template('shared.html', filelist=filelist, folder=folder)
+    return render_template("shared.html", filelist=filelist, folder=folder)
 
 
 # Called when user downloads something from the downloads page
-@app.route('/shared/<folder>/<filename>', methods=['GET', 'POST'])
+@app.route("/shared/<folder>/<filename>", methods=["GET", "POST"])
 def viewfile(folder, filename):
     filename = filename + ".html"
-    return send_from_directory("{}/shared/{}/".format(config.SCRIPT_LOC,
-                                                      folder),
-                               filename,
-                               as_attachment=False)
+    return send_from_directory(
+        "{}/shared/{}/".format(config.SCRIPT_LOC, folder), filename, as_attachment=False
+    )
 
 
 # This is the short url page, user supplies a short code which will be converted to a full url which user will then be redirected to
-@app.route('/short/<short_code>/')
+@app.route("/short/<short_code>/")
 def short(short_code):
     # First convert short code to an integer
     integer = base62_to_integer(short_code)
-    url = get_table('urls').filter(pl.col('url_id') == integer)
+    url = get_table("urls").filter(pl.col("url_id") == integer)
 
     if url.is_empty():
         return "Short code not recognized."
-    url = loads(url[0, 'url'])
+    url = loads(url[0, "url"])
 
     # add a keyword to the url to prevent generating another shortcode
     url += f"/{url['organism']}/{url['transcriptome']}?short={short_code}"
@@ -879,10 +996,11 @@ def after_request_func(response):
 
 # This is the home page it show a list of organisms as defined by trips_dict
 # TODO: Move pages in order
-@app.route('/')
+@app.route("/")
 def homepage2() -> str:
     """Home page."""
     sanitize_get_request(request.cookies.get("cookieconsent_status"))
+    print(request.remote_addr)
 
     # For All
 
@@ -893,66 +1011,86 @@ def homepage2() -> str:
         # TODO: Replace login and register part with username
         flash(f"You are logged in as {user}")
         user_id = get_user_id(user)  # TODO: Find a way to pass only str
-        private_organisms_id = get_table('organism_access').filter(
-            pl.col('user_id') == user_id)["organism_id"].to_list()
-    organisms = get_table('organisms').filter((pl.col('private') == 0) | (
-        pl.col('organism_id').is_in(private_organisms_id))).select(
-            'organism_name', 'transcriptome_list').unique().to_pandas()
-    organisms = organisms.groupby("organism_name")['transcriptome_list'].apply(
-        list).reset_index()
+        private_organisms_id = (
+            get_table("organism_access")
+            .filter(pl.col("user_id") == user_id)["organism_id"]
+            .to_list()
+        )
+    organisms = (
+        get_table("organisms")
+        .filter(
+            (pl.col("private") == 0)
+            | (pl.col("organism_id").is_in(private_organisms_id))
+        )
+        .select("organism_name", "transcriptome_list")
+        .unique()
+        .to_pandas()
+    )
+    organisms = (
+        organisms.groupby("organism_name")["transcriptome_list"]
+        .apply(list)
+        .reset_index()
+    )
     json_dict = {}
     for _, row in organisms.iterrows():
         json_dict[row.organism_name] = row.transcriptome_list
 
     # Create species list
 
-    return render_template('landing2.html',
-                           organisms=dumps(json_dict),
-                           message="")
+    return render_template("landing2.html", organisms=dumps(json_dict), message="")
 
 
 # Updates the settings for a specific user
-@app.route('/settingsquery', methods=['POST'])
+@app.route("/settingsquery", methods=["POST"])
 # @login_required
 def settingsquery():
     data = json.loads(request.data)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
+    connection = sqlite3.connect(
+        "{}/{}".format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    )
     connection.text_factory = str
     cursor = connection.cursor()
 
     user, logged_in = fetch_user()
     if logged_in:
-        new_password = data['new_password']
-        new_password2 = data['new_password2']
-        curr_password = data['curr_password']
+        new_password = data["new_password"]
+        new_password2 = data["new_password2"]
+        curr_password = data["curr_password"]
         if new_password and new_password2:
             if new_password != new_password2:
                 return "ERROR: New passwords do not match"
             generate_password_hash(curr_password)
-            old_password_hash = get_table('users').filter(
-                pl.col('username') == user)[0, 'password']
+            old_password_hash = get_table("users").filter(pl.col("username") == user)[
+                0, "password"
+            ]
 
             if check_password_hash(old_password_hash, curr_password):
                 new_password_hash = generate_password_hash(new_password)
                 cursor.execute(
-                    "UPDATE users SET password = '{}' WHERE username = '{}'".
-                    format(new_password_hash, user))
+                    "UPDATE users SET password = '{}' WHERE username = '{}'".format(
+                        new_password_hash, user
+                    )
+                )
                 connection.commit()
             else:
                 return "ERROR: Current password is not correct"
     # get user_id
     user_id = get_user_id(user)
-    update_table('users', 'update', {'user_id': user_id},
-                 {'advanced': 1 if 'advanced' in data else 0})
-    update_table('user_settings', 'update', {'user_id': user_id},
-                 data)  # TODO: might need some pruning
+    update_table(
+        "users",
+        "update",
+        {"user_id": user_id},
+        {"advanced": 1 if "advanced" in data else 0},
+    )
+    update_table(
+        "user_settings", "update", {"user_id": user_id}, data
+    )  # TODO: might need some pruning
 
     return "Settings have been updated"
 
 
 # Allows users to delete files
-@app.route('/deletequery', methods=['GET', 'POST'])
+@app.route("/deletequery", methods=["GET", "POST"])
 # @login_required
 def deletequery():
     data = json.loads(request.data)
@@ -965,46 +1103,52 @@ def deletequery():
     for key in data:
         file_id = data[key]["file_id"]
         if "filecheck" in data[key]:
-            study_id = files_all.filter(
-                pl.col("file_id") == file_id)[0, "study_id"]
-            study_name = studies_all.filter(
-                pl.col("study_id") == study_id)[0, "study_name"]
-            full_path = "{}{}/{}".format(config.UPLOADS_DIR, study_name,
-                                         study_id)
+            study_id = files_all.filter(pl.col("file_id") == file_id)[0, "study_id"]
+            study_name = studies_all.filter(pl.col("study_id") == study_id)[
+                0, "study_name"
+            ]
+            full_path = "{}{}/{}".format(config.UPLOADS_DIR, study_name, study_id)
             # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
             # The time to keep the file in seconds, currently set to 14 days
             keep_time = 60 * 60 * 24 * 14
             deletion_time = curr_time + keep_time
-            cursor.execute("INSERT INTO deletions VALUES({},'{}',{})".format(
-                file_id, full_path, deletion_time))
+            cursor.execute(
+                "INSERT INTO deletions VALUES({},'{}',{})".format(
+                    file_id, full_path, deletion_time
+                )
+            )
             if owner == user_id:
-                cursor.execute(
-                    "DELETE FROM files WHERE file_id = {}".format(file_id))
+                cursor.execute("DELETE FROM files WHERE file_id = {}".format(file_id))
 
         cursor.execute(
-            "UPDATE files SET file_description = '{}' WHERE file_id = {}".
-            format(data[key]["file_desc"], file_id))
-        if data[key]["cutadapt_removed"] != '0':
-            organism_id = files_all.filter(
-                pl.col("file_id") == file_id)[0, "organism_id"]
-            organism = organisms_all.filter(
-                pl.col("organism_id") == organism_id)[0, "organism_name"]
+            "UPDATE files SET file_description = '{}' WHERE file_id = {}".format(
+                data[key]["file_desc"], file_id
+            )
+        )
+        if data[key]["cutadapt_removed"] != "0":
+            organism_id = files_all.filter(pl.col("file_id") == file_id)[
+                0, "organism_id"
+            ]
+            organism = organisms_all.filter(pl.col("organism_id") == organism_id)[
+                0, "organism_name"
+            ]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
                     filepath = filepath_dict[seq_type][file_id]
                     opendict = SqliteDict(filepath, autocommit=True)
-                    opendict["cutadapt_removed"] = int(
-                        data[key]["cutadapt_removed"])
+                    opendict["cutadapt_removed"] = int(data[key]["cutadapt_removed"])
                     opendict.close()
 
-        if data[key]["rrna_removed"] != '0':
-            organism_id = files_all.filter(
-                pl.col("file_id") == file_id)[0, "organism_id"]
+        if data[key]["rrna_removed"] != "0":
+            organism_id = files_all.filter(pl.col("file_id") == file_id)[
+                0, "organism_id"
+            ]
 
-            organism = organisms_all.filter(
-                pl.col("organism_id") == organism_id)[0, "organism_name"]
+            organism = organisms_all.filter(pl.col("organism_id") == organism_id)[
+                0, "organism_name"
+            ]
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
                 if file_id in filepath_dict[seq_type]:
@@ -1012,12 +1156,14 @@ def deletequery():
                     opendict = SqliteDict(filepath, autocommit=True)
                     opendict["rrna_removed"] = int(data[key]["rrna_removed"])
                     opendict.close()
-        if data[key]["unmapped"] != '0':
-            organism_id = files_all.filter(
-                pl.col("file_id") == file_id)[0, "organism_id"]
+        if data[key]["unmapped"] != "0":
+            organism_id = files_all.filter(pl.col("file_id") == file_id)[
+                0, "organism_id"
+            ]
 
-            organism = organisms_all.filter(
-                pl.col("organism_id") == organism_id)[0, "organism_name"]
+            organism = organisms_all.filter(pl.col("organism_id") == organism_id)[
+                0, "organism_name"
+            ]
 
             filepath_dict = fetch_file_paths([file_id], organism)
             for seq_type in filepath_dict:
@@ -1031,7 +1177,7 @@ def deletequery():
 
 
 # Allows users to delete studies,modify access, modify the organism/transcriptome assembly or study name
-@app.route('/deletestudyquery', methods=['GET', 'POST'])
+@app.route("/deletestudyquery", methods=["GET", "POST"])
 # @login_required
 def deletestudyquery():
     data = json.loads(request.data)
@@ -1044,105 +1190,128 @@ def deletestudyquery():
         if studycheck.split("_")[-1] != "undefined":
             study_id = studycheck.split("_")[-1]
             print("deleting study_id", study_id)
-            files = get_table('files')
+            files = get_table("files")
             files = files[files.study_id == study_id]
-            studies = get_table('studies')
-            studies_files = studies.merge(files, on='study_id')
+            studies = get_table("studies")
+            studies_files = studies.merge(files, on="study_id")
             if not studies_files.empty:
                 studies_files = studies_files[studies_files.owner == user_id]
-                studies_files['full_path'] = stydies_files.apply(
-                    lambda x: "{}{}/{}".format(config.UPLOADS_DIR, x.
-                                               study_name, x.filename),
-                    axis=1)
-                studies_files = studies_files[studies_files['full_path'].apply(
-                    os.path.isfile)]
+                studies_files["full_path"] = stydies_files.apply(
+                    lambda x: "{}{}/{}".format(
+                        config.UPLOADS_DIR, x.study_name, x.filename
+                    ),
+                    axis=1,
+                )
+                studies_files = studies_files[
+                    studies_files["full_path"].apply(os.path.isfile)
+                ]
                 for _, row in studies_files.iterrows():
                     curr_time = time.time()
                     keep_time = 60 * 60 * 24 * 14
                     deletion_time = curr_time + keep_time
                     # TODO: Use cron for deletion
-                    update_table('deletions', 'insert', {}, {
-                        'file_id': row['file_id'],
-                        'full_path': row['full_path'],
-                        'deletion_time': deletion_time
-                    })
+                    update_table(
+                        "deletions",
+                        "insert",
+                        {},
+                        {
+                            "file_id": row["file_id"],
+                            "full_path": row["full_path"],
+                            "deletion_time": deletion_time,
+                        },
+                    )
 
             # Now remove the study and the files associated with it from the db
             study_owner = studies[studies.study_id == study_id].iloc[0].owner
             if study_owner == user_id:
                 # os.rename(study_path,study_path+"_REMOVE")
-                update_table('studies', {'study_id': study_id})
-                update_table('files', {'study_id': study_id})
+                update_table("studies", {"study_id": study_id})
+                update_table("files", {"study_id": study_id})
                 continue
 
         # Modify access list next to studies
         study_access = data[study_id][1].split(",")
-        study_access = list(filter(('').__ne__, study_access))
+        study_access = list(filter(("").__ne__, study_access))
         # check study_access against a list of all users
-        all_users = table_to_dict(get_table('users'), ['username', 'user_id'])
+        all_users = table_to_dict(get_table("users"), ["username", "user_id"])
         # Check that all users exist
         for username in study_access:
             if username:
                 if username not in all_users.keys():
                     flash(
-                        "Error: User {} is not registered on Trips-Viz".format(
-                            username))
+                        "Error: User {} is not registered on Trips-Viz".format(username)
+                    )
                     return str(get_flashed_messages())
                 else:
-                    study_access = get_table('study_access')
+                    study_access = get_table("study_access")
                     study_access = study_access[
-                        study_access.user_id == all_users[username]
-                        & study_access.study_id == study_id]
+                        study_access.user_id
+                        == all_users[username] & study_access.study_id
+                        == study_id
+                    ]
                     if study_access.empty:
-                        update_table('study_access', 'insert', {}, {
-                            'study_id': study_id,
-                            'user_id': all_users[username]
-                        })
+                        update_table(
+                            "study_access",
+                            "insert",
+                            {},
+                            {"study_id": study_id, "user_id": all_users[username]},
+                        )
 
         # Modify study names if they have changed
         # TODO: Till here
         new_study_name = "{}_{}".format(data[study_id][2], user_id)
         cursor.execute(
-            "SELECT study_name FROM studies WHERE study_id = {}".format(
-                study_id))
+            "SELECT study_name FROM studies WHERE study_id = {}".format(study_id)
+        )
         old_study_name = cursor.fetchone()[0]
         if old_study_name != new_study_name:
             # Update study name in the sqlite
             cursor.execute(
-                "UPDATE studies SET study_name = '{}' WHERE study_id = {}".
-                format(new_study_name, study_id))
+                "UPDATE studies SET study_name = '{}' WHERE study_id = {}".format(
+                    new_study_name, study_id
+                )
+            )
             # If the new_study_name folder does not exist, rename the old study to the new study, else move all files from old folder to new folder
-            if not os.path.isdir("{}/uploads/{}".format(
-                    config.SCRIPT_LOC, new_study_name)):
+            if not os.path.isdir(
+                "{}/uploads/{}".format(config.SCRIPT_LOC, new_study_name)
+            ):
                 os.rename(
-                    "{0}/uploads/{1}".format(config.SCRIPT_LOC,
-                                             old_study_name),
-                    "{0}/uploads/{1}".format(config.SCRIPT_LOC,
-                                             new_study_name))
+                    "{0}/uploads/{1}".format(config.SCRIPT_LOC, old_study_name),
+                    "{0}/uploads/{1}".format(config.SCRIPT_LOC, new_study_name),
+                )
             else:
-                if os.path.isdir("{}/uploads/{}".format(
-                        config.SCRIPT_LOC, old_study_name)):
-                    for filename in os.listdir("{}/uploads/{}".format(
-                            config.SCRIPT_LOC, new_study_name)):
-                        if os.path.isfile("{}/uploads/{}/{}".format(
-                                config.SCRIPT_LOC, old_study_name, filename)):
+                if os.path.isdir(
+                    "{}/uploads/{}".format(config.SCRIPT_LOC, old_study_name)
+                ):
+                    for filename in os.listdir(
+                        "{}/uploads/{}".format(config.SCRIPT_LOC, new_study_name)
+                    ):
+                        if os.path.isfile(
+                            "{}/uploads/{}/{}".format(
+                                config.SCRIPT_LOC, old_study_name, filename
+                            )
+                        ):
                             os.rename(
                                 "{}/uploads/{}/{}".format(
-                                    config.SCRIPT_LOC, old_study_name,
-                                    filename), "{}/uploads/{}/{}".format(
-                                        config.SCRIPT_LOC, new_study_name,
-                                        filename))
+                                    config.SCRIPT_LOC, old_study_name, filename
+                                ),
+                                "{}/uploads/{}/{}".format(
+                                    config.SCRIPT_LOC, new_study_name, filename
+                                ),
+                            )
         # Change organism/transcriptome assembly if applicable
         organism_name = data[study_id][3]
         assembly_name = data[study_id][4]
         cursor.execute(
-            "SELECT organism_id FROM studies WHERE study_id = {}".format(
-                study_id))
+            "SELECT organism_id FROM studies WHERE study_id = {}".format(study_id)
+        )
         org_id = cursor.fetchone()[0]
         org_id = get_table()
         cursor.execute(
-            "SELECT organism_name,transcriptome_list FROM organisms WHERE organism_id = {}"
-            .format(org_id))
+            "SELECT organism_name,transcriptome_list FROM organisms WHERE organism_id = {}".format(
+                org_id
+            )
+        )
         result = cursor.fetchone()
         if result:
             old_organism = result[0]
@@ -1150,16 +1319,21 @@ def deletestudyquery():
             if old_organism != organism_name or old_assembly != assembly_name:
                 # Check if the new orgnaism and new assembly are a valid combination
                 cursor.execute(
-                    "SELECT organism_id  FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}'"
-                    .format(organism_name, assembly_name))
+                    "SELECT organism_id  FROM organisms WHERE organism_name = '{}' AND transcriptome_list = '{}'".format(
+                        organism_name, assembly_name
+                    )
+                )
                 result = cursor.fetchone()
                 if not result:
                     return "Invalid organism/transcriptome combo for study {}".format(
-                        new_study_name)
+                        new_study_name
+                    )
                 else:
                     cursor.execute(
-                        "UPDATE studies SET organism_id = {} WHERE study_id = {}"
-                        .format(result[0], study_id))
+                        "UPDATE studies SET organism_id = {} WHERE study_id = {}".format(
+                            result[0], study_id
+                        )
+                    )
                     pass
                     # update study_id with new org_id
 
@@ -1170,7 +1344,7 @@ def deletestudyquery():
 
 
 # Allows users to delete transcriptomes
-@app.route('/deletetranscriptomequery', methods=['GET', 'POST'])
+@app.route("/deletetranscriptomequery", methods=["GET", "POST"])
 # @login_required
 # Convert this as chon task which runs every 12 hours
 def deletetranscriptomequery():
@@ -1178,51 +1352,78 @@ def deletetranscriptomequery():
 
     user = fetch_user()[0]
     organism_ids = [
-        val[0].split("_")[-1] for _, val in data.items()
+        val[0].split("_")[-1]
+        for _, val in data.items()
         if not val[0].endswith("_undefined")
     ]
     user_id = get_user_id(user)
     if user:
-        organisms = get_table("organisms").filter(
-            pl.col("organism_id").is_in(organism_ids)
-            & (pl.col("owner") == user_id)
-        ).select('organism_name', 'transcriptome_list').unique().with_columns(
-            pl.col('organism_name', 'transcriptome_list').apply(
-                lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".
-                format(config.UPLOADS_DIR, user_id, x['organism_name'], x[
-                    'transcriptome_list'])).alias('sqlite_path').filter(
-                        pl.col('sqlite_path').apply(os.path.isfile))
-        ).to_pandas()  # recheck if apply works correcly
+        organisms = (
+            get_table("organisms")
+            .filter(
+                pl.col("organism_id").is_in(organism_ids) & (pl.col("owner") == user_id)
+            )
+            .select("organism_name", "transcriptome_list")
+            .unique()
+            .with_columns(
+                pl.col("organism_name", "transcriptome_list")
+                .apply(
+                    lambda x: "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+                        config.UPLOADS_DIR,
+                        user_id,
+                        x["organism_name"],
+                        x["transcriptome_list"],
+                    )
+                )
+                .alias("sqlite_path")
+                .filter(pl.col("sqlite_path").apply(os.path.isfile))
+            )
+            .to_pandas()
+        )  # recheck if apply works correcly
         keep_time = 60 * 60 * 24 * 14  # 14 days
         curr_time = time.time()
         deletion_time = curr_time + keep_time
-        organisms.apply(lambda x: update_table("org_deletions", 'insert', {},
-                                               {'file_id': x['file_id']}),
-                        axis=1)
+        organisms.apply(
+            lambda x: update_table(
+                "org_deletions", "insert", {}, {"file_id": x["file_id"]}
+            ),
+            axis=1,
+        )
 
     for organism_id in data:
         organism_id = data[organism_id][0].split("_")[-1]
         if organism_id == "undefined":
             continue
         # Delete the annotation sqlite file
-        organisms = get_table("organisms").filter(
-            (pl.col("organism_id") == organism_id)
-            & (pl.col("owner") == user_id)).select("organism_name",
-                                                   "transcriptome_list")[0]
+        organisms = (
+            get_table("organisms")
+            .filter(
+                (pl.col("organism_id") == organism_id) & (pl.col("owner") == user_id)
+            )
+            .select("organism_name", "transcriptome_list")[0]
+        )
         sqlite_path = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, user_id, organisms["organism_name"],
-            organisms["transcriptome_list"])
+            config.UPLOADS_DIR,
+            user_id,
+            organisms["organism_name"],
+            organisms["transcriptome_list"],
+        )
         if os.path.isfile(sqlite_path):
             # Instead of deleting the file now, add it to deletions table where it will be deleted via cron job, this will give users time to contact in case of accidental deletion
             curr_time = time.time()
             # The time to keep the file in seconds, currently set to 14 days
             keep_time = 60 * 60 * 24 * 14
             deletion_time = curr_time + keep_time
-            update_table("org_deletions", 'insert', {}, {
-                "organism_id": organism_id,
-                "deletion_time": deletion_time,
-                "sqlite_path": sqlite_path
-            })
+            update_table(
+                "org_deletions",
+                "insert",
+                {},
+                {
+                    "organism_id": organism_id,
+                    "deletion_time": deletion_time,
+                    "sqlite_path": sqlite_path,
+                },
+            )
         update_table("organisms", {"organism_id": organism_id})
         files = get_table("files").filter(pl.col("organism_id") == organism_id)
         studies = get_table("studies")
@@ -1232,8 +1433,9 @@ def deletetranscriptomequery():
 
         # delete all files on the server associated with this organism, if there are any
         for _, row in files_studies.iterrows():
-            full_path = "{}{}/{}".format(config.UPLOADS_DIR, row.study_name,
-                                         row.file_name)
+            full_path = "{}{}/{}".format(
+                config.UPLOADS_DIR, row.study_name, row.file_name
+            )
             if os.path.isfile(full_path):
                 os.remove(full_path)
 
@@ -1250,12 +1452,13 @@ def deletetranscriptomequery():
 
 
 # Updates the "sequence rules", for custom sequence types
-@app.route('/seqrulesquery', methods=['GET', 'POST'])
+@app.route("/seqrulesquery", methods=["GET", "POST"])
 # @login_required
 def seqrulesquery():
     data = json.loads(request.data)
-    connection = sqlite3.connect('{}/{}'.format(config.SCRIPT_LOC,
-                                                config.DATABASE_NAME))
+    connection = sqlite3.connect(
+        "{}/{}".format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    )
     connection.text_factory = str
     cursor = connection.cursor()
 
@@ -1263,14 +1466,18 @@ def seqrulesquery():
     user_id = get_user_id(user)
 
     for seq_type in data:
-        if data[seq_type][0] == 'False':
+        if data[seq_type][0] == "False":
             cursor.execute(
-                "UPDATE seq_rules SET frame_breakdown = 0 WHERE seq_name = '{}' and user_id = {};"
-                .format(seq_type, user_id))
-        elif data[seq_type][0] == 'True':
+                "UPDATE seq_rules SET frame_breakdown = 0 WHERE seq_name = '{}' and user_id = {};".format(
+                    seq_type, user_id
+                )
+            )
+        elif data[seq_type][0] == "True":
             cursor.execute(
-                "UPDATE seq_rules SET frame_breakdown = 1 WHERE seq_name = '{}' and user_id = {};"
-                .format(seq_type, user_id))
+                "UPDATE seq_rules SET frame_breakdown = 1 WHERE seq_name = '{}' and user_id = {};".format(
+                    seq_type, user_id
+                )
+            )
     connection.commit()
     connection.close()
     flash("Update successful")
@@ -1278,7 +1485,7 @@ def seqrulesquery():
 
 
 # breaks down the counts from each file for a specific ORF
-@app.route('/<organism>/<transcriptome>/dataset_breakdown/')
+@app.route("/<organism>/<transcriptome>/dataset_breakdown/")
 def dataset_breakdown(organism, transcriptome):
     # ip = request.environ['REMOTE_ADDR']
 
@@ -1312,10 +1519,11 @@ def dataset_breakdown(organism, transcriptome):
         "fibroblast": "#00c6d1",
         "MCF10A-ER-Src": "#00d100",
         "HCT116": "#ffe900",
-        "U2OS": "#ffc042"
+        "U2OS": "#ffc042",
     }
-    orfquery_connection = sqlite3.connect('{}/{}'.format(
-        config.SCRIPT_LOC, config.DATABASE_NAME))
+    orfquery_connection = sqlite3.connect(
+        "{}/{}".format(config.SCRIPT_LOC, config.DATABASE_NAME)
+    )
     orfquery_cursor = orfquery_connection.cursor()
     for file_id in file_paths_dict["riboseq"]:
         i += 1
@@ -1323,16 +1531,17 @@ def dataset_breakdown(organism, transcriptome):
         xlist.append(i)
         sqlite_db = SqliteDict(file_paths_dict["riboseq"][file_id])
         try:
-            raw_count = sqlite_db[table_name][transcript][stop][start][
-                "profile_count"]
+            raw_count = sqlite_db[table_name][transcript][stop][start]["profile_count"]
             raw_reads.append(raw_count)
         except Exception:
             raw_count = 0
             raw_reads.append(raw_count)
 
         orfquery_cursor.execute(
-            "SELECT study_id,file_name,file_description from files WHERE file_id = {};"
-            .format(file_id))
+            "SELECT study_id,file_name,file_description from files WHERE file_id = {};".format(
+                file_id
+            )
+        )
         result = orfquery_cursor.fetchone()
         study_id = int(result[0])
         filenames.append(result[1].replace(".sqlite", ""))
@@ -1344,10 +1553,11 @@ def dataset_breakdown(organism, transcriptome):
 
         ylist.append(raw_count / (float(10000) / 100000))
         orfquery_cursor.execute(
-            "SELECT * from studies WHERE study_id = {};".format(study_id))
+            "SELECT * from studies WHERE study_id = {};".format(study_id)
+        )
         result = orfquery_cursor.fetchone()
         studies.append(result[0])
-        study_colors.append('#BABABA')
+        study_colors.append("#BABABA")
     orfquery_cursor.close()
     orfquery_connection.close()
     return
@@ -1359,26 +1569,25 @@ def dataset_breakdown(organism, transcriptome):
     # start, stop)
 
 
-@app.route('/query', methods=['POST']) 
-def query()->str: 
+@app.route("/query", methods=["POST"])
+def query() -> str:
     data = request.form.to_dict()
     to_return = ""
-    query  = string2other(loads(data["query"]))
-    if data["pathname"] == "single_transcript_plot": 
+    query = string2other(loads(data["query"]))
+    if data["pathname"] == "single_transcript_plot":
         to_return = query_plot(query)
-    elif data["pathname"] == "pause_detection": 
-        to_return = pausequery(query)
-    elif data["pathname"] == "comparison": 
+    elif data["pathname"] == "pause_detection":
+        to_return = find_pauses(query)
+    elif data["pathname"] == "comparison":
         to_return = comparequery(query)
-    elif data["pathname"] == "traninfo_plotpage": 
+    elif data["pathname"] == "traninfo_plotpage":
         to_return = traninfoquery(query)
-    elif data["pathname"] == "metainfo_plot": 
+    elif data["pathname"] == "metainfo_plot":
         to_return = metainfoquery(query)
-    return to_return  
+    return to_return
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     local = False
     try:
         if sys.argv[1] == "true":
@@ -1390,6 +1599,6 @@ if __name__ == '__main__':
     except Exception:
         port_no = 5000
     if not local:
-        app.run(host='0.0.0.0', debug=False)
+        app.run(host="0.0.0.0", debug=False)
     else:
-        app.run(host='0.0.0.0', port=port_no, debug=True, threaded=True)
+        app.run(host="0.0.0.0", port=port_no, debug=True, threaded=True)

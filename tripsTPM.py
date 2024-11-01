@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple, Union
-import numpy as np
-from tripsSplice import get_reads_per_transcript_location
-from tripsSplice import get_protein_coding_transcript_ids
-from tripsSplice import get_start_stop_codon_positions
+
+import polars as pl
+
+from tripsSplice import (get_protein_coding_transcript_ids,
+                         get_reads_per_transcript_location,
+                         get_start_stop_codon_positions)
 
 
 def get_counts_meanFLD(transcripts: List[str],
@@ -28,26 +30,33 @@ def get_counts_meanFLD(transcripts: List[str],
     
     """
 
-    length_freq = {}
-    transcript_counts = {}
+    all_dfs = []
     for transcript in set(transcripts):
-        transcript_counts[transcript] = 0
         #print "transcript, read_file", transcript, read_file
-        reads = get_reads_per_transcript_location(transcript, read_file)
+        reads = get_reads_per_transcript_location(transcript, read_file).with_columns(
+            transctipt=pl.lit(transcript)
+        )
+
         if not reads:
             continue
-        for length, positions in reads.items():
-            if length not in length_freq:
-                length_freq[length] = 0
-            for position in positions:
-                length_freq[length] += reads[length][position]
-                transcript_counts[transcript] += reads[length][position]
-    lengths = np.array(list(length_freq.keys()))
-    freqs = np.array(list(length_freq.values()))
-    total_count = np.sum(lengths * freqs)
-    count = np.sum(freqs)
-    mean_fld = 1 if not count else round(total_count * 1. / count)
-    return transcript_counts, mean_fld
+        all_dfs.append(reads)
+    if all_dfs:
+
+        reads = pl.concat(all_dfs)
+        transcript_counts = reads.groupby("transctipt").agg(
+            pl.sum("count").alias("count")
+            
+        )
+        mean_fld = reads.groupby("length").agg( # Need to correct it
+            pl.sum("count").alias("count")
+    ).with_columns(
+        pl.col("length") * pl.col("count") / pl.col("count").sum()
+    )
+        return transcript_counts, mean_fld
+
+
+    else:
+        return None, 1
 
 
 def transcript_reads_per_kilobase(transcript_counts: Dict[str, int],
@@ -66,19 +75,16 @@ def transcript_reads_per_kilobase(transcript_counts: Dict[str, int],
     Example:
 
     """
+    cds_lengths = pl.DataFrame({'transcript': list(cds_lengths.keys()),'length': list(cds_lengths.values())}).with_columns(
+        length = /(pl.col("length") -  meanFLD + 1)/1000. # Effective length per kb
+    )
+    transcript_counts = pl.DataFrame({'transcript': list(transcript_counts.keys()),'count': list(transcript_counts.values())})
 
-    RPK = {}
-    for transcript in cds_lengths:
-        effective_length = cds_lengths[transcript] - meanFLD + 1
-        effective_length_per_kilobase = effective_length / 1000
+    transcript_counts = cds_lengths.join(transcript_counts, on='transcript')
 
-        try:
-            RPK[transcript] = transcript_counts[
-                transcript] / effective_length_per_kilobase
-        except ZeroDivisionError:
-            RPK[transcript] = 0
-    return RPK
-
+    return transcript_counts.with_columns(
+        RPK = pl.col("count") / pl.col("length")
+    )
 
 def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
         seq_type: str) -> Dict[str, float]:
@@ -97,31 +103,22 @@ def TPM(gene: str, sqlite_path_organism: str, sqlite_path_reads: List[str],
     """
     transcripts = []
     lengths = {}
+    gene_lengths = get_protein_coding_transcript_ids(gene, sqlite_path_organism)
     if seq_type == "ribo":
-        transcripts = get_protein_coding_transcript_ids(
-            gene, sqlite_path_organism)
-        start_stops = {
-            transcript:
-            get_start_stop_codon_positions(transcript, sqlite_path_organism)
-            for transcript in transcripts
-        }
-        lengths = {
-            transcript: start_stop[1] - start_stop[0]
-            for transcript, start_stop in start_stops.items()
-        }
+        lengths = gene_lengths.filter(pl.col("tran_type") == 1).with_columns(lengths = pl.col("cds_stop") - pl.col("cds_start"))['lengths']
+
+        
 
     else:  #if seq_type == "rna":
-        transcripts = [
-            transcript[0]
-            for transcript in get_gene_info(gene, sqlite_path_organism)
-        ]
-        lengths = get_transcript_length(
-            gene, sqlite_path_organism)  # TODO: Look for this function
+        lengths = gene_lengths["length"]
 
     all_TPMs = {transcript: [] for transcript in transcripts}
 
     for read_file in sqlite_path_reads:
         counts, meanFLD = get_counts_meanFLD(transcripts, read_file)
+
+        if not counts:
+            continue
 
         RPK = transcript_reads_per_kilobase(counts, lengths, meanFLD)
         per_million_scaling_factor = sum(RPK.values()) / 1000000.

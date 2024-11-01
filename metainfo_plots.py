@@ -1,13 +1,15 @@
+import operator
+import os
+from math import log
 from typing import Dict, List, Tuple
 
-import os
-import operator
-from sqlitedict import SqliteDict
-from math import log
 import numpy as np
-from scipy.stats.stats import spearmanr, pearsonr
+from scipy.stats.stats import pearsonr, spearmanr
+from sqlitedict import SqliteDict
+
 import fixed_values
 from fixed_values import my_decoder
+
                           ColumnDataSource, HoverTool, LogColorMapper,
                           ColorBar)
 
@@ -37,7 +39,7 @@ def calc_factor(maxval) -> Tuple[Dict[str, float], int]:
     return factor, zeroes
 
 
-def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
+def readlen_dist(master_dict:pl.DataFrame, title: str, short_code: str,
                  background_col: str, readlength_col: str, title_size: int,
                  axis_label_size: int, subheading_size: int,
                  marker_size: int) -> str:
@@ -59,8 +61,8 @@ def readlen_dist(master_dict: Dict[str, int], title: str, short_code: str,
     Example:
 
     """
-    factor, factor = calc_factor(master_dict["count"].max())
-    master_dict = master_dict.with_columns(pl.col("count") / factor)
+    factor, zeroes = calc_factor(master_dict["count"].max())
+    master_dict = master_dict.with_columns(pl.col("count") / zeroes)
     ax.bar(read_length_list,
            master_dict.values(),
            width,

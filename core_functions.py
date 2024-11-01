@@ -58,13 +58,12 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
             tdict = sqldict[keys[0]][keys[1]]
         except KeyError:
             return pl.DataFrame()
-        if keys[1] in ["fiveprime",
-                       "threeprime"]:  # NOTE: keys[0]=="trip_periodity"
+        if keys[1] in ["fiveprime", "threeprime"]:  # NOTE: keys[0]=="trip_periodity"
             if keys[0] == "trip_periodicity":
                 for read_len, periodicity in tdict.items():
                     dfs.append(
-                        pl.DataFrame(periodicity).with_columns(
-                            read_len=read_len))
+                        pl.DataFrame(periodicity).with_columns(read_len=read_len)
+                    )
 
                 if dfs:
                     dfs = pl.concat(dfs)
@@ -72,22 +71,34 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
                     dfs = pl.DataFrame()
             elif keys[0] == "offsets":
                 print("mmmmmmmmmmmmmmmmmmmmm", tdict)
-                df = pl.DataFrame({
-                    "read_lens": tdict["read_scores"].keys(),
-                    "read_scores": tdict["read_scores"].values()
-                }).join(pl.DataFrame({
-                    "read_lens": tdict["offsets"].keys(),
-                    "offsets": tdict["offsets"].values()
-                }),
+                df = (
+                    pl.DataFrame(
+                        {
+                            "read_lens": tdict["read_scores"].keys(),
+                            "read_scores": tdict["read_scores"].values(),
+                        }
+                    )
+                    .join(
+                        pl.DataFrame(
+                            {
+                                "read_lens": tdict["offsets"].keys(),
+                                "offsets": tdict["offsets"].values(),
+                            }
+                        ),
                         on="read_lens",
-                        how="outer_coalesce").with_columns([
-                            pl.col('offsets').fill_null(15),
-                            pl.col('read_scores').fill_null(1)
-                        ])
+                        how="outer_coalesce",
+                    )
+                    .with_columns(
+                        [
+                            pl.col("offsets").fill_null(15),
+                            pl.col("read_scores").fill_null(1),
+                        ]
+                    )
+                )
                 print("zzzzzzzzzzzzzzzz", df)
                 return df
 
-        elif keys[1] == 'seq':
+        elif keys[1] == "seq":
             for pos, nuc_dist in tdict:
                 dfs.append(pl.DataFrame(nuc_dist).with_columns(pos=pos))
 
@@ -98,10 +109,10 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
         elif keys[1] in ["ambig", "unambig"]:
             for read_len, pos_count in tdict.items():
                 dfs.append(
-                    pl.DataFrame({
-                        "pos": pos_count.keys(),
-                        "count": pos_count.values()
-                    }).with_columns(read_len=read_len))
+                    pl.DataFrame(
+                        {"pos": pos_count.keys(), "count": pos_count.values()}
+                    ).with_columns(read_len=read_len)
+                )
 
             if dfs:
                 dfs = pl.concat(dfs)
@@ -113,32 +124,31 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
         else:
             dfs = pl.DataFrame()
     elif keys[0] in [
-            "unambiguous_all_totals", "unambiguous_cds_totals",
-            "unambiguous_fiveprime_totals", "unambiguous_threeprime_totals"
+        "unambiguous_all_totals",
+        "unambiguous_cds_totals",
+        "unambiguous_fiveprime_totals",
+        "unambiguous_threeprime_totals",
     ]:
-        pl.DataFrame({
-            'gene': sqldict[keys[0]].keys(),
-            'count': sqldict[keys[0]].values()
-        })
+        pl.DataFrame(
+            {"gene": sqldict[keys[0]].keys(), "count": sqldict[keys[0]].values()}
+        )
     elif keys[0] == "totals":
         for key2 in sqldict[keys[0]]:  # key2 = gene
             # print(sqlite_db[key][key2])
             tdf = pl.DataFrame(
                 [[key2] + sqldict[keys[0]][key2]],
-                schema=["gene", "fiveprime", "CDS",
-                        "threeprime"])  # .with_columns(gene=key2)
+                schema=["gene", "fiveprime", "CDS", "threeprime"],
+            )  # .with_columns(gene=key2)
             # print(tdf, key2)
             dfs.append(tdf)
         dfs = pl.concat(dfs)
     elif keys[0] == "read_lengths":
-        dfs = pl.DataFrame({
-            'read_len': sqldict[keys[0]].keys(),
-            'count': sqldict[keys[0]].values()
-        })
+        dfs = pl.DataFrame(
+            {"read_len": sqldict[keys[0]].keys(), "count": sqldict[keys[0]].values()}
+        )
     elif keys[0] == "dinuc_counts":
         for read_len, dinuc_count in sqldict[keys[0]].items():
-            dfs.append(
-                pl.DataFrame(dinuc_count).with_columns(read_len=read_len))
+            dfs.append(pl.DataFrame(dinuc_count).with_columns(read_len=read_len))
         if dfs:
             dfs = pl.concat(dfs)
         else:
@@ -148,8 +158,8 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
             for pos, nuc_count in nuc_counts.items():
 
                 dfs.append(
-                    pl.DataFrame(nuc_count).with_columns(pos=pos,
-                                                         read_len=read_len))
+                    pl.DataFrame(nuc_count).with_columns(pos=pos, read_len=read_len)
+                )
         if dfs:
             dfs = pl.concat(dfs)
         else:
@@ -164,35 +174,42 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
 
 def form_filler(organism, transcriptome):
     data: Dict[str, Any] = request.args.to_dict()
-    data['organism'] = organism
-    data['transcriptome'] = transcriptome
+    data["organism"] = organism
+    data["transcriptome"] = transcriptome
     gwips_info = get_table("organisms").filter(
-        (pl.col('organism_name') == organism)
-        & (pl.col('transcriptome_list') == transcriptome))[0, [
-            "gwips_clade", "gwips_organism", "gwips_database",
-            "default_transcript", "organism_id"
-        ]]
+        (pl.col("organism_name") == organism)
+        & (pl.col("transcriptome_list") == transcriptome)
+    )[
+        0,
+        [
+            "gwips_clade",
+            "gwips_organism",
+            "gwips_database",
+            "default_transcript",
+            "organism_id",
+        ],
+    ]
     # print(accepted_studies)
 
-    data['transcript'] = gwips_info[0, 'default_transcript']
-    data['gwips_info'] = gwips_info
-    data['user_hili_starts'] = []
-    data['user_hili_stops'] = []
+    data["transcript"] = gwips_info[0, "default_transcript"]
+    data["gwips_info"] = gwips_info
+    data["user_hili_starts"] = []
+    data["user_hili_stops"] = []
     try:
-        for item in data['user_hili'].split(","):
+        for item in data["user_hili"].split(","):
             item_split = item.split("_")
-            data['user_hili_starts'].append(int(item_split[0]))
-            data['user_hili_stops'].append(int(item_split[1]))
+            data["user_hili_starts"].append(int(item_split[0]))
+            data["user_hili_stops"].append(int(item_split[1]))
     except Exception:
         pass
-    data['user_hili_starts'] = ','.join(data['user_hili_starts'])
-    data['user_hili_stops'] = ','.join(data['user_hili_stops'])
+    data["user_hili_starts"] = ",".join(data["user_hili_starts"])
+    data["user_hili_stops"] = ",".join(data["user_hili_stops"])
 
     return data
 
 
 def fetch_user() -> Tuple[str | None, bool]:
-    '''
+    """
     Fetches active user from cookies if present and returns username and login status.
 
     Parameters:
@@ -200,7 +217,7 @@ def fetch_user() -> Tuple[str | None, bool]:
 
     Returns:
     - Tuple
-    '''
+    """
     consent = request.cookies.get("cookieconsent_status")
     # If user rejects cookies then do not track them and delete all other cookies
     if consent == "deny":
@@ -212,26 +229,30 @@ def fetch_user() -> Tuple[str | None, bool]:
     session_id = str(session["uid"])
     # Check if this session uid is already in the users table
     users = get_table("users")
-    if session_id not in users['username']:
+    if session_id not in users["username"]:
         # Add session uid to user table
         update_table(
-            "users", {
-                'user_id': None,
-                'username': session_id,
-                'password': None,
-                'study_access': '-1',
-                'organism_access': '',
-                'advanced': 0,
-                'temp_user': 1
-            }, 'insert')
-        user_id = max(users['user_id']) + 1
+            "users",
+            {
+                "user_id": None,
+                "username": session_id,
+                "password": None,
+                "study_access": "-1",
+                "organism_access": "",
+                "advanced": 0,
+                "temp_user": 1,
+            },
+            "insert",
+        )
+        user_id = max(users["user_id"]) + 1
         defaul_user_settings = config.DEFAULT_USER_SETTINGS.copy()
-        for stop in ['uaa', 'uag', 'uga']:
-            defaul_user_settings[f'comp_{stop}_col'] = defaul_user_settings[
-                f'{stop}_col']
-        defaul_user_settings['user_id'] = user_id
-        update_table("user_settings", defaul_user_settings, 'insert')
-# id and login starus
+        for stop in ["uaa", "uag", "uga"]:
+            defaul_user_settings[f"comp_{stop}_col"] = defaul_user_settings[
+                f"{stop}_col"
+            ]
+        defaul_user_settings["user_id"] = user_id
+        update_table("user_settings", defaul_user_settings, "insert")
+    # id and login starus
     try:
         return current_user.name, True
     except Exception:
@@ -240,7 +261,7 @@ def fetch_user() -> Tuple[str | None, bool]:
 
 # Given a username and an organism returns a list of relevant studies.
 def fetch_studies(organism_id) -> pl.DataFrame:
-    '''
+    """
     Fetches studies from database using organism and transcriptome information.
 
     Parameters:
@@ -249,32 +270,38 @@ def fetch_studies(organism_id) -> pl.DataFrame:
 
     Returns:
     - Tuple[organism_id:str, studies:DataFrame[study_id, study_name]]
-    '''
+    """
 
     print(current_user.is_authenticated, type(current_user), "Anmol")
     # get a list of organism id's this user can access
-    study_access_list = get_table("study_access").filter(
-        pl.col("user_id") == current_user.id)["study_id"].to_list(
-        ) if current_user.is_authenticated else []
+    study_access_list = (
+        get_table("study_access")
+        .filter(pl.col("user_id") == current_user.id)["study_id"]
+        .to_list()
+        if current_user.is_authenticated
+        else []
+    )
     # TODO: Check if it can work without list
     # users is name of table
 
     # Getting organism id
     # Getting studies
-    studies = get_table("studies").filter(
-        (pl.col("organism_id") == organism_id)
-        & (pl.col("study_id").is_in(study_access_list)
-           | (pl.col("private") == 0))).select(
-               "study_id",
-               "study_name").unique(subset=["study_id"
-                                            ])  # users is name of table
+    studies = (
+        get_table("studies")
+        .filter(
+            (pl.col("organism_id") == organism_id)
+            & (pl.col("study_id").is_in(study_access_list) | (pl.col("private") == 0))
+        )
+        .select("study_id", "study_name")
+        .unique(subset=["study_id"])
+    )  # users is name of table
     # TODO: Compare with original code and discuss which one too choose
     return studies
 
 
 # Create a dictionary of files seperated by type, this allows for file type grouping on the front end.
 def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
-    '''
+    """
     Fetches files from database for give studies.
 
     Parameters:
@@ -283,18 +310,20 @@ def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
     Returns: -- Fix this part
     - {'seqtype':{('project_id', 'project_name')
                    : {('file_id', 'file_name'): ['file_description']}}}
-    '''
-    return get_table("files").filter(
-        pl.col("study_id").is_in(accepted_studies['study_id'])).select(
-            "file_id", "study_id", "file_name", "file_description",
-            "file_type").with_columns(
-                pl.col('file_name').apply(
-                    lambda x: x.replace('.shelf', '.sqlite'))).join(
-                        accepted_studies, on="study_id")
+    """
+    return (
+        get_table("files")
+        .filter(pl.col("study_id").is_in(accepted_studies["study_id"]))
+        .select("file_id", "study_id", "file_name", "file_description", "file_type")
+        .with_columns(
+            pl.col("file_name").apply(lambda x: x.replace(".shelf", ".sqlite"))
+        )
+        .join(accepted_studies, on="study_id")
+    )
 
 
 def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
-    '''
+    """
     Convert string in dict collected from web page form to right types.
 
     Parameters:
@@ -302,10 +331,10 @@ def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
 
     Returns:
     - None
-    '''
+    """
     groups = []
     file_ids = []
-    print(dct,"Kiran")
+    print(dct, "Kiran")
     for key, value in dct.items():
         if key in config.VARIABLE_CONVERSION:
             dct[key] = config.VARIABLE_CONVERSION[key](value)
@@ -315,13 +344,13 @@ def string2other(dct: Dict[str, Any]) -> Dict[str, Any]:
             file_ids.extend(file_id)
             dct[key] = file_id
             groups.append(key)
-    dct['groups'] = groups
-    dct['file_ids'] = file_ids
+    dct["groups"] = groups
+    dct["file_ids"] = file_ids
     return dct
 
 
 def fetch_study_info(organism_id: int) -> pl.DataFrame:
-    '''
+    """
     Fetches studies from database for organism.
 
 
@@ -333,9 +362,11 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
 
     Example:
 
-    '''
-    studies = get_table("studies").filter(
-        pl.col('organism_id') == organism_id).select(
+    """
+    studies = (
+        get_table("studies")
+        .filter(pl.col("organism_id") == organism_id)
+        .select(
             "study_id",
             "paper_authors",
             "srp_nos",
@@ -348,6 +379,7 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
             "description",
             "study_name",
         )
+    )
 
     # "paper_link": row[5].strip('"'),  # generate link using pubmed id
     return studies
@@ -355,7 +387,7 @@ def fetch_study_info(organism_id: int) -> pl.DataFrame:
 
 # Given a list of file id's as strings returns a list of filepaths to the sqlite files.
 def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
-    '''
+    """
 
     Parameters:
     - data (Dict[str, Any]): dictionary of values
@@ -365,26 +397,46 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
 
     Example:
 
-    '''
+    """
 
     studies = get_table("studies").select(
-        "study_id", "study_name")  # users is name of table
-    files = get_table("files").filter(
-        pl.col("file_id").is_in(data['file_ids'])).join(
-            studies, on='study_id').with_columns(
-                pl.col('file_name').apply(lambda x: x.replace(
-                    '.shelf', '.sqlite')).alias('file_name'))
+        "study_id", "study_name"
+    )  # users is name of table
+    files = (
+        get_table("files")
+        .filter(pl.col("file_id").is_in(data["file_ids"]))
+        .join(studies, on="study_id")
+        .with_columns(
+            pl.col("file_name")
+            .apply(lambda x: x.replace(".shelf", ".sqlite"))
+            .alias("file_name")
+        )
+    )
 
     files = files.with_columns(
-        pl.struct('*').map_elements(lambda x: "{}/{}/{}/{}/{}/{}".format(
-            config.SCRIPT_LOC, config.SQLITES_DIR, x['file_type'],
-            data['organism'], x['study_name'], x['file_name']) if x[
-                'owner'] else "{}/{}/{}".format(config.UPLOADS_DIR, data[
-                    'study'], x['file_name'])).alias('path'))  # TODO: Fix this
+        pl.struct("*")
+        .map_elements(
+            lambda x: (
+                "{}/{}/{}/{}/{}/{}".format(
+                    config.SCRIPT_LOC,
+                    config.SQLITES_DIR,
+                    x["file_type"],
+                    data["organism"],
+                    x["study_name"],
+                    x["file_name"],
+                )
+                if x["owner"]
+                else "{}/{}/{}".format(
+                    config.UPLOADS_DIR, data["study"], x["file_name"]
+                )
+            )
+        )
+        .alias("path")
+    )  # TODO: Fix this
     file_not_found = []
-    for fl in files['path']:
+    for fl in files["path"]:
         if not os.path.isfile(fl):
-            file_not_found.append(fl.split('/')[-1])
+            file_not_found.append(fl.split("/")[-1])
 
     if file_not_found:
         # TODO: Fix the resturn accorind to original as it mught be used by js
@@ -418,17 +470,17 @@ def generate_short_code(data) -> str:
             key2remove.append(key)
     for key in key2remove:
         del data[key]
-    url_id:int = get_table("urls")["url_id"].max() + 1
+    url_id: int = get_table("urls")["url_id"].max() + 1
 
     # If the url table is empty result will return none
-    update_table("urls",{'url_id':url_id, 'url':dumps(data)})
+    update_table("urls", {"url_id": url_id, "url": dumps(data)})
     short_code = integer_to_base62(url_id)
     return short_code
 
 
 # Converts an integer to base62, needed to encode short urls
 def integer_to_base62(num: int) -> str:
-    '''
+    """
     Converts an integer to base62, needed to encode short urls.
 
     Parameters:
@@ -438,7 +490,7 @@ def integer_to_base62(num: int) -> str:
     - str
 
     Example:
-    '''
+    """
     base = string.digits + string.ascii_lowercase + string.ascii_uppercase
     r = num % 62
     res = base[r]
@@ -489,9 +541,11 @@ def nuc_to_aa(nuc_seq: str) -> str:
 
 
 # Calculates the coverage of each gene, for 5' leader, cds and 3' trailer for unambiguous and ambigous reads, needed for diff exp
-def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
-                        longest_tran_list: List[str],
-                        traninfo_dict: Dict[str, Dict[str, int]]) -> None:
+def calculate_coverages(
+    sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
+    longest_tran_list: List[str],
+    traninfo_dict: Dict[str, Dict[str, int]],
+) -> None:
     """
 
     Parameters:
@@ -505,10 +559,14 @@ def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
     Example:
     """
     coverage_types = [
-        "unambig_fiveprime_coverage", "unambig_cds_coverage",
-        "unambig_threeprime_coverage", "unambig_all_coverage",
-        "ambig_fiveprime_coverage", "ambig_cds_coverage",
-        "ambig_threeprime_coverage", "ambig_all_coverage"
+        "unambig_fiveprime_coverage",
+        "unambig_cds_coverage",
+        "unambig_threeprime_coverage",
+        "unambig_all_coverage",
+        "ambig_fiveprime_coverage",
+        "ambig_cds_coverage",
+        "ambig_threeprime_coverage",
+        "ambig_all_coverage",
     ]
     coverage_dict = {}
     for coverage_type in coverage_types:
@@ -540,9 +598,11 @@ def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
                 # for i in range(pos, pos + readlen):
                 # ambig_dict[i] = ""  # TODO: Use list instead of dict
         coverage_dict["unambig_all_coverage"][tran] = (
-            unambig_range[1] - unambig_range[0] + 1) / tranlen
+            unambig_range[1] - unambig_range[0] + 1
+        ) / tranlen
         coverage_dict["ambig_all_coverage"][tran] = (
-            ambig_range[1] - ambig_range[0] + 1) / tranlen
+            ambig_range[1] - ambig_range[0] + 1
+        ) / tranlen
         if cds_start != "None":
             cds_start = float(cds_start)  # Why Float
             cds_stop = float(cds_stop)
@@ -550,30 +610,39 @@ def calculate_coverages(sqlite_db: Dict[str, Dict[str, Dict[int, int]]],
             three_len = tranlen - cds_stop
             # Use list comprehension to count number of entries less than cds_start
             if cds_start > 0:  # TODO: Fix below as above
-                coverage_dict["unambig_fiveprime_coverage"][tran] = sum(
-                    i < cds_start for i in unambig_dict.keys()) / cds_start
-                coverage_dict["ambig_fiveprime_coverage"][tran] = sum(
-                    i < cds_start for i in ambig_dict.keys()) / cds_start
-            coverage_dict["unambig_cds_coverage"][tran] = sum(
-                i > cds_start and i < cds_stop
-                for i in unambig_dict.keys()) / cds_len
-            coverage_dict["ambig_cds_coverage"][tran] = sum(
-                i > cds_start and i < cds_stop
-                for i in ambig_dict.keys()) / cds_len
+                coverage_dict["unambig_fiveprime_coverage"][tran] = (
+                    sum(i < cds_start for i in unambig_dict.keys()) / cds_start
+                )
+                coverage_dict["ambig_fiveprime_coverage"][tran] = (
+                    sum(i < cds_start for i in ambig_dict.keys()) / cds_start
+                )
+            coverage_dict["unambig_cds_coverage"][tran] = (
+                sum(i > cds_start and i < cds_stop for i in unambig_dict.keys())
+                / cds_len
+            )
+            coverage_dict["ambig_cds_coverage"][tran] = (
+                sum(i > cds_start and i < cds_stop for i in ambig_dict.keys()) / cds_len
+            )
             if three_len > 0:
-                coverage_dict["unambig_threeprime_coverage"][tran] = sum(
-                    i > cds_stop for i in unambig_dict.keys()) / three_len
-                coverage_dict["ambig_threeprime_coverage"][tran] = sum(
-                    i > cds_stop for i in ambig_dict.keys()) / three_len
+                coverage_dict["unambig_threeprime_coverage"][tran] = (
+                    sum(i > cds_stop for i in unambig_dict.keys()) / three_len
+                )
+                coverage_dict["ambig_threeprime_coverage"][tran] = (
+                    sum(i > cds_stop for i in ambig_dict.keys()) / three_len
+                )
         for coverage in coverage_types:
             sqlite_db[coverage] = coverage_dict[coverage]
         sqlite_db.commit()
 
 
 # Builds a profile, applying offsets
-def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
-                  offsets: Dict[int, int], ambig: bool, minscore: int,
-                  scores: Dict[int, int]):
+def build_profile(
+    trancounts: Dict[str, Dict[int, List[int]]],
+    offsets: Dict[int, int],
+    ambig: bool,
+    minscore: int,
+    scores: Dict[int, int],
+):
     """
 
     Parameters:
@@ -592,54 +661,56 @@ def build_profile(trancounts: Dict[str, Dict[int, List[int]]],
     minreadlen = 15
     maxreadlen = 150
     profile = {}
-    unambig_trancounts = trancounts[
-        "unambig"] if 'unambig' in trancounts else {}
-    ambig_trancounts = trancounts["ambig"] if 'ambig' in trancounts else {}
-    for readlen in unambig_trancounts:
-        if minscore:
-            if readlen in scores:
-                if scores[readlen] < minscore:
-                    continue
-            else:
-                continue
-        if readlen < minreadlen or readlen > maxreadlen:
-            continue
-        offset = 15 if readlen in offsets else offsets[readlen] + 1
-        for pos in unambig_trancounts[readlen]:
-            count = unambig_trancounts[readlen][pos]
-            offset_pos = pos + offset
-            try:
-                profile[offset_pos] += count
-            except Exception:
-                profile[offset_pos] = count
+    unambig_trancounts = trancounts["unambig"] if "unambig" in trancounts else {}
+    if not unambig_trancounts:
+        unambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
+    else:
+        lists = []
+        for readlen, counts in unambig_trancounts.items():
+            for pos, count in counts.items():
+                lists.append([readlen, pos, count])
+        unambig_trancounts_df = pl.DataFrame(lists, schema=["readlen", "pos", "count"])
+    ambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
 
     if ambig:
-        for readlen in ambig_trancounts:
-            if minscore:
-                if readlen in scores:
-                    if scores[readlen] < minscore:
-                        continue
-                else:
-                    continue
-            if not (minreadlen <= readlen <= maxreadlen):
-                continue
-            offset = 15 if readlen in offsets else offsets[readlen] + 1
+        ambig_trancounts = trancounts["ambig"] if "ambig" in trancounts else {}
+        if ambig_trancounts:
+            lists = []
+            for readlen, counts in ambig_trancounts.items():
+                for pos, count in counts.items():
+                    lists.append([readlen, pos, count])
+            ambig_trancounts_df = pl.DataFrame(
+                lists, schema=["readlen", "pos", "count"]
+            )
+    transcounts_df = (
+        pl.concat([unambig_trancounts_df, ambig_trancounts_df])
+        .groupby("readlen", "pos")
+        .agg(pl.sum("count"))
+    ).filter(pl.col("readlen") >= minreadlen and pl.col("readlen") <= maxreadlen)
 
-            for pos in ambig_trancounts[readlen]:
-                count = ambig_trancounts[readlen][pos]
-                offset_pos = pos + offset
-                try:
-                    profile[offset_pos] += 0
-                except Exception:
-                    profile[offset_pos] = count
-    # print ("RETURNING PROFILE", profile)
+    del unambig_trancounts_df, ambig_trancounts_df
+
+    read_scores = pl.DataFrame({"readlen": scores.keys(), "score": scores.values()})
+    if minscore:
+        read_scores = read_scores.filter(pl.col("score") >= minscore)
+    transcounts_df = transcounts_df.join(read_scores, on="readlen", how="inner")
+    read_offsets = pl.DataFrame({"readlen": offsets.keys(), "offset": offsets.values()})
+    profile = (
+        transcounts_df.join(read_offsets, on="readlen", how="left")
+        .fill_null(14)
+        .with_columns(offset_pos=pl.col("readlen") + pl.col("offset") + 1)
+        .select("offset_pos", "count")
+        .groupby("offset_pos")
+        .agg(pl.sum("count"))
+    )
     return profile
 
 
 # Builds a profile, applying offsets
-def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
-                             # , ambig
-                             ) -> Dict[int, int]:
+def build_proteomics_profile(
+    trancounts: Dict[str, Dict[int, List[int]]],
+    # , ambig
+) -> Dict[int, int]:
     """
 
     Parameters:
@@ -652,27 +723,34 @@ def build_proteomics_profile(trancounts: Dict[str, Dict[int, List[int]]],
     minreadlen = 15
     maxreadlen = 150
     profile = {}
-    if "unambig" in trancounts:
-        unambig_trancounts = trancounts["unambig"]
-        for readlen in unambig_trancounts:
-            if not (minreadlen <= readlen <= maxreadlen):
-                continue
+    unambig_trancounts = trancounts["unambig"] if "unambig" in trancounts else {}
+    if not unambig_trancounts:
+        unambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
+    else:
+        lists = []
+        for readlen, counts in unambig_trancounts.items():
+            for pos, count in counts.items():
+                lists.append([readlen, pos, count])
+        unambig_trancounts_df = (
+            pl.DataFrame(lists, schema=["readlen", "pos", "count"])
+            .filter(pl.col("readlen") >= minreadlen and pl.col("readlen") <= maxreadlen)
+            .with_columns(count=pl.col("count") / pl.col("readlen") / 3.0)
+        )
+    profile = []
+    for row in unambig_trancounts_df.iter_rows(names=True):
 
-            for pos in unambig_trancounts[readlen]:
-                # That way when we add the reduced count at each position, in total it will add up to the original count
-                # and prevent a bias toward longer peptides, this allows us to count a fraction of a peptide that overlaps with an ORF
-                # rather than counting an arbitrary position like the 5' end or 3' end which may fall outside the ORF in question.
-                count = unambig_trancounts[readlen][pos] / float(readlen / 3)
-                for x in range(pos, pos + readlen, 3):
-                    try:
-                        profile[x] += count
-                    except Exception:
-                        profile[x] = count
+        for pos in range(row["pos"], row["pos"] + row["readlen"], 3):
+            profile.append([pos, row["count"]])
+    profile = (
+        pl.DataFrame(profile, schema=["pos", "count"])
+        .groupby("pos")
+        .agg(pl.sum("count"))
+    )
     return profile
 
 
 def fetch_filename_file_id(file_id: int) -> str:
-    '''
+    """
     Return the filename from the database given a file id.
 
     Parameters:
@@ -682,6 +760,5 @@ def fetch_filename_file_id(file_id: int) -> str:
     - str
 
     Example:
-    '''
-    return get_table("files").filter(pl.col("file_id") == file_id)[0,
-                                                                   "file_name"]
+    """
+    return get_table("files").filter(pl.col("file_id") == file_id)[0, "file_name"]

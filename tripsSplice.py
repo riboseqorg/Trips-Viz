@@ -1,11 +1,13 @@
-from typing import Dict, Tuple, List, Union
-from typing_extensions import Literal
+from typing import Dict, List, Tuple, Union
+
+import polars as pl
 from numpy.typing import NDArray
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
-from sqlqueries_2 import sqlquery
 from sqlitedict import SqliteDict
-import polars as pl
+from typing_extensions import Literal
+
+from sqlqueries_2 import sqlquery
 
 
 class TripsSplice:
@@ -202,7 +204,7 @@ def get_exon_coordinates_for_orf(transcript_id: str,
 
 
 def get_protein_coding_transcript_ids(gene: str,
-                                      sqlite_path_organism: str) -> NDArray:
+                                      sqlite_path_organism: str) -> pl.DataFrame:
     """
     Gets the transcript IDs for protein coding genes for the given gene.
 
@@ -212,32 +214,30 @@ def get_protein_coding_transcript_ids(gene: str,
     - sqlite_path_organism (str): The path to the sqlite database file `/path/to/db.sqlite`
 
     Return: 
-    - NDArray: A Numpy Array[str] of coding transcript IDs `Array(['A', 'B', 'C', 'D'])`
+    - pl.Series: A Polars Series[str] of coding transcript IDs `pl.Series(['A', 'B', 'C', 'D'])`
     """
-    transcripts = sqlquery(sqlite_path_organism, "transcripts")
-    return transcripts.loc[transcripts.gene == gene
-                           & transcripts.tran_type == 1, "transcript"].values
-
-
-def get_start_stop_codon_positions(transcript_id: str | List[str],
-                                   sqlite_path_organism: str) -> DataFrame:
-    """
-
-    Parameters:
-    - transcript_id (str): name of the transcript
-    - sqlite_path_organism (str): The path to the sqlite database file
-
-    Returns:
-
-    Example:
-    """
-    # Get start and stop codon positions from annotation sqlite
-    transcripts = sqlquery(sqlite_path_organism, "transcripts")
-    if isinstance(transcript_id, str):
-        transcript_id = [transcript_id]
-    return transcripts.loc[transcripts.transcript.isin(transcript_id),
-                           ['transcript', 'cds_start', 'cds_stop']]
-
+    return sqlquery(sqlite_path_organism, "transcripts").filter(pl.col("gene") == gene  )
+# def get_start_stop_codon_positions(transcript_id: pl.Series| str,
+#                                    sqlite_path_organism: str) -> DataFrame:
+#     """
+#
+#     Parameters:
+#     - transcript_id (str): name of the transcript
+#     - sqlite_path_organism (str): The path to the sqlite database file
+#
+#     Returns:
+#
+#     Example:
+#     """
+#     # Get start and stop codon positions from annotation sqlite
+#     transcripts = sqlquery(sqlite_path_organism, "transcripts")
+#     if isinstance(transcript_id, str):
+#         transcript_id = [transcript_id]
+#
+#     transcripts = transcripts.filter(pl.col("transcript").is_in(transcript_id)).select(['transcript', 'cds_start', 'cds_stop'])
+#     return transcripts.loc[transcripts.transcript.isin(transcript_id),
+#                            ['transcript', 'cds_start', 'cds_stop']]
+#
 
 def get_orf_exon_structure(start_stop: Tuple[int, int],
                            exon_coordinates: List[List[int]]) -> DataFrame:
@@ -471,7 +471,7 @@ def genomic_junction_scores(
 
 def get_reads_per_transcript_location(
         transcript_id: str,
-        sqlite_path_reads: str) -> Union[None, Dict[int, List[int]]]:
+        sqlite_path_reads: str) -> Union[None, pl.DataFrame]:
     """
     Class for extracting information from the trips splice database.
 
@@ -486,7 +486,11 @@ def get_reads_per_transcript_location(
 
     infile = SqliteDict(sqlite_path_reads)
     try:
-        return infile[transcript_id]["unambig"]
+        df = []
+        for length, positions in infile[transcript_id]["unambig"].items():
+            for position, count in positions.items():
+                df.append([length, position, count])
+        return pl.DataFrame(df, schema=["length", "position", "count"])
     except KeyError:
         return None
     # print("No unambiguous reads support this gene " + transcript_id)

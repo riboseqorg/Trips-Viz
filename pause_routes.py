@@ -8,47 +8,85 @@ from flask import Blueprint, render_template, request
 from sqlitedict import SqliteDict
 
 import config
-from core_functions import (build_profile, build_proteomics_profile,
-                            fetch_file_paths, fetch_files, fetch_studies,
-                            fetch_study_info, fetch_user, form_filler,
-                            generate_short_code)
+from core_functions import (
+    build_profile,
+    build_proteomics_profile,
+    fetch_file_paths,
+    fetch_files,
+    fetch_studies,
+    fetch_study_info,
+    fetch_user,
+    form_filler,
+    generate_short_code,
+)
 from fixed_values import my_decoder
-from sqlqueries_2 import get_table
+from sqlqueries_2 import get_table, sqlquery
 
 # This page is used to detect pauses
-pause_detection_blueprint = Blueprint("pause_detection_page",
-                                      __name__,
-                                      template_folder="templates")
+pause_detection_blueprint = Blueprint(
+    "pause_detection_page", __name__, template_folder="templates"
+)
 
 
-@pause_detection_blueprint.route(
-    '/<organism>/<transcriptome>/pause_detection/')
+@pause_detection_blueprint.route("/<organism>/<transcriptome>/pause_detection/")
 def pause_detection_page(organism: str, transcriptome: str) -> str:
     data = form_filler(organism, transcriptome)
     accepted_studies = fetch_studies(data["gwips_info"][0, "organism_id"])
-    data['files'] = fetch_files(accepted_studies).to_pandas()
-    return render_template('pause_detection.html', template_dict=data)
+    data["files"] = fetch_files(accepted_studies).to_pandas()
+    return render_template("pause_detection.html", template_dict=data)
 
 
-def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
-                    min_read_length, max_read_length):
+def create_profiles(
+    data,
+    file_paths_dict,
+    total_files,
+    min_read_length,
+    max_read_length,
+):
     ambig = False
     file_count = 0
     # This will be populated with the users chosen file_ids and passed to the table, so that the trips link can use these files aswell.
+    profile_dict = {}
     file_string = ""
     label_string = "&labels="
+    files = {}
     seq_types = ["riboseq", "proteomics"]
+    file_paths_dict = file_paths_dict.filter(pl.col("file_type").is_in(seq_types))
+    file_count = file_paths_dict.shape[0]
+    if not file_count:
+        return profile_dict, file_string, label_string
     color_list = [
-        "#ff0000", "#2bff00", "#0004ff", "#ffa200", "#c800ff",
-        "#000000", "#969696", "#fa00f2"
+        "#ff0000",
+        "#2bff00",
+        "#0004ff",
+        "#ffa200",
+        "#c800ff",
+        "#000000",
+        "#969696",
+        "#fa00f2",
     ]
     color_ind = 0
-    profile_dict = {}
 
-    tot_file_ids = 0.0
-    file_count = 0
-    for seq_type in seq_types:
-        tot_file_ids += len(file_paths_dict[seq_type])
+    for row in file_paths_dict.iter_row(named=True):
+        file_name = (
+            os.path.split(row["file_name"])[-1].split(".sqlite")[0].replace("_", " ")
+        )
+        sqlite_dicts = SqliteDict(
+            row["file_name"],
+            autocommit=False,
+            decode=my_decoder,
+        )
+        offsets, scores = {}, {}
+
+        if file_paths_dict["file_type"] == "riboseq":
+            try:
+                offsets = sqlite_dicts["offsets"]["fiveprime"]["offsets"]
+            except Exception:
+                pass
+            try:
+                scores = sqlite_dicts["offsets"]["fiveprime"]["read_scores"]
+            except Exception:
+                pass
 
     for seq_type in seq_types:
         if seq_type not in file_paths_dict:
@@ -57,11 +95,16 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
             profile_dict[file_id] = {}
             file_count += 1
             file_name = (
-                file_paths_dict[seq_type][file_id].split("/")[-1]).replace(
-                    ".sqlite", "").replace("_", " ")
-            sqlite_db = SqliteDict(f"{file_paths_dict[seq_type][file_id]}",
-                                   autocommit=False,
-                                   decode=my_decoder)
+                (file_paths_dict[seq_type][file_id].split("/")[-1])
+                .replace(".sqlite", "")
+                .replace("_", " ")
+            )
+            sqlite_db = SqliteDict(
+                f"{file_paths_dict[seq_type][file_id]}",
+                autocommit=False,
+                decode=my_decoder,
+            )
+            files[file_id] = color
             file_string += "{};{}_".format(file_id, color_list[color_ind])
             label_string += "{};{}_".format(file_name, color_list[color_ind])
             color_ind += 1
@@ -80,36 +123,43 @@ def create_profiles(file_paths_dict, accepted_transcript_list, total_files,
                 if transcript not in profile_dict[file_id]:
                     profile_dict[file_id][transcript] = {
                         "riboseq": {},
-                        "proteomics": {}
+                        "proteomics": {},
                     }
                 try:
                     counts = sqlite_db[transcript]
                 except Exception:
                     continue
                 if seq_type == "riboseq":
-                    subprofile = build_profile(counts,
-                                               offsets,
-                                               ambig,
-                                               minscore=None,
-                                               scores=scores)
+                    subprofile = build_profile(
+                        counts, offsets, ambig, minscore=None, scores=scores
+                    )
                 elif seq_type == "proteomics":
-                    subprofile = build_proteomics_profile(counts, ambig)
+                    subprofile = build_proteomics_profile(counts)
                 for pos in subprofile:
                     try:
-                        profile_dict[file_id][transcript][seq_type][
-                            pos] += subprofile[pos]
+                        profile_dict[file_id][transcript][seq_type][pos] += subprofile[
+                            pos
+                        ]
                     except Exception:
-                        profile_dict[file_id][transcript][seq_type][
-                            pos] = subprofile[pos]
+                        profile_dict[file_id][transcript][seq_type][pos] = subprofile[
+                            pos
+                        ]
     file_string = file_string[:-1]
     label_string = label_string[:-1]
     return (profile_dict, file_string, label_string)
 
 
-def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
-                   profile_dict, min_fold_change, window, min_coverage,
-                   nuc_output):
-    step = window // 2
+def extract_values(
+    data,
+    tran_gene_dict,
+    selected_seq_types,
+    profile_dict,
+    min_fold_change,
+    window,
+    min_coverage,
+    nuc_output,
+):
+    step = int(data["window_size"]) // 2
     all_values_dict = {}
     file_output_dict = {}
     file_number = len(list(profile_dict))
@@ -179,8 +229,15 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
                     if file_id not in all_values_dict[tran][pos]:
                         all_values_dict[tran][pos][file_id] = {}
                     all_values_dict[tran][pos][file_id] = [
-                        gene, tran, pos, avg_score, seq[pos - nuc_output:pos],
-                        seq[pos:pos + nuc_output], avg_cov, count, region
+                        gene,
+                        tran,
+                        pos,
+                        avg_score,
+                        seq[pos - nuc_output : pos],
+                        seq[pos : pos + nuc_output],
+                        avg_cov,
+                        count,
+                        region,
                     ]
     all_values_list = []
     for tran in all_values_dict:
@@ -201,185 +258,290 @@ def extract_values(traninfo_dict, data, tran_gene_dict, selected_seq_types,
                     tot_cov += all_values_dict[tran][pos][file_id][6]
                     tot_count += all_values_dict[tran][pos][file_id][7]
                     region = all_values_dict[tran][pos][file_id][8]
-                    file_output_dict[file_id].append([
-                        gene, tran, pos,
-                        all_values_dict[tran][pos][file_id][3], useq, dseq,
-                        all_values_dict[tran][pos][file_id][6],
-                        all_values_dict[tran][pos][file_id][7], region
-                    ])
+                    file_output_dict[file_id].append(
+                        [
+                            gene,
+                            tran,
+                            pos,
+                            all_values_dict[tran][pos][file_id][3],
+                            useq,
+                            dseq,
+                            all_values_dict[tran][pos][file_id][6],
+                            all_values_dict[tran][pos][file_id][7],
+                            region,
+                        ]
+                    )
                 avg_score = tot_score / file_number
                 avg_cov = tot_cov / file_number
                 avg_count = tot_count / file_number
-                all_values_list.append([
-                    gene, tran, pos, avg_score, useq, dseq, avg_cov, avg_count,
-                    region
-                ])
+                all_values_list.append(
+                    [gene, tran, pos, avg_score, useq, dseq, avg_cov, avg_count, region]
+                )
+    all_values_list = pl.DataFrame(
+        all_values_list,
+        schema=[
+            "gene",
+            "tran",
+            "pos",
+            "avg_score",
+            "useq",
+            "dseq",
+            "avg_cov",
+            "avg_count",
+            "region",
+        ],
+    ).sort("avg_score", descending=True)
 
-    sorted_all_values = sorted(all_values_list,
-                               key=lambda x: x[3],
-                               reverse=True)
-    return (sorted_all_values, file_output_dict)
+    return (all_values_list, file_output_dict)
 
 
-def write_to_file(sorted_all_values, file_output_dict, sequence_dict, organism,
-                  transcriptome, file_string, label_string, short_code):
+def write_to_file(
+    all_values_df,
+    file_output_dict,
+    sequence_dict,
+    organism,
+    transcriptome,
+    file_string,
+    label_string,
+    short_code,
+):
     # TODO: Write only when the number of results are more than 1000
     # logging.debug("all sorted all values", sorted_all_values)
     print("writing to file")
-    returnstr = "Table|"
+    returnstr = []
     tmp_filepath = "{}/static/tmp/{}.csv".format(config.SCRIPT_LOC, short_code)
     all_filepaths = tmp_filepath
 
     for file_id in file_output_dict:
-        file_name = get_table("files").filter(pl.col("file_id") == file_id)[0,'file_name']
+        file_name = get_table("files").filter(pl.col("file_id") == file_id)[
+            0, "file_name"
+        ]
         logging.debug(file_name)
-        filepath= "{}/static/tmp/{}_pauses.csv".format(
-            config.SCRIPT_LOC, file_name)
-        outfile= open(filepath, "w")
+        filepath = "{}/static/tmp/{}_pauses.csv".format(config.SCRIPT_LOC, file_name)
+        outfile = open(filepath, "w")
         all_filepaths += " {}".format(filepath)
         for line in file_output_dict[file_id]:
-            outfile.write("{},{},{},{},{},{},{},{},{}\n".format(
-                line[0], line[1], line[2], line[3], line[4], line[5], line[6],
-                line[7], line[8]))
+            outfile.write(
+                "{},{},{},{},{},{},{},{},{}\n".format(
+                    line[0],
+                    line[1],
+                    line[2],
+                    line[3],
+                    line[4],
+                    line[5],
+                    line[6],
+                    line[7],
+                    line[8],
+                )
+            )
         outfile.close()
 
-    tmp_result_file= open(tmp_filepath, "w")
+    tmp_result_file = open(tmp_filepath, "w")
     print("tmp filepath", tmp_filepath)
     tmp_result_file.write(
         "Gene,Tran,Position,Region, Coverage,Pause Score,Upstream_sequence, Downstream_sequence,Count,Link\n"
     )
-    tup_count= 0
+    tup_count = 0
 
     # logging.debug("writing to file",len(sorted_all_values))
-    for tup in sorted_all_values:
+    for tup_count, tup in enumerate(all_values_df):
         # logging.debug("tup", tup)
-        gene= tup[0]
-        transcript= tup[1]
-        position= tup[2]
-        pause_score= round(tup[3], 2)
-        upstream_seq= tup[4]
-        downstream_seq= tup[5]
-        cov= tup[6]
-        count= round(tup[7], 2)
-        region= tup[8]
+        gene = tup[0]
+        transcript = tup[1]
+        position = tup[2]
+        pause_score = round(tup[3], 2)
+        upstream_seq = tup[4]
+        downstream_seq = tup[5]
+        cov = tup[6]
+        count = round(tup[7], 2)
+        region = tup[8]
 
-        comparison_url= "/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
-            organism, transcriptome, file_string, label_string, transcript,
-            position - 15, position + 15)
-        ebc_link= '<a href="{}" target="_blank_" >View</a>'.format(
-            comparison_url)
+        comparison_url = "/{}/{}/comparison/?files={}{}&transcript={}&normalize=F&cov=T&ambig=F&minread=25&maxread=150&hili_start={}&hili_stop={}".format(
+            organism,
+            transcriptome,
+            file_string,
+            label_string,
+            transcript,
+            position - 15,
+            position + 15,
+        )
+        ebc_link = '<a href="{}" target="_blank_" >View</a>'.format(comparison_url)
 
-        tmp_result_file.write("{},{},{},{},{},{},{},{},{},{}\n".format(
-            gene, transcript, position, region, cov, pause_score, upstream_seq,
-            downstream_seq, count, ebc_link))
+        tmp_result_file.write(
+            "{},{},{},{},{},{},{},{},{},{}\n".format(
+                gene,
+                transcript,
+                position,
+                region,
+                cov,
+                pause_score,
+                upstream_seq,
+                downstream_seq,
+                count,
+                ebc_link,
+            )
+        )
         if tup_count < 1000:
-            returnstr += "{},{},{},{},{},{},{},{},{}.,/".format(
-                gene, transcript, position, region, pause_score, upstream_seq,
-                downstream_seq, count, ebc_link)
-        tup_count += 1
+            returnstr.append(
+                [
+                    gene,
+                    transcript,
+                    position,
+                    region,
+                    pause_score,
+                    upstream_seq,
+                    downstream_seq,
+                    count,
+                    ebc_link,
+                ]
+            )
     tmp_result_file.close()
     # Create a zip file of all output files
-    print("zip -j {}/static/tmp/{}.zip {}".format(config.SCRIPT_LOC,
-                                                  short_code, all_filepaths))
-    subprocess.call("zip -j {}/static/tmp/{}.zip {}".format(
-        config.SCRIPT_LOC, short_code, all_filepaths),
-                    shell=True)
+    print(
+        "zip -j {}/static/tmp/{}.zip {}".format(
+            config.SCRIPT_LOC, short_code, all_filepaths
+        )
+    )
+    subprocess.call(
+        "zip -j {}/static/tmp/{}.zip {}".format(
+            config.SCRIPT_LOC, short_code, all_filepaths
+        ),
+        shell=True,
+    )
     return returnstr
 
 
-def find_pauses(data, user, logged_in):
+def find_pauses(data):
+
+    # user, logged_in = fetch_user()
     logging.debug("pause query called")
 
-    print("organism, transcriptome", organism, transcriptome)
-    owner= get_table("organisms").filter(
-        pl.col("organism_name") == data["organism"])[0, "organism_owner"]
+    owner = get_table("organisms").filter(pl.col("organism_name") == data["organism"])[
+        0, "owner"
+    ]
+    file_ids = []
+    for k in data:
+        if not k.startswith("file_"):
+            continue
+        if "__" not in k:
+            continue
+        file_id = int(k.split("__")[-1])
+        file_ids.append(file_id)
+    data["file_ids"] = file_ids
 
-    file_paths_dict= fetch_file_paths(data["file_list"], organism)
+    file_paths_dict = fetch_file_paths(data)
+
     # Find out which studies have all files of a specific sequence type selected (to create aggregates)
 
-    full_studies= []
+    full_studies = []
 
     logging.debug("Full studies {}".format(full_studies))
 
-    min_coverage= data["min_coverage"] / 100.
+    data["min_coverage"] = data["min_coverage"] / 100.0
 
     # feature_list.append("Inframe Count Value")
-    if not html_args["user_short"]:
-        short_code= generate_short_code(data)
-    else:
-        short_code= html_args["user_short"]
-        user_short_passed= True
+    # if not html_args["user_short"]:
+    #     short_code= generate_short_code(data)
+    # else:
+    #     short_code= html_args["user_short"]
+    #     user_short_passed= True
 
-    if data['tranlist'] == "custom_trans":
-        data['custom_tran_list']= data['custom_tran_list'].split(',')
+    if data["tranlist"] == "custom_trans":
+        data["custom_tran_list"] = data["custom_tran_list"].split(",")
 
     # structure of orf dict is transcript[stop][start] = {"length":x,"score":0,"cds_cov":0} each stop can have multiple starts
 
     if owner == 1:
-        sqlfile= "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
-                                                      config.ANNOTATION_DIR,
-                                                      data['organism'],
-                                                      data['transcriptome'])
+        sqlfile = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC,
+            config.ANNOTATION_DIR,
+            data["organism"],
+            data["transcriptome"],
+        )
         if not os.path.isfile(sqlfile):
             return "Cannot find annotation file {}.{}.sqlite".format(
-                data['organism'], data['transcriptome'])
+                data["organism"], data["transcriptome"]
+            )
     else:
-        sqlfile= "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, data['organism'], data['transcriptome'])
-    traninfo= sqlquery(sqlfile, "transcripts")
-    tran_gene_dict= {}
+        sqlfile = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]
+        )
+    transcripts = sqlquery(sqlfile, "transcripts")
+    tran_gene_dict = {}
 
-    principal_transcripts= []
-    if data['tranlist'] == "prin_trans":
-        traninfo= traninfo.filter(pl.col("principal") == 1)
-    elif data['tranlist'] == "custom_trans":
-        traninfo= traninfo.filter(
-            pl.col("transcript").is_in(data['custom_tran_list']))
+    principal_transcripts = []
+    if data["tranlist"] == "prin_trans":
+        transcripts = transcripts.filter(pl.col("principal") == 1)
+    elif data["tranlist"] == "custom_trans":
+        transcripts = transcripts.filter(
+            pl.col("transcript").is_in(data["custom_tran_list"])
+        )
+    data["transcripts"] = transcripts
 
-    tran_gene= traninfo[["transcript", "gene"]]
-    tran_gene.gene= tran_gene.gene.apply(lambda x: x.replace(",", "_"))
+    tran_gene = transcripts[["transcript", "gene"]].with_columns(
+        pl.col("gene").apply(lambda x: x.replace(" ", "_"))
+    )
 
-    transcriptome_info_dict= traninfo[["transcript", "strand", "chrom"]]
-    exons= sqlquery(sqlfile, "exons").filter(
-        pl.col("transcript").is_in(traninfo['transcript']))
-    transcriptome_info_dict= transcriptome_info_dict.merge(exons,
-                                                            on="transcript")
+    transcriptome_info_dict = transcripts[["transcript", "strand", "chrom"]]
+    exons = sqlquery(sqlfile, "exons").filter(
+        pl.col("transcript").is_in(transcripts["transcript"])
+    )
+    transcriptome_info_dict = transcriptome_info_dict.join(exons, on="transcript")
 
     # logging.debug("accepted orf dict", accepted_orf_dict)
     logging.debug("accepted orf dict built")
     # Now build a profile for every transcript in accepted_transcripts
 
-    if (not file_paths_dict["rnaseq"]) and ("te_check" in data):
+    if ("rnaseq" not in file_paths_dict["file_type"]) and ("te_check" in data):
         del data["te_check"]
 
-    if not file_paths_dict["riboseq"] and not file_paths_dict["proteomics"]:
+    if ("riboseq" not in file_paths_dict["file_type"]) and (
+        "proteomics" not in file_paths_dict["file_type"]
+    ):
         return "Error no files selected"
 
-    total_files= 0
-    selected_seq_types= []
+    total_files = 0
+    selected_seq_types = []
     if "riboseq" in file_paths_dict:
         total_files += len(file_paths_dict["riboseq"])
-        if "riboseq" not in selected_seq_types:
-            selected_seq_types.append("riboseq")
+        selected_seq_types.append("riboseq")
     if "proteomics" in file_paths_dict:
         total_files += len(file_paths_dict["proteomics"])
-        if "proteomics" not in selected_seq_types:
-            selected_seq_types.append("proteomics")
+        selected_seq_types.append("proteomics")
 
-    profile_dict, file_string, label_string= create_profiles(
-        file_paths_dict, principal_transcripts, total_files, min_read_length,
-        max_read_length)
-    sorted_all_values, file_output_dict= extract_values(
-        traninfo_dict, data, tran_gene_dict, selected_seq_types, profile_dict,
-        min_fold_change, window, min_coverage, nuc_output)
-    if sorted_all_values:
+    profile_dict, file_string, label_string = create_profiles(
+        data,
+        file_paths_dict,
+        total_files,
+        data["min_read_length"],
+        data["max_read_length"],
+    )
+    print(profile_dict, file_string, label_string, "Kiran")
+    all_values_df, file_output_dict = extract_values(
+        data,
+        tran_gene_dict,
+        selected_seq_types,
+        profile_dict,
+        data["min_read_length"],
+        data["window_size"],
+        data["min_coverage"],
+        data["nuc_output"],
+    )
+    if all_values_df.is_empty():
         return "No results, try making filters less restrictive"
 
     # TODO change extension to csv if only one file
-    filename= short_code + ".zip"
-    returnstr= write_to_file(sorted_all_values, file_output_dict,
-                              sequence_dict, organism, transcriptome,
-                              file_string, label_string, short_code)
+    filename = short_code + ".zip"
+    returnstr = write_to_file(
+        all_values_df,
+        file_output_dict,
+        sequence_dict,
+        organism,
+        transcriptome,
+        file_string,
+        label_string,
+        short_code,
+    )
 
     logging.debug("creating returnstr")
     returnstr += "|"
@@ -397,10 +559,3 @@ def find_pauses(data, user, logged_in):
     logging.debug("returning result")
     print("return returnstr")
     return returnstr
-
-
-def pausequery(data):
-
-    user, logged_in= fetch_user()
-    print(data, user, logged_in)
-    return find_pauses(data, user, logged_in)

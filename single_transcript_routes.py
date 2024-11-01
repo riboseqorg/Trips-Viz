@@ -13,9 +13,10 @@ import riboflask
 from core_functions import (fetch_file_paths, fetch_files, fetch_studies,
                             fetch_study_info, fetch_user, form_filler,
                             generate_short_code, string2other)
-from orfQuant import incl_OPM_run_orfQuant
+#from orfQuant import incl_OPM_run_orfQuant
 from sqlqueries_2 import get_table, get_user_id, sqlquery
-from tripsTPM import TPM
+
+# from tripsTPM import TPM
 
 # This is the single transcript plot page, user chooses gene, files and other settings
 single_transcript_plotpage_blueprint = Blueprint("interactiveplotpage",
