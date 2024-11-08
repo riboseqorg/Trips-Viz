@@ -242,7 +242,6 @@ def fetch_user() -> Tuple[str | None, bool]:
                 "advanced": 0,
                 "temp_user": 1,
             },
-            "insert",
         )
         user_id = max(users["user_id"]) + 1
         defaul_user_settings = config.DEFAULT_USER_SETTINGS.copy()
@@ -698,9 +697,9 @@ def build_profile(
     profile = (
         transcounts_df.join(read_offsets, on="readlen", how="left")
         .fill_null(14)
-        .with_columns(offset_pos=pl.col("readlen") + pl.col("offset") + 1)
-        .select("offset_pos", "count")
-        .groupby("offset_pos")
+        .with_columns(pos=pl.col("pos") + pl.col("offset") + 1)
+        .select("pos", "count")
+        .groupby("pos")
         .agg(pl.sum("count"))
     )
     return profile

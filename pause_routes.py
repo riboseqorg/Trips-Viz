@@ -67,18 +67,17 @@ def create_profiles(
     ]
     color_ind = 0
 
-    for row in file_paths_dict.iter_row(named=True):
+    for row in file_paths_dict.iter_rows(named=True):
         file_name = (
             os.path.split(row["file_name"])[-1].split(".sqlite")[0].replace("_", " ")
         )
         sqlite_dicts = SqliteDict(
-            row["file_name"],
+            row["path"],
             autocommit=False,
-            decode=my_decoder,
         )
         offsets, scores = {}, {}
 
-        if file_paths_dict["file_type"] == "riboseq":
+        if row["file_type"] == "riboseq":
             try:
                 offsets = sqlite_dicts["offsets"]["fiveprime"]["offsets"]
             except Exception:
@@ -87,7 +86,7 @@ def create_profiles(
                 scores = sqlite_dicts["offsets"]["fiveprime"]["read_scores"]
             except Exception:
                 pass
-
+    subprofiles = []
     for seq_type in seq_types:
         if seq_type not in file_paths_dict:
             continue
@@ -120,11 +119,6 @@ def create_profiles(
                 except Exception:
                     pass
             for transcript in accepted_transcript_list:
-                if transcript not in profile_dict[file_id]:
-                    profile_dict[file_id][transcript] = {
-                        "riboseq": {},
-                        "proteomics": {},
-                    }
                 try:
                     counts = sqlite_db[transcript]
                 except Exception:
@@ -135,6 +129,12 @@ def create_profiles(
                     )
                 elif seq_type == "proteomics":
                     subprofile = build_proteomics_profile(counts)
+                subprofile = subprofile.with_columns(
+                    seq_type=pl.lit(seq_type),
+                    transcript=pl.lit(transcript),
+                    file_id=pl.lit(file_id),
+                )
+                subprofiles.append(subprofile)
                 for pos in subprofile:
                     try:
                         profile_dict[file_id][transcript][seq_type][pos] += subprofile[
@@ -146,7 +146,7 @@ def create_profiles(
                         ]
     file_string = file_string[:-1]
     label_string = label_string[:-1]
-    return (profile_dict, file_string, label_string)
+    return (pl.concat(subprofiles), file_string, label_string)
 
 
 def extract_values(
