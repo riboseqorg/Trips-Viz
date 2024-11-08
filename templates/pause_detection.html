@@ -1,93 +1,111 @@
 {% extends "layout.html" %}
+{% block header_static %}
+    <link rel="stylesheet" href='/static/css/triplet_periodicity.css'>
+    <script src='/static/js/aks/interaction.js'></script>
+{% endblock %}
 {% block content %}
-    <div class="page-section">
-        <div class="row">
+    {% include "page_jump.html" %}
+    <form id="form">
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>General Settings</u></b></font>
+            </p>
+        </div>
+        <div class='hidden'>
+            <!--Hidden Parameters-->
+            {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+            <input name="override" value="{{ override }}" />
+        </div>
+        <div class="page-section">
             <div class="row">
-                <div class="col-6">
-                    <b>Minimum fold change:</b>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Minimum fold change:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="min_fold_change" type="number" name="min_fold_change" value="20" />
+                        <span class='tooltip'
+                              style="max-height:800px"
+                              title="The fold change for a pause is also referred to as the pause score(Si). Pauses are predicted using the following procedure. The number of reads r mapped to each position i within a sliding window of length n (step = n/2) is normalized over the average density within the window to score the pause. The average of these values across overlapping windows is used as the pause score, Si: ">&#9432;</span>
+                    </div>
                 </div>
-                <div class="col-6">
-                    <input id="min_fold_change" type="number" name="min_fold_change" value="20" />
-                    <span class='tooltip'
-                          style="max-height:800px"
-                          title="The fold change for a pause is also referred to as the pause score(Si). Pauses are predicted using the following procedure. The number of reads r mapped to each position i within a sliding window of length n (step = n/2) is normalized over the average density within the window to score the pause. The average of these values across overlapping windows is used as the pause score, Si: ">&#9432;</span>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Window size:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="window_size" type="number" name="window_size" value="500" />
+                        <span class='tooltip'
+                              title="The default size of the window(n) for calculating the background density is 1000 nucleotides (nt). An overlapping window approach is used in the pause prediction such that each window overlaps the previous window by 50% (i.e. the step size is n/2). For pauses which are predicted in both overlapping windows, the pause score and window coverage are averaged for the final output. ">&#9432;</span>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Window size:</b>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Minimum coverage (%):</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="min_coverage" type="number" name="min_coverage" value="5" />
+                        <span class='tooltip'
+                              title="The coverage(%) represents the percentage of positions within a window size that have a minimum of one read mapped. This parameter helps to filter out the genes/genomic regions that have a low density coverage across the window ">&#9432;</span>
+                    </div>
                 </div>
-                <div class="col-6">
-                    <input id="window_size" type="number" name="window_size" value="500" />
-                    <span class='tooltip'
-                          title="The default size of the window(n) for calculating the background density is 1000 nucleotides (nt). An overlapping window approach is used in the pause prediction such that each window overlaps the previous window by 50% (i.e. the step size is n/2). For pauses which are predicted in both overlapping windows, the pause score and window coverage are averaged for the final output. ">&#9432;</span>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Nucleotide output:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="nuc_output" type="number" name="nuc_output" value="15" />
+                        <span class='tooltip'
+                              title="The flanking nucleotide sequences of a predicted pause location are provided in the output. You can specify the length(nt) of up and downstream sequences to be provided in the output file (the default value is 50 nt). The sequence information can be used as input to secondary structure prediction tools which may provide insight into the pause occurrence. ">&#9432;</span>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Minimum coverage (%):</b>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Minimum read length:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="min_read_length" type="number" name="min_read_length" value="20" />
+                        <span class='tooltip'
+                              title="You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span>
+                    </div>
                 </div>
-                <div class="col-6">
-                    <input id="min_coverage" type="number" name="min_coverage" value="5" />
-                    <span class='tooltip'
-                          title="The coverage(%) represents the percentage of positions within a window size that have a minimum of one read mapped. This parameter helps to filter out the genes/genomic regions that have a low density coverage across the window ">&#9432;</span>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Maximum read length:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="max_read_length" type="number" name="max_read_length" value="35" />
+                        <span class='tooltip'
+                              title="You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Nucleotide output:</b>
-                </div>
-                <div class="col-6">
-                    <input id="nuc_output" type="number" name="nuc_output" value="15" />
-                    <span class='tooltip'
-                          title="The flanking nucleotide sequences of a predicted pause location are provided in the output. You can specify the length(nt) of up and downstream sequences to be provided in the output file (the default value is 50 nt). The sequence information can be used as input to secondary structure prediction tools which may provide insight into the pause occurrence. ">&#9432;</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Minimum read length:</b>
-                </div>
-                <div class="col-6">
-                    <input id="min_read_length" type="number" name="min_read_length" value="20" />
-                    <span class='tooltip'
-                          title="You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Maximum read score:</b>
-                </div>
-                <div class="col-6">
-                    <input id="max_read_score" type="number" name="max_read_score" value="35" />
-                    <span class='tooltip'
-                          title="You can specify the footprint read lengths to be considered for the pause prediction(s). The default read length range is 25-35 nt. ">&#9432;</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <b>Transcripts:</b>
-                </div>
-                <div class="col-6">
-                    <input id="prin_trans" type="radio" name="tranlist" checked>
-                    Principal
-                    <input id="all_trans" type="radio" name="tranlist" unchecked>
-                    All
-                    <input id="custom_trans" type="radio" name="tranlist" unchecked>
-                    Custom:
-                    <input id="custom_trans_list" type="text" name="custom_trans_list" />
-                    <span class='tooltip'
-                          title="Search for pauses only on principal transcripts, all transcripts or a custom list (enter a comma seperated list in the input box). ">&#9432;</span>
+                <div class="row">
+                    <div class="col-6">
+                        <b>Transcripts:</b>
+                    </div>
+                    <div class="col-6">
+                        <input id="prin_trans" type="radio" name="tranlist" checked>
+                        Principal
+                        <input id="all_trans" type="radio" name="tranlist" unchecked>
+                        All
+                        <input id="custom_trans" type="radio" name="tranlist" unchecked>
+                        Custom:
+                        <input id="custom_trans_list" type="text" name="custom_trans_list" />
+                        <span class='tooltip'
+                              title="Search for pauses only on principal transcripts, all transcripts or a custom list (enter a comma seperated list in the input box). ">&#9432;</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    {% include "single_transcript_plot__files.html" %}
-    <div id="wrapper">
-        <button class="button" type="button"  id="query">
+        {% include "single_transcript_plot__files.html" %}
+    </form>
+    <div id="view_plot" class="wrapper">
+        <button class="button" type="button" id="query">
             <b>Generate table</b>
         </button>
     </div>
     {% include 'loading.html' %}
+    {% include 'plot.html' %}
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock %}

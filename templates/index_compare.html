@@ -4,13 +4,12 @@
         {% set studies_files = template_dict["files"] %}
         {% set file_types = studies_files["file_type"].unique() %}
     </div>
+    {% include "page_jump.html" %}
     <form id="form">
-        <div class="page-section">
-            <div id="page_heading">
-                <p>
-                    <font size="5"><b><u>General Settings</u></b></font>
-                </p>
-            </div>
+        <div id="page_heading">
+            <p>
+                <font size="5"><b><u>General Settings</u></b></font>
+            </p>
         </div>
         <div class='hidden'>
             <!--Hidden Parameters-->

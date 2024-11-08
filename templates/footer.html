@@ -1,7 +1,9 @@
 <footer>
-    <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"
-            data-cfasync="false"></script>
-    <script type="text/javascript">
+  <script
+    src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"
+    data-cfasync="false"
+  ></script>
+  <script type="text/javascript">
     var gtagId = "UA-115765268-1";
     //window['ga-disable-' + gtagId] = true;
 
@@ -34,10 +36,27 @@
         },
       });
     });
-    </script>
-    <script>
-    $(document).ready(function () {
+  </script>
+  <script>
+    // All these should be at bottom
+
+    $(document).ready(() => {
       $("#{{request.endpoint}}").addClass("active");
+      const plotname = window.location.pathname.split("/");
+      //$("#plots").select2("destroy");
+
+      $("#plots")
+        .val(plotname[plotname.length - 2])
+        .trigger("change.select2");
     });
-    </script>
+
+    $("#plots").change(() => {
+      const organism = $('input[name = "organism"]').val();
+      const assembly = $('input[name = "transcriptome"]').val();
+      const plot = $("#plots").val();
+
+      const url = "/" + organism + "/" + assembly + "/" + plot;
+      window.location.href = url;
+    });
+  </script>
 </footer>

@@ -1,11 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
+    {% include "page_jump.html" %}
     <div id="general_settings">
         <p>
             <font size="5" text-align="center"><b><u>General Settings</u></b>
                 <br />
             </font>
         </p>
+        <div class='hidden'>
+            <!--Hidden Parameters-->
+            {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+            <input name="override" value="{{ override }}" />
+        </div>
         <table align="center">
             <tr>
                 <td>

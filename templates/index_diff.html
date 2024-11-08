@@ -6,48 +6,54 @@
         <script src="https://cdn.pydata.org/bokeh/release/bokeh-0.12.14.min.js"></script>
         <script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.14.min.js"></script>
     </head>
+    {% include "page_jump.html" %}
     <div id="general_settings">
         <p>
             <font size="5" text-align="center"><b><u>General Settings</u></b>
-            </br>
-        </font>
-    </p>
-    <table align="center">
-        <tr>
-            <td>
-                <b>Plot type: </b>
+                <br />
+            </font>
+        </p>
+        <div class='hidden'>
+            <!--Hidden Parameters-->
+            {% for var in ['organism','transcriptome'] %}<input name="{{ var }}" value="{{ template_dict[var] }}" />{% endfor %}
+            <input name="override" value="{{ override }}" />
+        </div>
+        <table align="center">
+            <tr>
+                <td>
+                    <b>Plot type: </b>
+                    <input type="radio"
+                           class="plot_radio ribo_rna"
+                           id="ribo_rna"
+                           value="ribo_rna"
+                           name="plottype"
+                           unchecked>
+                    Correlation
+                </input>
                 <input type="radio"
-                       class="plot_radio ribo_rna"
-                       id="ribo_rna"
-                       value="ribo_rna"
+                       class="plot_radio Z-score"
+                       id="z_score"
+                       value="z_score"
                        name="plottype"
-                       unchecked>
-                Correlation
+                       checked>
+                Z-score
             </input>
             <input type="radio"
-                   class="plot_radio Z-score"
-                   id="z_score"
-                   value="z_score"
+                   class="plot_radio deseq2"
+                   id="deseq2"
+                   value="deseq2"
                    name="plottype"
-                   checked>
-            Z-score
+                   unchecked>
+            DESeq2
         </input>
         <input type="radio"
-               class="plot_radio deseq2"
-               id="deseq2"
-               value="deseq2"
+               class="plot_radio anota2seq"
+               id="anota2seq"
+               value="anota2seq"
                name="plottype"
                unchecked>
-        DESeq2
+        Anota2seq
     </input>
-    <input type="radio"
-           class="plot_radio anota2seq"
-           id="anota2seq"
-           value="anota2seq"
-           name="plottype"
-           unchecked>
-    Anota2seq
-</input>
 </td>
 <td>
     <a class="whatsthis"
