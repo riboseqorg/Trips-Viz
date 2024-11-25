@@ -1,4 +1,5 @@
 import logging
+from time import time
 import os
 import subprocess
 from typing import Dict, List, Tuple, Union
@@ -39,114 +40,65 @@ def pause_detection_page(organism: str, transcriptome: str) -> str:
 def create_profiles(
     data,
     file_paths_dict,
-    total_files,
-    min_read_length,
-    max_read_length,
 ):
     ambig = False
     file_count = 0
     # This will be populated with the users chosen file_ids and passed to the table, so that the trips link can use these files aswell.
     profile_dict = {}
-    file_string = ""
-    label_string = "&labels="
-    files = {}
     seq_types = ["riboseq", "proteomics"]
     file_paths_dict = file_paths_dict.filter(pl.col("file_type").is_in(seq_types))
     file_count = file_paths_dict.shape[0]
     if not file_count:
-        return profile_dict, file_string, label_string
-    color_list = [
-        "#ff0000",
-        "#2bff00",
-        "#0004ff",
-        "#ffa200",
-        "#c800ff",
-        "#000000",
-        "#969696",
-        "#fa00f2",
-    ]
-    color_ind = 0
+        return profile_dict
+
+    subprofiles = []
 
     for row in file_paths_dict.iter_rows(named=True):
-        file_name = (
-            os.path.split(row["file_name"])[-1].split(".sqlite")[0].replace("_", " ")
-        )
+        print(row)
         sqlite_dicts = SqliteDict(
             row["path"],
             autocommit=False,
         )
-        offsets, scores = {}, {}
+        offsets_scores = pl.DataFrame((), schema=("readlen", "offset", "score"))
 
         if row["file_type"] == "riboseq":
-            try:
-                offsets = sqlite_dicts["offsets"]["fiveprime"]["offsets"]
-            except Exception:
-                pass
-            try:
-                scores = sqlite_dicts["offsets"]["fiveprime"]["read_scores"]
-            except Exception:
-                pass
-    subprofiles = []
-    for seq_type in seq_types:
-        if seq_type not in file_paths_dict:
-            continue
-        for file_id in file_paths_dict[seq_type]:
-            profile_dict[file_id] = {}
-            file_count += 1
-            file_name = (
-                (file_paths_dict[seq_type][file_id].split("/")[-1])
-                .replace(".sqlite", "")
-                .replace("_", " ")
-            )
-            sqlite_db = SqliteDict(
-                f"{file_paths_dict[seq_type][file_id]}",
-                autocommit=False,
-                decode=my_decoder,
-            )
-            files[file_id] = color
-            file_string += "{};{}_".format(file_id, color_list[color_ind])
-            label_string += "{};{}_".format(file_name, color_list[color_ind])
-            color_ind += 1
-            offsets = {}
-            scores = {}
-            if seq_type == "riboseq":
-                try:
-                    offsets = sqlite_db["offsets"]["fiveprime"]["offsets"]
-                except Exception:
-                    pass
-                try:
-                    scores = sqlite_db["offsets"]["fiveprime"]["read_scores"]
-                except Exception:
-                    pass
-            for transcript in accepted_transcript_list:
-                try:
-                    counts = sqlite_db[transcript]
-                except Exception:
+            offsets_scores = sqlite_dicts["offsets"]["fiveprime"]
+            t1 = time()
+            for transcript in data["transcripts"]["transcript"]:
+                if transcript not in sqlite_dicts:
                     continue
-                if seq_type == "riboseq":
-                    subprofile = build_profile(
-                        counts, offsets, ambig, minscore=None, scores=scores
-                    )
-                elif seq_type == "proteomics":
-                    subprofile = build_proteomics_profile(counts)
-                subprofile = subprofile.with_columns(
-                    seq_type=pl.lit(seq_type),
-                    transcript=pl.lit(transcript),
-                    file_id=pl.lit(file_id),
+                counts = sqlite_dicts[transcript]
+                subprofile = build_profile(
+                    counts, offsets_scores, ambig, minscore=None
+                ).with_columns(
+                    pl.lit(row["file_type"]).alias("seq_type"),
+                    pl.lit(transcript).alias("transcript"),
+                    # pl.lit(row["file_id"]).alias("file_id"),
                 )
                 subprofiles.append(subprofile)
-                for pos in subprofile:
-                    try:
-                        profile_dict[file_id][transcript][seq_type][pos] += subprofile[
-                            pos
-                        ]
-                    except Exception:
-                        profile_dict[file_id][transcript][seq_type][pos] = subprofile[
-                            pos
-                        ]
-    file_string = file_string[:-1]
-    label_string = label_string[:-1]
-    return (pl.concat(subprofiles), file_string, label_string)
+            t2 = time()
+            print(t2 - t1)
+            # Build profile
+
+        elif row["file_type"] == "proteomics":
+            for transcript in data["transcripts"]["transcript"]:
+                if transcript not in sqlite_dicts:
+                    continue
+                counts = sqlite_dicts[transcript]
+                subprofile = build_proteomics_profile(counts, ambig).with_columns(
+                    pl.lit(row["file_type"]).alias("seq_type"),
+                    pl.lit(transcript).alias("transcript"),
+                    # pl.lit(row["file_id"]).alias("file_id"),
+                )
+                subprofiles.append(subprofile)
+
+        sqlite_dicts.close()
+
+    return (
+        pl.concat(subprofiles)
+        .groupby(["seq_type", "transcript", "pos"])
+        .agg(pl.sum("count"))
+    )
 
 
 def extract_values(
@@ -469,13 +421,14 @@ def find_pauses(data):
     transcripts = sqlquery(sqlfile, "transcripts")
     tran_gene_dict = {}
 
-    principal_transcripts = []
     if data["tranlist"] == "prin_trans":
         transcripts = transcripts.filter(pl.col("principal") == 1)
     elif data["tranlist"] == "custom_trans":
         transcripts = transcripts.filter(
             pl.col("transcript").is_in(data["custom_tran_list"])
         )
+    if transcripts.is_empty():
+        return "No transcripts found"
     data["transcripts"] = transcripts
 
     tran_gene = transcripts[["transcript", "gene"]].with_columns(
@@ -512,9 +465,6 @@ def find_pauses(data):
     profile_dict, file_string, label_string = create_profiles(
         data,
         file_paths_dict,
-        total_files,
-        data["min_read_length"],
-        data["max_read_length"],
     )
     print(profile_dict, file_string, label_string, "Kiran")
     all_values_df, file_output_dict = extract_values(

@@ -10,21 +10,10 @@ class VegaPlot:
     """Plotting class for VegaLite."""
 
     def __init__(self, table: pl.DataFrame, colors: alt.Scale | None = None):
-        # , color_col: str,
-        # params: Dict[str, Any]) -> None:
         self.table = table
         self.chart = alt.Chart(self.table)
         self.colors = colors
 
-        # self.color = alt.condition(alt.selection,
-        # alt.Color(f'{color_col}:N', legend=None),
-        # alt.value('lightgray'))
-        # self.legend = self.chart.mark_point().encode(
-        # y=alt.Y(f'{color_col}:N', axis=alt.Axis(orient='right')),
-        # color=self.color).add_params(alt.selection)
-        # self.param = params
-
-        # Predefides
         self.size = 12
         print(self.table)
 
@@ -36,17 +25,10 @@ class VegaPlot:
                 f'{x_col}',
                 axis=alt.Axis(tickSize=0, labels=False),
                 title=None,
-                # scale=alt.Scale(domain=[0, 500])
             ),
             y=alt.Y(f'{y_col}:Q', axis=alt.Axis(tickSize=0)),
             color=alt.Color('frame:N', scale=self.colors, legend=None)
-            # color=alt.condition(
-            #     alt.Color('frame:N', scale=self.colors, legend=None),
-            #     alt.value(1), alt.value(0.5))
         )
-        # .add_selection().transform_filter(
-        #             selection).interactive(bind_y=False).properties(width=800,
-        #                                                             height=300)
 
     def line(self, x_col: str, y_col: str) -> Chart:
         """Line plot."""
@@ -65,14 +47,6 @@ class VegaPlot:
             x=alt.X(f'{x_col}:Q',
                     axis=alt.Axis(tickSize=0, labels=True if last else False),
                     title=None),
-            # y=alt.Y(axis=alt.Axis(
-            # tickSize=0,
-            # labels=False,
-            # title="nucs",
-            # titleAngle=0,
-            # titleAlign="right",
-            # titleBaseline="middle",
-            # )),
             color=alt.Color('type:N',
                             scale=alt.Scale(domain=['start', 'stop'], )))
         return vline.mark_rule(fill='firebrick').properties(width=800,
