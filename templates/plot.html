@@ -23,7 +23,13 @@
     <script type="text/javascript">
     /*TODO: convert this as file*/
       function parse(data, div) {
-		//	alert(data);
+	console.log(data);
+	    if (data.startsWith("file:")) {
+		var url = data.replace("file:", "");
+		    $("#"+div).html(url);
+		    
+	    } else {
+		    
         var opt = {
           mode: "vega-lite",
           renderer: "svg",
@@ -31,6 +37,7 @@
         };
         vegaEmbed("#" + div, JSON.parse(data)); //, opt, function (error, result) {
 
+	    }
 
         //vegaEmbed("#" + div, url, opt, function (error, result) {
           // result.view is the Vega View, url is the original Vega-Lite specification

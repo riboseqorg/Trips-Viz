@@ -99,7 +99,7 @@ app.register_blueprint(diffquery_blueprint)
 app.register_blueprint(pause_detection_blueprint)
 # app.register_blueprint(pausequery_blueprint)
 # app.register_blueprint(taskstatus_blueprint)
-# app.register_blueprint(traninfo_plotpage_blueprint)
+app.register_blueprint(traninfo_plotpage_blueprint)
 app.config.from_pyfile("config.py")
 
 xcaptcha = XCaptcha(app=app)
@@ -1580,7 +1580,8 @@ def query() -> str:
         to_return = find_pauses(query)
     elif data["pathname"] == "comparison":
         to_return = comparequery(query)
-    elif data["pathname"] == "traninfo_plotpage":
+    elif data["pathname"] == "traninfo_plot":
+        print("helloooooooo")
         to_return = traninfoquery(query)
     elif data["pathname"] == "metainfo_plot":
         to_return = metainfoquery(query)

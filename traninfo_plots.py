@@ -7,9 +7,10 @@ import polars as pl
 import polars.selectors as cs
 import numpy as np
 
-#ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
+# ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
 try:
     import RNA
+
     vienna_rna = True
 except Exception:
     print(
@@ -23,10 +24,18 @@ bluehex = "#9ACAFF"
 yellowhex = "#FFFF91"
 
 
-def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
-                  short_code: str, background_col: str, readlength_col: str,
-                  title_size: int, axis_label_size: int, subheading_size: int,
-                  marker_size: int, filename: str) -> str:
+def nuc_freq_plot(
+    master_dict: Dict[str, Dict[str, str]],
+    title: str,
+    short_code: str,
+    background_col: str,
+    readlength_col: str,
+    title_size: int,
+    axis_label_size: int,
+    subheading_size: int,
+    marker_size: int,
+    filename: str,
+) -> str:
     """
 
     Parameters:
@@ -57,15 +66,19 @@ def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
     c_counts = []
     for i in range(minpos, maxpos):
         returnstr += "{},{:.2f},{:.2f},{:.2f},{:.2f}\n".format(
-            i, master_dict[i]["A"], master_dict[i]["T"], master_dict[i]["G"],
-            master_dict[i]["C"])
+            i,
+            master_dict[i]["A"],
+            master_dict[i]["T"],
+            master_dict[i]["G"],
+            master_dict[i]["C"],
+        )
         x_pos.append(i)
         a_counts.append(master_dict[i]["A"])
         t_counts.append(master_dict[i]["T"])
         g_counts.append(master_dict[i]["G"])
         c_counts.append(master_dict[i]["C"])
 
-    ax.set_xlabel('Position (nucleotides)', fontsize=axis_label_size)
+    ax.set_xlabel("Position (nucleotides)", fontsize=axis_label_size)
 
     ax = plt.subplot(111)
     title_str = "{} ({})".format(title, short_code)
@@ -73,13 +86,9 @@ def nuc_freq_plot(master_dict: Dict[str, Dict[str, str]], title: str,
     a_line = ax.plot(x_pos, a_counts, label=labels, color="blue", linewidth=4)
     t_line = ax.plot(x_pos, t_counts, label=labels, color="red", linewidth=4)
     g_line = ax.plot(x_pos, g_counts, label=labels, color="green", linewidth=4)
-    c_line = ax.plot(x_pos,
-                     c_counts,
-                     label=labels,
-                     color="orange",
-                     linewidth=4)
+    c_line = ax.plot(x_pos, c_counts, label=labels, color="orange", linewidth=4)
     ax.set_facecolor(background_col)
-    ax.tick_params('both', labelsize=marker_size)
+    ax.tick_params("both", labelsize=marker_size)
     plt.grid(color="white", linewidth=2, linestyle="solid")
 
 
@@ -108,7 +117,7 @@ def nuc_comp_single(data: dict):
     window_size = 60
     nucleotide_content = []
     t_counts = [0, 0, 0, 0]
-    seq = data[0, 'sequence']
+    seq = data[0, "sequence"]
     for nuc in seq[:window_size]:
         if nuc == "A":
             t_counts[0] += 1
@@ -121,7 +130,7 @@ def nuc_comp_single(data: dict):
     nucleotide_content.append(t_counts.copy())
     for i in range(step_size, data[0, "length"] - (window_size), step_size):
         # TODO: optimise this
-        for nuc in seq[i:i + step_size]:
+        for nuc in seq[i : i + step_size]:
             if nuc == "A":
                 t_counts[0] -= 1
             elif nuc == "C":
@@ -130,7 +139,7 @@ def nuc_comp_single(data: dict):
                 t_counts[2] -= 1
             elif nuc == "T":
                 t_counts[3] -= 1
-        for nuc in seq[i + window_size - step_size:i + window_size]:
+        for nuc in seq[i + window_size - step_size : i + window_size]:
             if nuc == "A":
                 t_counts[0] += 1
             elif nuc == "C":
@@ -140,19 +149,25 @@ def nuc_comp_single(data: dict):
             elif nuc == "T":
                 t_counts[3] += 1
         nucleotide_content.append(t_counts.copy())
-    nucleotide_content = pl.LazyFrame(
-        nucleotide_content, schema=[
-            "A", "C", "G", "T"
-        ]).with_columns((pl.col("G") + pl.col("C")).alias("GC")).with_columns(
-            pl.all() * 100 / window_size  # 100 in the max based on old code
-        ).with_columns(
-            pos=pl.arange(0, len(seq) - window_size, step_size, eager=True) +
-            (window_size / 2)).melt(id_vars="pos",
-                                    value_vars=["A", "C", "G", "T", "GC"],
-                                    variable_name="frame",
-                                    value_name="count").collect()
-    colors = alt.Scale(domain=["A", "C", "G", "T", "GC"],
-                       range=config.BOX_COLORS[:4])
+    nucleotide_content = (
+        pl.LazyFrame(nucleotide_content, schema=["A", "C", "G", "T"])
+        .with_columns((pl.col("G") + pl.col("C")).alias("GC"))
+        .with_columns(pl.all() * 100 / window_size)  # 100 in the max based on old code
+        .with_columns(
+            pos=(
+                pl.arange(0, len(seq) - window_size, step_size, eager=True)
+                + (window_size / 2)
+            ).cast(pl.Int64)
+        )
+        .melt(
+            id_vars="pos",
+            value_vars=["A", "C", "G", "T", "GC"],
+            variable_name="frame",
+            value_name="count",
+        )
+        .collect()
+    )
+    colors = alt.Scale(domain=["A", "C", "G", "T", "GC"], range=config.BOX_COLORS[:4])
     plot = VegaPlot(nucleotide_content, colors)
     return plot.line("pos", "count").to_json()
     print(nucleotide_content)
@@ -163,16 +178,24 @@ def nuc_comp_single(data: dict):
         window_size = 60
         mfe_dict = collections.OrderedDict()
         for i in range(0, len(seq) - (window_size), step_size):
-            seq_window = str(seq[i:i + window_size])
+            seq_window = str(seq[i : i + window_size])
             (ss, mfe) = RNA.fold(seq_window)
             mfe_dict[i + (window_size / 2)] = abs(mfe)
     else:
         mfe_dict = {}
 
 
-def gc_metagene(title: str, short_code: str, background_col: str,
-                readlength_col: str, title_size: int, axis_label_size: int,
-                subheading_size: int, marker_size: int, traninfo: str) -> str:
+def gc_metagene(
+    title: str,
+    short_code: str,
+    background_col: str,
+    readlength_col: str,
+    title_size: int,
+    axis_label_size: int,
+    subheading_size: int,
+    marker_size: int,
+    traninfo: str,
+) -> str:
     """
 
     Parameters:
@@ -192,28 +215,26 @@ def gc_metagene(title: str, short_code: str, background_col: str,
     """
     labels = ["CDS markers"]
     start_visible = [True]
-    color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
+    color_dict = {"frames": ["#FF4A45", "#64FC44", "#5687F9"]}
     gene = ""
     y_max = 100
     fig = plt.figure(figsize=(13, 8))
 
     ax_main = plt.subplot2grid((30, 1), (0, 0), rowspan=22)
-    ax_main.spines['bottom'].set_visible(False)
+    ax_main.spines["bottom"].set_visible(False)
     ax_main.set_ylabel("%", fontsize=axis_label_size, labelpad=30)
     ax_main.set_ylim(0, y_max)
     ax_main.set_xlim(0, 1500)
-    cds_markers = ax_main.plot((500, 500), (0, y_max - 3),
-                               color="black",
-                               linestyle='solid',
-                               linewidth=2)
-    cds_markers += ax_main.plot((1000, 1000), (0, y_max - 3),
-                                color="black",
-                                linestyle='solid',
-                                linewidth=2)
+    cds_markers = ax_main.plot(
+        (500, 500), (0, y_max - 3), color="black", linestyle="solid", linewidth=2
+    )
+    cds_markers += ax_main.plot(
+        (1000, 1000), (0, y_max - 3), color="black", linestyle="solid", linewidth=2
+    )
     for label in ax_main.xaxis.get_majorticklabels():
         label.set_fontsize(36)
 
-    title_str = '{} ({})'.format(gene, short_code)
+    title_str = "{} ({})".format(gene, short_code)
     plt.title(title_str, fontsize=title_size, y=36)
     line_collections = [cds_markers]
 
@@ -230,16 +251,14 @@ def gc_metagene(title: str, short_code: str, background_col: str,
             seq = item[3]
             seqlen = len(seq)
             for i in range(0, len(seq) - (window_size), step_size):
-                seq_window = str(seq[i:i + window_size])
+                seq_window = str(seq[i : i + window_size])
                 (ss, mfe) = RNA.fold(seq_window)
                 if i < cds_start:
                     per = (i + (window_size / 2) / cds_start) * 5
                 if i >= cds_start and i <= cds_stop:
-                    per = 500 + ((i + (window_size / 2) /
-                                  (cds_stop - cds_start)) * 5)
+                    per = 500 + ((i + (window_size / 2) / (cds_stop - cds_start)) * 5)
                 if i > cds_stop:
-                    per = 1000 + ((i + (window_size / 2) /
-                                   (seqlen - cds_stop)) * 5)
+                    per = 1000 + ((i + (window_size / 2) / (seqlen - cds_stop)) * 5)
                 if per not in mfe_dict:
                     mfe_dict[per] = [abs(mfe)]
                 else:
@@ -339,52 +358,68 @@ def gc_metagene(title: str, short_code: str, background_col: str,
         for per in sorted(gc_dict.keys()):
             sorted_gc_dict[per] = sum(gc_dict[per]) / len(gc_dict[per])
 
-        a_plot = ax_main.plot(a_dict.keys(),
-                              a_dict.values(),
-                              alpha=0.01,
-                              label=labels,
-                              zorder=1,
-                              color=color_dict['frames'][0],
-                              linewidth=4)
-        t_plot = ax_main.plot(t_dict.keys(),
-                              t_dict.values(),
-                              alpha=0.01,
-                              label=labels,
-                              zorder=1,
-                              color=color_dict['frames'][1],
-                              linewidth=4)
-        g_plot = ax_main.plot(g_dict.keys(),
-                              g_dict.values(),
-                              alpha=0.01,
-                              label=labels,
-                              zorder=1,
-                              color=color_dict['frames'][2],
-                              linewidth=4)
-        c_plot = ax_main.plot(c_dict.keys(),
-                              c_dict.values(),
-                              alpha=0.01,
-                              label=labels,
-                              zorder=1,
-                              color='#ffff99',
-                              linewidth=4)
-        gc_plot = ax_main.plot(sorted_gc_dict.keys(),
-                               sorted_gc_dict.values(),
-                               alpha=1,
-                               label=labels,
-                               zorder=1,
-                               color='grey',
-                               linewidth=4)
+        a_plot = ax_main.plot(
+            a_dict.keys(),
+            a_dict.values(),
+            alpha=0.01,
+            label=labels,
+            zorder=1,
+            color=color_dict["frames"][0],
+            linewidth=4,
+        )
+        t_plot = ax_main.plot(
+            t_dict.keys(),
+            t_dict.values(),
+            alpha=0.01,
+            label=labels,
+            zorder=1,
+            color=color_dict["frames"][1],
+            linewidth=4,
+        )
+        g_plot = ax_main.plot(
+            g_dict.keys(),
+            g_dict.values(),
+            alpha=0.01,
+            label=labels,
+            zorder=1,
+            color=color_dict["frames"][2],
+            linewidth=4,
+        )
+        c_plot = ax_main.plot(
+            c_dict.keys(),
+            c_dict.values(),
+            alpha=0.01,
+            label=labels,
+            zorder=1,
+            color="#ffff99",
+            linewidth=4,
+        )
+        gc_plot = ax_main.plot(
+            sorted_gc_dict.keys(),
+            sorted_gc_dict.values(),
+            alpha=1,
+            label=labels,
+            zorder=1,
+            color="grey",
+            linewidth=4,
+        )
         if plot_mfe:
-            ax_main.plot(mfe_dict.keys(),
-                         mfe_dict.values(),
-                         alpha=0.01,
-                         label=labels,
-                         zorder=1,
-                         color='#df8500',
-                         linewidth=4)
-        for item, lbl, viz in [(a_plot, "A%", False), (t_plot, "T%", False),
-                               (g_plot, "G%", False), (c_plot, "C%", False),
-                               (gc_plot, "GC%", True)]:
+            ax_main.plot(
+                mfe_dict.keys(),
+                mfe_dict.values(),
+                alpha=0.01,
+                label=labels,
+                zorder=1,
+                color="#df8500",
+                linewidth=4,
+            )
+        for item, lbl, viz in [
+            (a_plot, "A%", False),
+            (t_plot, "T%", False),
+            (g_plot, "G%", False),
+            (c_plot, "C%", False),
+            (gc_plot, "GC%", True),
+        ]:
             line_collections.append(item)
             labels.append(lbl)
             start_visible.append(viz)
@@ -395,27 +430,28 @@ def gc_metagene(title: str, short_code: str, background_col: str,
 
     ax_main.set_facecolor(background_col)
     # This changes the size of the tick markers, works on both firefox and chrome.
-    ax_main.tick_params('both', labelsize=marker_size)
+    ax_main.tick_params("both", labelsize=marker_size)
     ax_main.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax_main.yaxis.set_major_locator(plt.MaxNLocator(3))
     ax_main.grid(True, color="white", linewidth=30, linestyle="solid")
-    ax_main.text(500,
-                 y_max * 0.97,
-                 "CDS start",
-                 fontsize=18,
-                 color="black",
-                 ha="center")
-    ax_main.text(1000,
-                 y_max * 0.97,
-                 "CDS stop",
-                 fontsize=18,
-                 color="black",
-                 ha="center")
-    #hide x axis set_ticks
+    ax_main.text(
+        500, y_max * 0.97, "CDS start", fontsize=18, color="black", ha="center"
+    )
+    ax_main.text(
+        1000, y_max * 0.97, "CDS stop", fontsize=18, color="black", ha="center"
+    )
+    # hide x axis set_ticks
 
 
-def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
-                     marker_size, nucleotide, short_code):
+def nuc_comp_scatter(
+    master_dict,
+    filename,
+    title_size,
+    axis_label_size,
+    marker_size,
+    nucleotide,
+    short_code,
+):
     """
 
     Parameters:
@@ -436,11 +472,7 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list = master_dict[1]["trans"]
     for i in range(1, len(gc_list) + 1):
         x_values.append(i)
-    source = ColumnDataSource({
-        'x': x_values,
-        'y': gc_list,
-        'trans': tran_list
-    })
+    source = ColumnDataSource({"x": x_values, "y": gc_list, "trans": tran_list})
     x_num = len(gc_list)
 
     x_values2 = []
@@ -448,11 +480,7 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list2 = master_dict[2]["trans"]
     for i in range(1, len(gc_list2) + 1):
         x_values2.append(x_num + i)
-    source2 = ColumnDataSource({
-        'x': x_values2,
-        'y': gc_list2,
-        'trans': tran_list2
-    })
+    source2 = ColumnDataSource({"x": x_values2, "y": gc_list2, "trans": tran_list2})
     x_num += len(gc_list2)
 
     x_values3 = []
@@ -460,11 +488,7 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list3 = master_dict[3]["trans"]
     for i in range(1, len(gc_list3) + 1):
         x_values3.append(x_num + i)
-    source3 = ColumnDataSource({
-        'x': x_values3,
-        'y': gc_list3,
-        'trans': tran_list3
-    })
+    source3 = ColumnDataSource({"x": x_values3, "y": gc_list3, "trans": tran_list3})
     x_num += len(gc_list3)
 
     x_values4 = []
@@ -472,50 +496,55 @@ def nuc_comp_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list4 = master_dict[4]["trans"]
     for i in range(1, len(gc_list4) + 1):
         x_values4.append(x_num + i)
-    source4 = ColumnDataSource({
-        'x': x_values4,
-        'y': gc_list4,
-        'trans': tran_list4
-    })
+    source4 = ColumnDataSource({"x": x_values4, "y": gc_list4, "trans": tran_list4})
     x_num += len(gc_list4)
 
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source,
-              fill_color='green')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source2,
-              fill_color='red')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source3,
-              fill_color='blue')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source4,
-              fill_color='yellow')
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source,
+        fill_color="green",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source2,
+        fill_color="red",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source3,
+        fill_color="blue",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source4,
+        fill_color="yellow",
+    )
     hover = p.select(dict(type=HoverTool))
 
 
-def lengths_scatter(master_dict, filename, title_size, axis_label_size,
-                    marker_size, short_code):
+def lengths_scatter(
+    master_dict, filename, title_size, axis_label_size, marker_size, short_code
+):
     """
 
     Parameters:
@@ -535,11 +564,7 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list = master_dict[1]["trans"]
     for i in range(1, len(gc_list) + 1):
         x_values.append(i)
-    source = ColumnDataSource({
-        'x': x_values,
-        'y': gc_list,
-        'trans': tran_list
-    })
+    source = ColumnDataSource({"x": x_values, "y": gc_list, "trans": tran_list})
     x_num = len(gc_list)
 
     x_values2 = []
@@ -547,11 +572,7 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list2 = master_dict[2]["trans"]
     for i in range(1, len(gc_list2) + 1):
         x_values2.append(x_num + i)
-    source2 = ColumnDataSource({
-        'x': x_values2,
-        'y': gc_list2,
-        'trans': tran_list2
-    })
+    source2 = ColumnDataSource({"x": x_values2, "y": gc_list2, "trans": tran_list2})
     x_num += len(gc_list2)
 
     x_values3 = []
@@ -559,11 +580,7 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list3 = master_dict[3]["trans"]
     for i in range(1, len(gc_list3) + 1):
         x_values3.append(x_num + i)
-    source3 = ColumnDataSource({
-        'x': x_values3,
-        'y': gc_list3,
-        'trans': tran_list3
-    })
+    source3 = ColumnDataSource({"x": x_values3, "y": gc_list3, "trans": tran_list3})
     x_num += len(gc_list3)
 
     x_values4 = []
@@ -571,51 +588,63 @@ def lengths_scatter(master_dict, filename, title_size, axis_label_size,
     tran_list4 = master_dict[4]["trans"]
     for i in range(1, len(gc_list4) + 1):
         x_values4.append(x_num + i)
-    source4 = ColumnDataSource({
-        'x': x_values4,
-        'y': gc_list4,
-        'trans': tran_list4
-    })
+    source4 = ColumnDataSource({"x": x_values4, "y": gc_list4, "trans": tran_list4})
     x_num += len(gc_list4)
     full_title = "Lengths ({})".format(short_code)
     y_lab = "Length"
 
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source,
-              fill_color='green')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source2,
-              fill_color='red')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source3,
-              fill_color='blue')
-    p.scatter('x',
-              'y',
-              alpha=0.2,
-              color="black",
-              fill_alpha=1,
-              size=12,
-              source=source4,
-              fill_color='yellow')
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source,
+        fill_color="green",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source2,
+        fill_color="red",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source3,
+        fill_color="blue",
+    )
+    p.scatter(
+        "x",
+        "y",
+        alpha=0.2,
+        color="black",
+        fill_alpha=1,
+        size=12,
+        source=source4,
+        fill_color="yellow",
+    )
 
 
-def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
-                 axis_label_size, marker_size, short_code):
+def nuc_comp_box(
+    master_dict,
+    filename,
+    nucleotide,
+    title_size,
+    box_colour,
+    axis_label_size,
+    marker_size,
+    short_code,
+):
     """
 
     Parameters:
@@ -762,7 +791,7 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
                 grouplist.append("Group 4")
                 gclist.append(item)
     df = pd.DataFrame({"group": grouplist, "gc": gclist})
-    groups = df.groupby('group')
+    groups = df.groupby("group")
     q1 = groups.quantile(q=0.25)
     q2 = groups.quantile(q=0.5)
     q3 = groups.quantile(q=0.75)
@@ -782,8 +811,9 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
         Example:
         """
         cat = group.name
-        return group[(group.gc > upper.loc[cat]['gc']) |
-                     (group.gc < lower.loc[cat]['gc'])]['gc']
+        return group[
+            (group.gc > upper.loc[cat]["gc"]) | (group.gc < lower.loc[cat]["gc"])
+        ]["gc"]
 
     out = groups.apply(outliers).dropna()
 
@@ -798,15 +828,11 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
             except Exception:
                 pass
     full_title = "{}% ({})".format(nucleotide, short_code)
-    y_lab = '{} %'.format(nucleotide)
+    y_lab = "{} %".format(nucleotide)
     qmin = groups.quantile(q=0.00)
     qmax = groups.quantile(q=1.00)
-    upper.gc = [
-        min([x, y]) for (x, y) in zip(list(qmax.loc[:, 'gc']), upper.gc)
-    ]
-    lower.gc = [
-        max([x, y]) for (x, y) in zip(list(qmin.loc[:, 'gc']), lower.gc)
-    ]
+    upper.gc = [min([x, y]) for (x, y) in zip(list(qmax.loc[:, "gc"]), upper.gc)]
+    lower.gc = [max([x, y]) for (x, y) in zip(list(qmin.loc[:, "gc"]), lower.gc)]
 
     # stems
     p.segment(cats, upper.gc, cats, q3.gc, line_color="black")
@@ -823,8 +849,15 @@ def nuc_comp_box(master_dict, filename, nucleotide, title_size, box_colour,
         p.circle(outx, outy, size=6, color="#F38630", fill_alpha=0.6)
 
 
-def lengths_box(master_dict, filename, box_colour, short_code, title_size,
-                marker_size, axis_label_size):
+def lengths_box(
+    master_dict,
+    filename,
+    box_colour,
+    short_code,
+    title_size,
+    marker_size,
+    axis_label_size,
+):
     """
 
     Parameters:
@@ -869,7 +902,7 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
             gclist.append(item)
 
     df = pd.DataFrame({"group": grouplist, "lengths": gclist})
-    groups = df.groupby('group')
+    groups = df.groupby("group")
     q1 = groups.quantile(q=0.25)
     q2 = groups.quantile(q=0.5)
     q3 = groups.quantile(q=0.75)
@@ -884,8 +917,10 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
         """
         # TODO: Merge with other same function
         cat = group.name
-        return group[(group.lengths > upper.loc[cat]['lengths']) |
-                     (group.lengths < lower.loc[cat]['lengths'])]['lengths']
+        return group[
+            (group.lengths > upper.loc[cat]["lengths"])
+            | (group.lengths < lower.loc[cat]["lengths"])
+        ]["lengths"]
 
     out = groups.apply(outliers).dropna()
 
@@ -898,23 +933,23 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
             outy.append(out.loc[keys[0]].loc[keys[1]])
 
     full_title = "Lengths ({})".format(short_code)
-    p = figure(plot_width=1300,
-               plot_height=1300,
-               tools="reset,pan,box_zoom,save,hover,tap",
-               title=full_title,
-               background_fill_color="#efefef",
-               x_range=cats,
-               toolbar_location="below")
+    p = figure(
+        plot_width=1300,
+        plot_height=1300,
+        tools="reset,pan,box_zoom,save,hover,tap",
+        title=full_title,
+        background_fill_color="#efefef",
+        x_range=cats,
+        toolbar_location="below",
+    )
     # if no outliers, shrink gcs of stems to be no longer than the minimums or maximums
     qmin = groups.quantile(q=0.00)
     qmax = groups.quantile(q=1.00)
     upper.lengths = [
-        min([x, y])
-        for (x, y) in zip(list(qmax.loc[:, 'lengths']), upper.lengths)
+        min([x, y]) for (x, y) in zip(list(qmax.loc[:, "lengths"]), upper.lengths)
     ]
     lower.lengths = [
-        max([x, y])
-        for (x, y) in zip(list(qmin.loc[:, 'lengths']), lower.lengths)
+        max([x, y]) for (x, y) in zip(list(qmin.loc[:, "lengths"]), lower.lengths)
     ]
 
     # stems
@@ -922,18 +957,8 @@ def lengths_box(master_dict, filename, box_colour, short_code, title_size,
     p.segment(cats, lower.lengths, cats, q1.lengths, line_color="black")
 
     # boxes
-    p.vbar(cats,
-           0.7,
-           q2.lengths,
-           q3.lengths,
-           fill_color=box_colour,
-           line_color="black")
-    p.vbar(cats,
-           0.7,
-           q1.lengths,
-           q2.lengths,
-           fill_color=box_colour,
-           line_color="black")
+    p.vbar(cats, 0.7, q2.lengths, q3.lengths, fill_color=box_colour, line_color="black")
+    p.vbar(cats, 0.7, q1.lengths, q2.lengths, fill_color=box_colour, line_color="black")
 
     # whiskers (almost-0 height rects simpler than segments)
     p.rect(cats, lower.lengths, 0.2, 0.01, line_color="black")

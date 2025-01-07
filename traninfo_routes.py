@@ -1,4 +1,5 @@
 import json
+import altair as alt
 import os
 import sqlite3
 import time
@@ -11,18 +12,23 @@ from flask_login import current_user
 import config
 import fixed_values
 import traninfo_plots
-from core_functions import (fetch_files, fetch_studies, fetch_study_info,
-                            fetch_user, form_filler, generate_short_code)
+from core_functions import (
+    fetch_files,
+    fetch_studies,
+    fetch_study_info,
+    fetch_user,
+    form_filler,
+    generate_short_code,
+)
 from plots import VegaPlot
 from sqlqueries_2 import get_table, get_user_id, sqlquery, table2dict
 
-traninfo_plotpage_blueprint = Blueprint("traninfo_plotpage",
-                                        __name__,
-                                        template_folder="templates")
+traninfo_plotpage_blueprint = Blueprint(
+    "traninfo_plotpage", __name__, template_folder="templates"
+)
 
 
-@traninfo_plotpage_blueprint.route(
-    '/<organism>/<transcriptome>/traninfo_plot/')
+@traninfo_plotpage_blueprint.route("/<organism>/<transcriptome>/traninfo_plot/")
 def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     """
 
@@ -37,17 +43,13 @@ def traninfo_plotpage(organism: str, transcriptome: str) -> str:
     """
     data = form_filler(organism, transcriptome)
 
-    # holds all values the user could possibly pass in the url
-    # (keywords are after request.args.get), anything not passed
-    # by user will be a string: "None"
     return render_template(
-        'traninfo_index.html',
+        "traninfo_index.html",
         template_dict=data,
     )
 
 
 # Used to create custom metagene plots on the traninformation plot page
-
 
 
 def traninfoquery(data) -> str:
@@ -61,64 +63,110 @@ def traninfoquery(data) -> str:
     """
     # global user_short_passed
     print(data, "Anmol")
-    if data["plottype"] not in ["gene_count"]:
-        data['metagene_tranlist'] = data['metagene_tranlist'].strip(',').split(
-            ",")
     owner = get_table("organisms").filter(
         (pl.col("organism_name") == data["organism"])
-        & (pl.col("transcriptome_list") == data["transcriptome"]))[0, "owner"]
+        & (pl.col("transcriptome_list") == data["transcriptome"])
+    )[0, "owner"]
 
     if owner == 1:
-        transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-            config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
-            data["transcriptome"]))
+        transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+            config.SCRIPT_LOC,
+            config.ANNOTATION_DIR,
+            data["organism"],
+            data["transcriptome"],
+        )
     else:
-        transhelve = ("{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-            config.UPLOADS_DIR, owner, data["organism"],
-            data["transcriptome"]))
+        transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+            config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]
+        )
+
+    if not os.path.isfile(transhelve):
+        return f"Cannot find annotation file {data['organism']}.{data['transcriptome']}.sqlite"
 
     transcripts = sqlquery(transhelve, "transcripts")
+    if data["plottype"] not in ["gene_count", "orfstats"]:
+        data["gc_tranlist"] = data["gc_tranlist"].strip(",").split(",")
+        transcripts = transcripts.filter(
+            pl.col("transcript").is_in(data["gc_tranlist"])
+        )
+
+    print(transcripts)
     # Nucleotide composition (single transcript)
     if data["plottype"] == "nuc_comp_single":
         transcripts = transcripts.filter(
-            pl.col("transcript").is_in(data["metagene_tranlist"]))
+            pl.col("transcript").is_in(data["gc_tranlist"])
+        )
+        print(transcripts)
+        print(data["gc_tranlist"])
 
-        if len(data["metagene_tranlist"]) == 1:
-            return traninfo_plots.nuc_comp_single(transcripts)
+        if len(data["gc_tranlist"]) == 1:
+
+            plot_json = traninfo_plots.nuc_comp_single(transcripts)
+            print(plot_json, "Plot json")
+
+            return plot_json
         else:
 
             if transcripts.shape[0] == 0:
                 # TODO: Correct the bottom code
-                transcripts = transcripts.filter((pl.col("principal") == True)
-                                                 & (pl.col("tran_type")))
+                transcripts = transcripts.filter(
+                    (pl.col("principal") == True) & (pl.col("tran_type"))
+                )
             title = "GC metagene of {} genes".format(len(traninfo))
-            return traninfo_plots.gc_metagene(title, short_code,
-                                              config.DEFAULT_USER_SETTING,
-                                              traninfo)
+            return traninfo_plots.gc_metagene(
+                title, short_code, config.DEFAULT_USER_SETTING, traninfo
+            )
     if data["plottype"] == "gene_count":
-        gene_count = transcripts.unique("gene").groupby(
-            "tran_type").count().with_columns(pl.lit("gene").alias("pos"))
-        transcript_count = transcripts.unique("gene").groupby(
-            "tran_type").count().with_columns(
-                pl.lit("transcript").alias("pos"))
+        gene_count = (
+            transcripts.unique("gene")
+            .groupby("tran_type")
+            .count()
+            .with_columns(pl.lit("gene").alias("pos"))
+        )
+        transcript_count = (
+            transcripts.unique("gene")
+            .groupby("tran_type")
+            .count()
+            .with_columns(pl.lit("transcript").alias("pos"))
+        )
         mapper = {0: "noncoding", 1: "coding"}
 
-        gene_count = gene_count.vstack(transcript_count).with_columns(
-            pl.col("tran_type").map_dict(mapper)).rename(
-                {"tran_type": "frame"})
+        gene_count = (
+            gene_count.vstack(transcript_count)
+            .with_columns(pl.col("tran_type").map_dict(mapper))
+            .rename({"tran_type": "frame"})
+        )
+        return (
+            alt.Chart(gene_count.to_pandas())
+            .mark_bar()
+            .encode(
+                x="pos",
+                y="count",
+                color="frame",
+                order=alt.Order(
+                    # Sort the segments of the bars by this field
+                    "frame",
+                    sort="ascending",
+                ),
+            )
+            .to_json()
+        )
+        # TODO: Unify bottom
+
         plot = VegaPlot(gene_count)
         print(gene_count)
+        print(plot.bar("pos", "count").to_json())
         # TODO: fix this for categorical values
         return plot.bar("pos", "count").to_json()
 
-    data["metagene_tranlist"] = data["metagene_tranlist"].strip(",").split(",")
+    # data["gc_tranlist"] = data["gc_tranlist"].strip(",").split(",")
 
     try:
         data["maxscaleval"] = int(data["maxscaleval"])
     except Exception:
         data["maxscaleval"] = "None"
 
-    html_args = data["html_args"]
+    # html_args = data["html_args"] # TODO: Fix this
 
     principal = "principal" in data
     exons = "exons" in data
@@ -130,118 +178,101 @@ def traninfoquery(data) -> str:
         # get user_id
         user_name = current_user.name
         user_id = get_user_id(user_name)
-        user_settings = get_table('user_settings')
-        user_settings = user_settings.filter(pl.col('user_id') == user_id)
-        user_settings = table2dict(user_settings,
-                                   '')  # TODO: Correct for empty
+        user_settings = get_table("user_settings")
+        user_settings = user_settings.filter(pl.col("user_id") == user_id)
+        user_settings = table2dict(user_settings, "")  # TODO: Correct for empty
 
-    if html_args["user_short"] == "None" or user_short_passed:
-        html_args["short"] = generate_short_code(data, organism,
-                                                 html_args["transcriptome"],
-                                                 "traninfo_plot")
-    else:
-        user_short_passed = True
+    # if html_args["user_short"] == "None" or user_short_passed:
+    #     html_args["short"] = generate_short_code(
+    #         data, organism, html_args["transcriptome"], "traninfo_plot"
+    #     )
+    # else:
+    #     user_short_passed = True
     if data["plottype"] == "fetch_seq":
-        filename = organism + "_sequences_" + str(time.time()) + ".fa"
-        table_str = filename + "?~"
-        splitlist = (data["gc_tranlist"].replace(" ", ",")).split(",")
-        tmp_fa_file = open(
-            "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
-        owner = get_table("organisms").filter(
-            pl.col("organism_name") == data["organism"])[0, "owner"]
-        if owner:
-            sqlite_path_organism = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
-                data["transcriptome"])
-            if not os.path.isfile(sqlite_path_organism):
-                return_str = "Cannot find annotation file {}.{}.sqlite".format(
-                    data["organism"], data["transcriptome"])
-                return return_str
-        else:
-            sqlite_path_organism = ("{0}/transcriptomes/{1}/{2}/{3}/{2}"
-                                    "_{3}.sqlite".format(
-                                        config.UPLOADS_DIR, owner,
-                                        data["organism"],
-                                        data["transcriptome"]))
-        transcripts = sqlquery(sqlite_path_organism, "transcripts").filter(
-            pl.col("transcript").is_in(splitlist)).unique(
-                subset=["transcript"])
-        transcript_without_start = transcripts.filter(
-            pl.col("cds_start").is_null())
+        print(data, transcripts)
 
-        if gc_location != "all":
+        transcripts = transcripts.unique(subset=["transcript"])
+        transcript_without_start = transcripts.filter(pl.col("cds_start").is_null())
+
+        if data["gc_location"] != "all":
             if transcript_without_start.shape[0] > 0:
                 return "Error: {} is non-coding, region cannot be {}".format(
                     ", ".join(transcript_without_start["transcript"]),
-                    gc_location)
-            transcripts["cds_start"] -= 1
+                    data["gc_location"],
+                )
+            transcripts = transcripts.with_columns(cds_start=pl.col("cds_start") - 1)
 
         if data["gc_location"] == "five":
-            transcripts = transcripts.with_column(
+            transcripts = transcripts.with_columns(
+                tseq=pl.col("sequence").str.slice(0, pl.col("cds_start"))
                 # Fix the filter
             )
-            transcripts.seq = transcripts.seq.apply(lambda x: x[:cds_start])
-        elif data["gc_location"] == "start":
-            transcripts.seq = transcripts.seq.apply(lambda x: x[
-                cds_start - include_first_val:cds_start + include_last_val])
         elif data["gc_location"] == "cds":
-            transcripts.seq = transcripts.seq.apply(
-                lambda x: x[cds_start:cds_end])
-        elif data["gc_location"] == "stop":
-            transcripts.seq = transcripts.seq.apply(
-                lambda x: x[:cds_stop + include_last_val])
-        else:  # gc_location == "three":
-            transcripts.seq = transcripts.seq.apply(lambda x: x[cds_stop:])
+            transcripts = transcripts.with_columns(
+                tseq=pl.col("sequence").str.slice(
+                    pl.col("cds_start"), pl.col("cds_stop") - pl.col("cds_start")
+                )  # NOTE: Might need to include + 1
+            )
+        elif data["gc_location"] == "three":
+            transcripts = transcripts.with_columns(
+                tseq=pl.col("sequence").str.slice(pl.col("cds_stop"))
+            )
+        # WARNING:: start and stop codon is not included in the original code. I have no clue why is it there. Therefore I have removed from html
+        # WARNING: Include and exclude doesnot make sense. commenting them out at moment
 
-        subseq = ""  # TODO: This need to be corrected here
-        if sum([
-                include_first_val, include_last_val, exclude_first_val,
-                exclude_last_val
-        ]) == 0 or (gc_location in ["start", "stop"]):
-            subseq = seq
-        else:
-            if not include_first_val:
-                subseq += seq[:include_first_val]
-            if not include_last_val:
-                subseq += seq[(include_last_val * -1):]
-            if not exclude_first_val:
-                seqlen = len(seq)
-                subseq += seq[(seqlen - exclude_first_val) * -1:]
-            if not exclude_last_val:
-                seqlen = len(seq)
-                subseq += seq[:(seqlen - exclude_last_val)]
-        tmp_fa_file.write(">{}_{}\n{}\n".format(gene, tran, subseq))
-        tmp_fa_file.close()
-        total_rows = transcripts.shape[0]
-        table_str = "FA?~" + str(total_rows) + "?~" + table_str
+        # subseq = ""  # TODO: This need to be corrected here
+        # if sum(
+        #     [include_first_val, include_last_val, exclude_first_val, exclude_last_val]
+        # ) == 0 or (gc_location in ["start", "stop"]):
+        #     subseq = seq
+        # else:
+        #     if not include_first_val:
+        #         subseq += seq[:include_first_val]
+        #     if not include_last_val:
+        #         subseq += seq[(include_last_val * -1) :]
+        #     if not exclude_first_val:
+        #         seqlen = len(seq)
+        #         subseq += seq[(seqlen - exclude_first_val) * -1 :]
+        #     if not exclude_last_val:
+        #         seqlen = len(seq)
+        #         subseq += seq[: (seqlen - exclude_last_val)]
 
-        return table_str
+        filename = data["organism"] + "_sequences_" + str(time.time()) + ".fa"
+        with open(
+            "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w"
+        ) as tmp_fa_file:
+            for row in transcripts.iter_rows(named=True):
+                tmp_fa_file.write(
+                    f">{row['gene']}_{row['transcript']}\n{row['tseq']}\n"
+                )
+        print(filename)
+
+        return f"file:<a href='/static/tmp/{filename}'>download fasta file</a>"
     if data["plottype"] == "nuc_freq_plot":
         filename = "Sequences_{}.fa".format(time.time())
-        outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
-                       "w")
+        outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
         owner = get_table("organisms").filter(
             (pl.col("organism_name") == data["organism"])
-            & (pl.col("transcriptome_list") == data["transcriptome"]))[0,
-                                                                       "owner"]
+            & (pl.col("transcriptome_list") == data["transcriptome"])
+        )[0, "owner"]
 
         if owner == 1:
-            transhelve = ("{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, data["organism"],
-                data["transcriptome"]))
+            transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
+                config.SCRIPT_LOC,
+                config.ANNOTATION_DIR,
+                data["organism"],
+                data["transcriptome"],
+            )
         else:
-            transhelve = (
-                "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                    config.UPLOADS_DIR, owner, data["organism"],
-                    data["transcriptome"]))
+            transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
+                config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]
+            )
         transcripts = sqlquery(transhelve, "transcrips")
 
         if splitlist:
-            transcripts = transcripts.filter(
-                pl.col("transcript").is_in(splitlist))
+            transcripts = transcripts.filter(pl.col("transcript").is_in(splitlist))
         master_dict = {}
-        for i in range(data["nuc_freq_plot_window"] * -1,
-                       data["nuc_freq_plot_window"]):
+        for i in range(data["nuc_freq_plot_window"] * -1, data["nuc_freq_plot_window"]):
             # TODO: convert this to dataframe
             master_dict[i] = {"A": 0, "T": 0, "G": 0, "C": 0}
         for row in transcripts.iterrows(named=True):
@@ -255,8 +286,7 @@ def traninfoquery(data) -> str:
             seq = row[3]
             seqlen = len(seq)
             if data["nuc_freq_plot_anchor"] == "tss":
-                outfile.write(">{}\n{}\n".format(tran,
-                                                 seq[0:nuc_freq_plot_window]))
+                outfile.write(">{}\n{}\n".format(tran, seq[0:nuc_freq_plot_window]))
                 for i in range(0, nuc_freq_plot_window):
                     try:
                         master_dict[i][seq[i]] += 1
@@ -264,12 +294,17 @@ def traninfoquery(data) -> str:
                         pass
             if data["nuc_freq_plot_anchor"] == "cds_start":
                 if cds_start != None:
-                    outfile.write(">{}\n{}\n".format(
-                        tran,
-                        seq[cds_start + (nuc_freq_plot_window * -1):cds_start +
-                            nuc_freq_plot_window]))
-                    for i in range(nuc_freq_plot_window * -1,
-                                   nuc_freq_plot_window):
+                    outfile.write(
+                        ">{}\n{}\n".format(
+                            tran,
+                            seq[
+                                cds_start
+                                + (nuc_freq_plot_window * -1) : cds_start
+                                + nuc_freq_plot_window
+                            ],
+                        )
+                    )
+                    for i in range(nuc_freq_plot_window * -1, nuc_freq_plot_window):
                         try:
                             seqpos = cds_start + i
                             if seqpos >= 0:
@@ -278,20 +313,26 @@ def traninfoquery(data) -> str:
                             pass
             if data["nuc_freq_plot_anchor"] == "cds_stop":
                 if cds_stop:
-                    outfile.write(">{}\n{}\n".format(
-                        tran,
-                        seq[cds_stop + (nuc_freq_plot_window * -1):cds_stop +
-                            nuc_freq_plot_window]))
-                    for i in range(nuc_freq_plot_window * -1,
-                                   nuc_freq_plot_window):
+                    outfile.write(
+                        ">{}\n{}\n".format(
+                            tran,
+                            seq[
+                                cds_stop
+                                + (nuc_freq_plot_window * -1) : cds_stop
+                                + nuc_freq_plot_window
+                            ],
+                        )
+                    )
+                    for i in range(nuc_freq_plot_window * -1, nuc_freq_plot_window):
                         seqpos = cds_stop + i
                         try:
                             master_dict[i][seq[seqpos]] += 1
                         except Exception:
                             pass
             if data["nuc_freq_plot_anchor"] == "tts":
-                outfile.write(">{}\n{}\n".format(
-                    tran, seq[-1 * nuc_freq_plot_window:]))
+                outfile.write(
+                    ">{}\n{}\n".format(tran, seq[-1 * nuc_freq_plot_window :])
+                )
                 for i in range(nuc_freq_plot_window * -1, 0):
                     try:
                         master_dict[i][seq[seqlen + i]] += 1
@@ -299,102 +340,81 @@ def traninfoquery(data) -> str:
                         pass
 
         title = nuc_freq_plot_anchor
-        return traninfo_plots.nuc_freq_plot(master_dict, title, short_code,
-                                            config.DEFAULT_USER_SETTING,
-                                            filename)
+        return traninfo_plots.nuc_freq_plot(
+            master_dict, title, short_code, config.DEFAULT_USER_SETTING, filename
+        )
 
     if data["plottype"] == "orfstats":
-        filename = organism + "_orfstats_" + str(time.time()) + ".csv"
-        table_str = filename + "?~"
-        tmp_te_file = open(
-            "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
-        owner = get_table("organisms").filter(
-            (pl.col("organism_name") == organism)
-            & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
-        if owner == 1:
-            transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)
-        else:
-            transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome)
-        tmp_te_file.write(
-            "Gene,Tran,ORF Type,Start Codon,Length,Start position,"
-            "Stop position,CDS coverage\n")
-        transcripts = sqlquery(transhelve, "transcripts")
-        if principal:
-            transcripts = transcripts.filter(pl.col("principal"))
-        orf_type = sqlquery(transhelve, orftype)
-        transcripts = transcripts.merge(orf_type, on="transcript")[[
-            "gene", "transcript", "start_codon", "length", "start", "stop",
-            "cds_coverage"
-        ]]
 
-        input_list = []
-        result = transcripts
-        for row in result:  # TODO: All these part should be cleaned
-            gene = row[0]
-            tran = row[1]
-            start_codon = row[2]
-            length = row[3]
-            start = row[4]
-            stop = row[5]
-            cds_cov = row[6]
-            input_list.append([
-                gene, tran, orftype, start_codon, length, start, stop, cds_cov
-            ])
-            tmp_te_file.write("{},{},{},{},{},{},{},{}\n".format(
-                gene, tran, orftype, start_codon, length, start, stop,
-                cds_cov))
-        tmp_te_file.close()
-        total_rows = 0
-        all_sorted_rows = input_list
-        for row in all_sorted_rows:
-            total_rows += 1
-            if total_rows <= 1000:
-                input_str = ""
-                for item in row:
-                    input_str += "{}.;".format(item)
-                input_str += "?~"
-                table_str += input_str
-        table_str = "TE?~" + str(total_rows) + "?~" + table_str
-        return table_str
+        if principal:
+            transcripts = transcripts.filter(pl.col("principal") == 1)
+        orf_type = sqlquery(transhelve, data["orftype"])
+        if orf_type.shape[0] == 0:
+            return f"file:table {data['orftype']} is empty"
+        print(orf_type, "xxxxxxxxxx")
+        transcripts = (
+            transcripts.join(orf_type, on="transcript")
+            .select(
+                "gene",
+                "transcript",
+                "start_codon",
+                "length",
+                "start",
+                "stop",
+                "cds_coverage",
+            )
+            .rename(
+                {
+                    "gene": "Gene",
+                    "transcript": "Tran",
+                    "start_codon": "Start Codon",
+                    "length": "Length",
+                    "start": "Start position",
+                    "stop": "Stop position",
+                    "cds_coverage": "CDS coverage",
+                }
+            )
+            .with_columns(pl.lit(data["orftype"]).alias("ORF Type"))
+        )
+        filename = data["organism"] + "_orfstats_" + str(time.time()) + ".csv"
+        tmp_te_file = "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename)
+        transcripts.write_csv(tmp_te_file, include_header=True)
+        html_table = (
+            transcripts.head(1000).to_pandas().to_html(index=False, classes="table")
+        )
+        html_table = (
+            f"file:<a href='/static/tmp/{filename}'>Download full table</a>{html_table}"
+        )
+
+        print(transcripts)
+
+        return html_table
 
     # Nucleotide composition (multiple transcripts)
     elif data["plottype"] == "nuc_comp_multi":
         owner = get_table("organisms").filyer(
             (pl.col("organism_name") == organism)
-            & (pl.col("transcriptome_list") == transcriptome))[0, "owner"]
+            & (pl.col("transcriptome_list") == transcriptome)
+        )[0, "owner"]
         if owner == 1:
             transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism,
-                transcriptome)
+                config.SCRIPT_LOC, config.ANNOTATION_DIR, organism, transcriptome
+            )
         else:
             transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, organism, transcriptome)
+                config.UPLOADS_DIR, owner, organism, transcriptome
+            )
         filename = "{}_{}_nucleotide_comp_{}.csv".format(
-            organism, gc_location, str(time.time()))
-        outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
-                       "w")
+            organism, gc_location, str(time.time())
+        )
+        outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
 
         if data["plottype"] == "scatter":
             master_dict = {
-                1: {
-                    "trans": [],
-                    "lengths": []
-                },
-                2: {
-                    "trans": [],
-                    "lengths": []
-                },
-                3: {
-                    "trans": [],
-                    "lengths": []
-                },
-                4: {
-                    "trans": [],
-                    "lengths": []
-                }
+                1: {"trans": [], "lengths": []},
+                2: {"trans": [], "lengths": []},
+                3: {"trans": [], "lengths": []},
+                4: {"trans": [], "lengths": []},
             }
             gc_dict = {}
             transcripts = sqlquery(transhelve, "transcripts")
@@ -416,17 +436,17 @@ def traninfoquery(data) -> str:
                         splitlist.append(item)
                 strlist = str(splitlist).strip("[]")
                 transcripts = transcripts.filter(
-                    pl.col("transcript").is_in(strlist.upper()))
+                    pl.col("transcript").is_in(strlist.upper())
+                )
 
             else:
                 if gc_location == "all":
                     transcripts = transcripts.filter(pl.col("principal"))
                 else:
-                    transcripts = transcripts.filter((pl.col("principal"))
-                                                     & (pl.col("tran_type")))
-            result = transcripts[[
-                "transcript", "sequence", "cds_start", "cds_stop"
-            ]]
+                    transcripts = transcripts.filter(
+                        (pl.col("principal")) & (pl.col("tran_type"))
+                    )
+            result = transcripts[["transcript", "sequence", "cds_start", "cds_stop"]]
             for row in result:
                 tran = row[0]
                 seq = row[1]
@@ -436,33 +456,31 @@ def traninfoquery(data) -> str:
                 if gc_location == "all":
                     nuc_dict = calc_gc(seq)
                 elif gc_location == "five":
-                    nuc_dict = calc_gc(seq[:cds_start - 1])
+                    nuc_dict = calc_gc(seq[: cds_start - 1])
                 elif gc_location == "cds":
-                    nuc_dict = calc_gc(seq[cds_start - 1:cds_stop + 3])
+                    nuc_dict = calc_gc(seq[cds_start - 1 : cds_stop + 3])
                 elif gc_location == "three":
-                    nuc_dict = calc_gc(seq[cds_stop + 3:])
-                tot = sum([
-                    nuc_dict["G"], nuc_dict["C"], nuc_dict["T"], nuc_dict["A"]
-                ])
+                    nuc_dict = calc_gc(seq[cds_stop + 3 :])
+                tot = sum([nuc_dict["G"], nuc_dict["C"], nuc_dict["T"], nuc_dict["A"]])
                 if tot > 0:
                     if nucleotide == "GC":
-                        gc = ((nuc_dict["G"] + nuc_dict["C"]) / tot)
+                        gc = (nuc_dict["G"] + nuc_dict["C"]) / tot
                         gc = gc * 100
                         gc_dict[tran] = gc
                     elif nucleotide == "A":
-                        a = ((nuc_dict["A"]) / tot)
+                        a = (nuc_dict["A"]) / tot
                         a = a * 100
                         gc_dict[tran] = a
                     elif nucleotide == "T":
-                        t = ((nuc_dict["T"]) / tot)
+                        t = (nuc_dict["T"]) / tot
                         t = t * 100
                         gc_dict[tran] = t
                     elif nucleotide == "G":
-                        g = ((nuc_dict["G"]) / tot)
+                        g = (nuc_dict["G"]) / tot
                         g = g * 100
                         gc_dict[tran] = g
                     elif nucleotide == "C":
-                        c = ((nuc_dict["C"]) / tot)
+                        c = (nuc_dict["C"]) / tot
                         c = c * 100
                         gc_dict[tran] = c
             if gc_tranlist == "":
@@ -500,46 +518,22 @@ def traninfoquery(data) -> str:
                     outfile.write("{}.{}\n".format(group, gc))
 
             outfile.close()
-            return traninfo_plots.nuc_comp_scatter(master_dict, filename,
-                                                   str(title_size) + "pt",
-                                                   str(axis_label_size) + "pt",
-                                                   str(marker_size) + "pt",
-                                                   nucleotide, short_code)
+            return traninfo_plots.nuc_comp_scatter(
+                master_dict,
+                filename,
+                str(title_size) + "pt",
+                str(axis_label_size) + "pt",
+                str(marker_size) + "pt",
+                nucleotide,
+                short_code,
+            )
         elif data["plottype"] == "box":
             transcripts = sqlquery(transhelve, "transcripts")
             master_dict = {
-                1: {
-                    "trans": [],
-                    "gc": [],
-                    "a": [],
-                    "t": [],
-                    "g": [],
-                    "c": []
-                },
-                2: {
-                    "trans": [],
-                    "gc": [],
-                    "a": [],
-                    "t": [],
-                    "g": [],
-                    "c": []
-                },
-                3: {
-                    "trans": [],
-                    "gc": [],
-                    "a": [],
-                    "t": [],
-                    "g": [],
-                    "c": []
-                },
-                4: {
-                    "trans": [],
-                    "gc": [],
-                    "a": [],
-                    "t": [],
-                    "g": [],
-                    "c": []
-                }
+                1: {"trans": [], "gc": [], "a": [], "t": [], "g": [], "c": []},
+                2: {"trans": [], "gc": [], "a": [], "t": [], "g": [], "c": []},
+                3: {"trans": [], "gc": [], "a": [], "t": [], "g": [], "c": []},
+                4: {"trans": [], "gc": [], "a": [], "t": [], "g": [], "c": []},
             }
             gc_dict = {}
             if gc_tranlist != "":
@@ -558,17 +552,15 @@ def traninfoquery(data) -> str:
                     for item in splitlist4:
                         splitlist.append(item)
                 strlist = str(splitlist).strip("[]")
-                transcripts = transcripts[transcripts.transcript.isin(
-                    strlist.upper())]
+                transcripts = transcripts[transcripts.transcript.isin(strlist.upper())]
             else:
                 if gc_location == "all":
                     transcripts = transcripts[transcripts.principal]
                 else:
-                    transcripts = transcripts[transcripts.principal
-                                              & transcripts.tran_type]
-            result = transcripts[[
-                "transcript", "seq", "cds_start", "cds_stop"
-            ]]
+                    transcripts = transcripts[
+                        transcripts.principal & transcripts.tran_type
+                    ]
+            result = transcripts[["transcript", "seq", "cds_start", "cds_stop"]]
             for row in result:
                 tran = row[0]
                 seq = row[1]
@@ -585,22 +577,19 @@ def traninfoquery(data) -> str:
                     nuc_dict = calc_gc(seq)
                     # outfile.write(">{}\n{}\n".format(tran,seq))
                 elif gc_location == "five":
-                    nuc_dict = calc_gc(seq[:cds_start - 1])
-                    outfile.write(">{}\n{}\n".format(tran,
-                                                     seq[:cds_start - 1]))
+                    nuc_dict = calc_gc(seq[: cds_start - 1])
+                    outfile.write(">{}\n{}\n".format(tran, seq[: cds_start - 1]))
                 elif gc_location == "cds":
-                    nuc_dict = calc_gc(seq[cds_start - 1:cds_stop + 3])
+                    nuc_dict = calc_gc(seq[cds_start - 1 : cds_stop + 3])
                 elif gc_location == "three":
-                    nuc_dict = calc_gc(seq[cds_stop + 3:])
-                tot = sum([
-                    nuc_dict["G"], nuc_dict["C"], nuc_dict["T"], nuc_dict["A"]
-                ])
+                    nuc_dict = calc_gc(seq[cds_stop + 3 :])
+                tot = sum([nuc_dict["G"], nuc_dict["C"], nuc_dict["T"], nuc_dict["A"]])
                 if tot > 0:
-                    gc = ((nuc_dict["G"] + nuc_dict["C"]) / tot)
-                    a = ((nuc_dict["A"]) / tot)
-                    t = ((nuc_dict["T"]) / tot)
-                    g = ((nuc_dict["G"]) / tot)
-                    c = ((nuc_dict["C"]) / tot)
+                    gc = (nuc_dict["G"] + nuc_dict["C"]) / tot
+                    a = (nuc_dict["A"]) / tot
+                    t = (nuc_dict["T"]) / tot
+                    g = (nuc_dict["G"]) / tot
+                    c = (nuc_dict["C"]) / tot
 
                     gc = gc * 100
                     a = a * 100
@@ -662,19 +651,22 @@ def traninfoquery(data) -> str:
                 for gc in master_dict[group]["gc"]:
                     outfile.write("{},{}\n".format(group, gc))
             outfile.close()
-            return traninfo_plots.nuc_comp_box(master_dict, filename,
-                                               nucleotide,
-                                               str(title_size) + "pt",
-                                               config.A_COL,
-                                               str(axis_label_size) + "pt",
-                                               str(marker_size) + "pt",
-                                               short_code)
+            return traninfo_plots.nuc_comp_box(
+                master_dict,
+                filename,
+                nucleotide,
+                str(title_size) + "pt",
+                config.A_COL,
+                str(axis_label_size) + "pt",
+                str(marker_size) + "pt",
+                short_code,
+            )
 
     if data["plottype"] == "codon_usage":
+
         aa_dict = fixed_values.codon_aa_full.copy()
         filename = organism + "_codon_usage_" + str(time.time()) + ".csv"
-        cu_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename),
-                       "w")
+        cu_file = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
         # if gc_tranlist != "":
         # splitlist = (gc_tranlist.replace(" ", ",")).split(",")
         # strlist = str(splitlist).strip("[]")
@@ -690,33 +682,24 @@ def traninfoquery(data) -> str:
         cu_file.write("Total_transcripts,{}\n".format(total_trans))
         cu_file.write("Total_length_(nts),{}\n".format(total_length))
         for codon in sorted(codon_dict.keys()):
-            cu_file.write("{},{},{}\n".format(codon, aa_dict[codon],
-                                              codon_dict[codon]))
+            cu_file.write("{},{},{}\n".format(codon, aa_dict[codon], codon_dict[codon]))
 
-        return fixed_values.codon_usage(codon_dict, short_code,
-                                        str(title_size) + "pt",
-                                        str(axis_label_size) + "pt",
-                                        str(marker_size) + "pt", filename)
+        return fixed_values.codon_usage(
+            codon_dict,
+            short_code,
+            str(title_size) + "pt",
+            str(axis_label_size) + "pt",
+            str(marker_size) + "pt",
+            filename,
+        )
     # This is the lengths plot
     elif data["plottype"] == "lengths_plot":
 
         master_dict = {
-            1: {
-                "trans": [],
-                "lengths": []
-            },
-            2: {
-                "trans": [],
-                "lengths": []
-            },
-            3: {
-                "trans": [],
-                "lengths": []
-            },
-            4: {
-                "trans": [],
-                "lengths": []
-            }
+            1: {"trans": [], "lengths": []},
+            2: {"trans": [], "lengths": []},
+            3: {"trans": [], "lengths": []},
+            4: {"trans": [], "lengths": []},
         }
         gc_dict = {}
         if gc_tranlist != "":
@@ -737,18 +720,22 @@ def traninfoquery(data) -> str:
             strlist = str(splitlist).strip("[]")
             trancursor.execute(
                 "SELECT transcript,length,cds_start,cds_stop,"
-                "exon_junctions from transcripts WHERE transcript IN ({});".
-                format(strlist.upper()))
+                "exon_junctions from transcripts WHERE transcript IN ({});".format(
+                    strlist.upper()
+                )
+            )
         else:
             if gc_location == "all":
                 trancursor.execute(
                     "SELECT transcript,length,cds_start,cds_stop,"
-                    "exon_junctions from transcripts WHERE principal = 1;")
+                    "exon_junctions from transcripts WHERE principal = 1;"
+                )
             else:
                 trancursor.execute(
                     "SELECT transcript,length,cds_start,cds_stop,"
                     "exon_junctions from transcripts WHERE principal = 1"
-                    " and tran_type = 1;")
+                    " and tran_type = 1;"
+                )
         result = trancursor.fetchall()
         if data["plottype"] == "box":
             if result == []:
@@ -759,7 +746,7 @@ def traninfoquery(data) -> str:
                 exon_junctions_raw = row[4].split(",")
                 exon_junctions = []
                 for item in exon_junctions_raw:
-                    if item != '':
+                    if item != "":
                         exon_junctions.append(int(item))
                 if gc_location != "all":
                     cds_start = int(row[2])
@@ -774,8 +761,9 @@ def traninfoquery(data) -> str:
                     exon_no = length / (local_exons + 1)
                 elif gc_location == "cds":
                     length = cds_stop - cds_start
-                    local_exons = sum((i > cds_start and i < cds_stop)
-                                      for i in exon_junctions)
+                    local_exons = sum(
+                        (i > cds_start and i < cds_stop) for i in exon_junctions
+                    )
                     exon_no = length / (local_exons + 1)
                 elif gc_location == "three":
                     length = tranlen - cds_stop
@@ -786,8 +774,7 @@ def traninfoquery(data) -> str:
                 else:
                     gc_dict[tran] = exon_no
             filename = "Lengths_{}.csv".format(time.time())
-            outfile = open(
-                "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
+            outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
             if gc_tranlist == "":
                 for tran in gc_dict:
                     master_dict[1]["trans"].append(tran)
@@ -798,8 +785,7 @@ def traninfoquery(data) -> str:
                     if tran in gc_dict:
                         master_dict[1]["trans"].append(tran)
                         master_dict[1]["lengths"].append(gc_dict[tran])
-                        outfile.write("Group1,{},{}\n".format(
-                            tran, gc_dict[tran]))
+                        outfile.write("Group1,{},{}\n".format(tran, gc_dict[tran]))
                     else:
                         return tran
                 if gc_tranlist2 != "":
@@ -808,29 +794,30 @@ def traninfoquery(data) -> str:
                         if tran in gc_dict:
                             master_dict[2]["trans"].append(tran)
                             master_dict[2]["lengths"].append(gc_dict[tran])
-                            outfile.write("Group2,{},{}\n".format(
-                                tran, gc_dict[tran]))
+                            outfile.write("Group2,{},{}\n".format(tran, gc_dict[tran]))
                 if gc_tranlist3 != "":
                     splitlist = (gc_tranlist3.replace(" ", ",")).split(",")
                     for tran in splitlist3:
                         if tran in gc_dict:
                             master_dict[3]["trans"].append(tran)
                             master_dict[3]["lengths"].append(gc_dict[tran])
-                            outfile.write("Group3,{},{}\n".format(
-                                tran, gc_dict[tran]))
+                            outfile.write("Group3,{},{}\n".format(tran, gc_dict[tran]))
                 if gc_tranlist4 != "":
                     splitlist = (gc_tranlist4.replace(" ", ",")).split(",")
                     for tran in splitlist4:
                         if tran in gc_dict:
                             master_dict[4]["trans"].append(tran)
                             master_dict[4]["lengths"].append(gc_dict[tran])
-                            outfile.write("Group4,{},{}\n".format(
-                                tran, gc_dict[tran]))
-            return traninfo_plots.lengths_box(master_dict, filename,
-                                              config.A_COL, short_code,
-                                              str(title_size) + "pt",
-                                              str(marker_size) + "pt",
-                                              str(axis_label_size) + "pt")
+                            outfile.write("Group4,{},{}\n".format(tran, gc_dict[tran]))
+            return traninfo_plots.lengths_box(
+                master_dict,
+                filename,
+                config.A_COL,
+                short_code,
+                str(title_size) + "pt",
+                str(marker_size) + "pt",
+                str(axis_label_size) + "pt",
+            )
         elif data["plottype"] == "scatter":
 
             for row in result:
@@ -849,8 +836,7 @@ def traninfoquery(data) -> str:
                     length = tranlen - cds_stop
                 gc_dict[tran] = length
             filename = "Lengths_{}.csv".format(time.time())
-            outfile = open(
-                "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
+            outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
 
             if gc_tranlist == "":
                 for tran in gc_dict:
@@ -881,14 +867,16 @@ def traninfoquery(data) -> str:
                             master_dict[4]["trans"].append(tran)
                             master_dict[4]["lengths"].append(gc_dict[tran])
             outfile.close()
-            return traninfo_plots.lengths_scatter(master_dict, filename,
-                                                  str(title_size) + "pt",
-                                                  str(axis_label_size) + "pt",
-                                                  str(marker_size) + "pt",
-                                                  short_code)
+            return traninfo_plots.lengths_scatter(
+                master_dict,
+                filename,
+                str(title_size) + "pt",
+                str(axis_label_size) + "pt",
+                str(marker_size) + "pt",
+                short_code,
+            )
 
     if 1:
-        if (data["plottype"].strip(" ").replace("\n",
-                                                "")) not in ["replicate_comp"]:
+        if (data["plottype"].strip(" ").replace("\n", "")) not in ["replicate_comp"]:
             print("Unknown plottype", data["plottype"])
     return "Error, unknown plot type selected: {}".format(data["plottype"])
