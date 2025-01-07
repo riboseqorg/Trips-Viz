@@ -380,11 +380,16 @@ def traninfoquery(data) -> str:
         tmp_te_file = "{}/static/tmp/{}".format(config.SCRIPT_LOC, filename)
         transcripts.write_csv(tmp_te_file, include_header=True)
         html_table = (
-            transcripts.head(1000).to_pandas().to_html(index=False, classes="table")
+            transcripts.head(1000)
+            .to_pandas()
+            .to_html(
+                table_id="data",
+                escape=False,
+                index=False,
+                classes="table table-striped table-bordered table-hover",
+            )
         )
-        html_table = (
-            f"file:<a href='/static/tmp/{filename}'>Download full table</a>{html_table}"
-        )
+        html_table = f"table:<a href='/static/tmp/{filename}'>Download full table</a>{html_table}"
 
         print(transcripts)
 

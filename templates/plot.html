@@ -1,4 +1,11 @@
 {% block header_static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x"
+          crossorigin="anonymous" />
+    <link rel="stylesheet"
+          type="text/css"
+          href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.css" />
     <link rel="stlesheet"
           type="text/css"
           href="https://cdn.jsdelivr.net/npm/vega-tooltip@0.32.0/vega-tooltip.scss" />
@@ -28,7 +35,11 @@
 		var url = data.replace("file:", "");
 		    $("#"+div).html(url);
 		    
-	    } else {
+			} else if (data.startsWith("table:")){
+			var url = data.replace("table:", "");
+			$("#"+div).html(url);
+					$("#data").DataTable({ pageLength: 10 });
+			}else {
 		    
         var opt = {
           mode: "vega-lite",
