@@ -1,9 +1,10 @@
 import json
-import altair as alt
 import os
 import sqlite3
 import time
+from copy import deepcopy
 
+import altair as alt
 import pandas as pd
 import polars as pl
 from flask import Blueprint, render_template, request
@@ -89,6 +90,8 @@ def traninfoquery(data) -> str:
         transcripts = transcripts.filter(
             pl.col("transcript").is_in(data["gc_tranlist"])
         )
+    if data["plottype"] == "lengths_plot":
+        t_transcript = deepcopy(transcripts)
 
     print(transcripts)
     # Nucleotide composition (single transcript)
@@ -248,101 +251,84 @@ def traninfoquery(data) -> str:
         print(filename)
 
         return f"file:<a href='/static/tmp/{filename}'>download fasta file</a>"
+
     if data["plottype"] == "nuc_freq_plot":
         filename = "Sequences_{}.fa".format(time.time())
         outfile = open("{}/static/tmp/{}".format(config.SCRIPT_LOC, filename), "w")
-        owner = get_table("organisms").filter(
-            (pl.col("organism_name") == data["organism"])
-            & (pl.col("transcriptome_list") == data["transcriptome"])
-        )[0, "owner"]
-
-        if owner == 1:
-            transhelve = "{0}/{1}/{2}/{2}.{3}.sqlite".format(
-                config.SCRIPT_LOC,
-                config.ANNOTATION_DIR,
-                data["organism"],
-                data["transcriptome"],
-            )
-        else:
-            transhelve = "{0}transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
-                config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"]
-            )
-        transcripts = sqlquery(transhelve, "transcrips")
-
-        if splitlist:
-            transcripts = transcripts.filter(pl.col("transcript").is_in(splitlist))
-        master_dict = {}
-        for i in range(data["nuc_freq_plot_window"] * -1, data["nuc_freq_plot_window"]):
-            # TODO: convert this to dataframe
-            master_dict[i] = {"A": 0, "T": 0, "G": 0, "C": 0}
-        for row in transcripts.iterrows(named=True):
-            tran = row[0]
-            try:
-                cds_start = int(row[1])
-                cds_stop = int(row[2])
-            except Exception:
-                cds_start = None
-                cds_stop = None
-            seq = row[3]
-            seqlen = len(seq)
-            if data["nuc_freq_plot_anchor"] == "tss":
-                outfile.write(">{}\n{}\n".format(tran, seq[0:nuc_freq_plot_window]))
-                for i in range(0, nuc_freq_plot_window):
-                    try:
-                        master_dict[i][seq[i]] += 1
-                    except Exception:
-                        pass
-            if data["nuc_freq_plot_anchor"] == "cds_start":
-                if cds_start != None:
-                    outfile.write(
-                        ">{}\n{}\n".format(
-                            tran,
-                            seq[
-                                cds_start
-                                + (nuc_freq_plot_window * -1) : cds_start
-                                + nuc_freq_plot_window
-                            ],
-                        )
-                    )
-                    for i in range(nuc_freq_plot_window * -1, nuc_freq_plot_window):
-                        try:
-                            seqpos = cds_start + i
-                            if seqpos >= 0:
-                                master_dict[i][seq[seqpos]] += 1
-                        except Exception:
-                            pass
-            if data["nuc_freq_plot_anchor"] == "cds_stop":
-                if cds_stop:
-                    outfile.write(
-                        ">{}\n{}\n".format(
-                            tran,
-                            seq[
-                                cds_stop
-                                + (nuc_freq_plot_window * -1) : cds_stop
-                                + nuc_freq_plot_window
-                            ],
-                        )
-                    )
-                    for i in range(nuc_freq_plot_window * -1, nuc_freq_plot_window):
-                        seqpos = cds_stop + i
-                        try:
-                            master_dict[i][seq[seqpos]] += 1
-                        except Exception:
-                            pass
-            if data["nuc_freq_plot_anchor"] == "tts":
-                outfile.write(
-                    ">{}\n{}\n".format(tran, seq[-1 * nuc_freq_plot_window :])
-                )
-                for i in range(nuc_freq_plot_window * -1, 0):
-                    try:
-                        master_dict[i][seq[seqlen + i]] += 1
-                    except Exception:
-                        pass
-
-        title = nuc_freq_plot_anchor
-        return traninfo_plots.nuc_freq_plot(
-            master_dict, title, short_code, config.DEFAULT_USER_SETTING, filename
+        rng = pl.arange(
+            -1 * data["nuc_freq_plot_window"], data["nuc_freq_plot_window"], eager=True
         )
+        df_list = []
+        print(data)
+
+        for row in transcripts.iter_rows(named=True):
+            tseq = ""
+            if data["nuc_freq_plot_anchor"] == "tss":
+                tseq = row["sequence"][0 : data["nuc_freq_plot_window"]]
+                outfile.write(">{}\n{}\n".format(row["transcript"], tseq))
+                tseq = "X" * data["nuc_freq_plot_window"] + tseq
+
+            if data["nuc_freq_plot_anchor"] in ["cds_start", "cds_stop"]:
+                print(row[data["nuc_freq_plot_anchor"]])
+                if not row[data["nuc_freq_plot_anchor"]]:
+                    continue
+                point = row[data["nuc_freq_plot_anchor"]]
+                left = point - data["nuc_freq_plot_window"]
+                right = point + data["nuc_freq_plot_window"]
+                if left < 0:
+                    tseq = "X" * abs(left) + row["sequence"][0:right]
+                    left = 0
+                else:
+                    tseq = row["sequence"][left:right]
+                if right > len(row["sequence"]):
+                    tseq += "X" * (right - len(row["sequence"]))
+                print(left, right, len(row["sequence"]), tseq)
+
+                tseqx = row["sequence"][left:right]
+                outfile.write(">{}\n{}\n".format(row["transcript"], tseqx))
+
+            if data["nuc_freq_plot_anchor"] == "tts":
+                seqlen = len(row["sequence"])
+                if seqlen <= data["nuc_freq_plot_window"]:
+                    outfile.write(
+                        ">{}\n{}\n".format(row["transcript"], row["sequence"])
+                    )
+                    tseq = (
+                        "X" * (data["nuc_freq_plot_window"] - seqlen) + row["sequence"]
+                    )
+                else:
+                    tseq = row["sequence"][-1 * data["nuc_freq_plot_window"] :]
+                    outfile.write(">{}\n{}\n".format(row["transcript"], tseq))
+                    tseq += "X" * data["nuc_freq_plot_window"]
+            print("abc", tseq, rng)
+            df_list.append(pl.DataFrame({"pos": rng, "frame": list(tseq)}))
+        outfile.close()
+
+        if len(df_list) == 0:
+            return f"file:table {data['nuc_freq_plot_anchor']} is empty"
+        else:
+            df_list = pl.concat(df_list, how="vertical")
+            df_list = (
+                df_list.filter(pl.col("frame") != "X").groupby("pos", "frame").count()
+            )  # TODO: Fill 0's as well by melting the adata
+        plot = (
+            alt.Chart(df_list.to_pandas())
+            .mark_line()
+            .encode(
+                x="pos:Q",
+                y="count:Q",
+                color=alt.Color("frame:N", scale=alt.Scale(scheme="category20")),
+                tooltip=["frame:N", "count:Q"],
+            )
+            .to_json()
+        )
+        print(plot, "yyyyyyyyyyyy")
+        return plot
+
+        # title = nuc_freq_plot_anchor
+        # return traninfo_plots.nuc_freq_plot(
+        #     master_dict, title, short_code, config.DEFAULT_USER_SETTING, filename
+        # )
 
     if data["plottype"] == "orfstats":
 
@@ -699,6 +685,7 @@ def traninfoquery(data) -> str:
         )
     # This is the lengths plot
     elif data["plottype"] == "lengths_plot":
+        print(data)
 
         master_dict = {
             1: {"trans": [], "lengths": []},
@@ -707,13 +694,15 @@ def traninfoquery(data) -> str:
             4: {"trans": [], "lengths": []},
         }
         gc_dict = {}
-        if gc_tranlist != "":
-            splitlist = (gc_tranlist.replace(" ", ",")).split(",")
+        if not transcripts.is_empty():
 
-            if gc_tranlist2 != "":
-                splitlist2 = (gc_tranlist2.replace(" ", ",")).split(",")
-                for item in splitlist2:
-                    splitlist.append(item)
+            if data["gc_tranlist2"]:
+                data["gc_tranlist2"] = data["gc_tranlist2"].split(",")
+            if data["gc_tranlist3"]:
+                data["gc_tranlist3"] = data["gc_tranlist3"].split(",")
+            if data["gc_tranlist4"]:
+                data["gc_tranlist4"] = data["gc_tranlist2"].split(",")
+
             if gc_tranlist3 != "":
                 splitlist3 = (gc_tranlist3.replace(" ", ",")).split(",")
                 for item in splitlist3:
@@ -835,7 +824,7 @@ def traninfoquery(data) -> str:
                     length = tranlen
                 elif gc_location == "five":
                     length = cds_start
-                elif gc_location == "cds":
+                    # != "" or gc_tranlist != ""elif gc_location == "cds":
                     length = cds_stop - cds_start
                 elif gc_location == "three":
                     length = tranlen - cds_stop

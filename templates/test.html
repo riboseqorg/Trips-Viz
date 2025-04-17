@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title></title>
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <!--d3js-->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-format@3"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-time@3"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-time-format@4"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/d3-scale@4"></script>-->
+    <!--<script src="https://d3js.org/d3-axis.v1.min.js"></script>-->
+  </head>
+  <body>
+    <div id="plot"></div>
+    <div id="rdg"></div>
+    <div id="cds"></div>
+  </body>
+  <footer>
+    <script>
+      var input = {
+        query:
+          '{"organism":"escherichia_coli","transcriptome":"Ensembl_k_12_ASM584v2","override":"","transcript":"gapA","readscore":"0","minread":"5","maxread":"150","seqhili":"","hili_stop":"0","offsite":"fiveprime","file_type":"riboseq","study":"0","file_riboseq__0":"on","file_riboseq__1":"on"}',
+        pathname: "single_transcript_plot",
+      };
+      var line = d3
+        .line()
+        .x((d) => xScale(d.date))
+        .y((d) => yScale(d.value))
+        .curve(d3.curveNatural);
+      $.post("http://localhost:5000/query", input, function (data2) {
+        console.log(data2.plot);
+        data = d3.csvParse(data2.plot);
+        data = data.slice().sort((a, b) => d3.ascending(a.pos, b.pos));
+
+        const margin = { top: 10, right: 10, bottom: 20, left: 40 };
+        const full_width = 800;
+        const full_height = 600;
+        const width = full_width - (margin.left + margin.right);
+        const height = full_height - (margin.bottom + margin.top);
+        const svg = d3
+          .select("#plot")
+          .append("svg")
+          .attr("height", full_height)
+          .attr("width", full_width)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+        //const x = d3
+        //  .scaleLinear()
+        //  .domain(
+        //    d3.extent(data, function (d) {
+        //
+        //      return d.pos;
+        //    }),
+        //  )
+        //  .range([0, width]);
+        const x = d3
+          .scaleLinear()
+          .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
+          .range([0, width]);
+
+        svg
+          .append("g")
+          .attr("transform", `translate(0,${height})`)
+          .call(d3.axisBottom(x).ticks(5));
+        const y = d3
+          .scaleLinear()
+          .domain(d3.extent(data, (d) => +d.count))
+          .range([height, 0]);
+        svg.append("g").call(d3.axisLeft(y));
+
+        var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the calculation per level of a factor
+        var res = sumstat.map((d) => d.frame); // list of group names
+        var color = d3
+          .scaleOrdinal()
+          .domain(res)
+          .range(["#e41a1c", "#377eb8", "#4daf4a"]);
+        console.log(color(1));
+        console.log(sumstat[0][1]);
+        console.log("Anmol");
+
+        sumstat.forEach((d) => {
+          console.log(d[1]);
+          console.log(d[0]);
+          console.log("Kiran");
+          svg
+            .append("path")
+            .datum(d[1])
+            .attr("fill", "none")
+            .attr("stroke", color(d[0] - 1))
+            .attr("stroke-width", 1.5)
+            .attr(
+              "d",
+              d3
+                .line()
+                .x((d) => x(d.pos))
+                .y((d) => y(d.count)),
+            );
+        });
+        svg
+          .selectAll(".line")
+          .data(sumstat)
+          .enter()
+          .append("path")
+          .attr("fill", "none")
+          .attr("stroke", function (d) {
+            return color(d.frame);
+          })
+          .attr("stroke-width", 1.5)
+          .attr("d", function (d) {
+            return d3
+              .line()
+              .x(function (d) {
+                return x(d.pos);
+              })
+              .y(function (d) {
+                return y(+d.ccount);
+              })(d.values);
+          });
+
+        // RDG
+        var datax = structuredClone(JSON.parse(data2.rdg));
+
+        draw(datax);
+        cds_plot(datax);
+        var undo = [];
+        var redo_count = 0;
+        var redo = [];
+
+        // removing CDS
+
+        $("line").live("click", function () {
+          var thisClass = parseInt(this.className.baseVal, 10);
+          var frag = $(this).attr("frag");
+          console.log(frag);
+          undo_list = [];
+          if (frag == "5utr") {
+            for (let obj of datax) {
+              if (obj.order >= thisClass) {
+                undo_list.push(obj);
+              }
+            }
+          } else {
+            for (let obj of datax) {
+              if (
+                obj.order == thisClass &&
+                (obj.frag == "3utr" || obj.frag == "cds")
+              ) {
+                undo_list.push(obj);
+              }
+            }
+          }
+          undo.push(undo_list);
+          if (frag == "5utr") {
+            datax = datax.filter((obj) => obj.order < thisClass);
+          } else {
+            datax = datax.filter(
+              (obj) =>
+                !(
+                  obj.order == thisClass &&
+                  (obj.frag == "3utr" || obj.frag == "cds")
+                ),
+            );
+            for (let obj of datax) {
+              if (obj.order > thisClass) {
+                obj.order -= 1;
+              }
+            }
+          }
+
+          draw(datax);
+          cds_plot(datax);
+        });
+
+        // NOTE: Cumulative CDS plot
+
+        function cds_plot(datat) {
+          console.log(datat);
+          d3.select("#cds").select("svg").remove();
+          d3.select("#cds")
+            .append("svg")
+            .attr("width", full_width)
+            .attr("height", "100");
+          var line = d3.select("#cds").select("svg");
+          datat.forEach((dt) => {
+            if (dt.frag == "cds") {
+              if (dt.x1 % 3 == 0) {
+                color = "green";
+              } else if (dt.x1 % 3 == 1) {
+                color = "blue";
+              } else {
+                color = "red";
+              }
+
+              width = 5;
+              line
+                .append("line")
+                .attr("x1", dt.x1)
+                .attr("y1", (dt.x1 % 3) * 20 + 25)
+                .attr("x2", dt.x2)
+                .attr("y2", (dt.x1 % 3) * 20 + 25)
+                .attr("class", dt.order)
+                .style("stroke", color)
+                .style("opacity", 0.5)
+                .style("stroke-width", width);
+            }
+          });
+        }
+
+        // NOTE: Plotting cds paths
+        function draw(datat) {
+          console.log(datat);
+          d3.select("#rdg").select("svg").remove();
+          var svg = d3
+            .select("#rdg")
+            .append("svg")
+            .attr("height", full_height)
+            .attr("width", full_width);
+          var line = d3.select("#rdg").select("svg");
+          var i = 0;
+          var already_there = [];
+          datat.forEach((dt) => {
+            var width = 1;
+
+            if (dt.frag == "cds") {
+              if (dt.x1 % 3 == 0) {
+                color = "green";
+              } else if (dt.x1 % 3 == 1) {
+                color = "blue";
+              } else {
+                color = "red";
+              }
+
+              width = 5;
+              line
+                .append("text")
+                .attr("x", dt.x2 + 2)
+                .attr("y", dt.order * 10 + 25)
+                .text(dt.rank)
+                .attr("class", dt.order);
+            } else {
+              color = "black";
+              width = 2;
+            }
+
+            line
+              .append("line")
+              .attr("frag", dt.frag)
+              .attr("x1", dt.x1)
+              .attr("y1", dt.order * 10 + 25)
+              .attr("x2", dt.x2)
+              .attr("y2", dt.order * 10 + 25)
+              .attr("class", dt.order)
+              .style("stroke", color)
+              .style("stroke-width", width);
+            if (
+              dt.order > 0 &&
+              dt.frag == "5utr" &&
+              !already_there.includes(dt.order)
+            ) {
+              already_there.push(dt.order);
+              line
+                .append("line")
+                .attr("x1", dt.x1)
+                .attr("x2", dt.x1)
+                .attr("y1", dt.order * 10 + 25)
+                .attr("y2", (dt.order - 1) * 10 + 25)
+                .style("stroke", "black")
+                .style("stroke-width", 2);
+            }
+          });
+        }
+
+        function undoo() {
+          if (undo.length > 0) {
+            var last_values = undo.pop();
+            redo.push(last_values);
+            //elevate the number
+            if (last_values.length == 2) {
+              for (let obj of datax) {
+                if (obj.org_order > last_values[0].org_order) {
+                  obj.order += 1;
+                }
+              }
+            }
+            for (let last_value of last_values) {
+              datax.push(last_value);
+            }
+            draw(datax);
+            cds_plot(datax);
+          }
+        }
+        function redoing() {
+          if (redo.length > 0) {
+            last_value = redo.pop();
+            undo.push(last_value);
+            datax = datax.filter((obj) => !last_value.includes(obj));
+            //de-elevate the number
+            if (last_value.length == 2) {
+              for (let obj of datax) {
+                if (obj.order > last_value[0].order) {
+                  obj.order -= 1;
+                }
+              }
+            }
+            draw(datax);
+            cds_plot(datax);
+          }
+        }
+
+        function reset() {
+          datax = structuredClone(data2.org);
+          undo = [];
+          redo_count = 0;
+          draw(datax);
+          cds_plot(datax);
+        }
+
+        function submit() {
+          console.log(datax);
+        }
+
+        //svg
+        //  .append("path")
+        //  .datum(data)
+        //  .attr("fill", "none")
+        //  .attr("stroke", "black")
+        //  .attr("stroke-width", 1.5)
+        //  .attr(
+        //    "d",
+        //    d3
+        //      .line()
+        //      .x((d) => x(d.pos))
+        //      .y((d) => y(d.count)),
+        //  );
+      });
+    </script>
+  </footer>
+</html>

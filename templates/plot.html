@@ -9,28 +9,28 @@
     <link rel="stlesheet"
           type="text/css"
           href="https://cdn.jsdelivr.net/npm/vega-tooltip@0.32.0/vega-tooltip.scss" />
+	<script src="https://d3js.org/d3.v6.js"></script>
+
 {% endblock %}
 {% block plot %}
-    <div class="charts text-center" id="plot">
+    <div class="charts text-center">
         <!--<h1>Car Graph</h1>-->
-        <div class="row">
-            <div id="plot"></div>
+        <div class="row" id="plot_root">
+            <div id="main_plot"></div>
+			<div id="sequence"></div>
+			<div id="frame1"></div>
+			<div id="frame2"></div>
+			<div id="frame3"></div>
+			<div id="rdg"></div>
+
         </div>
-        <hr />
+
         <!-- Placeholder for the tooltip -->
-        <div id="vis-tooltip" class="vg-tooltip"></div>
     </div>
 {% endblock %}
 {% block footer_static %}
-    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-    <script src="https://vega.github.io/datalib/datalib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-tooltip@0.32.0/build/vega-tooltip.min.js"></script>
     <script type="text/javascript">
     /*TODO: convert this as file*/
-      function parse(data, div) {
-	console.log(data);
 	    if (data.startsWith("file:")) {
 		var url = data.replace("file:", "");
 		    $("#"+div).html(url);
@@ -41,21 +41,115 @@
 					$("#data").DataTable({ pageLength: 10 });
 			}else {
 		    
-        var opt = {
-          mode: "vega-lite",
-          renderer: "svg",
-          actions: { export: true, source: false, editor: false },
         };
-        vegaEmbed("#" + div, JSON.parse(data)); //, opt, function (error, result) {
 
-	    }
 
-        //vegaEmbed("#" + div, url, opt, function (error, result) {
-          // result.view is the Vega View, url is the original Vega-Lite specification
-          //vegaTooltip.vegaLite(result.view, url);
-        //});
-      }
+    </script>
+	    <script>
+      // set the dimensions and margins of the graph
+      const margin = { top: 10, right: 30, bottom: 30, left: 60 },
+        width = 460 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
 
+      // append the svg object to the body of the page
+      const svg = d3
+        .select("#main_plot")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+
+	  const main_plot = {{data}}
+	  // bar plot 
+	  // blank plot 
+	  // sequence plot 
+	  // rdp 
+
+      //Line plot 
+      d3.csv.parse(
+      data).then(function (data) {
+        // Pivoting table for bar chart
+        var bar_data = d3
+          .group()
+          .key(function (d) {
+            return d.year;
+          })
+          .rollup(function (values) {
+            values.forEach(function (d) {
+              console.log(d);
+            });
+          })
+          .entries(data);
+
+        // group the data: I want to draw one line per group
+        const sumstat = d3.group(data, (d) => d.name); // nest function allows to group the calculation per level of a factor
+        console.log(sumstat);
+
+        // Add X axis --> it is a date format
+        const x = d3
+          .scaleLinear()
+          .domain(
+            d3.extent(data, function (d) {
+              return d.year;
+            }),
+          )
+          .range([0, width]);
+        svg
+          .append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(d3.axisBottom(x).ticks(2));
+
+        // Add Y axis
+        const y = d3
+          .scaleLinear()
+          .domain([
+            0,
+            d3.max(data, function (d) {
+              return +d.n;
+            }),
+          ])
+          .range([height, 0]);
+        svg.append("g").call(d3.axisLeft(y));
+
+        // color palette
+        const color = d3
+          .scaleOrdinal()
+          .range([
+            "#e41a1c",
+            "#377eb8",
+            "#4daf4a",
+            "#984ea3",
+            "#ff7f00",
+            "#ffff33",
+            "#a65628",
+            "#f781bf",
+            "#999999",
+          ]);
+        // Draw bar
+
+        // Draw the line
+        svg
+          .selectAll(".line")
+          .data(sumstat)
+          .join("path")
+          .attr("fill", "none")
+          .attr("stroke", function (d) {
+            return color(d[0]);
+          })
+          .attr("stroke-width", 1.5)
+          .attr("d", function (d) {
+            return d3
+              .line()
+              .x(function (d) {
+                return x(d.year);
+              })
+              .y(function (d) {
+                return y(+d.n);
+              })(d[1]);
+          });
+      });
     </script>
     <script src="/static/js/aks/plot_ajax.js"></script>
 {% endblock %}

@@ -2,17 +2,16 @@ import logging
 import os
 from typing import Text
 
-import polars as pl
-from flask import Blueprint, Response
-from flask import current_app as app
-from flask import jsonify, make_response, render_template, request
-from flask_login import current_user
-
 import config
+import polars as pl
 import riboflask
 from core_functions import (fetch_file_paths, fetch_files, fetch_studies,
                             fetch_study_info, fetch_user, form_filler,
                             generate_short_code, string2other)
+from flask import Blueprint, Response
+from flask import current_app as app
+from flask import jsonify, make_response, render_template, request
+from flask_login import current_user
 #from orfQuant import incl_OPM_run_orfQuant
 from sqlqueries_2 import get_table, get_user_id, sqlquery
 
@@ -75,6 +74,7 @@ def query_plot(data):  #TODO: add return type
 
     Returns:
     """
+    print(data, 'xxxxxxxxxxxxxxxxxxxxxxxx')
     # global user_short_passed
     data["transcript"] = data["transcript"].upper()
     print(data, "Anmol")

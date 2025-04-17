@@ -8,15 +8,16 @@ import polars.selectors as cs
 import numpy as np
 
 # ViennaRNA can be installed from here https://github.com/ViennaRNA/ViennaRNA
-try:
-    import RNA
-
-    vienna_rna = True
-except Exception:
-    print(
-        "Could not import the RNA module, ViennaRNA needs to be installed (https://github.com/ViennaRNA/ViennaRNA), MFE will not be plotted on traninfo plot"
-    )
-    vienna_rna = False
+# try:
+#     import RNA
+#
+#     vienna_rna = True
+# except Exception:
+#     print(
+#         "Could not import the RNA module, ViennaRNA needs to be installed (https://github.com/ViennaRNA/ViennaRNA), MFE will not be plotted on traninfo plot"
+#     )
+#     vienna_rna = False
+vienna_rna = False
 
 redhex = "#FF5F5B"
 greenhex = "#90E090"

@@ -1,11 +1,13 @@
-from typing import Dict, Tuple, Union
-from time import sleep
-from core_functions import dict2df
 import collections
-from fixed_values import merge_dicts
-from sqlitedict import SqliteDict
-import polars as pl
+from time import sleep
+from typing import Dict, Tuple, Union
+
 import pandas as pd
+import polars as pl
+from sqlitedict import SqliteDict
+
+from core_functions import dict2df
+from fixed_values import merge_dicts
 
 
 # Merge two dictionaries
@@ -43,7 +45,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
     offset_dict = {}
     for fl in data['file_paths_dict']['path']:
         try:
-            sqlite_db = SqliteDict(fl, autocommit=False)
+            sqlite_db = SqliteDict(fl)
         except FileNotFoundError:
             return pd.DataFrame(), pd.DataFrame()
         try:
@@ -72,32 +74,36 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
 
         try:
             alltrandict = sqlite_db[data['transcript']]
-            tdf = [dict2df(sqlite_db, [data['transcript'], "unambig"])]
+            tdf = [alltrandict["unambig"] ]
+            print("alltrandict", alltrandict)
             if ("ambig" in alltrandict):
                 print("hellow ambig")
-                tdf.append(dict2df(sqlite_db, [data['transcript'], "ambig"]))
+                tdf.append(alltrandict["ambig"])
             # TODO: Change merge_dicts to take a list of dicts instead of two
             # NOTE: pcr not found in databases, explore for other data
             if "pcr" in data:  # TODO: Convert this value as ambig and unambig
                 if "unambig_pcr" in alltrandict:
                     tdf.append(
-                        dict2df(sqlite_db,
-                                [data['transcript'], "unambig_pcr"]))
+                        alltrandict["unambig_pcr"]
+)
                 if ("ambig" in data) and "ambig_pcr" in alltrandict:
                     tdf.append(
-                        dict2df(sqlite_db, [data['transcript'], "ambig_pcr"]))
+                        alltrandict["ambig_pcr"]
+)
             print(
                 "tdfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                 fl, tdf)
 
             master_file_dict[fl] = pl.concat(tdf, how="diagonal_relaxed")
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
+            print("hellow")
     range_set = set(range(data["minread"], data["maxread"] + 1))
     if "subcodon" not in data:
+        print(master_file_dict, 'aaaaaaaaaaa')
         master_file_dict_values = pl.concat(master_file_dict.values()).filter(
-            pl.col("read_len").is_in(range_set)).select(
-                'pos', 'count').groupby('pos').sum()
+            pl.col("readlen").is_in(range_set)).select(
+                'pos', 'count').group_by('pos').sum()
         print(master_file_dict_values, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
         data["coverage"] = True  # For testing purpose only
         if "coverage" in data:

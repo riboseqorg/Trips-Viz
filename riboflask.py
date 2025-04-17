@@ -1,19 +1,17 @@
-import config
-import altair as alt
+import collections
 import os
+
+import altair as alt
+import config
+import fixed_values
 import numpy as np
 import polars as pl
-from plots import VegaPlot
+from core_functions import sequence2rdg
 from fetch_shelve_reads2 import get_reads
-from sqlitedict import SqliteDict
-import collections
-import matplotlib.pyplot as plt
-import matplotlib
-import fixed_values
 from fixed_values import get_user_defined_seqs
+from plots import VegaPlot
+from sqlitedict import SqliteDict
 from sqlqueries_2 import get_table, sqlquery
-
-matplotlib.use("agg")
 
 
 def generate_plot(data, settings) -> str:
@@ -111,7 +109,7 @@ def generate_plot(data, settings) -> str:
     start_stop_dataframe = pl.concat(
         [start_stop_dataframe, start_dataframe, stop_dataframe])
     start_stop = start_stop_dataframe.with_columns(
-        pl.col("type").apply(lambda x: x if x == 'start' else 'stop'))
+        pl.col("type").map_elements(lambda x: x if x == 'start' else 'stop'))
     print(start_stop, "hello!!")
 
     # TODO: add avarible of rnaseq
@@ -143,5 +141,9 @@ def generate_plot(data, settings) -> str:
             VegaPlot(seq_frames.to_pandas(), colors).seq_plot())
     plt = plt.vact_plot_json([plot] + start_stop_plot)
 
-    print(all_rna_reads, rna_seqvar_dict, "Anmol Kiran You are here")
+    print(all_rna_reads.head().write_csv(), rna_seqvar_dict, "Anmol Kiran You are here")
+    rdg = str(sequence2rdg(seq))
+    print(rdg)
+
+    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg} # all_rna_reads.sort("pos").write_csv()
     return plt.to_json()

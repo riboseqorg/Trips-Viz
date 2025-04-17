@@ -1,11 +1,7 @@
 import json
-
 # import riboflask_datasets
 import logging
 import os
-
-# , taskstatus_blueprint
-# from orfquery_routes import translated_orf_blueprint, orfquery_blueprint
 import re
 import smtplib
 import sqlite3
@@ -17,50 +13,33 @@ from email.mime.text import MIMEText
 from json import dumps, loads
 from typing import Any, Union
 
+import config
+import pandas as pd
 import polars as pl
-from flask import (
-    Flask,
-    Response,
-    flash,
-    get_flashed_messages,
-    redirect,
-    render_template,
-    request,
-    send_from_directory,
-    url_for,
-)
-from flask_login import (
-    LoginManager,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
+from comparison_routes import comparequery, comparison_plotpage_blueprint
+from core_functions import (User, base62_to_integer, fetch_file_paths,
+                            fetch_user, string2other)
+from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
+from flask import (Flask, Response, flash, get_flashed_messages, redirect,
+                   render_template, request, send_from_directory, url_for)
+from flask_login import (LoginManager, current_user, login_required,
+                         login_user, logout_user)
 from flask_mail import Mail
 from flask_xcaptcha import XCaptcha
-from sqlitedict import SqliteDict
-from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
-
-import config
-from comparison_routes import comparequery, comparison_plotpage_blueprint
-from core_functions import (
-    User,
-    base62_to_integer,
-    fetch_file_paths,
-    fetch_user,
-    string2other,
-)
-from diff_exp_routes import diff_plotpage_blueprint, diffquery_blueprint
 from metainfo_routes import metainfo_plotpage_blueprint, metainfoquery
-from pause_routes import pause_detection_blueprint, find_pauses
-from single_transcript_routes import query_plot, single_transcript_plotpage_blueprint
+# , taskstatus_blueprint
+from orfquery_routes import orfquery, translated_orf_blueprint  # _blueprint
+from pause_routes import find_pauses, pause_detection_blueprint
+from single_transcript_routes import (query_plot,
+                                      single_transcript_plotpage_blueprint)
 from single_transcript_routes_genomic import (
     single_transcript_plotpage_genomic_blueprint,
-    single_transcript_query_genomic_blueprint,
-)
+    single_transcript_query_genomic_blueprint)
+from sqlitedict import SqliteDict
 from sqlqueries_2 import get_table, get_user_id, sqlquery, update_table
 from traninfo_routes import traninfo_plotpage_blueprint, traninfoquery
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 root_logger = logging.getLogger()
 # lhStdout = root_logger.handlers[0]
@@ -94,7 +73,7 @@ app.register_blueprint(single_transcript_query_genomic_blueprint)
 app.register_blueprint(comparison_plotpage_blueprint)
 app.register_blueprint(diff_plotpage_blueprint)
 app.register_blueprint(diffquery_blueprint)
-# app.register_blueprint(translated_orf_blueprint)
+app.register_blueprint(translated_orf_blueprint)
 # app.register_blueprint(orfquery_blueprint)
 app.register_blueprint(pause_detection_blueprint)
 # app.register_blueprint(pausequery_blueprint)
@@ -103,6 +82,10 @@ app.register_blueprint(traninfo_plotpage_blueprint)
 app.config.from_pyfile("config.py")
 
 xcaptcha = XCaptcha(app=app)
+
+
+
+from flask_cors import CORS, cross_origin
 
 app.config["UPLOAD_FOLDER"] = "/static/tmp"
 app.config["SECURITY_PASSWORD_SALT"] = config.PASSWORD_SALT
@@ -1569,9 +1552,11 @@ def dataset_breakdown(organism, transcriptome):
     # start, stop)
 
 
-@app.route("/query", methods=["POST"])
+@app.route("/query", methods=["POST","GET"])
+@cross_origin()
 def query() -> str:
     data = request.form.to_dict()
+    print(data)
     to_return = ""
     query = string2other(loads(data["query"]))
     if data["pathname"] == "single_transcript_plot":
@@ -1585,7 +1570,10 @@ def query() -> str:
         to_return = traninfoquery(query)
     elif data["pathname"] == "metainfo_plot":
         to_return = metainfoquery(query)
+    elif data["pathname"] == "orf_translation":
+        to_return = orfquery(query)
     return to_return
+
 
 
 if __name__ == "__main__":

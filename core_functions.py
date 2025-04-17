@@ -53,6 +53,7 @@ class User(UserMixin):
 
 def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
     dfs = []  # Allow empty dict
+    print(sorted(list(sqldict.keys()), reverse=True)[:30], keys)
     if len(keys) == 2:  # For gene and triplet periodicity use two keys
         try:
             tdict = sqldict[keys[0]][keys[1]]
@@ -71,6 +72,7 @@ def dict2df(sqldict: Dict, keys: List) -> pl.DataFrame | List:
                     dfs = pl.DataFrame()
             elif keys[0] == "offsets":
                 print("mmmmmmmmmmmmmmmmmmmmm", tdict)
+                return tdict
                 df = (
                     pl.DataFrame(
                         {
@@ -315,7 +317,7 @@ def fetch_files(accepted_studies: pl.DataFrame) -> pl.DataFrame:
         .filter(pl.col("study_id").is_in(accepted_studies["study_id"]))
         .select("file_id", "study_id", "file_name", "file_description", "file_type")
         .with_columns(
-            pl.col("file_name").apply(lambda x: x.replace(".shelf", ".sqlite"))
+            pl.col("file_name").map_elements(lambda x: x.replace(".shelf", ".sqlite"))
         )
         .join(accepted_studies, on="study_id")
     )
@@ -407,8 +409,7 @@ def fetch_file_paths(data: Dict[str, Any]) -> pl.DataFrame:
         .join(studies, on="study_id")
         .with_columns(
             pl.col("file_name")
-            .apply(lambda x: x.replace(".shelf", ".sqlite"))
-            .alias("file_name")
+            .map_elements(lambda x: x.replace(".shelf", ".sqlite"))
         )
     )
 
@@ -634,13 +635,25 @@ def calculate_coverages(
         sqlite_db.commit()
 
 
+def tran_count(trancounts, typ="unambig"):
+    t_trancounts = trancounts[typ] if typ in trancounts else {}
+    if t_trancounts:
+        lists = []
+        for readlen, counts in trancounts.items():
+            for pos, count in counts.items():
+                lists.append([readlen, pos, count])
+        t_trancounts = pl.DataFrame(lists, schema=["readlen", "pos", "count"])
+    else:
+        t_trancounts = pl.DataFrame({"readlen": [], "pos": [], "count": []})
+
+    return t_trancounts
+
+
 # Builds a profile, applying offsets
 def build_profile(
     trancounts: Dict[str, Dict[int, List[int]]],
-    offsets: Dict[int, int],
+    offsets_5p_offsetsNscores: Dict[int, int],
     ambig: bool,
-    minscore: int,
-    scores: Dict[int, int],
 ):
     """
 
@@ -659,50 +672,36 @@ def build_profile(
     # print ("minscore", minscore)
     minreadlen = 15
     maxreadlen = 150
-    profile = {}
-    unambig_trancounts = trancounts["unambig"] if "unambig" in trancounts else {}
-    if not unambig_trancounts:
-        unambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
-    else:
-        lists = []
-        for readlen, counts in unambig_trancounts.items():
-            for pos, count in counts.items():
-                lists.append([readlen, pos, count])
-        unambig_trancounts_df = pl.DataFrame(lists, schema=["readlen", "pos", "count"])
-    ambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
+
+    t_trancounts = trancounts["unambig"]  # Unambig
 
     if ambig:
-        ambig_trancounts = trancounts["ambig"] if "ambig" in trancounts else {}
-        if ambig_trancounts:
-            lists = []
-            for readlen, counts in ambig_trancounts.items():
-                for pos, count in counts.items():
-                    lists.append([readlen, pos, count])
-            ambig_trancounts_df = pl.DataFrame(
-                lists, schema=["readlen", "pos", "count"]
+        t_trancounts = (
+            pl.concat([t_trancounts, trancounts["ambig"]])
+            .groupby("readlen", "pos")
+            .agg(pl.sum("count"))
+            .filter(
+                (pl.col("readlen") >= minreadlen) & (pl.col("readlen") <= maxreadlen)
             )
-    transcounts_df = (
-        pl.concat([unambig_trancounts_df, ambig_trancounts_df])
-        .groupby("readlen", "pos")
-        .agg(pl.sum("count"))
-    ).filter(pl.col("readlen") >= minreadlen and pl.col("readlen") <= maxreadlen)
+        )
+    else:
+        if not t_trancounts.is_empty():
+            t_trancounts = t_trancounts.filter(
+                (pl.col("readlen") >= minreadlen) & (pl.col("readlen") <= maxreadlen)
+            )
+        if t_trancounts.is_empty():
+            return pl.DataFrame({"pos": [], "count": []})
 
-    del unambig_trancounts_df, ambig_trancounts_df
-
-    read_scores = pl.DataFrame({"readlen": scores.keys(), "score": scores.values()})
-    if minscore:
-        read_scores = read_scores.filter(pl.col("score") >= minscore)
-    transcounts_df = transcounts_df.join(read_scores, on="readlen", how="inner")
-    read_offsets = pl.DataFrame({"readlen": offsets.keys(), "offset": offsets.values()})
-    profile = (
-        transcounts_df.join(read_offsets, on="readlen", how="left")
+    t_trancounts = (
+        t_trancounts.join(offsets_5p_offsetsNscores, on="readlen", how="left")
         .fill_null(14)
         .with_columns(pos=pl.col("pos") + pl.col("offset") + 1)
         .select("pos", "count")
         .groupby("pos")
         .agg(pl.sum("count"))
     )
-    return profile
+
+    return t_trancounts
 
 
 # Builds a profile, applying offsets
@@ -722,21 +721,13 @@ def build_proteomics_profile(
     minreadlen = 15
     maxreadlen = 150
     profile = {}
-    unambig_trancounts = trancounts["unambig"] if "unambig" in trancounts else {}
-    if not unambig_trancounts:
-        unambig_trancounts_df = pl.DataFrame({"readlen": [], "pos": [], "count": []})
-    else:
-        lists = []
-        for readlen, counts in unambig_trancounts.items():
-            for pos, count in counts.items():
-                lists.append([readlen, pos, count])
-        unambig_trancounts_df = (
-            pl.DataFrame(lists, schema=["readlen", "pos", "count"])
-            .filter(pl.col("readlen") >= minreadlen and pl.col("readlen") <= maxreadlen)
-            .with_columns(count=pl.col("count") / pl.col("readlen") / 3.0)
-        )
+    t_trancounts = (
+        tran_count(trancounts)
+        .filter(pl.col("readlen") >= minreadlen and pl.col("readlen") <= maxreadlen)
+        .with_columns(count=pl.col("count") / pl.col("readlen") / 3.0)
+    )
     profile = []
-    for row in unambig_trancounts_df.iter_rows(names=True):
+    for row in t_trancounts.iter_rows(names=True):
 
         for pos in range(row["pos"], row["pos"] + row["readlen"], 3):
             profile.append([pos, row["count"]])
@@ -761,3 +752,114 @@ def fetch_filename_file_id(file_id: int) -> str:
     Example:
     """
     return get_table("files").filter(pl.col("file_id") == file_id)[0, "file_name"]
+
+
+
+# Sequence to RDG
+
+def extract_translons(
+    sequence: str,
+    starts: set[str] = {"ATG", "CTG", "GTG"},
+    min_length: int = 30,
+) -> list[tuple[int, int]]:
+    """
+    Extract open reading frames (translons) from a nucleotide sequence.
+
+    Parameters:
+    - sequence (str): The input nucleotide sequence.
+    - starts (Set[str]): Set of start codons to initiate translon detection.
+            Default: {"ATG", "CTG", "GTG"}.
+    - min_length (int): Minimum length of translons to be included in
+            the result. Default: 10.
+
+    Returns:
+    List[Tuple[int, int]]: A list of tuples representing the start and
+                        stop positions of detected translons.
+
+    Example:
+    ```python
+    sequence = "ATGCTAGCATGAATAG"
+    translons = extract_translons(sequence)
+    print(translons)
+    # Output: [(0, 15)]
+    ```
+    """
+    if not sequence:
+        return []
+    sequence = sequence.upper()
+    if not starts:
+        starts = {"ATG"}# {"ATG", "CTG", "GTG"}
+    aug_index = pd.read_table("AUG.csv", comment="#")[["sequence"]].reset_index().rename(columns={"index": "rank"})
+    print(aug_index.head())
+
+    stops = {"TAA", "TAG", "TGA"}
+    translons = []
+    starts_poses = {0:[],1:[],2:[]}
+    seq_len = len(sequence)
+    start_positions = []
+    max_translone_count = 1000
+    translon_count = 0
+    df = [] # frame, from, to, type
+    rank  = -1
+    last_stop_start_indexes = []
+
+
+    for i in range(seq_len - 3):
+        codon = sequence[i: i + 3]
+        if codon in starts:
+            if i < 6:
+                rank = -1
+            else:
+                rank = aug_index.loc[aug_index["sequence"] == sequence[i-6:i+5], "rank"].values[0] + 1
+            starts_poses[i%3].append((i, rank))
+            start_positions.append(i)
+
+        elif codon in stops and starts_poses[i%3]:
+            for pos, rank in starts_poses[i%3]:
+                if (i-pos+3) >= min_length:
+                    translons.append((pos, i+2))
+                    start_index = start_positions.index(pos)
+                    if start_index !=0:
+                        df.append([ i%3, pos,[pos, i+2],[ start_positions[start_index-1], pos],[ i+2, seq_len], rank ])
+                    else:
+                        df.append([ i%3, pos,[pos, i+2],[ 0, pos],[ i+2, seq_len], rank ])
+
+                    translon_count += 1
+                    if translon_count == max_translone_count:
+                        break
+                else:
+                    start_index = start_positions.index(pos)
+                    start_positions = start_positions[:start_index]
+                    break
+            starts_poses[i%3] = []
+        if translon_count == max_translone_count:
+            break
+    if translon_count == max_translone_count:
+        return translons, df
+    for start_pos_list in starts_poses.values():
+        for start, rank in start_pos_list:
+            if seq_len - start >= min_length:
+                translons.append((start, seq_len-1))
+                df.append([ start%3, start,[start, seq_len],[ start_positions[start_positions.index(start)-1] , start],[ seq_len, seq_len], rank ])
+                translon_count += 1
+                if max_translone_count == translon_count:
+                    break
+            else:
+                break
+
+
+    return translons, df
+
+def sequence2rdg(sequence):
+    translons = extract_translons(sequence,starts={"ATG"},min_length=10)
+    df = pd.DataFrame(translons[1], columns=['frame',"start","cds", "5utr","3utr","rank"]).sort_values('start', ignore_index=True).reset_index().rename(columns={'index':'order'})
+    df = df.melt(id_vars=["order","rank"], value_vars=["cds", "5utr","3utr"]).rename(columns={'variable':'frag'})
+
+    df['x1'] = df['value'].apply(lambda x:x[0])
+    df['x2'] = df['value'].apply(lambda x:x[1])
+    df["lw"] = 1
+    df.loc[df['frag']=='cds', 'lw'] = 5
+    df["org_order"] = df["order"]
+    # del df['value']
+
+    return df.to_json(orient="records")

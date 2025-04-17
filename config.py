@@ -21,15 +21,21 @@ DEFAULT_USER_SETTINGS = {  # This should match the table columns
     "axis_label_size": 20,
     "marker_size": 20,
     "cds_marker_width": 2,
-    "cds_marker_colour": '#000000',
+    "cds_marker_colour": "#000000",
     "legend_size": 17,
-    "ribo_linewidth": 2
+    "ribo_linewidth": 2,
 }
-STARTS_CODONS = ['aug', 'cug', 'gug', 'none']
+STARTS_CODONS = ["aug", "cug", "gug", "none"]
 VARIABLE_UPPER = {"tranlist": str.upper}
 BOX_COLORS = [
-    '#ff0000', '#0010FF', '#0DFF00', 'FFA200', '#BA00FF', '#02EDFF', '#F9FF12',
-    '#FF02DA'
+    "#ff0000",
+    "#0010FF",
+    "#0DFF00",
+    "FFA200",
+    "#BA00FF",
+    "#02EDFF",
+    "#F9FF12",
+    "#FF02DA",
 ]
 VARIABLE_CONVERSION = {
     "cds_start": int,
@@ -80,7 +86,7 @@ VARIABLE_CONVERSION = {
 SCRIPT_LOC = "."
 CDS_MARKER_COLOUR = "black"
 RIBO_LINEWIDTH = 2
-SQLITES_DIR = "trips_data_sample"
+SQLITES_DIR = "anmol_trips_data_sample"
 ANNOTATION_DIR = "trips_annotations_sample"
 UPLOADS_DIR = SCRIPT_LOC + "/uploads/"
 EMAIL_PASS = ""
