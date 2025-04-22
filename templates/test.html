@@ -19,8 +19,57 @@
   </head>
   <body>
     <div id="plot"></div>
+    <div id="frame_1" style="border-style: solid">
+      <svg width="600" height="20"></svg>
+    </div>
+    <div id="frame_2" style="border-style: solid">
+      <svg width="600" height="20"></svg>
+    </div>
+    <div id="frame_3" style="border-style: solid">
+      <svg width="600" height="20"></svg>
+    </div>
+    <div id="seq" style="border-style: solid">
+      <svg width="600" height="20"></svg>
+    </div>
+
     <div id="rdg"></div>
     <div id="cds"></div>
+    <div>
+      <style>
+        .dataframe > thead > tr,
+        .dataframe > tbody > tr {
+          text-align: right;
+          white-space: pre-wrap;
+        }
+      </style>
+      <small>shape: (3, 2)</small>
+      <table border="1" class="dataframe">
+        <thead>
+          <tr>
+            <th>a</th>
+            <th>b</th>
+          </tr>
+          <tr>
+            <td>i64</td>
+            <td>i64</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>null</td>
+          </tr>
+          <tr>
+            <td>null</td>
+            <td>null</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </body>
   <footer>
     <script>
@@ -35,7 +84,59 @@
         .y((d) => yScale(d.value))
         .curve(d3.curveNatural);
       $.post("http://localhost:5000/query", input, function (data2) {
-        console.log(data2.plot);
+        console.log(data2.seq);
+        seq_plot = d3.select("#seq").select("svg");
+        data2.seq.split("").forEach((d, i) => {
+          seq_plot.append("text").text(d).attr("x", i).attr("y", 0);
+        });
+
+        start_stop = structuredClone(JSON.parse(data2.start_stop));
+        for (var i = 1; i < 4; i++) {
+          tframe = d3.select("#frame_" + i).select("svg");
+          tframe
+            .append("rect")
+            .attr("width", "100%")
+            .attr("height", "600")
+            .attr("fill", "red");
+          var bar_color = "white";
+
+          start_stop.forEach((dt) => {
+            if (dt.frame == i) {
+              if (dt.type == "start") {
+                bar_color = "white";
+              } else {
+                bar_color = "black";
+              }
+              tframe
+                .append("line")
+                .attr("x1", dt.pos)
+                .attr("y1", 0)
+                .attr("x2", dt.pos)
+                .attr("y2", 100)
+                .attr("stroke", bar_color)
+                .attr("stroke-width", 20);
+            }
+          });
+          tframe
+            .append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "end")
+            .attr("x", 300)
+            .attr("y", 0 - 6)
+            .text("Postions");
+          tframe
+            .append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "end")
+            .attr("y", 6)
+            .attr("dy", ".75em")
+            .attr("transform", "rotate(-90)")
+
+            .attr("stroke", "white")
+            .text(i);
+        }
+
+        // console.log(data2.plot);
         data = d3.csvParse(data2.plot);
         data = data.slice().sort((a, b) => d3.ascending(a.pos, b.pos));
 
@@ -81,14 +182,14 @@
           .scaleOrdinal()
           .domain(res)
           .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-        console.log(color(1));
-        console.log(sumstat[0][1]);
-        console.log("Anmol");
+        // console.log(color(1));
+        // console.log(sumstat[0][1]);
+        // console.log("Anmol");
 
         sumstat.forEach((d) => {
-          console.log(d[1]);
-          console.log(d[0]);
-          console.log("Kiran");
+          // console.log(d[1]);
+          // console.log(d[0]);
+          // console.log("Kiran");
           svg
             .append("path")
             .datum(d[1])
@@ -138,7 +239,7 @@
         $("line").live("click", function () {
           var thisClass = parseInt(this.className.baseVal, 10);
           var frag = $(this).attr("frag");
-          console.log(frag);
+          // console.log(frag);
           undo_list = [];
           if (frag == "5utr") {
             for (let obj of datax) {
@@ -181,13 +282,14 @@
         // NOTE: Cumulative CDS plot
 
         function cds_plot(datat) {
-          console.log(datat);
+          // console.log(datat);
           d3.select("#cds").select("svg").remove();
           d3.select("#cds")
             .append("svg")
             .attr("width", full_width)
             .attr("height", "100");
           var line = d3.select("#cds").select("svg");
+          const width = 5;
           datat.forEach((dt) => {
             if (dt.frag == "cds") {
               if (dt.x1 % 3 == 0) {
@@ -198,7 +300,6 @@
                 color = "red";
               }
 
-              width = 5;
               line
                 .append("line")
                 .attr("x1", dt.x1)
@@ -215,7 +316,7 @@
 
         // NOTE: Plotting cds paths
         function draw(datat) {
-          console.log(datat);
+          // console.log(datat);
           d3.select("#rdg").select("svg").remove();
           var svg = d3
             .select("#rdg")
@@ -277,6 +378,8 @@
           });
         }
 
+        // Undo
+
         function undoo() {
           if (undo.length > 0) {
             var last_values = undo.pop();
@@ -323,7 +426,7 @@
         }
 
         function submit() {
-          console.log(datax);
+          // console.log(datax);
         }
 
         //svg
