@@ -110,7 +110,6 @@ def generate_plot(data, settings) -> str:
         [start_stop_dataframe, start_dataframe, stop_dataframe])
     start_stop = start_stop_dataframe.with_columns(
         pl.col("type").map_elements(lambda x: x if x == 'start' else 'stop'))
-    print(start_stop, "hello!!")
 
     # TODO: add avarible of rnaseq
 
@@ -118,32 +117,10 @@ def generate_plot(data, settings) -> str:
         data
     )  # TODO: keep rna_Seqvar_dict and ribo_seq_var_dict meltated to compine them
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
-    colors = alt.Scale(domain=[1, 2, 3], range=config.BOX_COLORS[:3])
-    plt = VegaPlot(all_rna_reads, colors)
-    if 'line' in data:
-        plot = plt.line("pos:Q", "count")
-    else:
-        plot = plt.bar("pos:Q", "count")
     frame_3 = 0 if 'show_nuc' in data else 3
-    start_stop_plot = []
-    for frame in [1, 2, 3]:
-        start_stop_plot.append(
-            VegaPlot(start_stop.filter(pl.col("frame") == frame)).vline(
-                "pos", last=True if frame == frame_3 else False))
-    # plt2 = VegaPlot(all_rna_reads).scatter("pos", "count")
-    if not frame_3:
-        seq_frames = pl.DataFrame({
-            'sequence': list(seq),
-            'pos': range(len(seq)),
-            'y': [0] * len(seq)
-        }).with_columns(frame=pl.col('pos') % 3 + 1)
-        start_stop_plot.append(
-            VegaPlot(seq_frames.to_pandas(), colors).seq_plot())
-    plt = plt.vact_plot_json([plot] + start_stop_plot)
-
-    print(all_rna_reads.head().write_csv(), rna_seqvar_dict, "Anmol Kiran You are here")
+    
     rdg = str(sequence2rdg(seq))
-    print(rdg)
+    # print(rdg)
 
-    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg} # all_rna_reads.sort("pos").write_csv()
-    return plt.to_json()
+    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': start_stop.to_pandas().to_json(orient="records"),'seq':seq} # all_rna_reads.sort("pos").write_csv()
+    # return plt.to_json()

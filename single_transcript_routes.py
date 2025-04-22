@@ -74,10 +74,8 @@ def query_plot(data):  #TODO: add return type
 
     Returns:
     """
-    print(data, 'xxxxxxxxxxxxxxxxxxxxxxxx')
     # global user_short_passed
     data["transcript"] = data["transcript"].upper()
-    print(data, "Anmol")
     data["file_ids"] = []
 
     # NOTE: Listing selected files for each file type
@@ -98,7 +96,6 @@ def query_plot(data):  #TODO: add return type
     data['owner'] = owner
 
 
-    user = fetch_user()[0]
 
     if owner == 1:
         sql_path = "{0}/{1}/{2}/{2}.{3}.sqlite".format(config.SCRIPT_LOC,
@@ -122,7 +119,6 @@ def query_plot(data):  #TODO: add return type
     else:
         sql_path = "{0}/transcriptomes/{1}/{2}/{3}/{2}_{3}.sqlite".format(
             config.UPLOADS_DIR, owner, data["organism"], data["transcriptome"])
-    print(sql_path, "I am here")
     transcripts = sqlquery(
         sql_path,
         "transcripts").filter((pl.col('transcript') == data['transcript'])
@@ -134,109 +130,19 @@ def query_plot(data):  #TODO: add return type
         logging.debug(return_str)
         return return_str
     if transcripts.shape[0] > 1:
-        # TODO: Create a popup dialog box
-        t_transcripts = transcripts.filter(
+        # NOTE: if number of transcripts are more than one
+        # TODO: write JS for csv to table
+        return transcripts.filter(
             pl.col('gene') == data['transcript']).select(
                 "transcript", "version", "cds_start", "cds_stop",
                 "principle").with_columns(cds_len=pl.col("cds_stop") -
                                           pl.col("cds_start") +
-                                          1).to_pandas().to_html()
-        return t_transcripts
-        # Create popup window
-        pass
-    print(data['transcript'] in transcripts['transcript'], "yyyyyyyyyyyyy")
+                                          1).to_csv()
 
-    # if data['transcript'] not in transcripts['transcript']:
-    #     return_str = "TRANSCRIPTS"
-    #     if user == "test":
-    #         return_str = "QUANT_TRANSCRIPTS"
-    #         try:  #  Riboseq
-    #             pre_orfQuant_res = incl_OPM_run_orfQuant(
-    #                 transcripts[0, 'transcript'], sql_path,
-    #                 file_paths_dict.loc[file_paths_dict["file_type"] ==
-    #                                     "riboseq", "path"].values)
-    #             pre_TPM_Ribo = TPM(
-    #                 transcripts[0, 'transcript'], sql_path,
-    #                 file_paths_dict.loc[file_paths_dict["file_type"] ==
-    #                                     "riboseq", "path"].values, "ribo")
-    #
-    #             max_TPM_Ribo = max(pre_TPM_Ribo.values())
-    #             TPM_Ribo = {
-    #                 transcript:
-    #                 round((pre_TPM_Ribo[transcript] * 100. / max_TPM_Ribo), 2)
-    #                 for transcript in pre_TPM_Ribo
-    #             }
-    #
-    #             max_orf = max(pre_orfQuant_res.values())
-    #             orfQuant_res = {
-    #                 transcript:
-    #                 round((pre_orfQuant_res[transcript] / max_orf) * 100, 2)
-    #                 for transcript in pre_orfQuant_res
-    #             }
-    #
-    #         except KeyError:
-    #             orfQuant_res = {
-    #                 transcript: None
-    #                 for transcript in transcripts.transcript
-    #             }
-    #             TPM_Ribo = orfQuant_res.copy()
-    #
-    #         try:  #RNA Seq
-    #             pre_TPM_RNA = TPM(
-    #                 transcripts[0, 'transcript'], sql_path,
-    #                 file_paths_dict.loc[file_paths_dict["file_type"] ==
-    #                                     "rnaseq", "path"].values, "rna")
-    #             max_TPM_RNA = max(pre_TPM_RNA.values())
-    #             TPM_RNA = {
-    #                 transcript:
-    #                 round((pre_TPM_RNA[transcript] / max_TPM_RNA) * 100, 2)
-    #                 for transcript in pre_TPM_RNA
-    #             }
-    #
-    #         except KeyError:
-    #             TPM_RNA = {
-    #                 transcript: None
-    #                 for transcript in transcripts["transcript"]
-    #             }
-
-    # for transcript in transcripts.iter_rows(
-    #         named=True):  # TODO: Replace with iter tuple
-    #     if not transcript['cds_start']:
-    #         cdslen = None
-    #         three_utr_len = None
-    #     else:
-    #         cdslen = transcript['cds_stop'] - transcript['cds_start']
-    #         three_utr_len = transcript['length'] - transcript['cds_stop']
-    #     if user == "test":
-    #         try:
-    #             OPM_coverage = orfQuant_res[transcript['length']]
-    #         except KeyError:
-    #             OPM_coverage = None
-    #         try:
-    #             RNA_coverage = TPM_RNA[transcript['length']]
-    #         except KeyError:
-    #             RNA_coverage = None
-    #         try:
-    #             ribo_coverage = TPM_Ribo[transcript['length']]
-    #         except KeyError:
-    #             ribo_coverage = None
-    #         return_str += (":{},{},{},{},{},{},{},{},{}".format(
-    #             transcript['transcript'], transcript['version'],
-    #             transcript['length'], transcript['cds_start'], cdslen,
-    #             three_utr_len, OPM_coverage, ribo_coverage, RNA_coverage))
-    #
-    #     else:
-    #         return_str += (":{},{},{},{},{},{},{}".format(
-    #             transcript['transcript'], transcript['version'],
-    #             transcript['length'], transcript['cds_start'], cdslen,
-    #             three_utr_len, transcript['principle']))
-    # print(return_str)
-    # return return_str
-    # NOTE: Till here
+        # NOTE: Till here
 
     # get user_id
     settings = config.DEFAULT_USER_SETTINGS.copy()
-    print(current_user.is_authenticated, "ZZZZZZZZZZZ")
     if current_user.is_authenticated:
 
         user_name = current_user.name
