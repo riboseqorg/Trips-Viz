@@ -66,8 +66,8 @@ def generate_plot(data, settings) -> str:
 
     # TODO: I need to orf in sqlite file
     orfs = SqliteDict(sqlpath.replace(".sqlite","_helper.sqlite")) # TODO:: Check if it will work 
-    start_stop_dataframe = pl.DataFrame(orfs["start_stop_list"], schema=["frame", "pos", "type"])
-    orf_dataframe = pl.DataFrame(orfs["orfs"], schema=["frame", "start", "stop"])
+    start_stop_dataframe = pl.DataFrame(orfs[data["transcript"]]["start_stop_list"], schema=["frame", "pos", "type"])
+    orf_dataframe = pl.DataFrame(orfs[data["transcript"]]["orfs"], schema=["frame", "start", "stop"])
     # TODO: add avarible of rnaseq
 
     all_rna_reads, rna_seqvar_dict = get_reads(
