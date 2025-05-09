@@ -1,0 +1,622 @@
+// Conversions/constants
+
+const codon2aaDict = {
+  GCA: "A",
+  GCC: "A",
+  GCG: "A",
+  GCT: "A",
+  TGC: "C",
+  TGT: "C",
+  GAC: "D",
+  GAT: "D",
+  GAA: "E",
+  GAG: "E",
+  TTC: "F",
+  TTT: "F",
+  GGA: "G",
+  GGC: "G",
+  GGG: "G",
+  GGT: "G",
+  CAC: "H",
+  CAT: "H",
+  ATA: "I",
+  ATC: "I",
+  ATT: "I",
+  AAA: "K",
+  AAG: "K",
+  CTA: "L",
+  CTC: "L",
+  CTG: "L",
+  CTT: "L",
+  TTA: "L",
+  TTG: "L",
+  ATG: "M",
+  AAC: "N",
+  AAT: "N",
+  CCA: "P",
+  CCC: "P",
+  CCG: "P",
+  CCT: "P",
+  CAA: "Q",
+  CAG: "Q",
+  AGA: "R",
+  AGG: "R",
+  CGA: "R",
+  CGC: "R",
+  CGG: "R",
+  CGT: "R",
+  AGC: "S",
+  AGT: "S",
+  TCA: "S",
+  TCC: "S",
+  TCG: "S",
+  TCT: "S",
+  ACA: "T",
+  ACC: "T",
+  ACG: "T",
+  ACT: "T",
+  GTA: "V",
+  GTC: "V",
+  GTG: "V",
+  GTT: "V",
+  TGG: "W",
+  TAC: "Y",
+  TAT: "Y",
+  TAA: "*",
+  TAG: "*",
+  TGA: "*",
+};
+
+// slide :: (Int, Int) -> [a] -> [[a]]
+const slide = (n, m) => (xs) => {
+  if (n > xs.length) return [];
+  else return [xs.slice(0, n), ...slide(n, m)(xs.slice(m))];
+};
+// slideStr :: (Int, Int) -> String -> [String]
+const slideStr = (n, m) => (str) =>
+  slide(n, m)(Array.from(str)).map((s) => s.join(""));
+const codon2amino = (str, frame) =>
+  slideStr(
+    3,
+    3,
+  )(str.slice(frame))
+    .map((c) => codon2aaDict[c])
+    .join("");
+
+// Plots
+/// Plot dimensions
+////RDG Dimension
+const full_width = 800;
+const rdg_height = 600;
+const line_height = 600;
+const margin = {
+  top: 10,
+  right: 10,
+  bottom: 20,
+  left: 40,
+};
+
+const base_plot_dimensions = {
+  width: full_width - (margin.left + margin.right),
+  height: 600 - (margin.top + margin.bottom),
+};
+
+const frame_plot_dimensions = {
+  width: full_width - (margin.left + margin.right),
+  height: 50 - (margin.top + margin.bottom),
+};
+
+const frame_colors = new Map([
+  [0, "#e41a1c"],
+  [1, "#377eb8"],
+  [2, "#4daf4a"],
+]);
+
+const charge_colors = new Map([
+  [1, "red"],
+  [2, "blue"],
+  [3, "green"],
+]);
+const phobicity_colors = new Map([
+  [1, "red"],
+  [2, "blue"],
+  [3, "green"],
+]);
+
+const nuc_colors = new Map([
+  ["G", "green"],
+  ["C", "red"],
+  ["A", "blue"],
+  ["T", "black"],
+]);
+
+const amino_colors = new Map([
+  ["A", "amber"],
+  ["R", "red"],
+  ["N", "blue"],
+  ["D", "purple"],
+  ["C", "green"],
+  ["Q", "orange"],
+  ["E", "yellow"],
+  ["G", "brown"],
+  ["H", "pink"],
+  ["I", "grey"],
+  ["L", "cyan"],
+  ["K", "black"],
+  ["M", "magenta"],
+  ["F", "white"],
+  ["P", "indigo"],
+  ["S", "lime"],
+  ["T", "maroon"],
+  ["W", "olive"],
+  ["Y", "navy"],
+  ["V", "teal"],
+  ["*", "red"],
+]);
+
+// Zooming
+
+function zoom(svg) {
+  const extent = [
+    [marginLeft, marginTop],
+    [width - marginRight, height - marginTop],
+  ];
+  svg.call(
+    d3.zoom().scaleExtent([1, 8]).translateExtent(extent).on("zoom", zoomed),
+  );
+  function zoomed(event) {
+    x.range([marginLeft, width - marginRight]).map((d) =>
+      d3.event.transform.rescaleX(x),
+    );
+    svg
+      .selectAll(".plot path")
+      .attr("x", (d) => x(d.pos))
+      .attr("width", x.bandwidth());
+    svg.selectAll(".x-axis").call(xAxis);
+  }
+}
+
+//// Base plot dimensions
+//// Frames dimensions
+
+// Rescaling plots
+// TODO: Auto call function
+
+// RDG
+function rdg_plot(data) {
+  console.log(data);
+  d3.select("#rdg").select("svg").remove();
+  var svg = d3
+    .select("#rdg")
+    .append("svg")
+    .attr("height", rdg_height)
+    .attr("width", full_width - 40);
+  var line = d3.select("#rdg").select("svg");
+  console.log(d3.extent(data, (d) => +d.x2)[1]);
+  const x = d3
+    .scaleLinear()
+    .domain([0, d3.extent(data, (d) => +d.x2)[1]]) // + mean incremental // TODO:replace this with a fixed value later
+    .range([0, full_width]);
+  var i = 0;
+  var already_there = [];
+  data.forEach((dt) => {
+    var width = 1;
+
+    if (dt.frag == "cds") {
+      if (dt.x1 % 3 == 0) {
+        color = "green";
+      } else if (dt.x1 % 3 == 1) {
+        color = "blue";
+      } else {
+        color = "red";
+      }
+
+      width = 5;
+      line
+        .append("text")
+        .attr("x", dt.x2 + 2)
+        .attr("y", dt.order * 10 + 25)
+        .text(dt.rank)
+        .attr("class", dt.order);
+    } else {
+      color = "black";
+      width = 2;
+    }
+
+    line
+      .append("line")
+      .attr("frag", dt.frag)
+      .attr("x1", x(dt.x1))
+      .attr("y1", dt.order * 10 + 25)
+      .attr("x2", x(dt.x2))
+      .attr("y2", dt.order * 10 + 25)
+      .attr("class", dt.order)
+      .style("stroke", color)
+      .style("stroke-width", width);
+    if (
+      dt.order > 0 &&
+      dt.frag == "5utr" &&
+      !already_there.includes(dt.order)
+    ) {
+      already_there.push(dt.order);
+      line
+        .append("line")
+        .attr("x1", x(dt.x1))
+        .attr("x2", x(dt.x1))
+        .attr("y1", dt.order * 10 + 25)
+        .attr("y2", (dt.order - 1) * 10 + 25)
+        .style("stroke", "black")
+        .style("stroke-width", 2);
+    }
+  });
+}
+
+function bar_plot(data) {
+  return;
+  const svg = d3
+    .select("#plotbar")
+    .append("svg")
+    .attr("height", line_height)
+    .attr("width", full_width)
+    .append("g")
+    .attr("transform", `translate(40,10)`);
+  // x scaling
+  const x = d3
+    // .scaleLinear()
+    .scaleBand()
+    .range([0, full_width - 100])
+    .domain(d3.range(0, d3.max(data.map((d) => +d.pos)) + 1).map(String)) // + mean incremental
+    // .rangeRound([0, 1000])
+    .padding(0.02);
+  // .range([0, full_width - 100]);
+
+  console.log(d3.max(data.map((d) => +d.pos)));
+  console.log(d3.range(0, d3.max(data.map((d) => +d.pos)) + 1));
+  data.forEach((d) => {
+    console.log(d.pos);
+    console.log(x(d.pos.toString()));
+    console.log(full_width - 100);
+    console.log("Anmol");
+  });
+  // svg
+  //   .append("g")
+  //   .attr("transform", `translate(0,${line_height - 50})`)
+  //   .call(
+  //     d3
+  //       .axisBottom()
+  //       .scale(x)
+  //       .tickFormat((d) => d.toString())
+  //       .ticksValues(x.domain().filter((v, i) => i % 50 == 0)),
+  //   );
+  // Add Y axis
+  const y = d3
+    .scaleLinear()
+    .domain(d3.extent(data, (d) => +d.count))
+    .range([line_height, 0]);
+  svg.append("g").call(d3.axisLeft(y));
+  var barplot = svg.append("g").attr("class", "plot");
+  console.log(data);
+  console.log("anmol");
+  barplot
+    .selectAll("rect")
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("x", (d) => x(d.pos.toString()))
+    .attr("y", (d) => y(d.count))
+    .attr("fill", (d) => frame_colors.get(Number(d.frame)))
+    .attr("width", x.bandwidth())
+    .attr("height", (d) => line_height - y(d.count));
+  var color = d3
+    .scaleOrdinal()
+    .domain([0, 1, 2])
+    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
+
+  var legend = svg
+    .append("g")
+    .attr("class", "legend")
+    .attr("x", 100 - 65)
+    .attr("y", 25)
+    .attr("height", 100)
+    .attr("width", 100);
+  legend
+    .selectAll("rect")
+    .data(new Set(data.map((d) => d.frame)))
+    .enter()
+    .append("rect")
+    .attr("x", 100 - 65)
+    .attr("y", function (d, i) {
+      return i * 20;
+    })
+    .attr("width", 10)
+    .attr("height", 10)
+    .style("fill", function (d) {
+      return color(d - 1);
+    });
+}
+
+function line_plot(data) {
+  // NOTE: Line plot
+  const svg = d3
+    .select("#plot")
+    .append("svg")
+    .attr("height", line_height)
+    .attr("width", full_width)
+    .append("g")
+    .attr("transform", `translate(40,10)`);
+  const x = d3
+    .scaleLinear()
+    .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
+    .range([0, full_width - 100]);
+
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${line_height - 50})`)
+    .call(d3.axisBottom(x).ticks(5));
+  const y = d3
+    .scaleLinear()
+    .domain(d3.extent(data, (d) => +d.count))
+    .range([line_height - 100, 0]);
+  svg.append("g").call(d3.axisLeft(y));
+  var lnplot = svg.append("g").attr("class", "plot");
+  //
+  var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the
+  // calculation per level of a factor
+  var res = sumstat.map((d) => d.frame); // list of group names
+  console.log(res);
+  var color = d3
+    .scaleOrdinal()
+    .domain(res)
+    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
+  // // console.log(color(1));
+  // // console.log(sumstat[0][1]);
+  // // console.log("Anmol");
+  //
+  sumstat.forEach((d) => {
+    // console.log(d);
+    // console.log(d[0]);
+    // console.log("Kiran");
+    lnplot
+      .append("path")
+      .datum(d[1])
+      .attr("fill", "none")
+      .attr("id", "a_" + d[0])
+      .attr("stroke", color(d[0] - 1))
+      .attr("stroke-width", 1.5)
+      .attr(
+        "d",
+        d3
+          .line()
+          .x((d) => x(d.pos))
+          .y((d) => y(d.count)),
+      );
+  });
+  // svg
+  //   .selectAll(".line")
+  //   .data(sumstat)
+  //   .enter()
+  //   .append("path")
+  //
+  //   .attr("fill", "none")
+  //   .attr("stroke", (d) => color(d.frame))
+  //   .attr("stroke-width", 1.5)
+  //   .attr("d", function (d) {
+  //     return d3
+  //       .line()
+  //       .x((d) => x(d.pos))
+  //       .y((d) => y(+d.count))(d.values);
+  //   });
+
+  var legend = svg
+    .append("g")
+    .attr("class", "legend")
+    .attr("x", 100 - 65)
+    .attr("y", 25)
+    .attr("height", 100)
+    .attr("width", 100);
+  legend
+    .selectAll("rect")
+    .data(sumstat)
+    .enter()
+    .append("rect")
+    .attr("id", (d) => d[0])
+    .attr("x", 100 - 65)
+    .attr("y", (d, i) => i * 20)
+    .attr("width", 10)
+    .attr("height", 10)
+    .style("fill", (d) => color(d[0] - 1));
+  legend
+    .selectAll("text")
+    .data(sumstat)
+    .enter()
+
+    .append("text")
+    .attr("x", 100 - 55)
+    .attr("y", (d, i) => i * 20 + 10)
+    .text((d) => "Frame " + d[0])
+    .style("fill", (d) => color(d[0] - 1));
+  legend.on("click", (d) => {
+    var this_id = d.target.getAttribute("id");
+    console.log(this_id);
+    $("#a_" + this_id).toggle();
+    console.log($("#a_" + this_id).is(":visible"));
+  });
+}
+
+// ORFs
+//
+function cds_plot(datat) {
+  // console.log(datat);
+  d3.select("#cds").select("svg").remove();
+  d3.select("#cds")
+    .append("svg")
+    .attr("width", full_width)
+    .attr("height", "100");
+  var line = d3.select("#cds").select("svg");
+  const width = 5;
+  datat.forEach((dt) => {
+    if (dt.frag == "cds") {
+      if (dt.x1 % 3 == 0) {
+        color = "green";
+      } else if (dt.x1 % 3 == 1) {
+        color = "blue";
+      } else {
+        color = "red";
+      }
+
+      line
+        .append("line")
+        .attr("x1", dt.x1)
+        .attr("y1", (dt.x1 % 3) * 20 + 25)
+        .attr("x2", dt.x2)
+        .attr("y2", (dt.x1 % 3) * 20 + 25)
+        .attr("class", dt.order)
+        .style("stroke", color)
+        .style("opacity", 0.5)
+        .style("stroke-width", width);
+    }
+  });
+}
+
+// Plot Amino Acids
+
+function aaplot(str, frame) {
+  const aa = codon2amino(str, frame);
+  const x = d3
+    .scaleLinear()
+    .domain([0, str.length]) // + mean incremental
+    .range([0, full_width - 100]);
+
+  d3.select("#frame_" + frame)
+    .select("svg")
+    .remove();
+  text = d3
+    .select("#frame_" + frame)
+    .append("svg")
+    .attr("width", full_width)
+    .attr("height", "100");
+
+  aa.split("").forEach((dt, i) => {
+    text
+      .append("text")
+      .attr("x", x(frame + i * 3 + 1)) // optimised position
+      .attr("y", 50)
+      .text(dt)
+      .attr("fill", amino_colors.get(dt)); // TODO: Add color based on frame.
+    // Light and dark alternate
+  });
+}
+function nucplot(str, frame) {
+  const x = d3
+    .scaleLinear()
+    .domain([0, str.length]) // + mean incremental
+    .range([0, full_width - 100]);
+
+  d3.select("#seq").select("svg").remove();
+  text = d3
+    .select("#seq")
+    .append("svg")
+    .attr("width", full_width)
+    .attr("height", "100");
+
+  str.split("").forEach((dt, i) => {
+    text
+      .append("text")
+      .attr("x", x(i)) // optimised position
+      .attr("y", 50)
+      .text(dt)
+      .attr("fill", nuc_colors.get(dt)); // TODO: Add color based on frame.
+    // Light and dark alternate
+  });
+}
+
+// Controls
+$("line").live("click", function () {
+  // NOTE: Remove clicked node/CDS from RDG
+  var thisClass = parseInt(this.className.baseVal, 10);
+  var frag = $(this).attr("frag");
+  // console.log(frag);
+  undo_list = [];
+  if (frag == "5utr") {
+    for (let obj of datax) {
+      if (obj.order >= thisClass) {
+        undo_list.push(obj);
+      }
+    }
+  } else {
+    for (let obj of datax) {
+      if (obj.order == thisClass && (obj.frag == "3utr" || obj.frag == "cds")) {
+        undo_list.push(obj);
+      }
+    }
+  }
+  undo.push(undo_list);
+  if (frag == "5utr") {
+    datax = datax.filter((obj) => obj.order < thisClass);
+  } else {
+    datax = datax.filter(
+      (obj) =>
+        !(obj.order == thisClass && (obj.frag == "3utr" || obj.frag == "cds")),
+    );
+    for (let obj of datax) {
+      if (obj.order > thisClass) {
+        obj.order -= 1;
+      }
+    }
+  }
+
+  rdg_plot(datax);
+  cds_plot(datax);
+});
+
+function reset() {
+  // NOTE:Reset RDG
+  datax = structuredClone(data2.org);
+  undo = [];
+  redo_count = 0;
+  draw(datax);
+  cds_plot(datax);
+}
+function undoo() {
+  // NOTE:Restore removed CDS or ORF
+  if (undo.length > 0) {
+    var last_values = undo.pop();
+    redo.push(last_values);
+    // elevate the number
+    if (last_values.length == 2) {
+      for (let obj of datax) {
+        if (obj.org_order > last_values[0].org_order) {
+          obj.order += 1;
+        }
+      }
+    }
+    for (let last_value of last_values) {
+      datax.push(last_value);
+    }
+    rdg_plot(datax);
+    cds_plot(datax);
+  }
+}
+function redoing() {
+  // NOTE:Removed restored CDS or ORF by Undoo functions
+  if (redo.length > 0) {
+    last_value = redo.pop();
+    undo.push(last_value);
+    datax = datax.filter((obj) => !last_value.includes(obj));
+    // de-elevate the number
+    if (last_value.length == 2) {
+      for (let obj of datax) {
+        if (obj.order > last_value[0].order) {
+          obj.order -= 1;
+        }
+      }
+    }
+    rdg_plot(datax);
+    cds_plot(datax);
+  }
+}
+
+// NOTE: RDG submission
+function submit() {
+  // console.log(datax);
+}
