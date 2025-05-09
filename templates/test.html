@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title></title>
-    <link href="css/style.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="d3_plot.js"></script>
     <!--d3js-->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <!--<script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>-->
@@ -19,13 +19,14 @@
   </head>
   <body>
     <div id="plot"></div>
+    <div id="plotbar"></div>
+    <div id="frame_0" style="border-style: solid">
+      <svg width="600" height="20"></svg>
+    </div>
     <div id="frame_1" style="border-style: solid">
       <svg width="600" height="20"></svg>
     </div>
     <div id="frame_2" style="border-style: solid">
-      <svg width="600" height="20"></svg>
-    </div>
-    <div id="frame_3" style="border-style: solid">
       <svg width="600" height="20"></svg>
     </div>
     <div id="seq" style="border-style: solid">
@@ -70,6 +71,19 @@
         </tbody>
       </table>
     </div>
+
+    <script>
+      $(document).ready(function () {
+        $("button").click(function () {
+          $(".x").toggle();
+        });
+      });
+    </script>
+
+    <button>Toggle between hiding and showing the paragraphs</button>
+
+    <p class="x">This is a paragraph with little content.</p>
+    <p class="x">This is another small paragraph.</p>
   </body>
   <footer>
     <script>
@@ -78,356 +92,204 @@
           '{"organism":"escherichia_coli","transcriptome":"Ensembl_k_12_ASM584v2","override":"","transcript":"gapA","readscore":"0","minread":"5","maxread":"150","seqhili":"","hili_stop":"0","offsite":"fiveprime","file_type":"riboseq","study":"0","file_riboseq__0":"on","file_riboseq__1":"on"}',
         pathname: "single_transcript_plot",
       };
+      // const rdg_data = null;
       var line = d3
         .line()
         .x((d) => xScale(d.date))
         .y((d) => yScale(d.value))
         .curve(d3.curveNatural);
-      $.post("http://localhost:5000/query", input, function (data2) {
-        console.log(data2.seq);
-        seq_plot = d3.select("#seq").select("svg");
-        data2.seq.split("").forEach((d, i) => {
-          seq_plot.append("text").text(d).attr("x", i).attr("y", 0);
-        });
+      $.post("http://localhost:5000/query", input, function (data) {
+        // console.log(data.start_stop);
+        var rdg_data = structuredClone(JSON.parse(data.rdg));
 
-        start_stop = structuredClone(JSON.parse(data2.start_stop));
-        for (var i = 1; i < 4; i++) {
-          tframe = d3.select("#frame_" + i).select("svg");
-          tframe
-            .append("rect")
-            .attr("width", "100%")
-            .attr("height", "600")
-            .attr("fill", "red");
-          var bar_color = "white";
-
-          start_stop.forEach((dt) => {
-            if (dt.frame == i) {
-              if (dt.type == "start") {
-                bar_color = "white";
-              } else {
-                bar_color = "black";
-              }
-              tframe
-                .append("line")
-                .attr("x1", dt.pos)
-                .attr("y1", 0)
-                .attr("x2", dt.pos)
-                .attr("y2", 100)
-                .attr("stroke", bar_color)
-                .attr("stroke-width", 20);
-            }
-          });
-          tframe
-            .append("text")
-            .attr("class", "x label")
-            .attr("text-anchor", "end")
-            .attr("x", 300)
-            .attr("y", 0 - 6)
-            .text("Postions");
-          tframe
-            .append("text")
-            .attr("class", "y label")
-            .attr("text-anchor", "end")
-            .attr("y", 6)
-            .attr("dy", ".75em")
-            .attr("transform", "rotate(-90)")
-
-            .attr("stroke", "white")
-            .text(i);
+        rdg_plot(rdg_data);
+        line_plot(d3.csvParse(data.plot));
+        bar_plot(d3.csvParse(data.plot));
+        for (var i = 0; i < 3; i++) {
+          aaplot(data.seq, i);
         }
-
-        // console.log(data2.plot);
-        data = d3.csvParse(data2.plot);
-        data = data.slice().sort((a, b) => d3.ascending(a.pos, b.pos));
-
-        const margin = { top: 10, right: 10, bottom: 20, left: 40 };
-        const full_width = 800;
-        const full_height = 600;
-        const width = full_width - (margin.left + margin.right);
-        const height = full_height - (margin.bottom + margin.top);
-        const svg = d3
-          .select("#plot")
-          .append("svg")
-          .attr("height", full_height)
-          .attr("width", full_width)
-          .append("g")
-          .attr("transform", `translate(${margin.left},${margin.top})`);
-        //const x = d3
-        //  .scaleLinear()
-        //  .domain(
-        //    d3.extent(data, function (d) {
+        nucplot(data.seq);
+        //  console.log(data2.seq);
+        //  seq_plot = d3.select("#seq").select("svg");
+        //  data2.seq.split("").forEach((d, i) => {
+        //    seq_plot.append("text").text(d).attr("x", i).attr("y", 0);
+        //  });
         //
-        //      return d.pos;
-        //    }),
-        //  )
-        //  .range([0, width]);
-        const x = d3
-          .scaleLinear()
-          .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
-          .range([0, width]);
-
-        svg
-          .append("g")
-          .attr("transform", `translate(0,${height})`)
-          .call(d3.axisBottom(x).ticks(5));
-        const y = d3
-          .scaleLinear()
-          .domain(d3.extent(data, (d) => +d.count))
-          .range([height, 0]);
-        svg.append("g").call(d3.axisLeft(y));
-
-        var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the calculation per level of a factor
-        var res = sumstat.map((d) => d.frame); // list of group names
-        var color = d3
-          .scaleOrdinal()
-          .domain(res)
-          .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-        // console.log(color(1));
-        // console.log(sumstat[0][1]);
-        // console.log("Anmol");
-
-        sumstat.forEach((d) => {
-          // console.log(d[1]);
-          // console.log(d[0]);
-          // console.log("Kiran");
-          svg
-            .append("path")
-            .datum(d[1])
-            .attr("fill", "none")
-            .attr("stroke", color(d[0] - 1))
-            .attr("stroke-width", 1.5)
-            .attr(
-              "d",
-              d3
-                .line()
-                .x((d) => x(d.pos))
-                .y((d) => y(d.count)),
-            );
-        });
-        svg
-          .selectAll(".line")
-          .data(sumstat)
-          .enter()
-          .append("path")
-          .attr("fill", "none")
-          .attr("stroke", function (d) {
-            return color(d.frame);
-          })
-          .attr("stroke-width", 1.5)
-          .attr("d", function (d) {
-            return d3
-              .line()
-              .x(function (d) {
-                return x(d.pos);
-              })
-              .y(function (d) {
-                return y(+d.ccount);
-              })(d.values);
-          });
-
-        // RDG
-        var datax = structuredClone(JSON.parse(data2.rdg));
-
-        draw(datax);
-        cds_plot(datax);
-        var undo = [];
-        var redo_count = 0;
-        var redo = [];
+        //  start_stop = structuredClone(JSON.parse(data2.start_stop));
+        //  for (var i = 1; i < 4; i++) {
+        //    tframe = d3.select("#frame_" + i).select("svg");
+        //    tframe
+        //      .append("rect")
+        //      .attr("width", "100%")
+        //      .attr("height", "600")
+        //      .attr("fill", "red");
+        //    var bar_color = "white";
+        //
+        //    start_stop.forEach((dt) => {
+        //      if (dt.frame == i) {
+        //        if (dt.type == "start") {
+        //          bar_color = "white";
+        //        } else {
+        //          bar_color = "black";
+        //        }
+        //        tframe
+        //          .append("line")
+        //          .attr("x1", dt.pos)
+        //          .attr("y1", 0)
+        //          .attr("x2", dt.pos)
+        //          .attr("y2", 100)
+        //          .attr("stroke", bar_color)
+        //          .attr("stroke-width", 20);
+        //      }
+        //    });
+        //    tframe
+        //      .append("text")
+        //      .attr("class", "x label")
+        //      .attr("text-anchor", "end")
+        //      .attr("x", 300)
+        //      .attr("y", 0 - 6)
+        //      .text("Postions");
+        //    tframe
+        //      .append("text")
+        //      .attr("class", "y label")
+        //      .attr("text-anchor", "end")
+        //      .attr("y", 6)
+        //      .attr("dy", ".75em")
+        //      .attr("transform", "rotate(-90)")
+        //
+        //      .attr("stroke", "white")
+        //      .text(i);
+        //  }
+        //
+        //  // console.log(data2.plot);
+        //  data = data.slice().sort((a, b) => d3.ascending(a.pos, b.pos));
+        //
+        //  const margin = { top: 10, right: 10, bottom: 20, left: 40 };
+        //  const full_width = 800;
+        //  const full_height = 600;
+        //  const width = full_width - (margin.left + margin.right);
+        //  const height = full_height - (margin.bottom + margin.top);
+        //
+        //  // plotting bar chart
+        // const colors = new Map([[1, "red"], [2, "blue"], [3, "green"]]);
+        // const series = d3
+        // .stack().keys(colors.keys()).value((group,key) => group.get(key).value).order(d3.stackOrderNone)(d3.rollup(data,([d])=>d,d.pos,d=>d.frame).values()).map(s=>(s.forEach(d=>d.data=d.data.get(s.key)),s));
+        // const x_bar = d3.scaleBand().domain(data.map((d) => d.pos)).range([0, width]);
+        // const y_bar = d3.scaleLinear().domain([0, d3.max(data, (d) => d.count)]).range([height, 0]);
+        //
+        //  const bar = d3
+        //    .select("#plotbar")
+        //    .append("svg").attr("viewBox", [0, 0, full_width, full_height]);
+        //    .attr("height", full_height)
+        //    .attr("width", full_width).attr("style", "max-width: 100%; height: auto;");
+        //  bar.append("g").selectAll("g").data(data)
+        //    .selectAll("rect")
+        //    .data(data)
+        //    .enter()
+        //    .append("rect")
+        //    .attr("x", (d) => x(d.pos))
+        //    .attr("y", (d) => y(d.count))
+        //    .attr("width", 1)
+        //    .attr("height", (d) => height - y(d.count))
+        //    .attr("fill", "steelblue");
+        //  // End of plotting bar chart
+        //
+        //  const svg = d3
+        //    .select("#plot")
+        //    .append("svg")
+        //    .attr("height", full_height)
+        //    .attr("width", full_width)
+        //    .append("g")
+        //    .attr("transform", `translate(${margin.left},${margin.top})`);
+        //  //const x = d3
+        //  //  .scaleLinear()
+        //  //  .domain(
+        //  //    d3.extent(data, function (d) {
+        //  //
+        //  //      return d.pos;
+        //  //    }),
+        //  //  )
+        //  //  .range([0, width]);
+        //  const x = d3
+        //    .scaleLinear()
+        //    .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
+        //    .range([0, width]);
+        //
+        //  svg
+        //    .append("g")
+        //    .attr("transform", `translate(0,${height})`)
+        //    .call(d3.axisBottom(x).ticks(5));
+        //  const y = d3
+        //    .scaleLinear()
+        //    .domain(d3.extent(data, (d) => +d.count))
+        //    .range([height, 0]);
+        //  svg.append("g").call(d3.axisLeft(y));
+        //
+        //  var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the calculation per level of a factor
+        //  var res = sumstat.map((d) => d.frame); // list of group names
+        //  var color = d3
+        //    .scaleOrdinal()
+        //    .domain(res)
+        //    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
+        //  // console.log(color(1));
+        //  // console.log(sumstat[0][1]);
+        //  // console.log("Anmol");
+        //
+        //  sumstat.forEach((d) => {
+        //    // console.log(d[1]);
+        //    // console.log(d[0]);
+        //    // console.log("Kiran");
+        //    svg
+        //      .append("path")
+        //      .datum(d[1])
+        //      .attr("fill", "none")
+        //      .attr("stroke", color(d[0] - 1))
+        //      .attr("stroke-width", 1.5)
+        //      .attr(
+        //        "d",
+        //        d3
+        //          .line()
+        //          .x((d) => x(d.pos))
+        //          .y((d) => y(d.count)),
+        //      );
+        //  });
+        //  svg
+        //    .selectAll(".line")
+        //    .data(sumstat)
+        //    .enter()
+        //    .append("path")
+        //    .attr("fill", "none")
+        //    .attr("stroke", function (d) {
+        //      return color(d.frame);
+        //    })
+        //    .attr("stroke-width", 1.5)
+        //    .attr("d", function (d) {
+        //      return d3
+        //        .line()
+        //        .x(function (d) {
+        //          return x(d.pos);
+        //        })
+        //        .y(function (d) {
+        //          return y(+d.ccount);
+        //        })(d.values);
+        //    });
+        //
+        //  // RDG
+        //  var datax = structuredClone(JSON.parse(data2.rdg));
+        //
+        //  rdg_plot(datax);
+        //  cds_plot(datax);
+        //  var undo = [];
+        //  var redo_count = 0;
+        //  var redo = [];
 
         // removing CDS
 
-        $("line").live("click", function () {
-          var thisClass = parseInt(this.className.baseVal, 10);
-          var frag = $(this).attr("frag");
-          // console.log(frag);
-          undo_list = [];
-          if (frag == "5utr") {
-            for (let obj of datax) {
-              if (obj.order >= thisClass) {
-                undo_list.push(obj);
-              }
-            }
-          } else {
-            for (let obj of datax) {
-              if (
-                obj.order == thisClass &&
-                (obj.frag == "3utr" || obj.frag == "cds")
-              ) {
-                undo_list.push(obj);
-              }
-            }
-          }
-          undo.push(undo_list);
-          if (frag == "5utr") {
-            datax = datax.filter((obj) => obj.order < thisClass);
-          } else {
-            datax = datax.filter(
-              (obj) =>
-                !(
-                  obj.order == thisClass &&
-                  (obj.frag == "3utr" || obj.frag == "cds")
-                ),
-            );
-            for (let obj of datax) {
-              if (obj.order > thisClass) {
-                obj.order -= 1;
-              }
-            }
-          }
-
-          draw(datax);
-          cds_plot(datax);
-        });
-
         // NOTE: Cumulative CDS plot
 
-        function cds_plot(datat) {
-          // console.log(datat);
-          d3.select("#cds").select("svg").remove();
-          d3.select("#cds")
-            .append("svg")
-            .attr("width", full_width)
-            .attr("height", "100");
-          var line = d3.select("#cds").select("svg");
-          const width = 5;
-          datat.forEach((dt) => {
-            if (dt.frag == "cds") {
-              if (dt.x1 % 3 == 0) {
-                color = "green";
-              } else if (dt.x1 % 3 == 1) {
-                color = "blue";
-              } else {
-                color = "red";
-              }
-
-              line
-                .append("line")
-                .attr("x1", dt.x1)
-                .attr("y1", (dt.x1 % 3) * 20 + 25)
-                .attr("x2", dt.x2)
-                .attr("y2", (dt.x1 % 3) * 20 + 25)
-                .attr("class", dt.order)
-                .style("stroke", color)
-                .style("opacity", 0.5)
-                .style("stroke-width", width);
-            }
-          });
-        }
-
         // NOTE: Plotting cds paths
-        function draw(datat) {
-          // console.log(datat);
-          d3.select("#rdg").select("svg").remove();
-          var svg = d3
-            .select("#rdg")
-            .append("svg")
-            .attr("height", full_height)
-            .attr("width", full_width);
-          var line = d3.select("#rdg").select("svg");
-          var i = 0;
-          var already_there = [];
-          datat.forEach((dt) => {
-            var width = 1;
-
-            if (dt.frag == "cds") {
-              if (dt.x1 % 3 == 0) {
-                color = "green";
-              } else if (dt.x1 % 3 == 1) {
-                color = "blue";
-              } else {
-                color = "red";
-              }
-
-              width = 5;
-              line
-                .append("text")
-                .attr("x", dt.x2 + 2)
-                .attr("y", dt.order * 10 + 25)
-                .text(dt.rank)
-                .attr("class", dt.order);
-            } else {
-              color = "black";
-              width = 2;
-            }
-
-            line
-              .append("line")
-              .attr("frag", dt.frag)
-              .attr("x1", dt.x1)
-              .attr("y1", dt.order * 10 + 25)
-              .attr("x2", dt.x2)
-              .attr("y2", dt.order * 10 + 25)
-              .attr("class", dt.order)
-              .style("stroke", color)
-              .style("stroke-width", width);
-            if (
-              dt.order > 0 &&
-              dt.frag == "5utr" &&
-              !already_there.includes(dt.order)
-            ) {
-              already_there.push(dt.order);
-              line
-                .append("line")
-                .attr("x1", dt.x1)
-                .attr("x2", dt.x1)
-                .attr("y1", dt.order * 10 + 25)
-                .attr("y2", (dt.order - 1) * 10 + 25)
-                .style("stroke", "black")
-                .style("stroke-width", 2);
-            }
-          });
-        }
 
         // Undo
-
-        function undoo() {
-          if (undo.length > 0) {
-            var last_values = undo.pop();
-            redo.push(last_values);
-            //elevate the number
-            if (last_values.length == 2) {
-              for (let obj of datax) {
-                if (obj.org_order > last_values[0].org_order) {
-                  obj.order += 1;
-                }
-              }
-            }
-            for (let last_value of last_values) {
-              datax.push(last_value);
-            }
-            draw(datax);
-            cds_plot(datax);
-          }
-        }
-        function redoing() {
-          if (redo.length > 0) {
-            last_value = redo.pop();
-            undo.push(last_value);
-            datax = datax.filter((obj) => !last_value.includes(obj));
-            //de-elevate the number
-            if (last_value.length == 2) {
-              for (let obj of datax) {
-                if (obj.order > last_value[0].order) {
-                  obj.order -= 1;
-                }
-              }
-            }
-            draw(datax);
-            cds_plot(datax);
-          }
-        }
-
-        function reset() {
-          datax = structuredClone(data2.org);
-          undo = [];
-          redo_count = 0;
-          draw(datax);
-          cds_plot(datax);
-        }
-
-        function submit() {
-          // console.log(datax);
-        }
 
         //svg
         //  .append("path")
