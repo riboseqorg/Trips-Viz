@@ -86,10 +86,10 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
             if "pcr" in data:  # TODO: Convert this value as ambig and unambig
                 if "unambig_pcr" in alltrandict:
                     tdf[0:0] = alltrandict["unambig_pcr"]
-)
+
                 if ("ambig" in data) and "ambig_pcr" in alltrandict:
                     tdf[0:0] = alltrandict["ambig_pcr"]
-)
+
             # print(
             #     "tdfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             #     fl, tdf)
@@ -102,7 +102,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
     if "subcodon" not in data:
         print(master_file_dict, 'aaaaaaaaaaa')
         master_file_dict_values = pl.concat(master_file_dict.values()).filter(
-(pl.col("readlen") >= data["minread"]) & (pl.col("readlen") <= data["maxread")).select(
+(pl.col("readlen") >= data["minread"]) & (pl.col("readlen") <= data["maxread"])).select(
                 'pos', 'count').group_by('pos').sum()
         print(master_file_dict_values, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
         data["coverage"] = True  # For testing purpose only

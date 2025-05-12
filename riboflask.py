@@ -59,6 +59,7 @@ def generate_plot(data, settings) -> str:
 
     data["coding_regions"] = coding_regions
     data["traninfo"] = traninfo
+    print(traninfo)
 
 
 
@@ -66,7 +67,7 @@ def generate_plot(data, settings) -> str:
 
     # TODO: I need to orf in sqlite file
     orfs = SqliteDict(sqlpath.replace(".sqlite","_helper.sqlite")) # TODO:: Check if it will work 
-    start_stop_dataframe = pl.DataFrame(orfs[data["transcript"]]["start_stop_list"], schema=["frame", "pos", "type"])
+    start_stop = pl.DataFrame(orfs[data["transcript"]]["start_stop_list"], schema=["frame", "pos", "type"])
     orf_dataframe = pl.DataFrame(orfs[data["transcript"]]["orfs"], schema=["frame", "start", "stop"])
     # TODO: add avarible of rnaseq
 
@@ -75,8 +76,8 @@ def generate_plot(data, settings) -> str:
     )  # TODO: keep rna_Seqvar_dict and ribo_seq_var_dict meltated to compine them
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
     
-    rdg = str(sequence2rdg(seq))
+    rdg = str(sequence2rdg(traninfo["sequence"]))
     # print(rdg)
 
-    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': start_stop.to_pandas().to_json(orient="records"),'seq':seq} # all_rna_reads.sort("pos").write_csv()
+    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': start_stop.to_pandas().to_json(orient="records"),'seq': traninfo["sequence"]} # all_rna_reads.sort("pos").write_csv()
     # return plt.to_json()
