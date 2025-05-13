@@ -19,22 +19,8 @@
   </head>
   <body>
     <div id="plot"></div>
-    <div id="plotbar"></div>
-    <div id="frame_0" style="border-style: solid">
-      <svg width="600" height="20"></svg>
-    </div>
-    <div id="frame_1" style="border-style: solid">
-      <svg width="600" height="20"></svg>
-    </div>
-    <div id="frame_2" style="border-style: solid">
-      <svg width="600" height="20"></svg>
-    </div>
-    <div id="seq" style="border-style: solid">
-      <svg width="600" height="20"></svg>
-    </div>
 
     <div id="rdg"></div>
-    <div id="cds"></div>
     <div>
       <style>
         .dataframe > thead > tr,
@@ -103,207 +89,31 @@
         var rdg_data = structuredClone(JSON.parse(data.rdg));
 
         rdg_plot(rdg_data);
-        line_plot(d3.csvParse(data.plot));
+        line_plot(d3.csvParse(data.plot), data.seq);
         bar_plot(d3.csvParse(data.plot));
-        for (var i = 0; i < 3; i++) {
-          aaplot(data.seq, i);
-        }
-        nucplot(data.seq);
-        //  console.log(data2.seq);
-        //  seq_plot = d3.select("#seq").select("svg");
-        //  data2.seq.split("").forEach((d, i) => {
-        //    seq_plot.append("text").text(d).attr("x", i).attr("y", 0);
-        //  });
-        //
-        //  start_stop = structuredClone(JSON.parse(data2.start_stop));
-        //  for (var i = 1; i < 4; i++) {
-        //    tframe = d3.select("#frame_" + i).select("svg");
-        //    tframe
-        //      .append("rect")
-        //      .attr("width", "100%")
-        //      .attr("height", "600")
-        //      .attr("fill", "red");
-        //    var bar_color = "white";
-        //
-        //    start_stop.forEach((dt) => {
-        //      if (dt.frame == i) {
-        //        if (dt.type == "start") {
-        //          bar_color = "white";
-        //        } else {
-        //          bar_color = "black";
-        //        }
-        //        tframe
-        //          .append("line")
-        //          .attr("x1", dt.pos)
-        //          .attr("y1", 0)
-        //          .attr("x2", dt.pos)
-        //          .attr("y2", 100)
-        //          .attr("stroke", bar_color)
-        //          .attr("stroke-width", 20);
-        //      }
-        //    });
-        //    tframe
-        //      .append("text")
-        //      .attr("class", "x label")
-        //      .attr("text-anchor", "end")
-        //      .attr("x", 300)
-        //      .attr("y", 0 - 6)
-        //      .text("Postions");
-        //    tframe
-        //      .append("text")
-        //      .attr("class", "y label")
-        //      .attr("text-anchor", "end")
-        //      .attr("y", 6)
-        //      .attr("dy", ".75em")
-        //      .attr("transform", "rotate(-90)")
-        //
-        //      .attr("stroke", "white")
-        //      .text(i);
-        //  }
-        //
-        //  // console.log(data2.plot);
-        //  data = data.slice().sort((a, b) => d3.ascending(a.pos, b.pos));
-        //
-        //  const margin = { top: 10, right: 10, bottom: 20, left: 40 };
-        //  const full_width = 800;
-        //  const full_height = 600;
-        //  const width = full_width - (margin.left + margin.right);
-        //  const height = full_height - (margin.bottom + margin.top);
-        //
-        //  // plotting bar chart
-        // const colors = new Map([[1, "red"], [2, "blue"], [3, "green"]]);
-        // const series = d3
-        // .stack().keys(colors.keys()).value((group,key) => group.get(key).value).order(d3.stackOrderNone)(d3.rollup(data,([d])=>d,d.pos,d=>d.frame).values()).map(s=>(s.forEach(d=>d.data=d.data.get(s.key)),s));
-        // const x_bar = d3.scaleBand().domain(data.map((d) => d.pos)).range([0, width]);
-        // const y_bar = d3.scaleLinear().domain([0, d3.max(data, (d) => d.count)]).range([height, 0]);
-        //
-        //  const bar = d3
-        //    .select("#plotbar")
-        //    .append("svg").attr("viewBox", [0, 0, full_width, full_height]);
-        //    .attr("height", full_height)
-        //    .attr("width", full_width).attr("style", "max-width: 100%; height: auto;");
-        //  bar.append("g").selectAll("g").data(data)
-        //    .selectAll("rect")
-        //    .data(data)
-        //    .enter()
-        //    .append("rect")
-        //    .attr("x", (d) => x(d.pos))
-        //    .attr("y", (d) => y(d.count))
-        //    .attr("width", 1)
-        //    .attr("height", (d) => height - y(d.count))
-        //    .attr("fill", "steelblue");
-        //  // End of plotting bar chart
-        //
-        //  const svg = d3
-        //    .select("#plot")
-        //    .append("svg")
-        //    .attr("height", full_height)
-        //    .attr("width", full_width)
-        //    .append("g")
-        //    .attr("transform", `translate(${margin.left},${margin.top})`);
-        //  //const x = d3
-        //  //  .scaleLinear()
-        //  //  .domain(
-        //  //    d3.extent(data, function (d) {
-        //  //
-        //  //      return d.pos;
-        //  //    }),
-        //  //  )
-        //  //  .range([0, width]);
-        //  const x = d3
-        //    .scaleLinear()
-        //    .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
-        //    .range([0, width]);
-        //
-        //  svg
-        //    .append("g")
-        //    .attr("transform", `translate(0,${height})`)
-        //    .call(d3.axisBottom(x).ticks(5));
-        //  const y = d3
-        //    .scaleLinear()
-        //    .domain(d3.extent(data, (d) => +d.count))
-        //    .range([height, 0]);
-        //  svg.append("g").call(d3.axisLeft(y));
-        //
-        //  var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the calculation per level of a factor
-        //  var res = sumstat.map((d) => d.frame); // list of group names
-        //  var color = d3
-        //    .scaleOrdinal()
-        //    .domain(res)
-        //    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-        //  // console.log(color(1));
-        //  // console.log(sumstat[0][1]);
-        //  // console.log("Anmol");
-        //
-        //  sumstat.forEach((d) => {
-        //    // console.log(d[1]);
-        //    // console.log(d[0]);
-        //    // console.log("Kiran");
-        //    svg
-        //      .append("path")
-        //      .datum(d[1])
-        //      .attr("fill", "none")
-        //      .attr("stroke", color(d[0] - 1))
-        //      .attr("stroke-width", 1.5)
-        //      .attr(
-        //        "d",
-        //        d3
-        //          .line()
-        //          .x((d) => x(d.pos))
-        //          .y((d) => y(d.count)),
-        //      );
-        //  });
-        //  svg
-        //    .selectAll(".line")
-        //    .data(sumstat)
-        //    .enter()
-        //    .append("path")
-        //    .attr("fill", "none")
-        //    .attr("stroke", function (d) {
-        //      return color(d.frame);
-        //    })
-        //    .attr("stroke-width", 1.5)
-        //    .attr("d", function (d) {
-        //      return d3
-        //        .line()
-        //        .x(function (d) {
-        //          return x(d.pos);
-        //        })
-        //        .y(function (d) {
-        //          return y(+d.ccount);
-        //        })(d.values);
-        //    });
-        //
-        //  // RDG
-        //  var datax = structuredClone(JSON.parse(data2.rdg));
-        //
-        //  rdg_plot(datax);
-        //  cds_plot(datax);
-        //  var undo = [];
-        //  var redo_count = 0;
-        //  var redo = [];
-
-        // removing CDS
-
-        // NOTE: Cumulative CDS plot
-
-        // NOTE: Plotting cds paths
-
-        // Undo
-
-        //svg
-        //  .append("path")
-        //  .datum(data)
-        //  .attr("fill", "none")
-        //  .attr("stroke", "black")
-        //  .attr("stroke-width", 1.5)
-        //  .attr(
-        //    "d",
-        //    d3
-        //      .line()
-        //      .x((d) => x(d.pos))
-        //      .y((d) => y(d.count)),
-        //  );
+        var vertical = d3
+          .select("#plot")
+          .append("div")
+          .attr("class", "remove")
+          .style("position", "absolute")
+          .style("z-index", "19")
+          .style("width", "1px")
+          .style("height", "380px")
+          .style("top", "10px")
+          .style("bottom", "30px")
+          .style("left", "0px")
+          .style("background", "#000");
+        d3.select("#plot")
+          .on("mousemove", function () {
+            mousex = d3.pointer(this);
+            mousex = mousex[0] + 5;
+            vertical.style("left", mousex + "px");
+          })
+          .on("mouseover", function () {
+            mousex = d3.pointer(this);
+            mousex = mousex[0] + 5;
+            vertical.style("left", mousex + "px");
+          });
       });
     </script>
   </footer>

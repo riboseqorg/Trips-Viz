@@ -88,11 +88,11 @@ const codon2amino = (str, frame) =>
 ////RDG Dimension
 const full_width = 800;
 const rdg_height = 600;
-const line_height = 600;
+const full_height = 600;
 const margin = {
   top: 10,
   right: 10,
-  bottom: 20,
+  bottom: 440,
   left: 40,
 };
 
@@ -154,27 +154,25 @@ const amino_colors = new Map([
   ["*", "red"],
 ]);
 
-// Zooming
-
-function zoom(svg) {
-  const extent = [
-    [marginLeft, marginTop],
-    [width - marginRight, height - marginTop],
-  ];
-  svg.call(
-    d3.zoom().scaleExtent([1, 8]).translateExtent(extent).on("zoom", zoomed),
-  );
-  function zoomed(event) {
-    x.range([marginLeft, width - marginRight]).map((d) =>
-      d3.event.transform.rescaleX(x),
-    );
-    svg
-      .selectAll(".plot path")
-      .attr("x", (d) => x(d.pos))
-      .attr("width", x.bandwidth());
-    svg.selectAll(".x-axis").call(xAxis);
-  }
-}
+// function zoom(svg) {
+//   const extent = [
+//     [marginLeft, marginTop],
+//     [width - marginRight, height - marginTop],
+//   ];
+//   svg.call(
+//     d3.zoom().scaleExtent([1, 8]).translateExtent(extent).on("zoom", zoomed),
+//   );
+//   function zoomed(event) {
+//     x.range([marginLeft, width - marginRight]).map((d) =>
+//       d3.event.transform.rescaleX(x),
+//     );
+//     svg
+//       .selectAll(".plot path")
+//       .attr("x", (d) => x(d.pos))
+//       .attr("width", x.bandwidth());
+//     svg.selectAll(".x-axis").call(xAxis);
+//   }
+// }
 
 //// Base plot dimensions
 //// Frames dimensions
@@ -251,15 +249,7 @@ function rdg_plot(data) {
   });
 }
 
-function bar_plot(data) {
-  return;
-  const svg = d3
-    .select("#plotbar")
-    .append("svg")
-    .attr("height", line_height)
-    .attr("width", full_width)
-    .append("g")
-    .attr("transform", `translate(40,10)`);
+function bar_plot(data,svg) {
   // x scaling
   const x = d3
     // .scaleLinear()
@@ -270,24 +260,12 @@ function bar_plot(data) {
     .padding(0.02);
   // .range([0, full_width - 100]);
 
-  console.log(d3.max(data.map((d) => +d.pos)));
-  console.log(d3.range(0, d3.max(data.map((d) => +d.pos)) + 1));
   data.forEach((d) => {
     console.log(d.pos);
     console.log(x(d.pos.toString()));
     console.log(full_width - 100);
     console.log("Anmol");
   });
-  // svg
-  //   .append("g")
-  //   .attr("transform", `translate(0,${line_height - 50})`)
-  //   .call(
-  //     d3
-  //       .axisBottom()
-  //       .scale(x)
-  //       .tickFormat((d) => d.toString())
-  //       .ticksValues(x.domain().filter((v, i) => i % 50 == 0)),
-  //   );
   // Add Y axis
   const y = d3
     .scaleLinear()
@@ -295,8 +273,6 @@ function bar_plot(data) {
     .range([line_height, 0]);
   svg.append("g").call(d3.axisLeft(y));
   var barplot = svg.append("g").attr("class", "plot");
-  console.log(data);
-  console.log("anmol");
   barplot
     .selectAll("rect")
     .data(data)
@@ -307,57 +283,65 @@ function bar_plot(data) {
     .attr("fill", (d) => frame_colors.get(Number(d.frame)))
     .attr("width", x.bandwidth())
     .attr("height", (d) => line_height - y(d.count));
-  var color = d3
-    .scaleOrdinal()
-    .domain([0, 1, 2])
-    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-
-  var legend = svg
-    .append("g")
-    .attr("class", "legend")
-    .attr("x", 100 - 65)
-    .attr("y", 25)
-    .attr("height", 100)
-    .attr("width", 100);
-  legend
-    .selectAll("rect")
-    .data(new Set(data.map((d) => d.frame)))
-    .enter()
-    .append("rect")
-    .attr("x", 100 - 65)
-    .attr("y", function (d, i) {
-      return i * 20;
-    })
-    .attr("width", 10)
-    .attr("height", 10)
-    .style("fill", function (d) {
-      return color(d - 1);
-    });
+  // var color = d3
+  //   .scaleOrdinal()
+  //   .domain([0, 1, 2])
+  //   .range(["#e41a1c", "#377eb8", "#4daf4a"]);
+  //
+  // var legend = svg
+  //   .append("g")
+  //   .attr("class", "legend")
+  //   .attr("x", 100 - 65)
+  //   .attr("y", 25)
+  //   .attr("height", 100)
+  //   .attr("width", 100);
+  // legend
+  //   .selectAll("rect")
+  //   .data(new Set(data.map((d) => d.frame)))
+  //   .enter()
+  //   .append("rect")
+  //   .attr("x", 100 - 65)
+  //   .attr("y", function (d, i) {
+  //     return i * 20;
+  //   })
+  //   .attr("width", 10)
+  //   .attr("height", 10)
+  //   .style("fill", function (d) {
+  //     return color(d - 1);
+  //   });
 }
 
-function line_plot(data) {
+function line_plot(data, str) {
+  // Zooming
+
+  const zoom = d3.zoom().on("zoom", function (event) {
+    x2 = event.transform.rescaleX(xScale);
+    xAxisG.call(xAxis.scale(x2));
+    path.attr("d", line);
+  });
+
   // NOTE: Line plot
   const svg = d3
     .select("#plot")
     .append("svg")
-    .attr("height", line_height)
+    .attr("height", full_height)
     .attr("width", full_width)
     .append("g")
-    .attr("transform", `translate(40,10)`);
-  const x = d3
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+  const xScale = d3
     .scaleLinear()
     .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
-    .range([0, full_width - 100]);
+    .range([0, full_width - (margin.left + margin.right)]);
 
   svg
     .append("g")
-    .attr("transform", `translate(0,${line_height - 50})`)
-    .call(d3.axisBottom(x).ticks(5));
-  const y = d3
+    .attr("transform", `translate(0,${full_height - margin.bottom})`)
+    .call(d3.axisBottom(xScale).ticks(5));
+  const yScale = d3
     .scaleLinear()
     .domain(d3.extent(data, (d) => +d.count))
-    .range([line_height - 100, 0]);
-  svg.append("g").call(d3.axisLeft(y));
+    .range([full_height - margin.bottom - margin.top, 0]);
+  svg.append("g").call(d3.axisLeft(yScale));
   var lnplot = svg.append("g").attr("class", "plot");
   //
   var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the
@@ -387,25 +371,10 @@ function line_plot(data) {
         "d",
         d3
           .line()
-          .x((d) => x(d.pos))
-          .y((d) => y(d.count)),
+          .x((d) => xScale(d.pos))
+          .y((d) => yScale(d.count)),
       );
   });
-  // svg
-  //   .selectAll(".line")
-  //   .data(sumstat)
-  //   .enter()
-  //   .append("path")
-  //
-  //   .attr("fill", "none")
-  //   .attr("stroke", (d) => color(d.frame))
-  //   .attr("stroke-width", 1.5)
-  //   .attr("d", function (d) {
-  //     return d3
-  //       .line()
-  //       .x((d) => x(d.pos))
-  //       .y((d) => y(+d.count))(d.values);
-  //   });
 
   var legend = svg
     .append("g")
@@ -441,6 +410,9 @@ function line_plot(data) {
     $("#a_" + this_id).toggle();
     console.log($("#a_" + this_id).is(":visible"));
   });
+  // AA plot
+  aa_plot(str, svg);
+  svg.call(zoom);
 }
 
 // ORFs
@@ -480,54 +452,83 @@ function cds_plot(datat) {
 
 // Plot Amino Acids
 
-function aaplot(str, frame) {
-  const aa = codon2amino(str, frame);
-  const x = d3
+function aa_plot(str, svg) {
+  // NOTE: Default font size is 10, sans-serif
+  const xScale = d3
     .scaleLinear()
     .domain([0, str.length]) // + mean incremental
-    .range([0, full_width - 100]);
+    .range([0, full_width - margin.left - margin.right]);
+  const y_level = 50;
+  for (let frame = 0; frame < 3; frame++) {
+    const aa = codon2amino(str, frame);
+    chr_pixels = ((full_width - margin.left - margin.right) * 1.0) / aa.length;
+    g = svg
+      .append("g")
+      .attr("height", 50)
+      .attr("width", full_width - margin.left - margin.right)
+      .attr(
+        "transform",
+        `translate(0,${full_height - margin.bottom + frame * 20})`,
+      );
+    if (chr_pixels < 14) {
+      aa.split("").forEach((dt, i) => {
+        g.append("line")
+          .attr("x1", xScale(frame + i * 3 + 1)) // optimised position
+          .attr("y1", y_level)
+          .attr("x2", xScale(frame + i * 3 + 1))
+          .attr("y2", y_level + 10)
+          .attr("stroke", amino_colors.get(dt))
+          .attr("stroke-width", chr_pixels); // TODO: Add color based on frame.
+      });
+    } else {
+      aa.split("").forEach((dt, i) => {
+        g.append("text")
+          .attr("x", xScale(frame + i * 3 + 1)) // optimised position
+          .attr("y", y_level)
+          .text(dt)
+          .attr("fill", amino_colors.get(dt)); // TODO: Add color based on frame.
+      });
+    }
+    g.append("text")
+      .attr("class", "y label")
+      .attr("text-anchor", "end")
+      .attr("y", y_level)
+      .attr("dy", ".75em")
+      .text(frame + 1);
+  }
 
-  d3.select("#frame_" + frame)
-    .select("svg")
-    .remove();
-  text = d3
-    .select("#frame_" + frame)
-    .append("svg")
-    .attr("width", full_width)
-    .attr("height", "100");
-
-  aa.split("").forEach((dt, i) => {
-    text
-      .append("text")
-      .attr("x", x(frame + i * 3 + 1)) // optimised position
-      .attr("y", 50)
-      .text(dt)
-      .attr("fill", amino_colors.get(dt)); // TODO: Add color based on frame.
-    // Light and dark alternate
-  });
-}
-function nucplot(str, frame) {
-  const x = d3
-    .scaleLinear()
-    .domain([0, str.length]) // + mean incremental
-    .range([0, full_width - 100]);
-
-  d3.select("#seq").select("svg").remove();
-  text = d3
-    .select("#seq")
-    .append("svg")
-    .attr("width", full_width)
-    .attr("height", "100");
-
-  str.split("").forEach((dt, i) => {
-    text
-      .append("text")
-      .attr("x", x(i)) // optimised position
-      .attr("y", 50)
-      .text(dt)
-      .attr("fill", nuc_colors.get(dt)); // TODO: Add color based on frame.
-    // Light and dark alternate
-  });
+  // Plottig Nucleotides
+  g = svg
+    .append("g")
+    .attr("height", 50)
+    .attr("width", full_width - margin.left - margin.right)
+    .attr("transform", `translate(0,${full_height - margin.bottom + 60})`);
+  chr_pixels = ((full_width - margin.left - margin.right) * 1.0) / str.length;
+  if (chr_pixels < 14) {
+    str.split("").forEach((dt, i) => {
+      g.append("line")
+        .attr("x1", xScale(i + 1)) // optimised position
+        .attr("y1", y_level)
+        .attr("x2", xScale(i + 1))
+        .attr("y2", y_level + 10)
+        .attr("stroke", nuc_colors.get(dt))
+        .attr("stroke-width", chr_pixels); // TODO: Add color based on frame.
+    });
+  } else {
+    str.split("").forEach((dt, i) => {
+      g.append("text")
+        .attr("x", xScale(i + 1)) // optimised position
+        .attr("y", y_level)
+        .text(dt)
+        .attr("fill", nuc_colors.get(dt)); // TODO: Add color based on frame.
+    });
+  }
+  g.append("text")
+    .attr("class", "y label")
+    .attr("text-anchor", "end")
+    .attr("y", y_level)
+    .attr("dy", ".75em")
+    .text("N");
 }
 
 // Controls
