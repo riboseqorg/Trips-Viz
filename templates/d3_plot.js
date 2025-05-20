@@ -92,7 +92,7 @@ const full_height = 600;
 const margin = {
   top: 10,
   right: 10,
-  bottom: 440,
+  bottom: 140,
   left: 40,
 };
 
@@ -108,8 +108,8 @@ const frame_plot_dimensions = {
 
 const frame_colors = new Map([
   [0, "#e41a1c"],
-  [1, "#377eb8"],
-  [2, "#4daf4a"],
+  [1, "#4daf4a"],
+  [2, "#377eb8"],
 ]);
 
 const charge_colors = new Map([
@@ -202,11 +202,11 @@ function rdg_plot(data) {
 
     if (dt.frag == "cds") {
       if (dt.x1 % 3 == 0) {
-        color = "green";
-      } else if (dt.x1 % 3 == 1) {
-        color = "blue";
-      } else {
         color = "red";
+      } else if (dt.x1 % 3 == 1) {
+        color = "green";
+      } else {
+        color = "blue";
       }
 
       width = 5;
@@ -249,70 +249,9 @@ function rdg_plot(data) {
   });
 }
 
-function bar_plot(data,svg) {
-  // x scaling
-  const x = d3
-    // .scaleLinear()
-    .scaleBand()
-    .range([0, full_width - 100])
-    .domain(d3.range(0, d3.max(data.map((d) => +d.pos)) + 1).map(String)) // + mean incremental
-    // .rangeRound([0, 1000])
-    .padding(0.02);
-  // .range([0, full_width - 100]);
-
-  data.forEach((d) => {
-    console.log(d.pos);
-    console.log(x(d.pos.toString()));
-    console.log(full_width - 100);
-    console.log("Anmol");
-  });
-  // Add Y axis
-  const y = d3
-    .scaleLinear()
-    .domain(d3.extent(data, (d) => +d.count))
-    .range([line_height, 0]);
-  svg.append("g").call(d3.axisLeft(y));
-  var barplot = svg.append("g").attr("class", "plot");
-  barplot
-    .selectAll("rect")
-    .data(data)
-    .enter()
-    .append("rect")
-    .attr("x", (d) => x(d.pos.toString()))
-    .attr("y", (d) => y(d.count))
-    .attr("fill", (d) => frame_colors.get(Number(d.frame)))
-    .attr("width", x.bandwidth())
-    .attr("height", (d) => line_height - y(d.count));
-  // var color = d3
-  //   .scaleOrdinal()
-  //   .domain([0, 1, 2])
-  //   .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-  //
-  // var legend = svg
-  //   .append("g")
-  //   .attr("class", "legend")
-  //   .attr("x", 100 - 65)
-  //   .attr("y", 25)
-  //   .attr("height", 100)
-  //   .attr("width", 100);
-  // legend
-  //   .selectAll("rect")
-  //   .data(new Set(data.map((d) => d.frame)))
-  //   .enter()
-  //   .append("rect")
-  //   .attr("x", 100 - 65)
-  //   .attr("y", function (d, i) {
-  //     return i * 20;
-  //   })
-  //   .attr("width", 10)
-  //   .attr("height", 10)
-  //   .style("fill", function (d) {
-  //     return color(d - 1);
-  //   });
-}
-
-function line_plot(data, str) {
+function line_plot(data) {
   // Zooming
+  plot_data = d3.csvParse(data.plot);
 
   const zoom = d3.zoom().on("zoom", function (event) {
     x2 = event.transform.rescaleX(xScale);
@@ -330,51 +269,25 @@ function line_plot(data, str) {
     .attr("transform", `translate(${margin.left},${margin.top})`);
   const xScale = d3
     .scaleLinear()
-    .domain(d3.extent(data, (d) => +d.pos)) // + mean incremental
+    .domain(d3.extent(plot_data, (d) => +d.pos)) // + mean incremental
     .range([0, full_width - (margin.left + margin.right)]);
 
   svg
     .append("g")
     .attr("transform", `translate(0,${full_height - margin.bottom})`)
     .call(d3.axisBottom(xScale).ticks(5));
+
   const yScale = d3
     .scaleLinear()
-    .domain(d3.extent(data, (d) => +d.count))
+    .domain(d3.extent(plot_data, (d) => +d.count))
     .range([full_height - margin.bottom - margin.top, 0]);
-  svg.append("g").call(d3.axisLeft(yScale));
-  var lnplot = svg.append("g").attr("class", "plot");
-  //
-  var sumstat = d3.groups(data, (d) => d.frame); // nest function allows to group the
-  // calculation per level of a factor
-  var res = sumstat.map((d) => d.frame); // list of group names
-  console.log(res);
-  var color = d3
-    .scaleOrdinal()
-    .domain(res)
-    .range(["#e41a1c", "#377eb8", "#4daf4a"]);
-  // // console.log(color(1));
-  // // console.log(sumstat[0][1]);
-  // // console.log("Anmol");
-  //
-  sumstat.forEach((d) => {
-    // console.log(d);
-    // console.log(d[0]);
-    // console.log("Kiran");
-    lnplot
-      .append("path")
-      .datum(d[1])
-      .attr("fill", "none")
-      .attr("id", "a_" + d[0])
-      .attr("stroke", color(d[0] - 1))
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x((d) => xScale(d.pos))
-          .y((d) => yScale(d.count)),
-      );
-  });
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${margin.top})`)
+    .call(d3.axisLeft(yScale));
+
+  // const sumstat = linep(plot_data, svg, xScale, yScale);
+  barp(plot_data, svg, yScale);
 
   var legend = svg
     .append("g")
@@ -385,33 +298,33 @@ function line_plot(data, str) {
     .attr("width", 100);
   legend
     .selectAll("rect")
-    .data(sumstat)
+    .data(frame_colors)
     .enter()
     .append("rect")
     .attr("id", (d) => d[0])
     .attr("x", 100 - 65)
-    .attr("y", (d, i) => i * 20)
+    .attr("y", (d) => d[0] * 20)
     .attr("width", 10)
     .attr("height", 10)
-    .style("fill", (d) => color(d[0] - 1));
+    .style("fill", (d) => d[1]);
   legend
     .selectAll("text")
-    .data(sumstat)
+    .data(frame_colors)
     .enter()
 
     .append("text")
     .attr("x", 100 - 55)
-    .attr("y", (d, i) => i * 20 + 10)
-    .text((d) => "Frame " + d[0])
-    .style("fill", (d) => color(d[0] - 1));
+    .attr("y", (d) => d[0] * 20 + 10)
+    .text((d) => "Frame " + (d[0] + 1))
+    .style("fill", (d) => d[1]);
   legend.on("click", (d) => {
     var this_id = d.target.getAttribute("id");
     console.log(this_id);
-    $("#a_" + this_id).toggle();
+    $(".a_" + this_id).toggle();
     console.log($("#a_" + this_id).is(":visible"));
   });
   // AA plot
-  aa_plot(str, svg);
+  aa_plot(data, svg);
   svg.call(zoom);
 }
 
@@ -452,34 +365,55 @@ function cds_plot(datat) {
 
 // Plot Amino Acids
 
-function aa_plot(str, svg) {
+function aa_plot(data, svg) {
+  str = data.seq;
+  start_stop = structuredClone(JSON.parse(data.start_stop)); // data.start_stop;
   // NOTE: Default font size is 10, sans-serif
+  var newplot = svg
+    .append("g")
+    .attr("transform", `translate(0,${full_height - margin.bottom})`);
+  console.log(full_height);
+  console.log(margin.bottom);
   const xScale = d3
     .scaleLinear()
     .domain([0, str.length]) // + mean incremental
     .range([0, full_width - margin.left - margin.right]);
   const y_level = 50;
+  console.log(start_stop);
   for (let frame = 0; frame < 3; frame++) {
     const aa = codon2amino(str, frame);
     chr_pixels = ((full_width - margin.left - margin.right) * 1.0) / aa.length;
-    g = svg
-      .append("g")
-      .attr("height", 50)
-      .attr("width", full_width - margin.left - margin.right)
-      .attr(
-        "transform",
-        `translate(0,${full_height - margin.bottom + frame * 20})`,
-      );
+    g = newplot.append("g").attr("transform", `translate(0,${frame * 20})`);
     if (chr_pixels < 14) {
-      aa.split("").forEach((dt, i) => {
-        g.append("line")
-          .attr("x1", xScale(frame + i * 3 + 1)) // optimised position
-          .attr("y1", y_level)
-          .attr("x2", xScale(frame + i * 3 + 1))
-          .attr("y2", y_level + 10)
-          .attr("stroke", amino_colors.get(dt))
-          .attr("stroke-width", chr_pixels); // TODO: Add color based on frame.
+      start_stop.forEach((dt) => {
+        if (dt.frame == frame) {
+          var ss_color = "green";
+          if (dt.type == "stop") {
+            ss_color = "red";
+          } else {
+            console.log(dt.pos);
+            console.log(xScale(dt.pos));
+            g.append("line")
+              .attr("x1", xScale(dt.pos))
+              .attr("y1", y_level)
+              .attr("x2", xScale(dt.pos))
+              .attr("y2", y_level + 10)
+              .attr("stroke", ss_color)
+              .attr("stroke-width", 2);
+          }
+        }
       });
+
+      // aa.split("").forEach((dt, i) => {
+      //   g.append("line")
+      //     .attr("x1", xScale(frame + i * 3 + 1)) // optimised position
+      //     .attr("y1", y_level)
+      //     .attr("x2", xScale(frame + i * 3 + 1))
+      //     .attr("y2", y_level + 10)
+      //     .attr("stroke", amino_colors.get(dt))
+      //     .attr("stroke-width", chr_pixels); // TODO: Add color based on
+      //     frame.
+      // });
     } else {
       aa.split("").forEach((dt, i) => {
         g.append("text")

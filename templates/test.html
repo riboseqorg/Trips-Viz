@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title></title>
     <script src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <!-- modules -->
+    <script src="main_plots.js"></script>
+    <!-- modules end -->
     <script src="d3_plot.js"></script>
     <!--d3js-->
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -89,8 +92,8 @@
         var rdg_data = structuredClone(JSON.parse(data.rdg));
 
         rdg_plot(rdg_data);
-        line_plot(d3.csvParse(data.plot), data.seq);
-        bar_plot(d3.csvParse(data.plot));
+        line_plot(data);
+        // bar_plot(d3.csvParse(data.plot));
         var vertical = d3
           .select("#plot")
           .append("div")
