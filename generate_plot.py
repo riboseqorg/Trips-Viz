@@ -1,15 +1,15 @@
-import pickle
-import config
-import os
-import sqlite3
-from fetch_shelve_reads2 import get_reads
-import pandas as pd
-from sqlitedict import SqliteDict
 import collections
+import os
+import pickle
+import sqlite3
 
 import altair as alt
-from fixed_values import get_user_defined_seqs
+import pandas as pd
+from sqlitedict import SqliteDict
 
+import config
+from fetch_shelve_reads2 import get_reads
+from fixed_values import get_user_defined_seqs
 
 color_dict = {'frames': ['#FF4A45', '#64FC44', '#5687F9']}
 
@@ -122,29 +122,55 @@ def generate_plot():
         if seq[i:i + 3] in stop_codons:
             all_stops[seq[i:i + 3]].append(i + 1)
     # Error occurs if one of the frames is empty for any given start/stop, so we initialise with -5 as this won't be seen by user and will prevent the error
-    start_stop_dict = {
+    # start_stop_dict = {
+    #     1: {
+    #         "starts": [-5],
+    #         "stops": {
+    #             "TGA": [-5],
+    #             "TAG": [-5],
+    #             "TAA": [-5]
+    #         }
+    #     },
+    #     2: {
+    #         "starts": [-5],
+    #         "stops": {
+    #             "TGA": [-5],
+    #             "TAG": [-5],
+    #             "TAA": [-5]
+    #         }
+    #     },
+    #     3: {
+    #         "starts": [-5],
+    #         "stops": {
+    #             "TGA": [-5],
+    #             "TAG": [-5],
+    #             "TAA": [-5]
+    #         }
+    #     }
+    # }
+start_stop_dict = {
         1: {
-            "starts": [-5],
+            "starts": [],
             "stops": {
-                "TGA": [-5],
-                "TAG": [-5],
-                "TAA": [-5]
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
             }
         },
         2: {
-            "starts": [-5],
+            "starts": [],
             "stops": {
-                "TGA": [-5],
-                "TAG": [-5],
-                "TAA": [-5]
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
             }
         },
         3: {
-            "starts": [-5],
+            "starts": [],
             "stops": {
-                "TGA": [-5],
-                "TAG": [-5],
-                "TAA": [-5]
+                "TGA": [],
+                "TAG": [],
+                "TAA": []
             }
         }
     }
