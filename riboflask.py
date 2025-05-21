@@ -59,7 +59,7 @@ def generate_plot(data, settings) -> str:
 
     data["coding_regions"] = coding_regions
     data["traninfo"] = traninfo
-    print(traninfo)
+
 
 
 
@@ -79,8 +79,8 @@ def generate_plot(data, settings) -> str:
     
     rdg = str(sequence2rdg(traninfo["sequence"]))
     print(sqlpath)
-    print(start_stop)
+    print(coding_regions.to_numpy())
 
 
-    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': str(start_stop.to_pandas().to_json(orient="records")),'seq': traninfo["sequence"],'cds_range':[traninfo["cds_start"],traninfo["cds_stop"]]} # all_rna_reads.sort("pos").write_csv()
+    return {"plot": all_rna_reads.sort("pos").write_csv(),'exon_junctions': traninfo['exon_junctions'],'coding_regions': coding_regions.write_csv(), "rdg": rdg, 'start_stop': str(start_stop.to_pandas().to_json(orient="records")),'seq': traninfo["sequence"],'cds_range':[traninfo["cds_start"],traninfo["cds_stop"]]} # all_rna_reads.sort("pos").write_csv()
     # return plt.to_json()
