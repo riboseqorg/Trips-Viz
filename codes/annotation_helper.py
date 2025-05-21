@@ -29,13 +29,17 @@ def run(annotations):
                     orfs.append([i%3,start,i])
                     break
                 starts[i%3] = []
-        start_stop_list = [[i,-5,"start"] for i in range(3)]
+        start_stop_list = []
+        # start_stop_list = [[i,-5,"start"] for i in range(3)]
+        
         for st in row["start_list"].split(","):
+            if '-' in st: continue
             stt = int(st) 
-            start_stop_list.append([stt%3,stt,"start"])
+            start_stop_list.append([(stt%3+2)%3,stt,"start"])# TODO: Check why shifts are required
         for st in row["stop_list"].split(","):
+            if '-' in st: continue
             stt = int(st) 
-            start_stop_list.append([stt%3,stt,"stop"])
+            start_stop_list.append([((stt+1)%3+2)%3 ,stt,"stop"]) # TODO: Check why shifts are required
         annotations_helper[row["transcript"]] = {"start_stop_list":start_stop_list,"start_stop_list_cols":["frame","position","type"],"orfs":orfs, 'orf_cols':['frame','start','stop']}
 
     annotations_helper.commit()
