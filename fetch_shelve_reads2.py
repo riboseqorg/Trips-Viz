@@ -4,6 +4,7 @@ from typing import Dict, Tuple, Union
 
 import pandas as pd
 import polars as pl
+from flask import flash
 from sqlitedict import SqliteDict
 
 from core_functions import dict2df
@@ -49,7 +50,8 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
         try:
             sqlite_db = SqliteDict(fl)
         except FileNotFoundError:
-            return pd.DataFrame(), pd.DataFrame()
+            flash(f"Sqlite file for {path.split(fl)[1].split('.')[0]} not found.")
+            # return pd.DataFrame(), pd.DataFrame()
         try:
             all_offsets_n_scores = sqlite_db["offsets"][ data["offsite"]]
             print("all_offsets_n_scores", all_offsets_n_scores)
@@ -105,7 +107,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
 (pl.col("readlen") >= data["minread"]) & (pl.col("readlen") <= data["maxread"])).select(
                 'pos', 'count').group_by('pos').sum()
         print(master_file_dict_values, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-        data["coverage"] = True  # For testing purpose only
+        # data["coverage"] = True  # For testing purpose only
         if "coverage" in data:
 
             # TODO: Simply the coverage value
