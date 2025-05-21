@@ -21,6 +21,16 @@
     <!--<script src="https://d3js.org/d3-axis.v1.min.js"></script>-->
   </head>
   <body>
+    <input
+      class="hidden_check line_graph"
+      id="line_graph"
+      type="checkbox"
+      name="namelite"
+      value="lite1"
+      checked=""
+    />
+    <label for="line_graph" class="checkbox_label"></label>
+    <label for="line_graph" class="padded_label">Line Graph</label>
     <div id="plot"></div>
 
     <div id="rdg"></div>
@@ -81,19 +91,14 @@
           '{"organism":"escherichia_coli","transcriptome":"Ensembl_k_12_ASM584v2","override":"","transcript":"gapA","readscore":"0","minread":"5","maxread":"150","seqhili":"","hili_stop":"0","offsite":"fiveprime","file_type":"riboseq","study":"0","file_riboseq__0":"on","file_riboseq__1":"on"}',
         pathname: "single_transcript_plot",
       };
-      // const rdg_data = null;
-      var line = d3
-        .line()
-        .x((d) => xScale(d.date))
-        .y((d) => yScale(d.value))
-        .curve(d3.curveNatural);
+      var full_data = null;
       $.post("http://localhost:5000/query", input, function (data) {
+        full_data = $.extend(true, {}, data); // making global copy
         // console.log(data.start_stop);
         var rdg_data = structuredClone(JSON.parse(data.rdg));
 
         rdg_plot(rdg_data);
         line_plot(data);
-        // bar_plot(d3.csvParse(data.plot));
         var vertical = d3
           .select("#plot")
           .append("div")
@@ -117,6 +122,11 @@
             mousex = mousex[0] + 5;
             vertical.style("left", mousex + "px");
           });
+      });
+      // Toggle line/bar
+      $("#line_graph").click(function () {
+        d3.select("#plot").select("svg").remove();
+        line_plot(full_data);
       });
     </script>
   </footer>

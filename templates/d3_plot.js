@@ -250,6 +250,8 @@ function rdg_plot(data) {
 }
 
 function line_plot(data) {
+  console.log(data.cds_range);
+  console.log("==================================================");
   // Zooming
   plot_data = d3.csvParse(data.plot);
 
@@ -262,6 +264,7 @@ function line_plot(data) {
   // NOTE: Line plot
   const svg = d3
     .select("#plot")
+    // To replot
     .append("svg")
     .attr("height", full_height)
     .attr("width", full_width)
@@ -269,25 +272,57 @@ function line_plot(data) {
     .attr("transform", `translate(${margin.left},${margin.top})`);
   const xScale = d3
     .scaleLinear()
-    .domain(d3.extent(plot_data, (d) => +d.pos)) // + mean incremental
+    .domain([0, d3.extent(plot_data, (d) => +d.pos)[1]]) // + mean incremental
     .range([0, full_width - (margin.left + margin.right)]);
 
   svg
     .append("g")
     .attr("transform", `translate(0,${full_height - margin.bottom})`)
     .call(d3.axisBottom(xScale).ticks(5));
+  ymax = d3.extent(plot_data, (d) => +d.count)[1];
 
   const yScale = d3
     .scaleLinear()
-    .domain(d3.extent(plot_data, (d) => +d.count))
+    .domain([0, ymax])
     .range([full_height - margin.bottom - margin.top, 0]);
   svg
     .append("g")
     .attr("transform", `translate(0,${margin.top})`)
     .call(d3.axisLeft(yScale));
 
-  // const sumstat = linep(plot_data, svg, xScale, yScale);
-  barp(plot_data, svg, yScale);
+  // plot cds vertical line
+  svg
+    .append("line")
+    .attr("x1", xScale(data.cds_range[0]))
+    .attr("x2", xScale(data.cds_range[0]))
+    .attr("y1", yScale(0))
+    .attr("y2", yScale(ymax - 20))
+    .style("stroke", "black")
+    .style("stroke-width", 1);
+  svg
+    .append("line")
+    .attr("x1", xScale(data.cds_range[1]))
+    .attr("x2", xScale(data.cds_range[1]))
+    .attr("y1", yScale(0))
+    .attr("y2", yScale(ymax - 20))
+    .style("stroke", "black")
+    .style("stroke-width", 1);
+  svg
+    .append("text")
+    .attr("x", xScale(data.cds_range[0]))
+    .attr("y", yScale(ymax - 20))
+    .text("start");
+  svg
+    .append("text")
+    .attr("x", xScale(data.cds_range[1]))
+    .attr("y", yScale(ymax - 20))
+    .text("stop");
+  // End of CDS
+  if ($("#line_graph").is(":checked")) {
+    linep(plot_data, svg, xScale, yScale);
+  } else {
+    barp(plot_data, svg, yScale);
+  }
 
   var legend = svg
     .append("g")
@@ -367,6 +402,7 @@ function cds_plot(datat) {
 
 function aa_plot(data, svg) {
   str = data.seq;
+  console.log(data.start_stop);
   start_stop = structuredClone(JSON.parse(data.start_stop)); // data.start_stop;
   // NOTE: Default font size is 10, sans-serif
   var newplot = svg
@@ -390,17 +426,16 @@ function aa_plot(data, svg) {
           var ss_color = "green";
           if (dt.type == "stop") {
             ss_color = "red";
-          } else {
-            console.log(dt.pos);
-            console.log(xScale(dt.pos));
-            g.append("line")
-              .attr("x1", xScale(dt.pos))
-              .attr("y1", y_level)
-              .attr("x2", xScale(dt.pos))
-              .attr("y2", y_level + 10)
-              .attr("stroke", ss_color)
-              .attr("stroke-width", 2);
           }
+          console.log(dt.pos);
+          console.log(xScale(dt.pos));
+          g.append("line")
+            .attr("x1", xScale(dt.pos))
+            .attr("y1", y_level)
+            .attr("x2", xScale(dt.pos))
+            .attr("y2", y_level + 10)
+            .attr("stroke", ss_color)
+            .attr("stroke-width", 2);
         }
       });
 
