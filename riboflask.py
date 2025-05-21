@@ -78,7 +78,9 @@ def generate_plot(data, settings) -> str:
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
     
     rdg = str(sequence2rdg(traninfo["sequence"]))
+    print(sqlpath)
     print(start_stop)
 
-    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': str(start_stop.to_pandas().to_json(orient="records")),'seq': traninfo["sequence"]} # all_rna_reads.sort("pos").write_csv()
+
+    return {"plot": all_rna_reads.sort("pos").write_csv(), "rdg": rdg, 'start_stop': str(start_stop.to_pandas().to_json(orient="records")),'seq': traninfo["sequence"],'cds_range':[traninfo["cds_start"],traninfo["cds_stop"]]} # all_rna_reads.sort("pos").write_csv()
     # return plt.to_json()
