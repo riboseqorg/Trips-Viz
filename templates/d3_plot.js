@@ -156,15 +156,15 @@ const amino_colors = new Map([
 
 // function zoom(svg) {
 //   const extent = [
-//     [marginLeft, marginTop],
-//     [width - marginRight, height - marginTop],
+//     [margin.left, margin.top],
+//     [full_width - margin.right, full_height - margin.top],
 //   ];
 //   svg.call(
 //     d3.zoom().scaleExtent([1, 8]).translateExtent(extent).on("zoom", zoomed),
 //   );
 //   function zoomed(event) {
-//     x.range([marginLeft, width - marginRight]).map((d) =>
-//       d3.event.transform.rescaleX(x),
+//     x.range([margin.left, width - margin.right]).map((d) =>
+//       d3.event.transform.rescaleX(d),
 //     );
 //     svg
 //       .selectAll(".plot path")
@@ -173,7 +173,7 @@ const amino_colors = new Map([
 //     svg.selectAll(".x-axis").call(xAxis);
 //   }
 // }
-
+//
 //// Base plot dimensions
 //// Frames dimensions
 
@@ -255,11 +255,11 @@ function line_plot(data) {
   // Zooming
   plot_data = d3.csvParse(data.plot);
 
-  const zoom = d3.zoom().on("zoom", function (event) {
-    x2 = event.transform.rescaleX(xScale);
-    xAxisG.call(xAxis.scale(x2));
-    path.attr("d", line);
-  });
+  // const zoom = d3.zoom().on("zoom", function (event) {
+  //   x2 = event.transform.rescaleX(xScale);
+  //   xAxisG.call(xAxis.scale(x2));
+  //   path.attr("d", line);
+  // });
 
   // NOTE: Line plot
   const svg = d3
@@ -270,12 +270,48 @@ function line_plot(data) {
     .attr("width", full_width)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
+  // NOTE: Add for crosshair
+  svg
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", full_width)
+    .attr("height", full_height)
+    .style("fill", "none")
+    .style("pointer-events", "all");
+
+  // Horizontal zooming
+  function zoomed(event) {
+    xScale.domain(event.transform.rescaleX(shadowScale).domain());
+    xAxisG.call(axis);
+  }
+  // Standard zoom behavior:
+  var zoom = d3
+    .zoom()
+    .scaleExtent([1, 10])
+    .translateExtent([
+      [0, 0],
+      [
+        full_width - margin.left - margin.right,
+        full_height - margin.top - margin.bottom,
+      ],
+    ])
+    .on("zoom", zoomed);
+
+  svg.call(zoom);
+  // svg.call(
+  //   d3.zoom().on("zoom", function () {
+  //     console.log(d3.zoomTransform(this));
+  //     svg.attr("transform", d3.zoomTransform(this));
+  //   }),
+  // );
   const xScale = d3
     .scaleLinear()
     .domain([0, data.seq.length]) // + mean incremental
     .range([0, full_width - (margin.left + margin.right)]);
-
-  svg
+  var shadowScale = xScale.copy();
+  var axis = d3.axisBottom().scale(xScale);
+  var xAxisG = svg
     .append("g")
     .attr("transform", `translate(0,${full_height - margin.bottom})`)
     .call(d3.axisBottom(xScale).ticks(5));
@@ -323,6 +359,7 @@ function line_plot(data) {
   } else {
     barp(plot_data, svg, yScale);
   }
+  circlep(plot_data, svg, xScale, yScale);
 
   var legend = svg
     .append("g")
@@ -358,13 +395,87 @@ function line_plot(data) {
     $(".a_" + this_id).toggle();
     console.log($("#a_" + this_id).is(":visible"));
   });
+
+  // cross hair
+  var verticalLine = svg
+    .append("line")
+    .attr("opacity", 0)
+    .attr("y1", 0)
+    .attr("y2", full_height)
+    .attr("stroke", "black")
+    .attr("stroke-width", 1)
+    .attr("pointer-events", "none");
+
+  var horizontalLine = svg
+    .append("line")
+    .attr("opacity", 0)
+    .attr("x1", 0)
+    .attr("x2", full_width)
+    .attr("stroke", "black")
+    .attr("stroke-width", 1)
+    .attr("pointer-events", "none");
+  //https://stackoverflow.com/questions/38687588/add-horizontal-crosshair-to-d3-js-chart
+  svg
+    .on("mousemove", function () {
+      var x = event.pageX - margin.left;
+      var y = event.pageY - margin.top;
+      verticalLine.attr("x1", x).attr("x2", x).attr("opacity", 1);
+      horizontalLine.attr("y1", y).attr("y2", y).attr("opacity", 1);
+    })
+    .on("mouseout", function () {
+      verticalLine.attr("opacity", 0);
+      horizontalLine.attr("opacity", 0);
+    });
+
   // ORFs
   cds_plot(d3.csvParse(data.coding_regions), svg, xScale);
   // AA plot
   aa_plot(data, svg, xScale);
-  svg.call(zoom);
+  // svg.call(zoom);
   exon_junction(data.exon_junctions, svg, xScale);
+  // showTooltip(plot_data, svg, xScale, yScale);
 }
+//Tool tips
+// Add circle for tool tip
+function circlep(data, svg, xScale, yScale) {
+  var tooltip = d3
+    .select("#plot")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    // .style("background", "#fff")
+    .text("a simple tooltip");
+  svg
+    .selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", (d) => xScale(d.pos))
+    .attr("cy", (d) => yScale(d.count))
+    .attr("r", 3)
+    .style("fill", (d) => "transparent")
+    .on("mouseover", function (event, d) {
+      tooltip
+        // .attr("transform", "translate(" + event.pageX + "," + event.pageY + ")")
+        .text("pos:" + d.pos + " count:" + d.count);
+      return tooltip.style("visibility", "visible");
+    })
+    .on("mousemove", function (d) {
+      // console.log(event);
+      return tooltip
+        .style("top", event.pageY + 10 + "px")
+        .style("left", event.pageX + 10 + "px");
+      // return tooltip.attr(
+      //   "transform",
+      //   "translate(" + event.pageX + "," + event.pageY + ")",
+      // );
+    })
+    .on("mouseout", function () {
+      return tooltip.style("visibility", "hidden");
+    });
+}
+
 // Exon juctions
 function exon_junction(data, svg, xScale) {
   exon_svg = svg.select(".plot");
