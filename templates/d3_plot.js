@@ -497,7 +497,7 @@ function cds_plot(data, svg, xScale) {
     .append("rect")
     .attr("x", (d) => xScale(d.coding_start))
     .attr("y", (d) => 25)
-    .attr("width", (d) => xScale(d.coding_stop - d.coding_start))
+    .attr("width", (d) => xScale(d.coding_stop) - xScale(d.coding_start))
     .attr("height", (d) => 20)
     .attr("fill", "teal");
   cds_svg
