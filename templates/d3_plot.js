@@ -154,25 +154,6 @@ const amino_colors = new Map([
   ["*", "red"],
 ]);
 
-// function zoom(svg) {
-//   const extent = [
-//     [margin.left, margin.top],
-//     [full_width - margin.right, full_height - margin.top],
-//   ];
-//   svg.call(
-//     d3.zoom().scaleExtent([1, 8]).translateExtent(extent).on("zoom", zoomed),
-//   );
-//   function zoomed(event) {
-//     x.range([margin.left, width - margin.right]).map((d) =>
-//       d3.event.transform.rescaleX(d),
-//     );
-//     svg
-//       .selectAll(".plot path")
-//       .attr("x", (d) => x(d.pos))
-//       .attr("width", x.bandwidth());
-//     svg.selectAll(".x-axis").call(xAxis);
-//   }
-// }
 //
 //// Base plot dimensions
 //// Frames dimensions
@@ -281,24 +262,7 @@ function line_plot(data) {
     .style("pointer-events", "all");
 
   // Horizontal zooming
-  function zoomed(event) {
-    xScale.domain(event.transform.rescaleX(shadowScale).domain());
-    xAxisG.call(axis);
-  }
-  // Standard zoom behavior:
-  var zoom = d3
-    .zoom()
-    .scaleExtent([1, 10])
-    .translateExtent([
-      [0, 0],
-      [
-        full_width - margin.left - margin.right,
-        full_height - margin.top - margin.bottom,
-      ],
-    ])
-    .on("zoom", zoomed);
 
-  svg.call(zoom);
   // svg.call(
   //   d3.zoom().on("zoom", function () {
   //     console.log(d3.zoomTransform(this));
@@ -310,11 +274,11 @@ function line_plot(data) {
     .domain([0, data.seq.length]) // + mean incremental
     .range([0, full_width - (margin.left + margin.right)]);
   var shadowScale = xScale.copy();
-  var axis = d3.axisBottom().scale(xScale);
+  var xAxis = d3.axisBottom().scale(xScale);
   var xAxisG = svg
     .append("g")
     .attr("transform", `translate(0,${full_height - margin.bottom})`)
-    .call(d3.axisBottom(xScale).ticks(5));
+    .call(xAxis.ticks(5));
   ymax = d3.extent(plot_data, (d) => +d.count)[1];
 
   const yScale = d3
@@ -361,6 +325,29 @@ function line_plot(data) {
   }
   circlep(plot_data, svg, xScale, yScale);
 
+  function zoomed(event) {
+    xScale.domain(event.transform.rescaleX(shadowScale).domain());
+    xAxisG.call(xAxis.ticks(5));
+    console.log(xScale.domain());
+    svg.select(".plot").remove();
+    linep(plot_data, svg, xScale, yScale);
+    aa_plot(data, svg, xScale);
+    cds_plot(d3.csvParse(data.coding_regions), svg, xScale);
+  }
+  // Standard zoom behavior:
+  var zoom = d3
+    .zoom()
+    .scaleExtent([1, 1000])
+    .translateExtent([
+      [0, 0],
+      [
+        full_width - margin.left - margin.right,
+        full_height - margin.top - margin.bottom,
+      ],
+    ])
+    .on("zoom", zoomed);
+
+  svg.call(zoom);
   var legend = svg
     .append("g")
     .attr("class", "legend")
@@ -496,9 +483,10 @@ function exon_junction(data, svg, xScale) {
 //
 function cds_plot(data, svg, xScale) {
   // console.log(datat);
+  svg.selectAll(".cds").remove();
   var cds_svg = svg
     .append("g")
-    .attr("id", "cds")
+    .attr("class", "cds")
     .attr("height", 50)
     .attr("width", full_width - margin.left - margin.right)
     .attr("transform", `translate(0,${full_height - margin.bottom})`);
@@ -527,15 +515,21 @@ function aa_plot(data, svg, xScale) {
   str = data.seq;
   start_stop = structuredClone(JSON.parse(data.start_stop)); // data.start_stop;
   // NOTE: Default font size is 10, sans-serif
+  svg.selectAll(".aa").remove();
   var newplot = svg
     .append("g")
+    .attr("class", "aa")
     .attr("transform", `translate(0,${full_height - margin.bottom})`);
   const y_level = 50;
   for (let frame = 0; frame < 3; frame++) {
     const aa = codon2amino(str, frame);
-    chr_pixels = ((full_width - margin.left - margin.right) * 1.0) / aa.length;
+    const ss = xScale.domain();
+    chr_pixels =
+      ((full_width - margin.left - margin.right) * 1.0) /
+      Math.ceil(ss[1] - ss[0]);
+    console.log(chr_pixels);
     g = newplot.append("g").attr("transform", `translate(0,${frame * 20})`);
-    if (chr_pixels < 14) {
+    if (chr_pixels < 7) {
       start_stop.forEach((dt) => {
         if (dt.frame == frame) {
           var ss_color = "green";
@@ -571,10 +565,10 @@ function aa_plot(data, svg, xScale) {
   // Plottig Nucleotides
   g = svg
     .append("g")
+    .attr("class", "aa")
     .attr("height", 50)
     .attr("width", full_width - margin.left - margin.right)
     .attr("transform", `translate(0,${full_height - margin.bottom + 60})`);
-  chr_pixels = ((full_width - margin.left - margin.right) * 1.0) / str.length;
   if (chr_pixels < 14) {
     str.split("").forEach((dt, i) => {
       g.append("line")
