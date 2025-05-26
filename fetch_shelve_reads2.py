@@ -37,6 +37,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
 
     Example:
     """
+
     mismatch_dict = []
     master_dict = []
 
@@ -44,9 +45,19 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
 
     # first make a master dict consisting of all the read dicts from each filename
     offset_dict = {}
+    
     print(data['file_paths_dict']['path'])
     print("====================")
-    for fl in data['file_paths_dict']['path']:
+    for fltype in data["file_paths_dict"]["filetype"].unique():
+        fl_type_data = data["file_paths_dict"].filter(
+            pl.col("filetype") == fltype
+        )
+
+
+
+
+
+    for fl in fl_type_data['path']:
         try:
             sqlite_db = SqliteDict(fl)
         except FileNotFoundError:
@@ -54,7 +65,6 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
             # return pd.DataFrame(), pd.DataFrame()
         try:
             all_offsets_n_scores = sqlite_db["offsets"][ data["offsite"]]
-            print("all_offsets_n_scores", all_offsets_n_scores)
 
         except KeyError:
             read_length = list(range(data["minread"], data["maxread"] + 1))
@@ -64,7 +74,6 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
                 'offsets': [15] * range_len,
                 'read_scores': [1] * range_len
             })
-        print(data)
         
         offset_dict[fl] = all_offsets_n_scores.filter(
             pl.col('read_scores') >= data["readscore"])
@@ -79,9 +88,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
         try:
             alltrandict = sqlite_db[data['transcript']]
             tdf = alltrandict["unambig"] 
-            # print("alltrandict", alltrandict)
             if ("ambig" in alltrandict):
-                # print("hellow ambig")
                 tdf[0:0]= alltrandict["ambig"]
             # TODO: Change merge_dicts to take a list of dicts instead of two
             # NOTE: pcr not found in databases, explore for other data

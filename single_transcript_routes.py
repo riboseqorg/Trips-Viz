@@ -79,14 +79,19 @@ def query_plot(data):  #TODO: add return type
     data["file_ids"] = []
 
     # NOTE: Listing selected files for each file type
+    file_types = []
 
     for key in data:
+        if key == "file_ids": continue
         # TODO: Make it for all the files
-        if key.startswith(f'file_{data["file_type"]}'):
-            file_id = int(key.split('__')[-1])
+        if key.startswith('file_'):
+            file_name_frags = key.split('_')
+            file_id = int(file_name_frags[-1])
+            file_types = file_name_frags[1]
             data["file_ids"].append(file_id)
     file_paths_dict = fetch_file_paths(data)
-    print(file_paths_dict, "Kiran")
+
+    print(file_paths_dict.columns, "KiranXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
     # user_short = data["user_short"]
 
