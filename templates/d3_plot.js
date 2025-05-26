@@ -285,9 +285,9 @@ function line_plot(data) {
     .scaleLinear()
     .domain([0, ymax])
     .range([full_height - margin.bottom - margin.top, 0]);
-  svg
+  var yAxisG = svg
     .append("g")
-    .attr("transform", `translate(0,${margin.top})`)
+    // .attr("transform", `translate(0,${margin.top})`)
     .call(d3.axisLeft(yScale));
 
   // plot cds vertical line
@@ -328,7 +328,17 @@ function line_plot(data) {
   function zoomed(event) {
     xScale.domain(event.transform.rescaleX(shadowScale).domain());
     xAxisG.call(xAxis.ticks(5));
-    console.log(xScale.domain());
+    xmin = xScale.domain()[0];
+    xmax = xScale.domain()[1];
+    var tymax = [];
+    plot_data.forEach((dt) => {
+      if (dt.pos > xmin && dt.pos < xmax) {
+        tymax.push(dt.count);
+      }
+    });
+    tymax = Math.max(...tymax);
+    yScale.domain([0, tymax]);
+    yAxisG.call(d3.axisLeft(yScale));
     svg.select(".plot").remove();
     linep(plot_data, svg, xScale, yScale);
     aa_plot(data, svg, xScale);
