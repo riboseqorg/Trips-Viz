@@ -2,16 +2,17 @@ import logging
 import os
 from typing import Text
 
-import config
 import polars as pl
-import riboflask
-from core_functions import (fetch_file_paths, fetch_files, fetch_studies,
-                            fetch_study_info, fetch_user, form_filler,
-                            generate_short_code, string2other)
 from flask import Blueprint, Response
 from flask import current_app as app
 from flask import jsonify, make_response, render_template, request
 from flask_login import current_user
+
+import config
+import riboflask
+from core_functions import (fetch_file_paths, fetch_files, fetch_studies,
+                            fetch_study_info, fetch_user, form_filler,
+                            generate_short_code, string2other)
 #from orfQuant import incl_OPM_run_orfQuant
 from sqlqueries_2 import get_table, get_user_id, sqlquery
 
@@ -76,19 +77,18 @@ def query_plot(data):  #TODO: add return type
     """
     # global user_short_passed
     data["transcript"] = data["transcript"].upper()
-    data["file_ids"] = []
+    file_ids = []
 
     # NOTE: Listing selected files for each file type
     file_types = []
 
     for key in data:
-        if key == "file_ids": continue
+        if key in ["file_type","file_ids"]: continue
         # TODO: Make it for all the files
         if key.startswith('file_'):
-            file_name_frags = key.split('_')
-            file_id = int(file_name_frags[-1])
-            file_types = file_name_frags[1]
-            data["file_ids"].append(file_id)
+            print(key)
+            file_ids.append(int(key.split('_')[-1]))
+    data["file_ids"] = file_ids
     file_paths_dict = fetch_file_paths(data)
 
     print(file_paths_dict.columns, "KiranXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")

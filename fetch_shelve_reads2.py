@@ -48,9 +48,9 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
     
     print(data['file_paths_dict']['path'])
     print("====================")
-    for fltype in data["file_paths_dict"]["filetype"].unique():
+    for fltype in data["file_paths_dict"]["file_type"].unique():
         fl_type_data = data["file_paths_dict"].filter(
-            pl.col("filetype") == fltype
+            pl.col("file_type") == fltype
         )
 
 
