@@ -8,27 +8,10 @@ from flask import flash
 from sqlitedict import SqliteDict
 
 from core_functions import dict2df
-from fixed_values import merge_dicts
-
-
-# Merge two dictionaries
-def merge_dicts(
-        dict1,
-        dict2):  # NOTE: expecting that second dictionary is always smaller
-    for readlen in dict2:
-        if readlen not in dict1:
-            dict1[readlen] = dict2[readlen]
-        else:
-            for pos in dict2[readlen]:
-                if pos in dict1[readlen]:
-                    dict1[readlen][pos] += dict2[readlen][pos]
-                else:
-                    dict1[readlen][pos] = dict2[readlen][pos]
-    return dict1
 
 
 # Create dictionary of read counts at each position in a transcript
-def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
+def get_reads(data, file_type) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
 
     Parameters: 
@@ -37,6 +20,8 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
 
     Example:
     """
+    print(data)
+    coverage = True if file_type == "rnaseq" else False
 
     mismatch_dict = []
     master_dict = []
@@ -47,11 +32,19 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
     offset_dict = {}
     
     print(data['file_paths_dict']['path'])
+    print(data['file_paths_dict']["file_type"]
+          )
     print("====================")
-    for fltype in data["file_paths_dict"]["file_type"].unique():
-        fl_type_data = data["file_paths_dict"].filter(
-            pl.col("file_type") == fltype
-        )
+    fl_type_data = data["file_paths_dict"].filter(
+        pl.col("file_type") == file_type
+    )
+
+    print(fl_type_data)
+
+    # for fltype in data["file_paths_dict"]["file_type"].unique():
+    #     fl_type_data = data["file_paths_dict"].filter(
+    #         pl.col("file_type") == fltype
+    #     )
 
 
 
@@ -115,7 +108,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
                 'pos', 'count').group_by('pos').sum()
         print(master_file_dict_values, "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
         # data["coverage"] = True  # For testing purpose only
-        if "coverage" in data:
+        if coverage:
 
             # TODO: Simply the coverage value
             master_file_dict_values = master_file_dict_values.with_columns(
@@ -125,7 +118,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
                 pos=pl.col("pos") + 16)
 
     master_dict_sub = []
-    if ("subcodon" in data) and ("coverage" not in data):
+    if ("subcodon" in data) and not coverage:
         for filename in set(offset_dict) & set(master_file_dict):
             for readlen in set(master_file_dict[filename]) & range_set & set(
                     offset_dict[filename]):
@@ -134,7 +127,7 @@ def get_reads(data) -> Tuple[pl.DataFrame, pl.DataFrame]:
                     count = master_file_dict[filename][readlen][pos]
                     if data["primetype"] == "threeprime":
                         pos += readlen
-                    if "coverage" in data:  # WARN:this shouldn't be here??
+                    if coverage:  # WARN:this shouldn't be here??
                         for i in range(0, readlen, 3):
                             new_offset_pos = (i + pos) + (offset % 3)
                             master_dict_sub.append([new_offset_pos, count])
