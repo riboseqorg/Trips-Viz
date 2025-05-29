@@ -1,5 +1,116 @@
 // Conversions/constants
 
+const color_combo = {
+  "#EA2C45": {
+    normal: "#EA2C45",
+    protan: "#6E4B2D",
+    deuteran: "#98643E",
+    tritan: "#ED2C46",
+  },
+  red: {
+    normal: "#EA2C45",
+    protan: "#6E4B2D",
+    deuteran: "#98643E",
+    tritan: "#ED2C46",
+  },
+  "#F0554E": {
+    normal: "#F0554E",
+    protan: "#98663F",
+    deuteran: "#B4774A",
+    tritan: "#F84761",
+  },
+  "#F3825B": {
+    normal: "#F3825B",
+    protan: "#CD8956",
+    deuteran: "#D88F59",
+    tritan: "#FE7182",
+  },
+  orange: {
+    normal: "#F3825B",
+    protan: "#CD8956",
+    deuteran: "#D88F59",
+    tritan: "#FE7182",
+  },
+  "#FCB66E": {
+    normal: "#FCB66E",
+    protan: "#FEB36E",
+    deuteran: "#FDB26D",
+    tritan: "#FEA2AD",
+  },
+  "#FDF487": {
+    normal: "#FDF487",
+    protan: "#FEE882",
+    deuteran: "#FEDB7D",
+    tritan: "#FFDAE0",
+  },
+  yellow: {
+    normal: "#FDF487",
+    protan: "#FEE882",
+    deuteran: "#FEDB7D",
+    tritan: "#FFDAE0",
+  },
+  "#70BF60": {
+    normal: "#70BF60",
+    protan: "#FFB16D",
+    deuteran: "#E69F62",
+    tritan: "#99ADB0",
+  },
+  "#00A74F": {
+    normal: "#00A74F",
+    protan: "#DA985D",
+    deuteran: "#BC8651",
+    tritan: "#5A97A2",
+  },
+  green: {
+    normal: "#00A74F",
+    protan: "#DA985D",
+    deuteran: "#BC8651",
+    tritan: "#5A97A2",
+  },
+  "#19B7B2": {
+    normal: "#19B7B2",
+    protan: "#ADAEB1",
+    deuteran: "#9BA3B2",
+    tritan: "#3BB2C5",
+  },
+  "#0063B1": {
+    normal: "#0063B1",
+    protan: "#0063B1",
+    deuteran: "#0063B1",
+    tritan: "#007284",
+  },
+  blue: {
+    normal: "#0063B1",
+    protan: "#0063B1",
+    deuteran: "#0063B1",
+    tritan: "#007284",
+  },
+  "#3B348D": {
+    normal: "#3B348D",
+    protan: "#00418D",
+    deuteran: "#00418C",
+    tritan: "#004C57",
+  },
+  "#8A2885": {
+    normal: "#8A2885",
+    protan: "#003F85",
+    deuteran: "#1E5384",
+    tritan: "#79454A",
+  },
+  purple: {
+    normal: "#8A2885",
+    protan: "#003F85",
+    deuteran: "#1E5384",
+    tritan: "#79454A",
+  },
+  "#B22A6D": {
+    normal: "#B22A6D",
+    protan: "#23466D",
+    deuteran: "#535C6B",
+    tritan: "#AA3A49",
+  },
+};
+
 const codon2aaDict = {
   GCA: "A",
   GCC: "A",
@@ -290,6 +401,14 @@ function line_plot(data) {
     // .attr("transform", `translate(0,${margin.top})`)
     .call(d3.axisLeft(yScale));
 
+  const xScale2 = d3
+    .scaleBand()
+    .range([0, full_width - (margin.left + margin.right)])
+    .domain(d3.range(0, d3.max(plot_data.map((d) => +d.pos)) + 1).map(String)) // + mean incremental
+    // .rangeRound([0, 1000])
+    .padding(0.02);
+
+  var shadowScale2 = xScale2.copy();
   if ($("#line_graph").is(":checked")) {
     linep(plot_data, svg, xScale, yScale);
   } else {
@@ -299,6 +418,11 @@ function line_plot(data) {
 
   function zoomed(event) {
     xScale.domain(event.transform.rescaleX(shadowScale).domain());
+    xScale2.range(
+      [0, full_width - (margin.left + margin.right)].map(
+        (d) => event.transform.applyX(d).domain()[0],
+      ),
+    );
     xAxisG.call(xAxis.ticks(5));
     xmin = xScale.domain()[0];
     xmax = xScale.domain()[1];
@@ -312,8 +436,8 @@ function line_plot(data) {
     yScale.domain([0, tymax]);
     yAxisG.call(d3.axisLeft(yScale));
     svg.select(".plot").remove();
-    // linep(plot_data, svg, xScale, yScale);
-    barp(plot_data, svg, yScale);
+    linep(plot_data, svg, xScale, yScale);
+    // barp(plot_data, svg, xScale2, yScale);
     cds_line(data, svg, xScale, yScale, tymax);
     circlep(plot_data, svg, xScale, yScale);
     aa_plot(data, svg, xScale);
@@ -387,7 +511,7 @@ function line_plot(data) {
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .attr("pointer-events", "none");
-  //https://stackoverflow.com/questions/38687588/add-horizontal-crosshair-to-d3-js-chart
+  // https://stackoverflow.com/questions/38687588/add-horizontal-crosshair-to-d3-js-chart
   svg
     .on("mousemove", function () {
       // var x = event.pageX - margin.left;
@@ -448,8 +572,8 @@ function cds_line(data, svg, xScale, yScale, ymax) {
 }
 // End of CDS
 
-//Tool tips
-// Add circle for tool tip
+// Tool tips
+//  Add circle for tool tip
 function circlep(data, svg, xScale, yScale) {
   d3.select("#plot").selectAll("circle").remove();
   d3.select("#plot").select("#tooltip").remove();
@@ -473,7 +597,8 @@ function circlep(data, svg, xScale, yScale) {
     .style("fill", (d) => "transparent")
     .on("mouseover", function (event, d) {
       tooltip
-        // .attr("transform", "translate(" + event.pageX + "," + event.pageY + ")")
+        // .attr("transform", "translate(" + event.pageX + "," +
+        // event.pageY + ")")
         .text("pos:" + d.pos + " count:" + d.count);
       return tooltip.style("visibility", "visible");
     })
