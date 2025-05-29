@@ -44,6 +44,21 @@ $(document).ready(() => {
     const seq_type = $('input[name = "study"]:checked').val();
     $(`.${seq_type}`).prop("checked", false);
   });
+
+  // Conflicting values
+  $("#cov_check").click(function () {
+    if (!$("#line_graph").prop("checked") && $("#cov_check").prop("checked")) {
+      alert("Coverage must be selected with line graph");
+      $("#cov_check").prop("checked", false);
+    }
+  });
+  $("#line_graph").click(function () {
+    if (!$("#line_graph").prop("checked") && $("#cov_check").prop("checked")) {
+      alert("Coverage must be selected with line graph");
+      $("#line_graph").prop("checked", false);
+      $("#cov_check").prop("checked", false);
+    }
+  });
 });
 
 // TO hide and show on click
