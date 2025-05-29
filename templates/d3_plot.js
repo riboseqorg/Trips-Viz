@@ -290,34 +290,6 @@ function line_plot(data) {
     // .attr("transform", `translate(0,${margin.top})`)
     .call(d3.axisLeft(yScale));
 
-  // plot cds vertical line
-  svg
-    .append("line")
-    .attr("x1", xScale(data.cds_range[0]))
-    .attr("x2", xScale(data.cds_range[0]))
-    .attr("y1", yScale(0))
-    .attr("y2", yScale(ymax - 20))
-    .style("stroke", "black")
-    .style("stroke-width", 1);
-  svg
-    .append("line")
-    .attr("x1", xScale(data.cds_range[1]))
-    .attr("x2", xScale(data.cds_range[1]))
-    .attr("y1", yScale(0))
-    .attr("y2", yScale(ymax - 20))
-    .style("stroke", "black")
-    .style("stroke-width", 1);
-  svg
-    .append("text")
-    .attr("x", xScale(data.cds_range[0]))
-    .attr("y", yScale(ymax - 20))
-    .text("start");
-  svg
-    .append("text")
-    .attr("x", xScale(data.cds_range[1]))
-    .attr("y", yScale(ymax - 20))
-    .text("stop");
-  // End of CDS
   if ($("#line_graph").is(":checked")) {
     linep(plot_data, svg, xScale, yScale);
   } else {
@@ -340,9 +312,13 @@ function line_plot(data) {
     yScale.domain([0, tymax]);
     yAxisG.call(d3.axisLeft(yScale));
     svg.select(".plot").remove();
-    linep(plot_data, svg, xScale, yScale);
+    // linep(plot_data, svg, xScale, yScale);
+    barp(plot_data, svg, yScale);
+    cds_line(data, svg, xScale, yScale, tymax);
+    circlep(plot_data, svg, xScale, yScale);
     aa_plot(data, svg, xScale);
     cds_plot(d3.csvParse(data.coding_regions), svg, xScale);
+    exon_junction(data.exon_junctions, svg, xScale);
   }
   // Standard zoom behavior:
   var zoom = d3
@@ -400,7 +376,7 @@ function line_plot(data) {
     .attr("y1", 0)
     .attr("y2", full_height)
     .attr("stroke", "black")
-    .attr("stroke-width", 1)
+    .attr("stroke-width", 0.5)
     .attr("pointer-events", "none");
 
   var horizontalLine = svg
@@ -409,13 +385,15 @@ function line_plot(data) {
     .attr("x1", 0)
     .attr("x2", full_width)
     .attr("stroke", "black")
-    .attr("stroke-width", 1)
+    .attr("stroke-width", 0.5)
     .attr("pointer-events", "none");
   //https://stackoverflow.com/questions/38687588/add-horizontal-crosshair-to-d3-js-chart
   svg
     .on("mousemove", function () {
-      var x = event.pageX - margin.left;
-      var y = event.pageY - margin.top;
+      // var x = event.pageX - margin.left;
+      var x = d3.pointer(event)[0];
+      var y = d3.pointer(event)[1];
+      // var y = event.pageY - margin.top;
       verticalLine.attr("x1", x).attr("x2", x).attr("opacity", 1);
       horizontalLine.attr("y1", y).attr("y2", y).attr("opacity", 1);
     })
@@ -431,13 +409,54 @@ function line_plot(data) {
   // svg.call(zoom);
   exon_junction(data.exon_junctions, svg, xScale);
   // showTooltip(plot_data, svg, xScale, yScale);
+  cds_line(data, svg, xScale, yScale, ymax);
 }
+
+// plot cds vertical line
+function cds_line(data, svg, xScale, yScale, ymax) {
+  svg.selectAll(".ccc").remove();
+  svg
+    .append("line")
+    .attr("class", "ccc")
+    .attr("x1", xScale(data.cds_range[0]))
+    .attr("x2", xScale(data.cds_range[0]))
+    .attr("y1", yScale(0))
+    .attr("y2", yScale(ymax - 20))
+    .style("stroke", "black")
+    .style("stroke-width", 1);
+  svg
+    .append("line")
+    .attr("class", "ccc")
+    .attr("x1", xScale(data.cds_range[1]))
+    .attr("x2", xScale(data.cds_range[1]))
+    .attr("y1", yScale(0))
+    .attr("y2", yScale(ymax - 20))
+    .style("stroke", "black")
+    .style("stroke-width", 1);
+  svg
+    .append("text")
+    .attr("class", "ccc")
+    .attr("x", xScale(data.cds_range[0]))
+    .attr("y", yScale(ymax - 20))
+    .text("start");
+  svg
+    .append("text")
+    .attr("class", "ccc")
+    .attr("x", xScale(data.cds_range[1]))
+    .attr("y", yScale(ymax - 20))
+    .text("stop");
+}
+// End of CDS
+
 //Tool tips
 // Add circle for tool tip
 function circlep(data, svg, xScale, yScale) {
+  d3.select("#plot").selectAll("circle").remove();
+  d3.select("#plot").select("#tooltip").remove();
   var tooltip = d3
     .select("#plot")
     .append("div")
+    .attr("id", "tooltip")
     .attr("class", "tooltip")
     .style("position", "absolute")
     .style("visibility", "hidden")
