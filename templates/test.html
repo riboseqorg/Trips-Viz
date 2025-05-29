@@ -48,8 +48,16 @@
       value="lite1"
       checked=""
     />
-    <label for="line_graph" class="checkbox_label"></label>
     <label for="line_graph" class="padded_label">Line Graph</label>
+
+    <label for="colors">Colorblind/Normal</label>
+    <select id="colors" name="colors">
+      <option value="normal">Normal</option>
+      <option value="protan">Protan</option>
+      <option value="deuteran">Deuteran</option>
+      <option value="tritan">Tritan</option>
+    </select>
+
     <div id="plot"></div>
 
     <div id="rdg"></div>
