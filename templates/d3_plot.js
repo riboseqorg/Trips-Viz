@@ -539,6 +539,14 @@ function aa_plot(data, svg, xScale) {
       Math.ceil(ss[1] - ss[0]);
     console.log(chr_pixels);
     g = newplot.append("g").attr("transform", `translate(0,${frame * 20})`);
+    g.append("line")
+      .attr("x1", 0)
+      .attr("y1", y_level + 10)
+      .attr("x2", full_width - margin.left - margin.right)
+      .attr("y2", y_level + 10)
+
+      .attr("stroke", frame_colors.get(frame))
+      .attr("stroke-width", 1);
     if (chr_pixels < 7) {
       start_stop.forEach((dt) => {
         if (dt.frame == frame) {
