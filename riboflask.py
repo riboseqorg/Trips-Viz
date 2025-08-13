@@ -15,10 +15,10 @@ from sqlqueries_2 import get_table, sqlquery
 
 def generate_plot(data, settings) -> str:
 
-    if ("line" not in data) and ("ribocoverage" in data):
-        # TODO: Convert this into notification
-        return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
-                " is turned off")
+    # if ("line" not in data) and ("ribocoverage" in data):
+    #     # TODO: Convert this into notification
+    #     return ("Error: Cannot display Ribo-Seq Coverage when 'Line Graph'" +
+    #             " is turned off")
 
     # This is a list of booleans that decide if the interactive legends boxes are filled in or not.Needs to be same length as labels
     if data['owner'] == 1:
@@ -73,7 +73,8 @@ def generate_plot(data, settings) -> str:
     # TODO: add avarible of rnaseq
 
     all_rna_reads, rna_seqvar_dict = get_reads(
-        data
+        data,
+        "riboseq"
     )  # TODO: keep rna_Seqvar_dict and ribo_seq_var_dict meltated to compine them
     all_rna_reads = all_rna_reads.with_columns(frame=pl.col("pos") % 3 + 1)
     

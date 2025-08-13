@@ -56,6 +56,7 @@
       <option value="protan">Protan</option>
       <option value="deuteran">Deuteran</option>
       <option value="tritan">Tritan</option>
+      <option value="cain">Cain</option>
     </select>
 
     <div id="plot"></div>
@@ -102,6 +103,14 @@
       $(document).ready(function () {
         $("button").click(function () {
           $(".x").toggle();
+        });
+        $("#colors").change(function () {
+          var val = $(this).val();
+          const color_class = ["red", "blue", "green"];
+          color_class.forEach((d) => {
+            $("." + d).css("stroke", color_combo[d][val]);
+            console.log(val, d, color_combo[d][val]);
+          });
         });
       });
     </script>

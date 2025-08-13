@@ -6,12 +6,14 @@ const color_combo = {
     protan: "#6E4B2D",
     deuteran: "#98643E",
     tritan: "#ED2C46",
+    cain: "#fdd0a2",
   },
   red: {
     normal: "#EA2C45",
     protan: "#6E4B2D",
     deuteran: "#98643E",
     tritan: "#ED2C46",
+    cain: "#fdd0a2",
   },
   "#F0554E": {
     normal: "#F0554E",
@@ -60,12 +62,14 @@ const color_combo = {
     protan: "#DA985D",
     deuteran: "#BC8651",
     tritan: "#5A97A2",
+    cain: "#f16913",
   },
   green: {
     normal: "#00A74F",
     protan: "#DA985D",
     deuteran: "#BC8651",
     tritan: "#5A97A2",
+    cain: "#f16913",
   },
   "#19B7B2": {
     normal: "#19B7B2",
@@ -78,12 +82,14 @@ const color_combo = {
     protan: "#0063B1",
     deuteran: "#0063B1",
     tritan: "#007284",
+    cain: "#8c2d04",
   },
   blue: {
     normal: "#0063B1",
     protan: "#0063B1",
     deuteran: "#0063B1",
     tritan: "#007284",
+    cain: "#8c2d04",
   },
   "#3B348D": {
     normal: "#3B348D",
@@ -218,9 +224,9 @@ const frame_plot_dimensions = {
 };
 
 const frame_colors = new Map([
-  [0, "#e41a1c"],
-  [1, "#4daf4a"],
-  [2, "#377eb8"],
+  [0, "red"],
+  [1, "green"],
+  [2, "blue"],
 ]);
 
 const charge_colors = new Map([
@@ -418,11 +424,11 @@ function line_plot(data) {
 
   function zoomed(event) {
     xScale.domain(event.transform.rescaleX(shadowScale).domain());
-    xScale2.range(
-      [0, full_width - (margin.left + margin.right)].map(
-        (d) => event.transform.applyX(d).domain()[0],
-      ),
-    );
+    // xScale2.range(
+    //   [0, full_width - (margin.left + margin.right)].map(
+    //     (d) => event.transform.applyX(d).domain()[0],
+    //   ),
+    // );
     xAxisG.call(xAxis.ticks(5));
     xmin = xScale.domain()[0];
     xmax = xScale.domain()[1];
