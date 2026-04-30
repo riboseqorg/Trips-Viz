@@ -1,0 +1,16 @@
+<div class="page-section">
+    <div class="row" style="text-align: center">
+        <div class="col">{{ template_dict['organism'] }}</div>
+        <div class="col">{{ template_dict['transcriptome'] }}</div>
+        <div class="col">
+            {% set plots = { "Single transcript plot": "single_transcript_plot",
+                            "Single transcript comparison plot": "comparison", "Meta-Information":
+                            "metainfo_plot", "Differential plot": "differential", "Transcriptome
+                            info": "traninfo_plot", "Translated ORF detection": "orf_translation",
+                        "PausePred": "pause_detection" } %}
+            <select id="plots">
+                {% for key, val in plots.items() %}<option value="{{ val }}">{{ key }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+</div>

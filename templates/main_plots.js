@@ -4,26 +4,26 @@ function linep(plot_data, svg, xScale, yScale) {
   // NOTE: Line plot
 
   var lnplot = svg.append("g").attr("class", "plot");
+  plot_data = plot_data.filter(
+      (d) => d.pos >= xScale.domain()[0] && d.pos <= xScale.domain()[1],
+  );
   //
-  var sumstat = d3.groups(plot_data, (d) => d.frame); // nest function allows to group the
+  var sumstat =
+      d3.groups(plot_data, (d) => d.frame); // nest function allows to group the
   // calculation per level of a factor
 
   sumstat.forEach((d) => {
     // console.log(d);
-    lnplot
-      .append("path")
-      .datum(d[1])
-      .attr("fill", "none")
-      .attr("class", frame_colors.get(d[0] - 1) + " a_" + (d[0] - 1))
-      .attr("stroke", frame_colors.get(d[0] - 1))
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x((d) => xScale(d.pos))
-          .y((d) => yScale(d.count)),
-      );
+    lnplot.append("path")
+        .datum(d[1])
+        .attr("fill", "none")
+        .attr("class", frame_colors.get(d[0] - 1) + " a_" + (d[0] - 1))
+        .attr("stroke", frame_colors.get(d[0] - 1))
+        .attr("stroke-width", 1.5)
+        .attr(
+            "d",
+            d3.line().x((d) => xScale(d.pos)).y((d) => yScale(d.count)),
+        );
   });
 }
 function barp(data, svg, xScale, yScale) {
@@ -38,20 +38,19 @@ function barp(data, svg, xScale, yScale) {
   //   .padding(0.02);
 
   var barplot = svg.append("g").attr("class", "plot");
-  barplot
-    .selectAll("rect")
-    .data(data)
-    .enter()
-    .append("rect")
-    .attr(
-      "class",
-      (d) =>
-        frame_colors.get(Number(d.frame) - 1) + " a_" + (Number(d.frame) - 1),
-    )
-    .attr("x", (d) => xScale(d.pos.toString()))
-    .attr("y", (d) => yScale(d.count))
-    .attr("fill", (d) => frame_colors.get(Number(d.frame) - 1))
-    .attr("width", 2)
+  barplot.selectAll("rect")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr(
+          "class",
+          (d) => frame_colors.get(Number(d.frame) - 1) + " a_" +
+                 (Number(d.frame) - 1),
+          )
+      .attr("x", (d) => xScale(d.pos.toString()))
+      .attr("y", (d) => yScale(d.count))
+      .attr("fill", (d) => frame_colors.get(Number(d.frame) - 1))
+      .attr("width", 2)
     // .attr("width", xScale.bandwidth())
     .attr(
       "height",

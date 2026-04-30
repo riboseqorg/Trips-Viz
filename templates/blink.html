@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Blinking with JavaScript</title>
+  </head>
+
+  <body>
+    <div id="notice" style="text-align: center">
+      <style>
+        #blink {
+          font-size: 20px;
+          font-weight: bold;
+          font-family: sans-serif;
+          color: red;
+        }
+      </style>
+      <p id="blink">
+        Dear Users, GWIPS-viz is currently experiencing high demand, which is
+        impacting performance. We appreciate your patience as we work to resolve
+        this issue promptly.
+      </p>
+      <script type="text/javascript">
+        let blink = document.getElementById("blink");
+
+        setInterval(function () {
+          blink.style.opacity = blink.style.opacity == 0 ? 1 : 0;
+        }, 1000);
+      </script>
+    </div>
+  </body>
+</html>
